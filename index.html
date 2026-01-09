@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
   <title>🍜 家系ラーメン巡り</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
@@ -14,18 +15,25 @@
       box-sizing: border-box;
     }
     
+    html {
+      height: 100vh;
+      height: 100dvh;
+    }
+    
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
       -webkit-font-smoothing: antialiased;
       overflow: hidden;
       height: 100vh;
+      height: 100dvh;
       background: white;
     }
     
     .app-container {
       display: flex;
       flex-direction: column;
-      height: 100vh;
+      height: 100vh; /* fallback for older browsers */
+      height: 100dvh; /* dynamic viewport height - URLバー考慮 */
       padding-top: env(safe-area-inset-top);
     }
     
@@ -1373,15 +1381,13 @@
     // Shop Data
     const shops = [
       {
-        id: 1, 
-        shopKey: "yoshimuraya", 
-        name: "家系総本山 吉村家", 
-        category: "総本山", 
+        id: "yoshimuraya",
+        name: "家系総本山 吉村家",
+        category: "総本山",
         area: "横浜駅西口",
-        lat: 35.4629487, 
-        lng: 139.6150264, 
-        lineage: "root", 
-        parentId: null,
+        lat: 35.4629487,
+        lng: 139.6150264,
+        parent: null,
         description: "1974年創業の家系ラーメン発祥店。濃厚豚骨醤油スープに太麺、好みを調節できる独自スタイルを確立した名店。",
         googleMapUrl: "https://www.google.co.jp/maps/place/%E5%AE%B6%E7%B3%BB%E7%B7%8F%E6%9C%AC%E5%B1%B1+%E5%90%89%E6%9D%91%E5%AE%B6/@35.4629487,139.6150264,154m/data=!3m2!1e3!5s0x60185c0c430436f7:0xf13df3160648aa53!4m15!1m8!3m7!1s0x60185c0c4307d32f:0xc9ce8a60cdd2d672!2z5a6257O757eP5pys5bGxIOWQieadkeWutg!8m2!3d35.4630187!4d139.6150749!10e9!16s%2Fg%2F1tfg31bf!3m5!1s0x60185c0c4307d32f:0xc9ce8a60cdd2d672!8m2!3d35.4630187!4d139.6150749!16s%2Fg%2F1tfg31bf?hl=ja&entry=ttu&g_ep=EgoyMDI1MTIwOS4wIKXMDSoASAFQAw%3D%3D",
         websiteUrl: "http://ieke1.com/",
@@ -1396,15 +1402,13 @@
         }
       },
       {
-        id: 2, 
-        shopKey: "sugitaya", 
-        name: "杉田家本店", 
-        category: "直系", 
+        id: "sugitaya",
+        name: "杉田家本店",
+        category: "直系",
         area: "新杉田",
-        lat: 35.3881631, 
-        lng: 139.6182152, 
-        lineage: "direct", 
-        parentId: 1,
+        lat: 35.3881631,
+        lng: 139.6182152,
+        parent: "yoshimuraya",
         description: "吉村家直系第1号店として1999年開店。朝5時から営業し、濃厚な豚骨醤油スープで行列が絶えない老舗直系店。",
         googleMapUrl: "https://www.google.co.jp/maps/place/%E6%9D%89%E7%94%B0%E5%AE%B6/@35.3881631,139.041433,158103m/data=!3m1!1e3!4m10!1m2!2m1!1z5p2J55Sw5a62!3m6!1s0x6018435d664217b9:0x50a70700f361edb7!8m2!3d35.3881631!4d139.6182152!15sCgnmnYnnlLDlrrYiA4gBAVoMIgrmnYnnlLAg5a62kgEQcmFtZW5fcmVzdGF1cmFudJoBRENpOURRVWxSUVVOdlpFTm9kSGxqUmpsdlQyc3dlV1ZJVmt0T2JHZDBVMFJHTkdSWFozcFNSRXAwVjFSYVdGWkhZeEFC4AEA-gEECAAQHQ!16s%2Fg%2F1z449y7b2?hl=ja&entry=ttu&g_ep=EgoyMDI1MTIwOS4wIKXMDSoASAFQAw%3D%3D",
         websiteUrl: "https://sugitaya.com/",
@@ -1419,15 +1423,13 @@
         }
       },
       {
-        id: 3, 
-        shopKey: "suehiroya", 
-        name: "末廣家", 
-        category: "直系", 
+        id: "suehiroya",
+        name: "末廣家",
+        category: "直系",
         area: "六角橋",
-        lat: 35.4880323, 
-        lng: 139.6221691, 
-        lineage: "direct", 
-        parentId: 1,
+        lat: 35.4880323,
+        lng: 139.6221691,
+        parent: "yoshimuraya",
         description: "吉村家直系店の一つ。六角橋で濃厚な直系家系ラーメンを提供し、直系王道の味継承店として人気。",
         googleMapUrl: "https://www.google.co.jp/maps/place/%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%B3+%E6%9C%AB%E5%BB%A3%E5%AE%B6/@35.4880323,139.6221691,1234m/data=!3m2!1e3!4b1!4m6!3m5!1s0x60185ea40ab2abe7:0xa69bc35f35258466!8m2!3d35.4880323!4d139.624744!16s%2Fg%2F12qfxwkw6?hl=ja&entry=ttu&g_ep=EgoyMDI1MTIwOS4wIKXMDSoASAFQAw%3D%3D",
         websiteUrl: "https://x.com/2525_2929",
@@ -1442,15 +1444,13 @@
         }
       },
       {
-        id: 4,
-        shopKey: "tsuruichiya-neo",
+        id: "tsuruichiya-neo",
         name: "鶴一家 neo",
         category: "直系",
         area: "鶴屋町",
         lat: 35.4694779,
         lng: 139.6208343,
-        lineage: "direct",
-        parentId: 1,
+        parent: "yoshimuraya",
         description: "横浜駅近く鶴屋町の家系ラーメン店。深夜まで営業し、濃厚な豚骨醤油スープが特徴。",
         googleMapUrl: "https://www.google.com/maps/place/%E9%B6%B4%E4%B8%80%E5%AE%B6+neo/@35.4694779,139.6208343,15z/data=!4m6!3m5!1s0x60185dd1f76c0b3b:0x56351e864f67679e!8m2!3d35.4694779!4d139.6208343!16s%252Fg%252F11xkgw9v4y?hl=ja",
         websiteUrl: "",
@@ -1465,15 +1465,13 @@
         }
       },
       {
-        id: 5,
-        shopKey: "oudou-kidouya",
+        id: "oudou-kidouya",
         name: "鬼道家",
         category: "有名店",
         area: "仙台",
         lat: 38.2645786,
         lng: 140.8666282,
-        lineage: "derivative",
-        parentId: 1,
+        parent: "yoshimuraya",
         description: "仙台にオープンした王道家系統のお店。",
         googleMapUrl: "https://www.google.com/maps/place/%E9%AC%BC%E9%81%93%E5%AE%B6/@38.2645786,140.8666282,16z/data=!4m6!3m5!1s0x5f89877591c28d59:0xf2d316766b1b9666!8m2!3d38.2645786!4d140.8666282!16s%2Fg%2F11bbxlkl66?entry=ttu&g_ep=EgoyMDI2MDEwNi4wIKXMDSoASAFQAw%3D%3D",
         websiteUrl: "https://x.com/kidouya_sendai",
@@ -2057,8 +2055,8 @@
     
     // Lineage Tab
     function renderLineageTab() {
-      const directShops = shops.filter(s => s.lineage === 'direct');
-      const derivativeShops = shops.filter(s => s.lineage === 'derivative');
+      const directShops = shops.filter(s => s.category === '直系' && s.parent === 'yoshimuraya');
+      const derivativeShops = shops.filter(s => (s.category === '派生' || s.category === '有名店') && s.parent === 'yoshimuraya');
       
       document.getElementById('lineage-direct').innerHTML = directShops.map(shop => {
         const isVisited = visits[shop.id]?.logs?.length > 0;
