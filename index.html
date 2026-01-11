@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -14,1043 +15,1098 @@
       padding: 0;
       box-sizing: border-box;
     }
-    
-    html {
-      height: 100vh;
-      height: 100dvh;
-    }
-    
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
-      -webkit-font-smoothing: antialiased;
-      overflow: hidden;
-      height: 100vh;
-      height: 100dvh;
-      background: white;
-    }
-    
-    .app-container {
-      display: flex;
-      flex-direction: column;
-      height: 100vh; /* fallback for older browsers */
-      height: 100dvh; /* dynamic viewport height - URLバー考慮 */
-      padding-top: env(safe-area-inset-top);
-    }
-    
-    .header {
-      background: #FF0000;
-      color: #000000;
-      padding: 12px 16px 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    
-    .header h1 {
-      font-size: 20px;
-      font-weight: bold;
-      margin-bottom: 0;
-      color: #000000;
-    }
-    
-    .content {
-      flex: 1;
-      overflow: hidden;
-      position: relative;
-    }
-    
-    .tab-content {
-      height: 100%;
-      overflow-y: auto;
-      display: none;
-    }
-    
-    .tab-content.active {
-      display: block;
-    }
-    
-    .bottom-nav {
-      display: flex;
-      background: white;
-      border-top: 1px solid #e5e7eb;
-      padding: 4px 0;
-      padding-bottom: max(env(safe-area-inset-bottom), 4px);
-    }
-    
-    .nav-item {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 4px 8px;
-      border: none;
-      background: none;
-      cursor: pointer;
-      color: #9ca3af;
-      transition: color 0.2s;
-    }
-    
-    .nav-item.active {
-      color: #3b82f6;
-    }
-    
-    .nav-item svg {
-      width: 22px;
-      height: 22px;
-      margin-bottom: 2px;
-    }
-    
-    .nav-item span {
-      font-size: 11px;
-      font-weight: 500;
-    }
-    
-    /* Map View */
-    #map {
-      height: 100%;
-      width: 100%;
-    }
-    
-    .map-view {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      position: relative;
-    }
-    
-    .map-container {
-      position: relative;
-      height: 60%; /* 初期値: 60% */
-      min-height: 30%;
-      max-height: 85%;
-    }
-    
-    .resize-handle {
-      height: 16px;
-      background: #f3f4f6;
-      cursor: ns-resize;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-top: 1px solid #e5e7eb;
-      border-bottom: 1px solid #e5e7eb;
-      position: relative;
-      z-index: 1001;
-      touch-action: none;
-    }
-    
-    .resize-handle::before {
-      content: '';
-      width: 32px;
-      height: 4px;
-      background: #d1d5db;
-      border-radius: 2px;
-    }
-    
-    .resize-handle:active {
-      background: #e5e7eb;
-    }
-    
-    .map-overlay {
-      position: absolute;
-      z-index: 1000;
-      pointer-events: none;
-    }
-    
-    .map-title {
-      top: 16px;
-      left: 16px;
-      background: rgba(255,255,255,0.95);
-      padding: 8px 12px;
-      border-radius: 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    
-    .map-legend {
-      top: 16px;
-      right: 16px;
-      background: rgba(255,255,255,0.95);
-      padding: 8px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      font-size: 12px;
-    }
-    
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 4px;
-    }
-    
-    .legend-item:last-child {
-      margin-bottom: 0;
-    }
-    
-    .legend-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-    }
-    
-    .shop-list-drawer {
-      background: white;
-      box-shadow: 0 -2px 16px rgba(0,0,0,0.1);
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-height: 120px;
-      overflow: hidden;
-    }
-    
-    .drawer-handle {
-      padding: 8px;
-      background: #f9fafb;
-      border-bottom: 1px solid #e5e7eb;
-    }
-    
-    .drawer-filter {
-      display: flex;
-      gap: 6px;
-      align-items: center;
-    }
-    
-    .drawer-filter select {
-      flex: 1;
-      padding: 8px 12px;
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      font-size: 14px;
-    }
-    
-    .filter-toggle-btn {
-      padding: 8px 12px;
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      font-size: 13px;
-      background: white;
-      color: #6b7280;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: all 0.2s;
-    }
-    
-    .filter-toggle-btn.active {
-      background: #10b981;
-      color: white;
-      border-color: #10b981;
-    }
-    
-    .filter-toggle-btn:hover {
-      background: #f3f4f6;
-    }
-    
-    .filter-toggle-btn.active:hover {
-      background: #059669;
-    }
-    
-    .drawer-content {
-      flex: 1;
-      overflow-y: auto;
-      padding: 8px 16px 16px;
-    }
-    
-    .shop-list-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: #f9fafb;
-      padding: 12px;
-      border-radius: 16px;
-      margin-bottom: 8px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    
-    .shop-list-item:active {
-      background: #f3f4f6;
-    }
-    
-    .shop-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      flex-shrink: 0;
-    }
-    
-    .shop-icon.visited {
-      background: #d1fae5;
-    }
-    
-    .shop-icon.unvisited {
-      background: #fee2e2;
-    }
-    
-    .shop-info {
-      flex: 1;
-      min-width: 0;
-    }
-    
-    .shop-name {
-      font-weight: 600;
-      color: #1f2937;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      font-size: 14px;
-    }
-    
-    .shop-meta {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      margin-top: 4px;
-      font-size: 12px;
-      color: #6b7280;
-    }
-    
-    .badge-open {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      background: #10b981;
-      color: white;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 11px;
-      margin-left: 4px;
-    }
-    
-    /* Shop Detail Modal */
-    .modal {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.5);
-      z-index: 2000;
-      display: none;
-      align-items: flex-end;
-    }
-    
-    .modal.active {
-      display: flex;
-    }
-    
-    .modal-content {
-      background: white;
-      width: 100%;
-      max-height: 95vh;
-      border-radius: 24px 24px 0 0;
-      overflow-y: auto;
-      overflow-x: hidden;
-      animation: slideUp 0.3s ease-out;
-      box-sizing: border-box;
-    }
-    
-    @keyframes slideUp {
-      from {
-        transform: translateY(100%);
-      }
-      to {
-        transform: translateY(0);
-      }
-    }
-    
-    .modal-header {
-      padding: 16px;
-      position: sticky;
-      top: 0;
-      background: white;
-      z-index: 10;
-      border-bottom: 1px solid #f3f4f6;
-    }
-    
-    .modal-handle {
-      width: 48px;
-      height: 4px;
-      background: #d1d5db;
-      border-radius: 2px;
-      margin: 0 auto 16px;
-    }
-    
-    .modal-title-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-    }
-    
-    .modal-title {
-      flex: 1;
-    }
-    
-    .modal-title h2 {
-      font-size: 24px;
-      font-weight: bold;
-      color: #1f2937;
-      margin-bottom: 8px;
-    }
-    
-    .modal-badges {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 8px;
-    }
-    
-    .badge {
-      padding: 4px 12px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: 500;
-    }
-    
-    .badge-category {
-      background: #dbeafe;
-      color: #1e40af;
-    }
-    
-    .badge-status {
-      background: #10b981;
-      color: white;
-    }
-    
-    .badge-closed {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      background: #9ca3af;
-      color: white;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 11px;
-      margin-left: 4px;
-    }
-    
-    .close-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: #f3f4f6;
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-    
-    .modal-body {
-      padding: 0 16px 24px;
-    }
-    
-    .section {
-      margin-bottom: 24px;
-    }
-    
-    .section-title {
-      font-weight: 600;
-      font-size: 16px;
-      color: #1f2937;
-      margin-bottom: 12px;
-    }
-    
-    .description {
-      color: #4b5563;
-      line-height: 1.6;
-      font-size: 14px;
-    }
-    
-    .hours-grid {
-      background: #f9fafb;
-      border-radius: 12px;
-      padding: 12px;
-    }
-    
-    .hours-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 1px solid #e5e7eb;
-      font-size: 14px;
-    }
-    
-    .hours-row:last-child {
-      border-bottom: none;
-    }
-    
-    .hours-row.today {
-      font-weight: bold;
-      color: #3b82f6;
-    }
-    
-    .hours-day {
-      color: #6b7280;
-    }
-    
-    .hours-time {
-      color: #1f2937;
-    }
-    
-    .hours-row.today .hours-day,
-    .hours-row.today .hours-time {
-      color: #3b82f6;
-    }
-    
-    .visit-stats {
-      display: grid;
-      grid-template-columns: 23fr 54fr 23fr;
-      gap: 12px;
-      margin-top: 12px;
-    }
-    
-    .visit-stats-inline {
-      display: flex;
-      gap: 16px;
-      margin-bottom: 16px;
-      padding: 12px;
-      background: #f9fafb;
-      border-radius: 12px;
-    }
-    
-    .stat-inline {
-      display: flex;
-      align-items: baseline;
-      gap: 8px;
-    }
-    
-    .stat-inline-label {
-      font-size: 13px;
-      color: #6b7280;
-    }
-    
-    .stat-inline-value {
-      font-size: 18px;
-      font-weight: bold;
-      color: #1f2937;
-    }
-    
-    .stat-card {
-      background: #f9fafb;
-      border-radius: 12px;
-      padding: 12px;
-    }
-    
-    .stat-label {
-      font-size: 12px;
-      color: #6b7280;
-      margin-bottom: 4px;
-    }
-    
-    .stat-value {
-      font-size: 18px;
-      font-weight: bold;
-      color: #1f2937;
-    }
-    
-    .stat-value-date {
-      font-size: 18px;
-    }
-    
-    .action-buttons {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-    
-    .btn {
-      flex: 1;
-      padding: 14px;
-      border-radius: 16px;
-      border: none;
-      font-weight: 600;
-      font-size: 15px;
-      cursor: pointer;
-      transition: opacity 0.2s;
-    }
-    
-    .btn:active {
-      opacity: 0.8;
-    }
-    
-    .btn-primary {
-      background: #3b82f6;
-      color: white;
-    }
-    
-    .btn-secondary {
-      background: #f3f4f6;
-      color: #1f2937;
-    }
-    
-    .btn-want {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
-    
-    .btn-want.active {
-      background: #fef3c7;
-      color: #92400e;
-    }
-    
-    .btn-favorite {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
-    
-    .btn-favorite.active {
-      background: #fce7f3;
-      color: #9f1239;
-    }
-    
-    .nav-buttons {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
-      margin-top: 12px;
-    }
-    
-    .btn-nav {
-      padding: 12px;
-      border-radius: 12px;
-      border: 1px solid #e5e7eb;
-      background: white;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      text-decoration: none;
-      color: #1f2937;
-    }
-    
-    .visit-history {
-      margin-top: 16px;
-    }
-    
-    .visit-card {
-      background: #f9fafb;
-      border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 8px;
-    }
-    
-    .visit-date {
-      font-weight: 600;
-      color: #1f2937;
-      margin-bottom: 8px;
-      font-size: 14px;
-    }
-    
-    .visit-details {
-      font-size: 13px;
-      color: #6b7280;
-      margin-bottom: 4px;
-    }
-    
-    .visit-rating {
-      display: flex;
-      gap: 2px;
-      margin: 8px 0;
-    }
-    
-    .visit-order {
-      font-size: 13px;
-      color: #1f2937;
-      margin-top: 8px;
-      line-height: 1.5;
-      background: #f3f4f6;
-      padding: 8px 12px;
-      border-radius: 8px;
-    }
-    
-    .visit-memo {
-      font-size: 13px;
-      color: #4b5563;
-      margin-top: 8px;
-      line-height: 1.5;
-    }
-    
-    .visit-photo {
-      margin-top: 8px;
-      border-radius: 8px;
-      max-width: 100%;
-      height: auto;
-    }
-    
-    .empty-state {
-      text-align: center;
-      padding: 40px 20px;
-      color: #9ca3af;
-    }
-    
-    .empty-state-icon {
-      font-size: 48px;
-      margin-bottom: 12px;
-    }
-    
-    /* Visit Record Modal */
-    .record-modal .modal-content {
-      max-height: 92vh;
-    }
-    
-    .form-group {
-      margin-bottom: 16px;
-      box-sizing: border-box;
-    }
-    
-    .form-label {
-      display: block;
-      font-size: 14px;
-      font-weight: 500;
-      color: #374151;
-      margin-bottom: 6px;
-    }
-    
-    .form-input {
-      width: 100%;
-      max-width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #d1d5db;
-      border-radius: 8px;
-      font-size: 15px;
-      box-sizing: border-box;
-    }
-    
-    input[type="datetime-local"].form-input {
-      font-size: 14px;
-      -webkit-appearance: none;
-      appearance: none;
-    }
-    
-    .datetime-input {
-      width: 100%;
-      max-width: 100%;
-    }
-    
-    .form-input:focus {
-      outline: none;
-      border-color: #3b82f6;
-    }
-    
-    textarea.form-input {
-      min-height: 80px;
-      resize: vertical;
-    }
-    
-    .rating-input {
-      display: flex;
-      gap: 8px;
-      margin-top: 8px;
-    }
-    
-    .star-btn {
-      background: none;
-      border: none;
-      font-size: 32px;
-      cursor: pointer;
-      padding: 0;
-      color: #d1d5db;
-      transition: transform 0.1s;
-    }
-    
-    .star-btn.active {
-      color: #fbbf24;
-    }
-    
-    .star-btn:active {
-      transform: scale(0.9);
-    }
-    
-    .photo-upload {
-      margin-top: 8px;
-    }
-    
-    .photo-upload-btn {
-      width: 100%;
-      padding: 40px 20px;
-      border: 2px dashed #d1d5db;
-      border-radius: 12px;
-      background: #f9fafb;
-      cursor: pointer;
-      text-align: center;
-      color: #6b7280;
-      font-size: 14px;
-    }
-    
-    .photo-preview {
-      margin-top: 12px;
-      position: relative;
-    }
-    
-    .photo-preview img {
-      width: 100%;
-      border-radius: 12px;
-    }
-    
-    .photo-remove {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: rgba(0,0,0,0.6);
-      color: white;
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .form-row {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-    }
-    
-    /* List Tab */
-    .list-container {
-      padding: 16px;
-    }
-    
-    .shop-card {
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      padding: 16px;
-      margin-bottom: 12px;
-      cursor: pointer;
-    }
-    
-    .shop-card-header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      margin-bottom: 8px;
-    }
-    
-    .shop-card-title {
-      flex: 1;
-    }
-    
-    .shop-card-title h3 {
-      font-size: 16px;
-      font-weight: 600;
-      color: #1f2937;
-      margin-bottom: 6px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    .check-icon {
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: #10b981;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-    }
-    
-    /* Lineage Tab */
-    .lineage-container {
-      padding: 16px;
-    }
-    
-    .lineage-card {
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      padding: 24px;
-    }
-    
-    .lineage-title {
-      font-size: 20px;
-      font-weight: bold;
-      margin-bottom: 24px;
-    }
-    
-    .lineage-root {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-bottom: 32px;
-    }
-    
-    .lineage-node {
-      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-      color: white;
-      padding: 16px 32px;
-      border-radius: 16px;
-      font-weight: bold;
-      font-size: 16px;
-      box-shadow: 0 4px 12px rgba(239,68,68,0.3);
-    }
-    
-    .lineage-line {
-      width: 2px;
-      height: 48px;
-      background: #d1d5db;
-    }
-    
-    .lineage-section {
-      margin-bottom: 32px;
-    }
-    
-    .lineage-section-title {
-      text-align: center;
-      font-weight: 600;
-      color: #4b5563;
-      margin-bottom: 16px;
-      font-size: 14px;
-    }
-    
-    .lineage-shops {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 12px;
-    }
-    
-    .lineage-shop {
-      padding: 12px 16px;
-      border-radius: 12px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-    
-    .lineage-shop.direct {
-      background: #dbeafe;
-      border: 1px solid #93c5fd;
-    }
-    
-    .lineage-shop.direct.visited {
-      background: #d1fae5;
-      border: 2px solid #10b981;
-    }
-    
-    .lineage-shop.derivative {
-      background: #f3e8ff;
-      border: 1px solid #d8b4fe;
-    }
-    
-    .lineage-shop.derivative.visited {
-      background: #d1fae5;
-      border: 2px solid #10b981;
-    }
-    
-    .lineage-shop-name {
-      font-weight: 600;
-      font-size: 13px;
-      color: #1f2937;
-      margin-bottom: 4px;
-    }
-    
-    .lineage-shop-area {
-      font-size: 11px;
-      color: #6b7280;
-    }
-    
-    .lineage-legend {
-      margin-top: 24px;
-      padding: 16px;
-      background: #f9fafb;
-      border-radius: 12px;
-    }
-    
-    .lineage-legend p {
-      font-weight: 600;
-      margin-bottom: 8px;
-      font-size: 13px;
-    }
-    
-    .lineage-legend ul {
-      list-style: none;
-      font-size: 12px;
-      color: #6b7280;
-    }
-    
-    .lineage-legend li {
-      margin-bottom: 4px;
-    }
-    
-    /* Stats Tab */
-    .stats-container {
-      padding: 16px;
-    }
-    
-    .stats-card {
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      padding: 24px;
-      margin-bottom: 16px;
-    }
-    
-    .stats-title {
-      font-size: 20px;
-      font-weight: bold;
-      margin-bottom: 16px;
-    }
-    
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-    
-    .stat-box {
-      padding: 16px;
-      border-radius: 12px;
-      text-align: center;
-    }
-    
-    .stat-box.blue {
-      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-    }
-    
-    .stat-box.green {
-      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-    }
-    
-    .stat-box.yellow {
-      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-    }
-    
-    .stat-number {
-      font-size: 32px;
-      font-weight: bold;
-      margin-bottom: 4px;
-    }
-    
-    .stat-box.blue .stat-number {
-      color: #1e40af;
-    }
-    
-    .stat-box.green .stat-number {
-      color: #065f46;
-    }
-    
-    .stat-box.yellow .stat-number {
-      color: #92400e;
-    }
-    
-    .stat-box-label {
-      font-size: 11px;
-      color: #4b5563;
-    }
+
+```
+html {
+  height: 100vh;
+  height: 100dvh;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  height: 100vh;
+  height: 100dvh;
+  background: white;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* fallback for older browsers */
+  height: 100dvh; /* dynamic viewport height - URLバー考慮 */
+  padding-top: env(safe-area-inset-top);
+}
+
+.header {
+  background: #FF0000;
+  color: #000000;
+  padding: 12px 16px 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.header h1 {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 0;
+  color: #000000;
+}
+
+.content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.tab-content {
+  height: 100%;
+  overflow-y: auto;
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.bottom-nav {
+  display: flex;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+  padding: 4px 0;
+  padding-bottom: max(env(safe-area-inset-bottom), 4px);
+}
+
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px 8px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #9ca3af;
+  transition: color 0.2s;
+}
+
+.nav-item.active {
+  color: #3b82f6;
+}
+
+.nav-item svg {
+  width: 22px;
+  height: 22px;
+  margin-bottom: 2px;
+}
+
+.nav-item span {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* Map View */
+#map {
+  height: 100%;
+  width: 100%;
+}
+
+.map-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+}
+
+.map-container {
+  position: relative;
+  height: 60%; /* 初期値: 60% */
+  min-height: 30%;
+  max-height: 85%;
+}
+
+.resize-handle {
+  height: 16px;
+  background: #f3f4f6;
+  cursor: ns-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  position: relative;
+  z-index: 1001;
+  touch-action: none;
+}
+
+.resize-handle::before {
+  content: '';
+  width: 32px;
+  height: 4px;
+  background: #d1d5db;
+  border-radius: 2px;
+}
+
+.resize-handle:active {
+  background: #e5e7eb;
+}
+
+.map-overlay {
+  position: absolute;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.map-title {
+  top: 16px;
+  left: 16px;
+  background: rgba(255,255,255,0.95);
+  padding: 8px 12px;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.map-legend {
+  top: 16px;
+  right: 16px;
+  background: rgba(255,255,255,0.95);
+  padding: 8px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  font-size: 12px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.legend-item:last-child {
+  margin-bottom: 0;
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.shop-list-drawer {
+  background: white;
+  box-shadow: 0 -2px 16px rgba(0,0,0,0.1);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 120px;
+  overflow: hidden;
+}
+
+.drawer-handle {
+  padding: 8px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.drawer-filter {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.drawer-filter select {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.filter-toggle-btn {
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 13px;
+  background: white;
+  color: #6b7280;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.filter-toggle-btn.active {
+  background: #10b981;
+  color: white;
+  border-color: #10b981;
+}
+
+.filter-toggle-btn:hover {
+  background: #f3f4f6;
+}
+
+.filter-toggle-btn.active:hover {
+  background: #059669;
+}
+
+.drawer-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 16px 16px;
+}
+
+.shop-list-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f9fafb;
+  padding: 12px;
+  border-radius: 16px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.shop-list-item:active {
+  background: #f3f4f6;
+}
+
+.shop-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.shop-icon.visited {
+  background: #d1fae5;
+}
+
+.shop-icon.unvisited {
+  background: #fee2e2;
+}
+
+.shop-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.shop-name {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.shop-name-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.shop-name-badges {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.shop-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.badge-open {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #10b981;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  margin-left: 4px;
+}
+
+.badge-want {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fef3c7;
+  color: #92400e;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 11px;
+  margin-left: 4px;
+}
+
+.badge-favorite {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fce7f3;
+  color: #9f1239;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 11px;
+  margin-left: 4px;
+}
+
+.badge-distance {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e0f2fe;
+  color: #075985;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 10px;
+  margin-left: 4px;
+}
+
+/* Shop Detail Modal */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 2000;
+  display: none;
+  align-items: flex-end;
+}
+
+.modal.active {
+  display: flex;
+}
+
+.modal-content {
+  background: white;
+  width: 100%;
+  max-height: 95vh;
+  border-radius: 24px 24px 0 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  animation: slideUp 0.3s ease-out;
+  box-sizing: border-box;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  padding: 16px;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 10;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.modal-handle {
+  width: 48px;
+  height: 4px;
+  background: #d1d5db;
+  border-radius: 2px;
+  margin: 0 auto 16px;
+}
+
+.modal-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.modal-title {
+  flex: 1;
+}
+
+.modal-title h2 {
+  font-size: 24px;
+  font-weight: bold;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.modal-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.badge-category {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.badge-status {
+  background: #10b981;
+  color: white;
+}
+
+.badge-closed {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #9ca3af;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  margin-left: 4px;
+}
+
+.close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.modal-body {
+  padding: 0 16px 24px;
+}
+
+.section {
+  margin-bottom: 24px;
+}
+
+.section-title {
+  font-weight: 600;
+  font-size: 16px;
+  color: #1f2937;
+  margin-bottom: 12px;
+}
+
+.description {
+  color: #4b5563;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.hours-grid {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.hours-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 14px;
+}
+
+.hours-row:last-child {
+  border-bottom: none;
+}
+
+.hours-row.today {
+  font-weight: bold;
+  color: #3b82f6;
+}
+
+.hours-day {
+  color: #6b7280;
+}
+
+.hours-time {
+  color: #1f2937;
+}
+
+.hours-row.today .hours-day,
+.hours-row.today .hours-time {
+  color: #3b82f6;
+}
+
+.visit-stats {
+  display: grid;
+  grid-template-columns: 23fr 54fr 23fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.visit-stats-inline {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 12px;
+}
+
+.stat-inline {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.stat-inline-label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.stat-inline-value {
+  font-size: 18px;
+  font-weight: bold;
+  color: #1f2937;
+}
+
+.stat-card {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: bold;
+  color: #1f2937;
+}
+
+.stat-value-date {
+  font-size: 18px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.btn {
+  flex: 1;
+  padding: 14px;
+  border-radius: 16px;
+  border: none;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn:active {
+  opacity: 0.8;
+}
+
+.btn-primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-secondary {
+  background: #f3f4f6;
+  color: #1f2937;
+}
+
+.btn-want {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-want.active {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.btn-favorite {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-favorite.active {
+  background: #fce7f3;
+  color: #9f1239;
+}
+
+.nav-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.btn-nav {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-decoration: none;
+  color: #1f2937;
+}
+
+.visit-history {
+  margin-top: 16px;
+}
+
+.visit-card {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.visit-date {
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.visit-details {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.visit-rating {
+  display: flex;
+  gap: 2px;
+  margin: 8px 0;
+}
+
+.visit-order {
+  font-size: 13px;
+  color: #1f2937;
+  margin-top: 8px;
+  line-height: 1.5;
+  background: #f3f4f6;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.visit-memo {
+  font-size: 13px;
+  color: #4b5563;
+  margin-top: 8px;
+  line-height: 1.5;
+}
+
+.visit-photo {
+  margin-top: 8px;
+  border-radius: 8px;
+  max-width: 100%;
+  height: auto;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #9ca3af;
+}
+
+.empty-state-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+/* Visit Record Modal */
+.record-modal .modal-content {
+  max-height: 92vh;
+}
+
+.form-group {
+  margin-bottom: 16px;
+  box-sizing: border-box;
+}
+
+.form-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+.form-input {
+  width: 100%;
+  max-width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 15px;
+  box-sizing: border-box;
+}
+
+input[type="datetime-local"].form-input {
+  font-size: 14px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.datetime-input {
+  width: 100%;
+  max-width: 100%;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+textarea.form-input {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.rating-input {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.star-btn {
+  background: none;
+  border: none;
+  font-size: 32px;
+  cursor: pointer;
+  padding: 0;
+  color: #d1d5db;
+  transition: transform 0.1s;
+}
+
+.star-btn.active {
+  color: #fbbf24;
+}
+
+.star-btn:active {
+  transform: scale(0.9);
+}
+
+.photo-upload {
+  margin-top: 8px;
+}
+
+.photo-upload-btn {
+  width: 100%;
+  padding: 40px 20px;
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  background: #f9fafb;
+  cursor: pointer;
+  text-align: center;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.photo-preview {
+  margin-top: 12px;
+  position: relative;
+}
+
+.photo-preview img {
+  width: 100%;
+  border-radius: 12px;
+}
+
+.photo-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+/* List Tab */
+.list-container {
+  padding: 16px;
+}
+
+.shop-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  padding: 16px;
+  margin-bottom: 12px;
+  cursor: pointer;
+}
+
+.shop-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.shop-card-title {
+  flex: 1;
+}
+
+.shop-card-title h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.check-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #10b981;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+/* Lineage Tab */
+.lineage-container {
+  padding: 16px;
+}
+
+.lineage-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  padding: 24px;
+}
+
+.lineage-title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 24px;
+}
+
+.lineage-root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.lineage-node {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  padding: 16px 32px;
+  border-radius: 16px;
+  font-weight: bold;
+  font-size: 16px;
+  box-shadow: 0 4px 12px rgba(239,68,68,0.3);
+}
+
+.lineage-line {
+  width: 2px;
+  height: 48px;
+  background: #d1d5db;
+}
+
+.lineage-section {
+  margin-bottom: 32px;
+}
+
+.lineage-section-title {
+  text-align: center;
+  font-weight: 600;
+  color: #4b5563;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.lineage-shops {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.lineage-shop {
+  padding: 12px 16px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.lineage-shop.direct {
+  background: #dbeafe;
+  border: 1px solid #93c5fd;
+}
+
+.lineage-shop.direct.visited {
+  background: #d1fae5;
+  border: 2px solid #10b981;
+}
+
+.lineage-shop.derivative {
+  background: #f3e8ff;
+  border: 1px solid #d8b4fe;
+}
+
+.lineage-shop.derivative.visited {
+  background: #d1fae5;
+  border: 2px solid #10b981;
+}
+
+.lineage-shop-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: #1f2937;
+  margin-bottom: 4px;
+}
+
+.lineage-shop-area {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.lineage-legend {
+  margin-top: 24px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 12px;
+}
+
+.lineage-legend p {
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.lineage-legend ul {
+  list-style: none;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.lineage-legend li {
+  margin-bottom: 4px;
+}
+
+/* Stats Tab */
+.stats-container {
+  padding: 16px;
+}
+
+.stats-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  padding: 24px;
+  margin-bottom: 16px;
+}
+
+.stats-title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 16px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.stat-box {
+  padding: 16px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.stat-box.blue {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+}
+
+.stat-box.green {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+}
+
+.stat-box.yellow {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+}
+
+.stat-number {
+  font-size: 32px;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.stat-box.blue .stat-number {
+  color: #1e40af;
+}
+
+.stat-box.green .stat-number {
+  color: #065f46;
+}
+
+.stat-box.yellow .stat-number {
+  color: #92400e;
+}
+
+.stat-box-label {
+  font-size: 11px;
+  color: #4b5563;
+}
+```
+
   </style>
 </head>
 <body>
@@ -1058,151 +1114,163 @@
     <div class="header">
       <h1>🍜 家系ラーメンmap</h1>
     </div>
-    
-    <div class="content">
-      <!-- Map Tab -->
-      <div id="tab-map" class="tab-content active">
-        <div class="map-view">
-          <div class="map-container">
-            <div id="map"></div>
-            <div class="map-overlay map-legend">
-              <div class="legend-item">
-                <div class="legend-dot" style="background:#ef4444;"></div>
-                <span>未訪問</span>
-              </div>
-              <div class="legend-item">
-                <div class="legend-dot" style="background:#10b981;"></div>
-                <span>訪問済み</span>
-              </div>
-            </div>
+
+```
+<div class="content">
+  <!-- Map Tab -->
+  <div id="tab-map" class="tab-content active">
+    <div class="map-view">
+      <div class="map-container">
+        <div id="map"></div>
+        <div class="map-overlay map-legend">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#ef4444;"></div>
+            <span>未訪問</span>
           </div>
-          <div class="resize-handle" id="resize-handle"></div>
-          <div class="shop-list-drawer">
-            <div class="drawer-handle">
-              <div class="drawer-filter">
-                <select id="filter-category">
-                  <option value="all">すべて表示</option>
-                  <option value="総本山">総本山</option>
-                  <option value="直系">直系</option>
-                  <option value="有名店">有名店</option>
-                  <option value="派生">派生</option>
-                  <option value="want">⭐ 行きたい</option>
-                  <option value="favorite">❤️ お気に入り</option>
-                </select>
-                <button class="filter-toggle-btn" id="btn-open-toggle">営業中</button>
-                <button class="filter-toggle-btn" id="btn-nearby">📍今から</button>
-              </div>
-            </div>
-            <div class="drawer-content" id="shop-list"></div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#10b981;"></div>
+            <span>訪問済み</span>
           </div>
         </div>
       </div>
-      
-      <!-- List Tab -->
-      <div id="tab-list" class="tab-content">
-        <div style="padding:16px;background:#f9fafb;border-bottom:1px solid #e5e7eb;">
-          <div style="display:flex;gap:6px;align-items:center;">
-            <select id="list-filter-category" style="flex:1;padding:8px 12px;border:1px solid #e5e7eb;border-radius:12px;font-size:14px;">
+      <div class="resize-handle" id="resize-handle"></div>
+      <div class="shop-list-drawer">
+        <div class="drawer-handle">
+          <div class="drawer-filter">
+            <select id="filter-category">
               <option value="all">すべて表示</option>
               <option value="総本山">総本山</option>
               <option value="直系">直系</option>
               <option value="有名店">有名店</option>
               <option value="派生">派生</option>
-              <option value="want">⭐ 行きたい</option>
-              <option value="favorite">❤️ お気に入り</option>
+              <option value="want">☆ 行きたい</option>
+              <option value="favorite">♡ お気に入り</option>
             </select>
-            <button class="filter-toggle-btn" id="list-btn-open-toggle">営業中</button>
-            <button class="filter-toggle-btn" id="list-btn-nearby">📍今から</button>
+            <button class="filter-toggle-btn" id="btn-open-toggle">営業中</button>
+            <button class="filter-toggle-btn" id="btn-nearby">
+              <svg style="width:14px;height:14px;vertical-align:middle;margin-right:2px;" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+              </svg>今から
+            </button>
           </div>
         </div>
-        <div class="list-container" id="list-container"></div>
+        <div class="drawer-content" id="shop-list"></div>
       </div>
-      
-      <!-- Lineage Tab -->
-      <div id="tab-lineage" class="tab-content">
-        <div class="lineage-container">
-          <div class="lineage-card">
-            <div class="lineage-title">家系ラーメン相関図</div>
-            <div class="lineage-root">
-              <div class="lineage-node">🍜 吉村家（総本山）</div>
-              <div class="lineage-line"></div>
-            </div>
-            <div class="lineage-section">
-              <div class="lineage-section-title">直系店</div>
-              <div class="lineage-shops" id="lineage-direct"></div>
-            </div>
-            <div class="lineage-section">
-              <div class="lineage-section-title">有名店・派生系</div>
-              <div class="lineage-shops" id="lineage-derivative"></div>
-            </div>
-            <div class="lineage-legend">
-              <p>凡例</p>
-              <ul>
-                <li>• 総本山: 家系ラーメン発祥の吉村家</li>
-                <li>• 直系店: 吉村家から直接暖簾分け</li>
-                <li>• 有名店・派生系: 吉村家以外から派生した店舗</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Stats Tab -->
-      <div id="tab-stats" class="tab-content">
-        <div class="stats-container">
-          <div class="stats-card">
-            <div class="stats-title">統計情報</div>
-            <div class="stats-grid">
-              <div class="stat-box blue">
-                <div class="stat-number" id="stat-visited">0</div>
-                <div class="stat-box-label">訪問店舗</div>
-              </div>
-              <div class="stat-box green">
-                <div class="stat-number" id="stat-percent">0%</div>
-                <div class="stat-box-label">制覇率</div>
-              </div>
-              <div class="stat-box yellow">
-                <div class="stat-number" id="stat-rating">-</div>
-                <div class="stat-box-label">平均評価</div>
-              </div>
-            </div>
-            <div class="section-title">訪問履歴</div>
-            <div id="visit-history-list"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <div class="bottom-nav">
-      <button class="nav-item active" data-tab="map">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-        </svg>
-        <span>マップ</span>
-      </button>
-      <button class="nav-item" data-tab="list">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-        </svg>
-        <span>リスト</span>
-      </button>
-      <button class="nav-item" data-tab="lineage">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12M8 12h12M8 17h12M3 7h.01M3 12h.01M3 17h.01"/>
-        </svg>
-        <span>相関図</span>
-      </button>
-      <button class="nav-item" data-tab="stats">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
-        </svg>
-        <span>統計</span>
-      </button>
     </div>
   </div>
   
+  <!-- List Tab -->
+  <div id="tab-list" class="tab-content">
+    <div style="padding:16px;background:#f9fafb;border-bottom:1px solid #e5e7eb;">
+      <div style="display:flex;gap:6px;align-items:center;">
+        <select id="list-filter-category" style="flex:1;padding:8px 12px;border:1px solid #e5e7eb;border-radius:12px;font-size:14px;">
+          <option value="all">すべて表示</option>
+          <option value="総本山">総本山</option>
+          <option value="直系">直系</option>
+          <option value="有名店">有名店</option>
+          <option value="派生">派生</option>
+          <option value="want">☆ 行きたい</option>
+          <option value="favorite">♡ お気に入り</option>
+        </select>
+        <button class="filter-toggle-btn" id="list-btn-open-toggle">営業中</button>
+        <button class="filter-toggle-btn" id="list-btn-nearby">
+          <svg style="width:14px;height:14px;vertical-align:middle;margin-right:2px;" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+          </svg>今から
+        </button>
+      </div>
+    </div>
+    <div class="list-container" id="list-container"></div>
+  </div>
+  
+  <!-- Lineage Tab -->
+  <div id="tab-lineage" class="tab-content">
+    <div class="lineage-container">
+      <div class="lineage-card">
+        <div class="lineage-title">家系ラーメン相関図</div>
+        <div class="lineage-root">
+          <div class="lineage-node">🍜 吉村家（総本山）</div>
+          <div class="lineage-line"></div>
+        </div>
+        <div class="lineage-section">
+          <div class="lineage-section-title">直系店</div>
+          <div class="lineage-shops" id="lineage-direct"></div>
+        </div>
+        <div class="lineage-section">
+          <div class="lineage-section-title">有名店・派生系</div>
+          <div class="lineage-shops" id="lineage-derivative"></div>
+        </div>
+        <div class="lineage-legend">
+          <p>凡例</p>
+          <ul>
+            <li>• 総本山: 家系ラーメン発祥の吉村家</li>
+            <li>• 直系店: 吉村家から直接暖簾分け</li>
+            <li>• 有名店・派生系: 吉村家以外から派生した店舗</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Stats Tab -->
+  <div id="tab-stats" class="tab-content">
+    <div class="stats-container">
+      <div class="stats-card">
+        <div class="stats-title">統計情報</div>
+        <div class="stats-grid">
+          <div class="stat-box blue">
+            <div class="stat-number" id="stat-visited">0</div>
+            <div class="stat-box-label">訪問店舗</div>
+          </div>
+          <div class="stat-box green">
+            <div class="stat-number" id="stat-percent">0%</div>
+            <div class="stat-box-label">制覇率</div>
+          </div>
+          <div class="stat-box yellow">
+            <div class="stat-number" id="stat-rating">-</div>
+            <div class="stat-box-label">平均評価</div>
+          </div>
+        </div>
+        <div class="section-title">訪問履歴</div>
+        <div id="visit-history-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-nav">
+  <button class="nav-item active" data-tab="map">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+    </svg>
+    <span>マップ</span>
+  </button>
+  <button class="nav-item" data-tab="list">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+    </svg>
+    <span>リスト</span>
+  </button>
+  <button class="nav-item" data-tab="lineage">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12M8 12h12M8 17h12M3 7h.01M3 12h.01M3 17h.01"/>
+    </svg>
+    <span>相関図</span>
+  </button>
+  <button class="nav-item" data-tab="stats">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+    </svg>
+    <span>統計</span>
+  </button>
+</div>
+```
+
+  </div>
+
   <!-- Shop Detail Modal -->
+
   <div id="shop-detail-modal" class="modal">
     <div class="modal-content" onclick="event.stopPropagation()">
       <div class="modal-header">
@@ -1228,80 +1296,86 @@
         <div class="section">
           <p class="description" id="detail-description"></p>
         </div>
-        
-        <div class="section">
-          <div class="section-title">営業時間</div>
-          <div class="hours-grid" id="detail-hours"></div>
+
+```
+    <div class="section">
+      <div class="section-title">営業時間</div>
+      <div class="hours-grid" id="detail-hours"></div>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">ナビゲーション</div>
+      <div class="nav-buttons">
+        <a class="btn-nav" id="nav-apple" href="#" target="_blank" rel="noopener noreferrer">
+          <span>🍎</span>
+          <span>Appleマップ</span>
+        </a>
+        <a class="btn-nav" id="nav-google" href="#" target="_blank" rel="noopener noreferrer">
+          <span>🧭</span>
+          <span>Google経路案内</span>
+        </a>
+      </div>
+    </div>
+    
+    <div class="section" id="link-section">
+      <div class="section-title">リンク</div>
+      <div class="nav-buttons">
+        <a class="btn-nav" id="nav-google-map" href="#" target="_blank" rel="noopener noreferrer">
+          <span>🗺️</span>
+          <span>Googleマップ</span>
+        </a>
+        <a class="btn-nav" id="nav-website" href="#" target="_blank" rel="noopener noreferrer">
+          <span>🏠</span>
+          <span>ホームページ</span>
+        </a>
+      </div>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">来店情報</div>
+      <div class="action-buttons">
+        <button class="btn btn-primary" onclick="openRecordModal()" style="width:100%;">📝 訪問記録</button>
+      </div>
+      <div class="action-buttons" style="margin-top:8px;">
+        <button class="btn btn-want" id="btn-want" onclick="toggleWantToGo()">
+          <span id="want-icon">☆</span>
+          <span>行きたい</span>
+        </button>
+        <button class="btn btn-favorite" id="btn-favorite" onclick="toggleFavorite()">
+          <svg id="favorite-icon" style="width:16px;height:16px;vertical-align:middle;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+          </svg>
+          <span style="margin-left:4px;">お気に入り</span>
+        </button>
+      </div>
+      <div class="visit-stats">
+        <div class="stat-card">
+          <div class="stat-label">来店回数</div>
+          <div class="stat-value" id="detail-visit-count">0</div>
         </div>
-        
-        <div class="section">
-          <div class="section-title">ナビゲーション</div>
-          <div class="nav-buttons">
-            <a class="btn-nav" id="nav-apple" href="#" target="_blank" rel="noopener noreferrer">
-              <span>🍎</span>
-              <span>Appleマップ</span>
-            </a>
-            <a class="btn-nav" id="nav-google" href="#" target="_blank" rel="noopener noreferrer">
-              <span>🧭</span>
-              <span>Google経路案内</span>
-            </a>
-          </div>
+        <div class="stat-card stat-card-wide">
+          <div class="stat-label">最終来店</div>
+          <div class="stat-value" id="detail-last-visit">-</div>
         </div>
-        
-        <div class="section" id="link-section">
-          <div class="section-title">リンク</div>
-          <div class="nav-buttons">
-            <a class="btn-nav" id="nav-google-map" href="#" target="_blank" rel="noopener noreferrer">
-              <span>🗺️</span>
-              <span>Googleマップ</span>
-            </a>
-            <a class="btn-nav" id="nav-website" href="#" target="_blank" rel="noopener noreferrer">
-              <span>🏠</span>
-              <span>ホームページ</span>
-            </a>
-          </div>
-        </div>
-        
-        <div class="section">
-          <div class="section-title">来店情報</div>
-          <div class="action-buttons">
-            <button class="btn btn-primary" onclick="openRecordModal()" style="width:100%;">📝 訪問記録</button>
-          </div>
-          <div class="action-buttons" style="margin-top:8px;">
-            <button class="btn btn-want" id="btn-want" onclick="toggleWantToGo()">
-              <span id="want-icon">☆</span>
-              <span>行きたい</span>
-            </button>
-            <button class="btn btn-favorite" id="btn-favorite" onclick="toggleFavorite()">
-              <span id="favorite-icon">♡</span>
-              <span>お気に入り</span>
-            </button>
-          </div>
-          <div class="visit-stats">
-            <div class="stat-card">
-              <div class="stat-label">来店回数</div>
-              <div class="stat-value" id="detail-visit-count">0</div>
-            </div>
-            <div class="stat-card stat-card-wide">
-              <div class="stat-label">最終来店</div>
-              <div class="stat-value" id="detail-last-visit">-</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">平均評価</div>
-              <div class="stat-value" id="detail-avg-rating">-</div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="section" id="visit-history-section">
-          <div class="section-title">来店履歴</div>
-          <div class="visit-history" id="detail-visits"></div>
+        <div class="stat-card">
+          <div class="stat-label">平均評価</div>
+          <div class="stat-value" id="detail-avg-rating">-</div>
         </div>
       </div>
     </div>
+    
+    <div class="section" id="visit-history-section">
+      <div class="section-title">来店履歴</div>
+      <div class="visit-history" id="detail-visits"></div>
+    </div>
   </div>
-  
+</div>
+```
+
+  </div>
+
   <!-- Visit Record Modal -->
+
   <div id="record-modal" class="modal record-modal">
     <div class="modal-content" onclick="event.stopPropagation()">
       <div class="modal-header">
@@ -1319,65 +1393,69 @@
             <label class="form-label">来店日時 *</label>
             <input type="datetime-local" class="form-input datetime-input" id="input-visited-at" required>
           </div>
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">気温（°C）</label>
-              <input type="number" class="form-input" id="input-temp" step="0.1" placeholder="例: 25">
-            </div>
-            <div class="form-group">
-              <label class="form-label">待ち時間（分）</label>
-              <input type="number" class="form-input" id="input-wait" min="0" placeholder="例: 15">
-            </div>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">天気</label>
-            <select class="form-input" id="input-weather">
-              <option value="">選択してください</option>
-              <option value="晴れ">☀️ 晴れ</option>
-              <option value="曇り">☁️ 曇り</option>
-              <option value="雨">🌧️ 雨</option>
-              <option value="雪">❄️ 雪</option>
-            </select>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">評価</label>
-            <div class="rating-input" id="rating-input"></div>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">注文内容</label>
-            <input type="text" class="form-input" id="input-order" placeholder="例: ラーメン（麺硬め、味濃いめ、油多め）">
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">メモ</label>
-            <textarea class="form-input" id="input-memo" placeholder="味の感想など..."></textarea>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">写真</label>
-            <div class="photo-upload">
-              <input type="file" id="input-photo" accept="image/*" style="display:none;" onchange="handlePhotoUpload(event)">
-              <div class="photo-upload-btn" onclick="document.getElementById('input-photo').click()">
-                📷 写真を追加
-              </div>
-              <div id="photo-preview" class="photo-preview" style="display:none;">
-                <img id="preview-img" src="" alt="Preview">
-                <button type="button" class="photo-remove" onclick="removePhoto()">✕</button>
-              </div>
-            </div>
-          </div>
-          
-          <button type="button" class="btn btn-primary" style="width:100%;margin-top:16px;" onclick="saveVisitRecordClick()">保存</button>
-        </form>
+
+```
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">気温（°C）</label>
+          <input type="number" class="form-input" id="input-temp" step="0.1" placeholder="例: 25">
+        </div>
+        <div class="form-group">
+          <label class="form-label">待ち時間（分）</label>
+          <input type="number" class="form-input" id="input-wait" min="0" placeholder="例: 15">
+        </div>
       </div>
-    </div>
+      
+      <div class="form-group">
+        <label class="form-label">天気</label>
+        <select class="form-input" id="input-weather">
+          <option value="">選択してください</option>
+          <option value="晴れ">☀️ 晴れ</option>
+          <option value="曇り">☁️ 曇り</option>
+          <option value="雨">🌧️ 雨</option>
+          <option value="雪">❄️ 雪</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">評価</label>
+        <div class="rating-input" id="rating-input"></div>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">注文内容</label>
+        <input type="text" class="form-input" id="input-order" placeholder="例: ラーメン（麺硬め、味濃いめ、油多め）">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">メモ</label>
+        <textarea class="form-input" id="input-memo" placeholder="味の感想など..."></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">写真</label>
+        <div class="photo-upload">
+          <input type="file" id="input-photo" accept="image/*" style="display:none;" onchange="handlePhotoUpload(event)">
+          <div class="photo-upload-btn" onclick="document.getElementById('input-photo').click()">
+            📷 写真を追加
+          </div>
+          <div id="photo-preview" class="photo-preview" style="display:none;">
+            <img id="preview-img" src="" alt="Preview">
+            <button type="button" class="photo-remove" onclick="removePhoto()">✕</button>
+          </div>
+        </div>
+      </div>
+      
+      <button type="button" class="btn btn-primary" style="width:100%;margin-top:16px;" onclick="saveVisitRecord(event)">保存</button>
+    </form>
   </div>
-  
+</div>
+```
+
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+
   <script>
     // Shop Data
     const shops = [
@@ -1495,6 +1573,7 @@
     let currentShop = null;
     let currentRating = 0;
     let currentPhoto = null;
+    let editingLogIndex = null; // 編集中のログインデックス
     let showOpenOnly = false; // 営業中フィルタ
     let userLocation = null; // ユーザー位置
     let userMarker = null; // ユーザー位置マーカー
@@ -1790,7 +1869,7 @@
         
         const popupId = `popup-${shop.id}`;
         const popup = `<div style="padding:8px;min-width:200px;position:relative;">
-          <button onclick="markers[${shop.id}].closePopup(); event.stopPropagation();" style="position:absolute;top:4px;right:4px;width:24px;height:24px;border:none;background:#f3f4f6;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:#6b7280;padding:0;">×</button>
+          <button onclick="markers['${shop.id}'].closePopup(); event.stopPropagation();" style="position:absolute;top:4px;right:4px;width:24px;height:24px;border:none;background:#f3f4f6;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:#6b7280;padding:0;">×</button>
           <div style="font-weight:bold;font-size:16px;margin-bottom:8px;padding-right:28px;">${shop.name}</div>
           <div style="font-size:12px;margin-bottom:8px">
             <span style="background:#dbeafe;color:#1e40af;padding:4px 8px;border-radius:12px;margin-right:8px">${shop.category}</span>
@@ -1846,6 +1925,8 @@
         const visitData = visits[shop.id];
         const isVisited = visitData?.logs?.length > 0;
         const isOpen = isOpenNow(shop.openingHours);
+        const wantToGo = visitData?.wantToGo || false;
+        const favorite = visitData?.favorite || false;
         
         return `
           <div class="shop-list-item" onclick="focusShop('${shop.id}')">
@@ -1853,7 +1934,13 @@
               ${isVisited ? '✓' : '🍜'}
             </div>
             <div class="shop-info">
-              <div class="shop-name">${shop.name}</div>
+              <div class="shop-name">
+                <span class="shop-name-text">${shop.name}</span>
+                <div class="shop-name-badges">
+                  ${wantToGo ? '<svg style="width:16px;height:16px;color:#eab308;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' : ''}
+                  ${favorite ? '<svg style="width:16px;height:16px;color:#ec4899;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>' : ''}
+                </div>
+              </div>
               <div class="shop-meta">
                 <span class="badge badge-category">${shop.category}</span>
                 <svg style="width:14px;height:14px;color:#6b7280;margin-left:4px;margin-right:-2px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1861,6 +1948,7 @@
                 </svg>
                 <span style="color:#6b7280;font-size:13px;">${shop.area}</span>
                 ${isOpen ? '<span class="badge-open">営業中</span>' : '<span class="badge-closed">営業時間外</span>'}
+                ${nearbyMode && shop.distance !== undefined ? `<span class="badge-distance">${shop.distance.toFixed(1)}km</span>` : ''}
               </div>
             </div>
             <svg style="width:20px;height:20px;color:#9ca3af;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2020,6 +2108,8 @@
         const isVisited = visitData?.logs?.length > 0;
         const isOpen = isOpenNow(shop.openingHours);
         const todayHours = getTodayHours(shop.openingHours);
+        const wantToGo = visitData?.wantToGo || false;
+        const favorite = visitData?.favorite || false;
         
         // 営業時間の表示文言
         let hoursText = '';
@@ -2035,7 +2125,13 @@
               ${isVisited ? '✓' : '🍜'}
             </div>
             <div class="shop-info">
-              <div class="shop-name">${shop.name}</div>
+              <div class="shop-name">
+                <span class="shop-name-text">${shop.name}</span>
+                <div class="shop-name-badges">
+                  ${wantToGo ? '<svg style="width:16px;height:16px;color:#eab308;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' : ''}
+                  ${favorite ? '<svg style="width:16px;height:16px;color:#ec4899;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>' : ''}
+                </div>
+              </div>
               <div class="shop-meta">
                 <span class="badge badge-category">${shop.category}</span>
                 <svg style="width:14px;height:14px;color:#6b7280;margin-left:4px;margin-right:-2px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2043,6 +2139,7 @@
                 </svg>
                 <span style="color:#6b7280;font-size:13px;">${shop.area}</span>
                 ${isOpen ? '<span class="badge-open">営業中</span>' : '<span class="badge-closed">営業時間外</span>'}
+                ${nearbyMode && shop.distance !== undefined ? `<span class="badge-distance">${shop.distance.toFixed(1)}km</span>` : ''}
               </div>
               <div style="color:#6b7280;font-size:12px;margin-top:4px;">${hoursText}</div>
             </div>
@@ -2190,12 +2287,15 @@
       }
       
       const favoriteBtn = document.getElementById('btn-favorite');
+      const favoriteIcon = document.getElementById('favorite-icon');
       if (visitData.favorite) {
         favoriteBtn.classList.add('active');
-        document.getElementById('favorite-icon').textContent = '❤';
+        favoriteIcon.setAttribute('fill', 'currentColor');
+        favoriteIcon.setAttribute('stroke', 'none');
       } else {
         favoriteBtn.classList.remove('active');
-        document.getElementById('favorite-icon').textContent = '♡';
+        favoriteIcon.setAttribute('fill', 'none');
+        favoriteIcon.setAttribute('stroke', 'currentColor');
       }
       
       // リンクの設定
@@ -2314,6 +2414,11 @@
         wantBtn.classList.remove('active');
         document.getElementById('want-icon').textContent = '☆';
       }
+      
+      // リスト・マップを即座に更新
+      updateMarkers();
+      renderShopList();
+      renderListTab();
     }
     
     function toggleFavorite() {
@@ -2327,13 +2432,21 @@
       saveVisits();
       
       const favoriteBtn = document.getElementById('btn-favorite');
+      const favoriteIcon = document.getElementById('favorite-icon');
       if (visits[currentShop.id].favorite) {
         favoriteBtn.classList.add('active');
-        document.getElementById('favorite-icon').textContent = '❤';
+        favoriteIcon.setAttribute('fill', 'currentColor');
+        favoriteIcon.setAttribute('stroke', 'none');
       } else {
         favoriteBtn.classList.remove('active');
-        document.getElementById('favorite-icon').textContent = '♡';
+        favoriteIcon.setAttribute('fill', 'none');
+        favoriteIcon.setAttribute('stroke', 'currentColor');
       }
+      
+      // リスト・マップを即座に更新
+      updateMarkers();
+      renderShopList();
+      renderListTab();
     }
     
     // Record Modal
@@ -2365,8 +2478,6 @@
       editingLogIndex = null; // 編集モードをリセット
     }
     
-    let editingLogIndex = null;
-    
     function editVisitRecord(logIndex) {
       if (!currentShop) return;
       
@@ -2377,7 +2488,7 @@
       
       // フォームに既存データを入力
       document.getElementById('input-visited-at').value = log.visitedAt;
-      document.getElementById('input-temperature').value = log.temperature || '';
+      document.getElementById('input-temp').value = log.temperature || '';
       document.getElementById('input-wait').value = log.waitMinutes || '';
       document.getElementById('input-weather').value = log.weather || '';
       document.getElementById('input-order').value = log.order || '';
@@ -2513,7 +2624,7 @@
       const visitRecord = {
         visitedAt: visitedAt,
         waitMinutes: document.getElementById('input-wait').value ? parseInt(document.getElementById('input-wait').value) : null,
-        temperature: document.getElementById('input-temperature').value ? parseFloat(document.getElementById('input-temperature').value) : null,
+        temperature: document.getElementById('input-temp').value ? parseFloat(document.getElementById('input-temp').value) : null,
         weather: document.getElementById('input-weather').value || null,
         rating: currentRating,
         order: document.getElementById('input-order').value || '',
@@ -2534,6 +2645,7 @@
       }
       
       saveVisits();
+      editingLogIndex = null; // 編集モードを即座にリセット
       
       // 画面を更新
       setTimeout(() => {
@@ -2714,6 +2826,10 @@
     
     // グローバル公開（onclick属性から呼び出すため）
     window.toggleFavorite = toggleFavorite;
+    window.editVisitRecord = editVisitRecord;
+    window.deleteVisitRecord = deleteVisitRecord;
+    window.saveVisitRecord = saveVisitRecord;
   </script>
+
 </body>
 </html>
