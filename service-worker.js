@@ -1,4 +1,4 @@
-const CACHE_NAME = 'iekei-ramen-map-v4';
+const CACHE_NAME = 'iekei-ramen-map-v5';
 const urlsToCache = [
   '/iekei-ramen-test/',
   '/iekei-ramen-test/index.html',
