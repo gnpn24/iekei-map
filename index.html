@@ -213,6 +213,68 @@
       align-items: center;
     }
     
+    .search-box {
+      margin-bottom: 8px;
+      position: relative;
+    }
+    
+    .search-input {
+      width: 100%;
+      padding: 10px 36px 10px 36px;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    
+    .search-input:focus {
+      border-color: #3b82f6;
+    }
+    
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9ca3af;
+      pointer-events: none;
+    }
+    
+    .search-clear {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 24px;
+      height: 24px;
+      border: none;
+      background: transparent;
+      color: #9ca3af;
+      cursor: pointer;
+      border-radius: 50%;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    
+    .search-clear:hover {
+      background: #f3f4f6;
+      color: #6b7280;
+    }
+    
+    .search-clear.visible {
+      display: flex;
+    }
+    
+    .search-results {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 8px;
+      padding: 0 4px;
+    }
+    
     .drawer-filter select {
       flex: 1;
       padding: 8px 12px;
@@ -1143,6 +1205,14 @@
           <div class="resize-handle" id="resize-handle"></div>
           <div class="shop-list-drawer">
             <div class="drawer-handle">
+              <div class="search-box" id="map-search-box" style="display:none;">
+                <svg class="search-icon" style="width:16px;height:16px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text" id="search-input" class="search-input" placeholder="店舗名・エリアで検索...">
+                <button class="search-clear" id="search-clear">×</button>
+              </div>
+              <div id="search-results" class="search-results" style="display:none;"></div>
               <div class="drawer-filter">
                 <select id="filter-category">
                   <option value="all">すべて表示</option>
@@ -1155,6 +1225,11 @@
                   <option value="want">☆ 行きたい</option>
                   <option value="favorite">♡ お気に入り</option>
                 </select>
+                <button class="filter-toggle-btn" id="btn-search-toggle">
+                  <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                  </svg>
+                </button>
                 <button class="filter-toggle-btn" id="btn-open-toggle">営業中</button>
                 <button class="filter-toggle-btn" id="btn-nearby">
                   <svg style="width:14px;height:14px;vertical-align:middle;margin-right:2px;" fill="currentColor" viewBox="0 0 24 24">
@@ -1171,6 +1246,14 @@
       <!-- List Tab -->
       <div id="tab-list" class="tab-content">
         <div style="padding:16px;background:#f9fafb;border-bottom:1px solid #e5e7eb;">
+          <div class="search-box">
+            <svg class="search-icon" style="width:16px;height:16px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text" id="list-search-input" class="search-input" placeholder="店舗名・エリアで検索...">
+            <button class="search-clear" id="list-search-clear">×</button>
+          </div>
+          <div id="list-search-results" class="search-results" style="display:none;"></div>
           <div style="display:flex;gap:6px;align-items:center;">
             <select id="list-filter-category" style="flex:1;padding:8px 12px;border:1px solid #e5e7eb;border-radius:12px;font-size:14px;">
               <option value="all">すべて表示</option>
@@ -1740,6 +1823,7 @@
     let userLocation = null; // ユーザー位置
     let userMarker = null; // ユーザー位置マーカー
     let nearbyMode = false; // 今からモード
+    let searchQuery = ''; // 検索クエリ
     
     // Initialize
     document.addEventListener('DOMContentLoaded', () => {
@@ -1756,6 +1840,82 @@
       document.getElementById('filter-category').addEventListener('change', () => {
         renderShopList();
         updateMarkers();
+      });
+      
+      // 検索トグルボタン（Mapタブ）
+      const mapSearchBox = document.getElementById('map-search-box');
+      const btnSearchToggle = document.getElementById('btn-search-toggle');
+      
+      btnSearchToggle.addEventListener('click', () => {
+        const isVisible = mapSearchBox.style.display !== 'none';
+        
+        if (isVisible) {
+          // 閉じる
+          mapSearchBox.style.display = 'none';
+          btnSearchToggle.classList.remove('active');
+        } else {
+          // 開く
+          mapSearchBox.style.display = 'block';
+          btnSearchToggle.classList.add('active');
+          searchInput.focus(); // 自動フォーカス
+        }
+      });
+      
+      // 検索機能（Mapタブ）
+      const searchInput = document.getElementById('search-input');
+      const searchClear = document.getElementById('search-clear');
+      
+      searchInput.addEventListener('input', (e) => {
+        searchQuery = e.target.value;
+        console.log('検索クエリ:', searchQuery);
+        searchClear.classList.toggle('visible', searchQuery.length > 0);
+        renderShopList();
+        updateMarkers();
+      });
+      
+      searchClear.addEventListener('click', () => {
+        searchQuery = '';
+        searchInput.value = '';
+        searchClear.classList.remove('visible');
+        // 検索ボックスを閉じる
+        mapSearchBox.style.display = 'none';
+        btnSearchToggle.classList.remove('active');
+        renderShopList();
+        updateMarkers();
+      });
+      
+      // 検索機能（Listタブ）
+      const listSearchInput = document.getElementById('list-search-input');
+      const listSearchClear = document.getElementById('list-search-clear');
+      
+      listSearchInput?.addEventListener('input', (e) => {
+        searchQuery = e.target.value;
+        listSearchClear.classList.toggle('visible', searchQuery.length > 0);
+        // Mapタブの検索ボックスも同期
+        searchInput.value = searchQuery;
+        searchClear.classList.toggle('visible', searchQuery.length > 0);
+        // Mapタブの検索ボックスを開く（検索中の場合）
+        if (searchQuery) {
+          mapSearchBox.style.display = 'block';
+          btnSearchToggle.classList.add('active');
+        }
+        renderListTab();
+        updateMarkers();
+        renderShopList();
+      });
+      
+      listSearchClear?.addEventListener('click', () => {
+        searchQuery = '';
+        listSearchInput.value = '';
+        searchInput.value = '';
+        listSearchClear.classList.remove('visible');
+        searchClear.classList.remove('visible');
+        // Mapタブの検索ボックスを閉じる
+        mapSearchBox.style.display = 'none';
+        btnSearchToggle.classList.remove('active');
+        renderListTab();
+        updateMarkers();
+        renderShopList();
       });
       
       // 営業中フィルタ
@@ -2004,6 +2164,14 @@
         filteredShops = shops.filter(s => s.category === categoryFilter);
       }
       
+      // 検索フィルター
+      if (searchQuery) {
+        filteredShops = filteredShops.filter(shop => 
+          shop.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          shop.area.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
+      
       // 営業中または今からモードの場合
       if (showOpenOnly || nearbyMode) {
         filteredShops = filteredShops.filter(shop => isOpenNow(shop.openingHours));
@@ -2065,6 +2233,14 @@
         filteredShops = shops.filter(s => s.category === categoryFilter);
       }
       
+      // 検索フィルター
+      if (searchQuery) {
+        filteredShops = filteredShops.filter(shop => 
+          shop.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          shop.area.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
+      
       // 営業中フィルタ
       if (showOpenOnly) {
         filteredShops = filteredShops.filter(shop => isOpenNow(shop.openingHours));
@@ -2077,6 +2253,15 @@
           ...shop,
           distance: calculateDistance(userLocation.lat, userLocation.lng, shop.lat, shop.lng)
         })).sort((a, b) => a.distance - b.distance);
+      }
+      
+      // 検索結果件数を表示
+      const resultsEl = document.getElementById('search-results');
+      if (searchQuery) {
+        resultsEl.textContent = `${filteredShops.length}件見つかりました`;
+        resultsEl.style.display = 'block';
+      } else {
+        resultsEl.style.display = 'none';
       }
       
       container.innerHTML = filteredShops.map(shop => {
@@ -2249,6 +2434,14 @@
         filteredShops = shops.filter(s => s.category === categoryFilter);
       }
       
+      // 検索フィルター
+      if (searchQuery) {
+        filteredShops = filteredShops.filter(shop => 
+          shop.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          shop.area.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
+      
       // 営業中フィルタ（リストタブ用）
       if (showOpenOnly) {
         filteredShops = filteredShops.filter(shop => isOpenNow(shop.openingHours));
@@ -2261,6 +2454,17 @@
           ...shop,
           distance: calculateDistance(userLocation.lat, userLocation.lng, shop.lat, shop.lng)
         })).sort((a, b) => a.distance - b.distance);
+      }
+      
+      // 検索結果件数を表示
+      const resultsEl = document.getElementById('list-search-results');
+      if (resultsEl) {
+        if (searchQuery) {
+          resultsEl.textContent = `${filteredShops.length}件見つかりました`;
+          resultsEl.style.display = 'block';
+        } else {
+          resultsEl.style.display = 'none';
+        }
       }
       
       container.innerHTML = filteredShops.map(shop => {
