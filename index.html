@@ -1429,6 +1429,91 @@
       font-size: 11px;
       color: #4b5563;
     }
+    
+    /* 変更履歴 */
+    .version-info {
+      background: #f9fafb;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    
+    .version-current {
+      font-size: 16px;
+      color: #1f2937;
+      margin-bottom: 4px;
+    }
+    
+    .version-current strong {
+      color: #C41E3A;
+      font-size: 18px;
+    }
+    
+    .version-date {
+      font-size: 13px;
+      color: #6b7280;
+    }
+    
+    .changelog {
+      margin-top: 16px;
+    }
+    
+    .version-section {
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .version-section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    
+    .version-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .version-number {
+      font-size: 16px;
+      font-weight: bold;
+      color: #C41E3A;
+    }
+    
+    .version-date-small {
+      font-size: 12px;
+      color: #6b7280;
+    }
+    
+    .version-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .version-list li {
+      padding: 6px 0 6px 24px;
+      position: relative;
+      font-size: 14px;
+      color: #4b5563;
+      line-height: 1.5;
+    }
+    
+    .version-list li::before {
+      content: '';
+      position: absolute;
+      left: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 4px;
+      background: #9ca3af;
+      border-radius: 50%;
+    }
   </style>
 </head>
 <body>
@@ -1566,6 +1651,101 @@
             </div>
             <div class="section-title">訪問履歴</div>
             <div id="visit-history-list"></div>
+          </div>
+          
+          <!-- 変更履歴 -->
+          <div class="stats-card" style="margin-top:16px;">
+            <div class="stats-title">📝 変更履歴</div>
+            <div class="version-info">
+              <div class="version-current">現在のバージョン: <strong>v1.5.0</strong></div>
+              <div class="version-date">最終更新: 2026/01/12</div>
+            </div>
+            
+            <div class="changelog">
+              <!-- v1.5.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.5.0</span>
+                  <span class="version-date-small">2026/01/12</span>
+                </div>
+                <ul class="version-list">
+                  <li>✨ 店舗シェア機能を追加（X / LINE / コピー）</li>
+                  <li>🔗 URLから直接店舗詳細を開けるように</li>
+                  <li>🐛 PWAのパス問題を修正</li>
+                </ul>
+              </div>
+              
+              <!-- v1.4.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.4.0</span>
+                  <span class="version-date-small">2026/01/12</span>
+                </div>
+                <ul class="version-list">
+                  <li>🔍 相関図に検索機能を追加</li>
+                  <li>📁 相関図に折りたたみ機能を追加</li>
+                  <li>🌳 家系図を3世代表示（孫世代対応）</li>
+                  <li>💅 相関図のカードをコンパクトに</li>
+                </ul>
+              </div>
+              
+              <!-- v1.3.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.3.0</span>
+                  <span class="version-date-small">2026/01/12</span>
+                </div>
+                <ul class="version-list">
+                  <li>📱 PWA対応を実装（ホーム画面に追加可能）</li>
+                  <li>🎨 アプリアイコンを追加（8サイズ）</li>
+                  <li>💾 オフライン動作対応</li>
+                </ul>
+              </div>
+              
+              <!-- v1.2.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.2.0</span>
+                  <span class="version-date-small">2026/01/12</span>
+                </div>
+                <ul class="version-list">
+                  <li>🔍 検索機能を実装</li>
+                  <li>📍 今からモードの距離表示を改善</li>
+                  <li>🎯 検索ボタンをUI改善</li>
+                </ul>
+              </div>
+              
+              <!-- v1.1.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.1.0</span>
+                  <span class="version-date-small">2026/01/11</span>
+                </div>
+                <ul class="version-list">
+                  <li>🏪 新規店舗を14店追加</li>
+                  <li>🕐 24時間営業に対応</li>
+                  <li>⏰ 営業ステータスを3段階に（閉店間近を追加）</li>
+                  <li>🎨 アイコンをSVGに統一</li>
+                </ul>
+              </div>
+              
+              <!-- v1.0.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.0.0</span>
+                  <span class="version-date-small">2026/01/09</span>
+                </div>
+                <ul class="version-list">
+                  <li>🎉 初回リリース</li>
+                  <li>🗺️ 地図表示機能</li>
+                  <li>📝 訪問記録機能</li>
+                  <li>📊 統計表示機能</li>
+                  <li>⭐ お気に入り・行きたい機能</li>
+                  <li>✏️ 記録の編集・削除機能</li>
+                  <li>📸 画像アップロード（自動圧縮）</li>
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
       </div>
