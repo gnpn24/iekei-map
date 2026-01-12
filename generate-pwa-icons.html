@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>PWA用アイコン生成</title>
+</head>
+<body>
+  <h1>PWA用アイコン生成中...</h1>
+  <p id="status">生成中...</p>
+  
+  <script>
+    // 「家」文字アイコンを生成
+    function generateKanjiIcon(size) {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      
+      // 背景（濃い赤）
+      ctx.fillStyle = '#C41E3A';
+      ctx.fillRect(0, 0, size, size);
+      
+      // 「家」の文字設定
+      ctx.font = `900 ${size * 0.65}px "Hiragino Mincho ProN", "Yu Mincho", "MS Mincho", serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      
+      // 黒い縁取り（かなり太め）
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = size * 0.05;
+      ctx.lineJoin = 'round';
+      ctx.miterLimit = 2;
+      
+      // 縁取りを3回重ねて濃く
+      ctx.strokeText('家', size / 2, size / 2);
+      ctx.strokeText('家', size / 2, size / 2);
+      ctx.strokeText('家', size / 2, size / 2);
+      
+      // 白い塗りつぶし
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('家', size / 2, size / 2);
+      
+      return canvas;
+    }
+    
+    // 必要なサイズ
+    const sizes = [29, 40, 76, 120, 152, 167, 180, 1024];
+    
+    // 各サイズのアイコンを生成してダウンロード
+    sizes.forEach((size, index) => {
+      setTimeout(() => {
+        const canvas = generateKanjiIcon(size);
+        canvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `icon-${size}.png`;
+          a.click();
+          URL.revokeObjectURL(url);
+          
+          document.getElementById('status').textContent = 
+            `生成完了: ${index + 1}/${sizes.length} - icon-${size}.png`;
+          
+          if (index === sizes.length - 1) {
+            setTimeout(() => {
+              document.getElementById('status').textContent = 
+                '✅ 全てのアイコン生成完了！ダウンロードフォルダを確認してください。';
+            }, 500);
+          }
+        });
+      }, index * 300); // 少し遅延させて連続ダウンロード
+    });
+  </script>
+</body>
+</html>
