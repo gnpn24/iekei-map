@@ -88,7 +88,9 @@
       background: white;
       border-top: 1px solid #e5e7eb;
       padding: 4px 0;
-      padding-bottom: 8px;
+      /* 下部余白: 0pxだとiPhoneのホームインジケーターと重なる可能性あり */
+      /* 必要に応じて padding-bottom: 4px; や 8px; に調整 */
+      padding-bottom: 0;
     }
     
     .nav-item {
@@ -1662,11 +1664,22 @@
           <div class="stats-card" style="margin-top:16px;">
             <div class="stats-title">📝 変更履歴</div>
             <div class="version-info">
-              <div class="version-current">現在のバージョン: <strong>v1.7.6</strong></div>
+              <div class="version-current">現在のバージョン: <strong>v1.7.7</strong></div>
               <div class="version-date">最終更新: 2026/01/15</div>
             </div>
             
             <div class="changelog">
+              <!-- v1.7.7 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.7.7</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>✂️ 下部余白を0に変更（最小化）</li>
+                </ul>
+              </div>
+              
               <!-- v1.7.6 -->
               <div class="version-section">
                 <div class="version-header">
