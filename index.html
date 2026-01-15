@@ -87,8 +87,8 @@
       display: flex;
       background: white;
       border-top: 1px solid #e5e7eb;
-      padding: 4px 0;
-      padding-bottom: max(env(safe-area-inset-bottom), 4px);
+      padding: 4px 0 0 0;
+      padding-bottom: env(safe-area-inset-bottom);
     }
     
     .nav-item {
@@ -1662,11 +1662,23 @@
           <div class="stats-card" style="margin-top:16px;">
             <div class="stats-title">📝 変更履歴</div>
             <div class="version-info">
-              <div class="version-current">現在のバージョン: <strong>v1.7.3</strong></div>
+              <div class="version-current">現在のバージョン: <strong>v1.7.4</strong></div>
               <div class="version-date">最終更新: 2026/01/13</div>
             </div>
             
             <div class="changelog">
+              <!-- v1.7.4 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.7.4</span>
+                  <span class="version-date-small">2026/01/13</span>
+                </div>
+                <ul class="version-list">
+                  <li>✂️ 下部ナビバーの下の余白を最小化</li>
+                  <li>📱 LINEアプリと同じ仕様に統一</li>
+                </ul>
+              </div>
+              
               <!-- v1.7.3 -->
               <div class="version-section">
                 <div class="version-header">
