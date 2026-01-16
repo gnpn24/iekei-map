@@ -1,8 +1,9 @@
-const CACHE_NAME = 'iekei-ramen-map-v5';
+const CACHE_NAME = 'iekei-ramen-map-v1.13.10';
 const urlsToCache = [
-  '/iekei-ramen-test/',
-  '/iekei-ramen-test/index.html',
-  '/iekei-ramen-test/manifest.json'
+  '/index.html',
+  '/manifest.json',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
 ];
 
 // インストール時
@@ -48,6 +49,26 @@ self.addEventListener('fetch', (event) => {
         .catch(() => {
           // オフライン時は地図なしで動作
           return new Response('オフラインです', { status: 503 });
+        })
+    );
+    return;
+  }
+  
+  // index.htmlはネットワーク優先（常に最新版を取得）
+  if (url.pathname === '/' || url.pathname.includes('index.html')) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          // 取得成功したらキャッシュも更新
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+          return response;
+        })
+        .catch(() => {
+          // オフライン時はキャッシュから返す
+          return caches.match(event.request);
         })
     );
     return;
