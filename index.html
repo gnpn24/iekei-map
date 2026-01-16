@@ -54,6 +54,7 @@
     }
     
     .header {
+      position: relative;
       background: #FF0000;
       color: #000000;
       padding: 12px 16px 12px;
@@ -492,6 +493,11 @@
       overflow-x: hidden;
       animation: slideUp 0.3s ease-out;
       box-sizing: border-box;
+    }
+    
+    /* チュートリアル中は大きく表示 */
+    body.tutorial-active .modal-content {
+      max-height: 85vh;
     }
     
     @keyframes slideUp {
@@ -1528,6 +1534,20 @@
   <div class="app-container">
     <div class="header">
       <h1>🍜 家系ラーメンmap</h1>
+      <button onclick="restartTutorial()" style="
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        padding: 8px 12px;
+        background: #ef4444;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+      ">チュートリアル</button>
     </div>
     
     <div class="content">
@@ -1667,11 +1687,255 @@
           <div class="stats-card" style="margin-top:16px;">
             <div class="stats-title">📝 変更履歴</div>
             <div class="version-info">
-              <div class="version-current">現在のバージョン: <strong>v1.10.0</strong></div>
-              <div class="version-date">最終更新: 2026/01/15</div>
+              <div class="version-current">現在のバージョン: <strong>v1.13.10</strong></div>
+              <div class="version-date">最終更新: 2026/01/16</div>
             </div>
             
             <div class="changelog">
+              <!-- v1.13.10 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.13.10</span>
+                  <span class="version-date-small">2026/01/16</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 更新バナーの無限表示を修正</li>
+                  <li>🔄 リロード時にキャッシュをクリア</li>
+                  <li>✅ 確実に最新版が読み込まれる</li>
+                </ul>
+              </div>
+              
+              <!-- v1.13.9 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.13.9</span>
+                  <span class="version-date-small">2026/01/16</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 訪問記録ボタンの取得を修正</li>
+                  <li>🔍 「来店情報」セクションを明示的に検索</li>
+                  <li>✅ Step 4が完全動作</li>
+                </ul>
+              </div>
+              
+              <!-- v1.13.8 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.13.8</span>
+                  <span class="version-date-small">2026/01/16</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 スクリプトエラーを修正</li>
+                  <li>✅ 二重クロージングを削除</li>
+                </ul>
+              </div>
+              
+              <!-- v1.13.7 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.13.7</span>
+                  <span class="version-date-small">2026/01/16</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 Step 4のスクロールを修正</li>
+                  <li>📜 modal-body内でスクロール</li>
+                  <li>✅ スポットライトが確実に表示</li>
+                </ul>
+              </div>
+              
+              <!-- v1.13.6 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.13.6</span>
+                  <span class="version-date-small">2026/01/16</span>
+                </div>
+                <ul class="version-list">
+                  <li>📱 歓迎カードを大きく表示</li>
+                  <li>🎨 文字サイズを拡大</li>
+                  <li>🌟 背景オーバーレイを追加</li>
+                </ul>
+              </div>
+              
+              <!-- v1.13.5 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.13.5</span>
+                  <span class="version-date-small">2026/01/16</span>
+                </div>
+                <ul class="version-list">
+                  <li>📱 モーダルを大きく表示</li>
+                  <li>📜 スクロール位置を調整</li>
+                  <li>✅ Step 4が確実に表示される</li>
+                </ul>
+              </div>
+              
+              <!-- v1.13.4 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.13.4</span>
+                  <span class="version-date-small">2026/01/16</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 Step 4で要素を再取得</li>
+                  <li>⏱️ スクロール待機時間を延長</li>
+                  <li>✅ 完了演出が確実に表示される</li>
+                </ul>
+              </div>
+              
+              <!-- v1.13.3 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.13.3</span>
+                  <span class="version-date-small">2026/01/16</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 吹き出しが表示されない問題を修正</li>
+                  <li>🔒 途中で閉じられない問題を修正</li>
+                  <li>✅ 準備OK！まで完走できるように</li>
+                </ul>
+              </div>
+              
+              <!-- v1.13.2 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.13.2</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>✏️ 文言を分かりやすく修正</li>
+                  <li>⏱️ 待機時間を3秒→2秒に短縮</li>
+                  <li>🐛 スポットライト表示を改善</li>
+                </ul>
+              </div>
+              
+              <!-- v1.13.1 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.13.1</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>🔄 4ステップ構成に変更</li>
+                  <li>👆 ポップアップ→詳細の流れを追加</li>
+                  <li>📖 営業時間→訪問記録を順に表示</li>
+                </ul>
+              </div>
+              
+              <!-- v1.13.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.13.0</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>✨ チュートリアルを大幅リニューアル</li>
+                  <li>📊 進捗表示（1/3）で安心感UP</li>
+                  <li>💡 スポットライト方式で対象を強調</li>
+                  <li>🎯 3ステップに簡略化</li>
+                  <li>🎉 完了演出を追加</li>
+                </ul>
+              </div>
+              
+              <!-- v1.12.1 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.12.1</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>🔽 吹き出しをマーカーの下に配置</li>
+                  <li>⬆️ 矢印を上向きに変更</li>
+                  <li>👀 マーカーと吹き出しが被らない</li>
+                </ul>
+              </div>
+              
+              <!-- v1.12.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.12.0</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>🔨 チュートリアルを根本から作り直し</li>
+                  <li>✅ 吉村家だけ表示（他は非表示）</li>
+                  <li>🎯 位置ずれ・誤タップ問題を完全解決</li>
+                </ul>
+              </div>
+              
+              <!-- v1.11.5 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.11.5</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 吉村家マーカーが右上に飛ぶ問題を修正</li>
+                  <li>📍 transform-originを設定して位置を維持</li>
+                </ul>
+              </div>
+              
+              <!-- v1.11.4 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.11.4</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 吹き出しの位置が左上に飛ぶ問題を修正</li>
+                  <li>🔝 z-indexを上げて黒背景の上に表示</li>
+                </ul>
+              </div>
+              
+              <!-- v1.11.3 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.11.3</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 マーカーが全部グレーアウトする問題を修正</li>
+                  <li>🔒 チュートリアル中の地図操作を無効化</li>
+                  <li>✨ 吹き出しUIを大幅改善（矢印・アニメーション）</li>
+                </ul>
+              </div>
+              
+              <!-- v1.11.2 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.11.2</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>➕ ヘッダーに「チュートリアル」ボタンを追加</li>
+                  <li>🔄 いつでもチュートリアルを再実行可能に</li>
+                </ul>
+              </div>
+              
+              <!-- v1.11.1 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.11.1</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 吉村家のピンがクリックできない問題を修正</li>
+                  <li>✨ 吉村家以外のピンを薄く表示（グレーアウト）</li>
+                  <li>💡 吉村家のピンを強調表示（赤い影）</li>
+                </ul>
+              </div>
+              
+              <!-- v1.11.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.11.0</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>📖 初回ガイド機能を追加（3ステップ）</li>
+                  <li>👥 友達に見せやすく改善</li>
+                </ul>
+              </div>
+              
               <!-- v1.10.0 -->
               <div class="version-section">
                 <div class="version-header">
@@ -2200,7 +2464,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
   <script>
     // App Version (手動で更新)
-    const APP_VERSION = "1.10.0";
+    const APP_VERSION = "1.13.10";
     
     // 更新チェック機能（HTMLのみ）
     async function checkUpdate() {
@@ -2222,7 +2486,11 @@
     }
     
     function showUpdateBanner(remoteVersion) {
+      // 既にバナーが表示されていたら何もしない
+      if (document.getElementById('update-banner')) return;
+      
       const el = document.createElement("div");
+      el.id = 'update-banner'; // IDを追加
       el.style.position = "fixed";
       el.style.left = "12px";
       el.style.right = "12px";
@@ -2246,10 +2514,24 @@
       `;
       document.body.appendChild(el);
       el.querySelector("#reloadBtn").onclick = () => {
+        // Service Workerをアンレジスト
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(registrations => {
+            registrations.forEach(reg => reg.unregister());
+          });
+        }
+        
+        // キャッシュをクリア
+        if ('caches' in window) {
+          caches.keys().then(names => {
+            names.forEach(name => caches.delete(name));
+          });
+        }
+        
         // 強制リロード
-        location.reload();
-        // 念のため:URLを変えて再読込（キャッシュ突破）
-        setTimeout(() => location.replace(location.pathname + "?r=" + Date.now()), 200);
+        setTimeout(() => {
+          location.reload(true);
+        }, 100);
       };
     }
     
@@ -2654,6 +2936,652 @@
       return warnings;
     }
     
+    // チュートリアル（段階式ガイド）
+    let tutorialActive = false;
+    let tutorialStep = 0;
+    
+    const tutorialSteps = {
+      WELCOME: 0,
+      CLICK_PIN: 1,        // Step 1/4: ピンをタップ
+      CLICK_DETAIL: 2,     // Step 2/4: 詳細・訪問をタップ
+      VIEW_INFO: 3,        // Step 3/4: お店の情報が見られます
+      VIEW_CHECKIN: 4,     // Step 4/4: 訪問記録を保存できます
+      COMPLETE: 5
+    };
+    
+    function startTutorial() {
+      console.log('startTutorial called');
+      if (localStorage.getItem('hasCompletedTutorial')) {
+        console.log('Tutorial already completed, skipping');
+        return;
+      }
+      
+      tutorialActive = true;
+      tutorialStep = tutorialSteps.WELCOME;
+      showWelcomeCard();
+      console.log('Tutorial started');
+    }
+    
+    function showWelcomeCard() {
+      // 背景オーバーレイを追加
+      const overlay = document.createElement('div');
+      overlay.id = 'welcome-overlay';
+      overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 9998;
+        background: rgba(0, 0, 0, 0.5);
+      `;
+      document.body.appendChild(overlay);
+      
+      const card = document.createElement('div');
+      card.id = 'tutorial-welcome';
+      card.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 9999;
+        background: white;
+        border-radius: 20px;
+        padding: 32px 24px;
+        width: 90%;
+        max-width: 400px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        text-align: center;
+      `;
+      card.innerHTML = `
+        <div style="font-size: 48px; margin-bottom: 16px;">🍜</div>
+        <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 12px; color: #111827;">家系ラーメンMAPへようこそ</h2>
+        <p style="font-size: 16px; color: #6b7280; line-height: 1.6; margin-bottom: 24px;">
+          近くの家系ラーメン店を<br>探して、行って、記録できます
+        </p>
+        <button onclick="startTutorialGuide()" style="
+          width: 100%;
+          padding: 16px;
+          background: #ef4444;
+          color: white;
+          border: none;
+          border-radius: 12px;
+          font-weight: 700;
+          font-size: 18px;
+          cursor: pointer;
+        ">はじめる</button>
+        <button onclick="skipTutorial()" style="
+          width: 100%;
+          margin-top: 12px;
+          padding: 12px;
+          background: none;
+          color: #9ca3af;
+          border: none;
+          font-size: 16px;
+          cursor: pointer;
+        ">スキップ</button>
+      `;
+      document.body.appendChild(card);
+    }
+    
+    function startTutorialGuide() {
+      console.log('startTutorialGuide called');
+      // 歓迎カードとオーバーレイを削除
+      const welcomeCard = document.getElementById('tutorial-welcome');
+      const welcomeOverlay = document.getElementById('welcome-overlay');
+      if (welcomeCard) welcomeCard.remove();
+      if (welcomeOverlay) welcomeOverlay.remove();
+      
+      // bodyにクラスを追加
+      document.body.classList.add('tutorial-active');
+      
+      // 進捗ヘッダーを表示
+      showTutorialHeader(1, 4);
+      
+      // 操作制限オーバーレイを追加
+      createTutorialOverlay();
+      
+      // 吉村家にズーム
+      tutorialStep = tutorialSteps.CLICK_PIN;
+      map.setView([35.4630187, 139.6150749], 16, { animate: true, duration: 1 });
+      console.log('Zoomed to Yoshimuraya');
+      
+      // 少し待ってからスポットライト+吹き出し表示
+      setTimeout(() => {
+        console.log('Showing spotlight and tooltip');
+        
+        // 吉村家のマーカーを取得してスポットライト
+        const yoshimuraya = markers['yoshimuraya'];
+        if (yoshimuraya) {
+          const markerElement = yoshimuraya.getElement();
+          if (markerElement) {
+            createSpotlight(markerElement);
+          }
+        }
+        
+        showTooltip('yoshimuraya-pin', 'お店をタップしてみよう');
+      }, 1000);
+    }
+    
+    function createTutorialOverlay() {
+      const overlay = document.createElement('div');
+      overlay.id = 'tutorial-overlay';
+      overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 8000;
+        pointer-events: none;
+        background: transparent;
+      `;
+      document.body.appendChild(overlay);
+      
+      // 地図の操作を無効化
+      map.dragging.disable();
+      map.touchZoom.disable();
+      map.doubleClickZoom.disable();
+      map.scrollWheelZoom.disable();
+      map.boxZoom.disable();
+      map.keyboard.disable();
+      if (map.tap) map.tap.disable();
+    }
+    
+    function createSpotlight(targetElement) {
+      // 既存のスポットライトを削除
+      document.getElementById('tutorial-spotlight')?.remove();
+      
+      if (!targetElement) return;
+      
+      const rect = targetElement.getBoundingClientRect();
+      const padding = 8; // くり抜きの余白
+      
+      // SVGを作成
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.id = 'tutorial-spotlight';
+      svg.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 8001;
+        pointer-events: none;
+      `;
+      
+      // マスク定義
+      const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+      const mask = document.createElementNS('http://www.w3.org/2000/svg', 'mask');
+      mask.id = 'spotlight-mask';
+      
+      // 全体を白（表示）
+      const fullRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      fullRect.setAttribute('x', '0');
+      fullRect.setAttribute('y', '0');
+      fullRect.setAttribute('width', '100%');
+      fullRect.setAttribute('height', '100%');
+      fullRect.setAttribute('fill', 'white');
+      
+      // くり抜き部分を黒（非表示）
+      const hole = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      hole.setAttribute('x', (rect.left - padding).toString());
+      hole.setAttribute('y', (rect.top - padding).toString());
+      hole.setAttribute('width', (rect.width + padding * 2).toString());
+      hole.setAttribute('height', (rect.height + padding * 2).toString());
+      hole.setAttribute('rx', '8'); // 角丸
+      hole.setAttribute('fill', 'black');
+      
+      mask.appendChild(fullRect);
+      mask.appendChild(hole);
+      defs.appendChild(mask);
+      svg.appendChild(defs);
+      
+      // 暗いオーバーレイ（マスク適用）
+      const overlay = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      overlay.setAttribute('x', '0');
+      overlay.setAttribute('y', '0');
+      overlay.setAttribute('width', '100%');
+      overlay.setAttribute('height', '100%');
+      overlay.setAttribute('fill', 'rgba(0, 0, 0, 0.7)');
+      overlay.setAttribute('mask', 'url(#spotlight-mask)');
+      svg.appendChild(overlay);
+      
+      // 強調の枠線
+      const border = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      border.setAttribute('x', (rect.left - padding).toString());
+      border.setAttribute('y', (rect.top - padding).toString());
+      border.setAttribute('width', (rect.width + padding * 2).toString());
+      border.setAttribute('height', (rect.height + padding * 2).toString());
+      border.setAttribute('rx', '8');
+      border.setAttribute('fill', 'none');
+      border.setAttribute('stroke', '#ef4444');
+      border.setAttribute('stroke-width', '3');
+      border.style.cssText = 'animation: pulse 2s ease-in-out infinite;';
+      svg.appendChild(border);
+      
+      // アニメーション定義
+      if (!document.getElementById('spotlight-animation-style')) {
+        const style = document.createElement('style');
+        style.id = 'spotlight-animation-style';
+        style.textContent = `
+          @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+      
+      document.body.appendChild(svg);
+    }
+    
+    function showSkipButton() {
+      const btn = document.createElement('button');
+      btn.id = 'tutorial-skip-btn';
+      btn.textContent = 'チュートリアルをやめる';
+      btn.style.cssText = `
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        z-index: 9999;
+        padding: 8px 16px;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 12px;
+        cursor: pointer;
+      `;
+      btn.onclick = skipTutorial;
+      document.body.appendChild(btn);
+    }
+    
+    function showTutorialHeader(currentStep, totalSteps) {
+      // 既存のヘッダーを削除
+      document.getElementById('tutorial-header')?.remove();
+      
+      const header = document.createElement('div');
+      header.id = 'tutorial-header';
+      header.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 10000;
+        background: white;
+        border-bottom: 1px solid #e5e7eb;
+        padding: 12px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      `;
+      
+      header.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 14px; font-weight: 600; color: #111827;">チュートリアル</span>
+          <span style="font-size: 12px; color: #6b7280;">${currentStep}/${totalSteps}</span>
+        </div>
+        <button onclick="skipTutorial()" style="
+          background: none;
+          border: none;
+          color: #6b7280;
+          font-size: 20px;
+          cursor: pointer;
+          padding: 0;
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        ">×</button>
+      `;
+      
+      document.body.appendChild(header);
+    }
+    
+    function showTooltip(targetId, text, offset = { x: 0, y: 0 }) {
+      const tooltip = document.createElement('div');
+      tooltip.className = 'tutorial-tooltip';
+      tooltip.style.cssText = `
+        position: fixed;
+        z-index: 10001;
+        background: white;
+        padding: 16px 20px;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+        font-size: 16px;
+        font-weight: 600;
+        color: #111827;
+        max-width: 240px;
+        line-height: 1.5;
+        pointer-events: none;
+        animation: tooltipFadeIn 0.3s ease;
+      `;
+      
+      // テキストを先に設定
+      tooltip.textContent = text;
+      tooltip.dataset.targetId = targetId;
+      
+      // 矢印を追加（上向き）
+      const arrow = document.createElement('div');
+      arrow.style.cssText = `
+        position: absolute;
+        top: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 10px solid transparent;
+        border-right: 10px solid transparent;
+        border-bottom: 10px solid white;
+        filter: drop-shadow(0 -2px 4px rgba(0,0,0,0.1));
+      `;
+      tooltip.appendChild(arrow);
+      
+      document.body.appendChild(tooltip);
+      
+      // アニメーション追加
+      if (!document.getElementById('tooltip-animation-style')) {
+        const style = document.createElement('style');
+        style.id = 'tooltip-animation-style';
+        style.textContent = `
+          @keyframes tooltipFadeIn {
+            from {
+              opacity: 0;
+              transform: translateY(10px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+      
+      // 位置調整
+      positionTooltip(tooltip, targetId, offset);
+    }
+    
+    function positionTooltip(tooltip, targetId, offset) {
+      let targetElement = null;
+      
+      // ターゲット要素を取得
+      if (targetId === 'yoshimuraya-pin') {
+        const marker = markers['yoshimuraya'];
+        if (marker) {
+          targetElement = marker.getElement();
+        }
+      } else if (targetId === 'detail-button') {
+        targetElement = document.getElementById('tutorial-detail-btn');
+      } else if (targetId === 'hours-section') {
+        targetElement = document.getElementById('detail-hours');
+      } else if (targetId === 'checkin-button') {
+        const detailModal = document.getElementById('shop-detail-modal');
+        const modalBody = detailModal?.querySelector('.modal-body');
+        const sections = modalBody?.querySelectorAll('.section');
+        const lastSection = sections?.[sections.length - 1];
+        targetElement = lastSection?.querySelector('button.btn-primary');
+      }
+      
+      if (!targetElement) return;
+      
+      // 要素の位置を取得
+      const rect = targetElement.getBoundingClientRect();
+      
+      // 吹き出しのサイズを取得
+      const tooltipRect = tooltip.getBoundingClientRect();
+      
+      // 位置を設定（中央揃え、要素の下）
+      tooltip.style.left = (rect.left + rect.width / 2 - tooltipRect.width / 2 + offset.x) + 'px';
+      tooltip.style.top = (rect.bottom + 10 + offset.y) + 'px';
+    }
+    
+    function removeTooltips() {
+      document.querySelectorAll('.tutorial-tooltip').forEach(el => el.remove());
+    }
+    
+    function skipTutorial() {
+      tutorialActive = false;
+      
+      // bodyからクラスを削除
+      document.body.classList.remove('tutorial-active');
+      
+      // すべてのチュートリアル要素を削除
+      document.getElementById('tutorial-welcome')?.remove();
+      document.getElementById('welcome-overlay')?.remove();
+      document.getElementById('tutorial-skip-btn')?.remove();
+      document.getElementById('tutorial-header')?.remove();
+      document.getElementById('tutorial-overlay')?.remove();
+      document.getElementById('tutorial-spotlight')?.remove();
+      removeTooltips();
+      
+      // 地図の操作を再有効化
+      if (map) {
+        map.dragging.enable();
+        map.touchZoom.enable();
+        map.doubleClickZoom.enable();
+        map.scrollWheelZoom.enable();
+        map.boxZoom.enable();
+        map.keyboard.enable();
+        if (map.tap) map.tap.enable();
+      }
+      
+      // localStorage保存
+      localStorage.setItem('hasCompletedTutorial', 'true');
+      
+      // MAP画面の通常状態に戻す
+      map.setView([35.45, 139.62], 11);
+      
+      // マーカーを再描画
+      updateMarkers();
+    }
+    
+    function completeTutorial() {
+      skipTutorial(); // 同じ処理
+    }
+    
+    function restartTutorial() {
+      // 既存のチュートリアルをクリーンアップ
+      document.getElementById('tutorial-welcome')?.remove();
+      document.getElementById('tutorial-skip-btn')?.remove();
+      document.getElementById('tutorial-overlay')?.remove();
+      removeTooltips();
+      
+      // マーカーのスタイルをリセット
+      Object.keys(markers).forEach(shopId => {
+        const marker = markers[shopId];
+        const icon = marker.getElement();
+        if (icon) {
+          icon.style.opacity = '1';
+          icon.style.pointerEvents = 'auto';
+          icon.style.filter = 'none';
+          icon.style.zIndex = '';
+        }
+      });
+      
+      // MAPタブに移動
+      const mapTab = document.getElementById('tab-map');
+      const tabs = document.querySelectorAll('.tab-content');
+      tabs.forEach(tab => tab.classList.remove('active'));
+      mapTab.classList.add('active');
+      
+      const navItems = document.querySelectorAll('.nav-item');
+      navItems.forEach(item => item.classList.remove('active'));
+      navItems[0].classList.add('active');
+      
+      // チュートリアルを再開
+      localStorage.removeItem('hasCompletedTutorial');
+      setTimeout(() => startTutorial(), 300);
+    }
+    
+    // チュートリアル進行管理
+    function onPopupOpened() {
+      if (!tutorialActive) return;
+      
+      if (tutorialStep === tutorialSteps.CLICK_PIN) {
+        // Step 1完了 → Step 2へ
+        removeTooltips();
+        document.getElementById('tutorial-spotlight')?.remove();
+        tutorialStep = tutorialSteps.CLICK_DETAIL;
+        showTutorialHeader(2, 4);
+        
+        setTimeout(() => {
+          // ポップアップ内の「詳細・訪問記録」ボタンをスポットライト
+          const detailButton = document.getElementById('tutorial-detail-btn');
+          
+          if (detailButton) {
+            createSpotlight(detailButton);
+            showTooltip('detail-button', '詳細・訪問記録をタップしてみよう');
+          }
+        }, 300);
+      }
+    }
+    
+    function onShopDetailOpened(shopId) {
+      if (!tutorialActive) return;
+      
+      if (tutorialStep === tutorialSteps.CLICK_DETAIL && shopId === 'yoshimuraya') {
+        // Step 2完了 → Step 3へ
+        removeTooltips();
+        document.getElementById('tutorial-spotlight')?.remove();
+        tutorialStep = tutorialSteps.VIEW_INFO;
+        showTutorialHeader(3, 4);
+        
+        setTimeout(() => {
+          // 営業時間をスポットライト
+          const hoursSection = document.getElementById('detail-hours');
+          if (hoursSection) {
+            createSpotlight(hoursSection);
+            showTooltip('hours-section', 'お店の情報が見られます');
+            
+            // 2秒後にStep 4へ
+            setTimeout(() => {
+              removeTooltips();
+              document.getElementById('tutorial-spotlight')?.remove();
+              tutorialStep = tutorialSteps.VIEW_CHECKIN;
+              showTutorialHeader(4, 4);
+              
+              // 訪問記録までスクロール
+              const detailModal = document.getElementById('shop-detail-modal');
+              const modalBody = detailModal?.querySelector('.modal-body');
+              const sections = modalBody?.querySelectorAll('.section');
+              
+              // 「来店情報」セクションを探す
+              let targetSection = null;
+              sections?.forEach(section => {
+                const title = section.querySelector('.section-title');
+                if (title && title.textContent.includes('来店情報')) {
+                  targetSection = section;
+                }
+              });
+              
+              console.log('Step 4: Starting scroll', {
+                modalBody: !!modalBody,
+                sections: sections?.length,
+                targetSection: !!targetSection
+              });
+              
+              if (targetSection && modalBody) {
+                // modal-body内でスクロール
+                const targetPosition = targetSection.offsetTop - modalBody.offsetTop;
+                modalBody.scrollTo({
+                  top: targetPosition,
+                  behavior: 'smooth'
+                });
+                
+                console.log('Step 4: Scrolled to', targetPosition);
+              }
+              
+              setTimeout(() => {
+                // スクロール後に要素を再取得
+                const modal = document.getElementById('shop-detail-modal');
+                const body = modal?.querySelector('.modal-body');
+                const sectionList = body?.querySelectorAll('.section');
+                
+                // 「来店情報」セクションを探す
+                let checkinSection = null;
+                sectionList?.forEach(section => {
+                  const title = section.querySelector('.section-title');
+                  if (title && title.textContent.includes('来店情報')) {
+                    checkinSection = section;
+                  }
+                });
+                
+                // 訪問記録ボタンを取得（action-buttonsの中）
+                const checkinBtn = checkinSection?.querySelector('.action-buttons button.btn-primary');
+                
+                console.log('Step 4: Debug info', {
+                  modal: !!modal,
+                  body: !!body,
+                  sectionCount: sectionList?.length,
+                  checkinSection: !!checkinSection,
+                  checkinBtn: !!checkinBtn
+                });
+                
+                if (checkinBtn) {
+                  createSpotlight(checkinBtn);
+                  showTooltip('checkin-button', '訪問記録を保存できます');
+                  
+                  // 2秒後に完了演出
+                  setTimeout(() => {
+                    removeTooltips();
+                    document.getElementById('tutorial-spotlight')?.remove();
+                    showCompletionMessage();
+                  }, 2000);
+                } else {
+                  console.error('Step 4: checkinBtn not found');
+                }
+              }, 800); // スクロール完了を待つために少し長めに
+            }, 2000);
+          }
+        }, 500);
+      }
+    }
+    
+    function onCheckinClicked() {
+      // チュートリアル中は何もしない（自動進行のため）
+      if (tutorialActive) return;
+    }
+    
+    function showCompletionMessage() {
+      const message = document.createElement('div');
+      message.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 10001;
+        background: white;
+        border-radius: 16px;
+        padding: 32px;
+        text-align: center;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        animation: fadeIn 0.3s ease;
+      `;
+      
+      message.innerHTML = `
+        <div style="font-size: 48px; margin-bottom: 16px;">✓</div>
+        <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 8px; color: #111827;">準備OK！</h2>
+        <p style="font-size: 14px; color: #6b7280; margin-bottom: 16px;">
+          近くの店を探してみよう
+        </p>
+      `;
+      
+      document.body.appendChild(message);
+      
+      setTimeout(() => {
+        message.style.opacity = '0';
+        message.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => {
+          message.remove();
+          completeTutorial();
+        }, 300);
+      }, 2000);
+    }
+    
     // Initialize
     document.addEventListener('DOMContentLoaded', () => {
       // データ検証（起動時）
@@ -2678,6 +3606,13 @@
       renderStatsTab();
       initRecordForm();
       initResizeHandle();
+      
+      // チュートリアル（初回のみ）
+      setTimeout(() => {
+        if (!localStorage.getItem('hasCompletedTutorial')) {
+          startTutorial();
+        }
+      }, 1000);
       
       // カテゴリーフィルタ
       document.getElementById('filter-category').addEventListener('change', () => {
@@ -2928,6 +3863,7 @@
     
     // Map Functions
     function initMap() {
+      console.log('initMap called');
       map = L.map('map').setView([35.45, 139.62], 11);
       
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -2942,6 +3878,7 @@
       });
       
       updateMarkers();
+      console.log('initMap completed');
     }
     
     function initResizeHandle() {
@@ -3016,6 +3953,39 @@
     function updateMarkers() {
       Object.values(markers).forEach(m => m.remove());
       markers = {};
+      
+      // チュートリアル中は吉村家だけ表示
+      if (tutorialActive && tutorialStep === tutorialSteps.CLICK_PIN) {
+        const yoshimuraya = shops.find(s => s.id === 'yoshimuraya');
+        if (yoshimuraya) {
+          const divIcon = L.divIcon({
+            className: 'custom-marker',
+            html: `<div style="width:48px;height:48px;border-radius:50%;background:#ef4444;border:3px solid white;box-shadow:0 0 20px rgba(239, 68, 68, 0.8);display:flex;align-items:center;justify-content:center;font-size:24px;color:white;font-weight:bold;cursor:pointer">🍜</div>`,
+            iconSize: [48, 48],
+            iconAnchor: [24, 48]
+          });
+          
+          const popup = `<div style="padding:8px;min-width:200px;position:relative;">
+            <button onclick="markers['yoshimuraya'].closePopup(); event.stopPropagation();" style="position:absolute;top:4px;right:4px;width:24px;height:24px;border:none;background:#f3f4f6;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:#6b7280;padding:0;">×</button>
+            <div style="font-weight:bold;font-size:16px;margin-bottom:8px;padding-right:28px;">${yoshimuraya.name}</div>
+            <button id="tutorial-detail-btn" onclick="showShopDetail('yoshimuraya')" style="width:100%;background:#3b82f6;color:white;padding:10px;border:none;border-radius:12px;font-weight:600;cursor:pointer">詳細・訪問記録</button>
+          </div>`;
+          
+          const marker = L.marker([yoshimuraya.lat, yoshimuraya.lng], { icon: divIcon })
+            .addTo(map)
+            .bindPopup(popup, { closeButton: false });
+          
+          // チュートリアル: ポップアップが開いたとき
+          marker.on('popupopen', function() {
+            if (tutorialActive && tutorialStep === tutorialSteps.CLICK_PIN) {
+              onPopupOpened();
+            }
+          });
+          
+          markers['yoshimuraya'] = marker;
+        }
+        return; // チュートリアル中は吉村家だけ表示して終了
+      }
       
       const categoryFilter = document.getElementById('filter-category').value;
       let filteredShops;
@@ -3619,6 +4589,11 @@
       currentShop = shops.find(s => s.id === shopId);
       if (!currentShop) return;
       
+      // チュートリアル進行
+      if (tutorialActive) {
+        onShopDetailOpened(shopId);
+      }
+      
       const visitData = visits[shopId] || { logs: [], wantToGo: false };
       const openStatus = getOpenStatus(currentShop.openingHours);
       const isOpen = openStatus.state !== 'closed';
@@ -3724,6 +4699,9 @@
     window.focusShop = focusShop;
     
     function closeShopDetail() {
+      // チュートリアル中は閉じない
+      if (tutorialActive) return;
+      
       document.getElementById('shop-detail-modal').classList.remove('active');
     }
     
@@ -4336,6 +5314,7 @@
       </div>
     </div>
   </div>
+  
   
 </body>
 </html>
