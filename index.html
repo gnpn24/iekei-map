@@ -312,6 +312,17 @@
       cursor: pointer;
       white-space: nowrap;
       transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    #btn-search-toggle {
+      padding: 8px;
+    }
+    
+    #btn-search-toggle svg {
+      display: block;
     }
     
     .filter-toggle-btn.active {
@@ -685,6 +696,8 @@
     
     .modal-body {
       padding: 0 16px 24px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch; /* iPhoneで慣性スクロール */
     }
     
     .section {
@@ -1528,6 +1541,194 @@
       background: #9ca3af;
       border-radius: 50%;
     }
+    
+    /* ========= かっこよくする上書きCSS ========= */
+    :root{
+      --bg: #0b0f19;
+      --surface: rgba(255,255,255,0.9);
+      --surface2: rgba(255,255,255,0.72);
+      --text: #0f172a;
+      --muted: #64748b;
+      --line: rgba(15,23,42,0.10);
+      --brand: #ef4444;       /* 赤 */
+      --brand2: #fb7185;      /* ピンク寄り */
+      --blue: #3b82f6;
+      --ok: #10b981;
+      --warn: #f59e0b;
+      --shadow: 0 10px 30px rgba(2,6,23,.15);
+      --shadow2: 0 6px 18px rgba(2,6,23,.12);
+      --radius: 18px;
+    }
+
+    body{
+      background: #ffffff;
+    }
+
+    /* ヘッダー：シンプルな赤 */
+    .header{
+      background: #ef4444;
+      color: white;
+      box-shadow: none;
+    }
+    .header h1{
+      color: #000000;
+      letter-spacing: .2px;
+    }
+
+    /* チュートリアルボタン：ガラス＋押した感 */
+    .header button{
+      background: rgba(255,255,255,0.22) !important;
+      border: 1px solid rgba(255,255,255,0.28) !important;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: none;
+    }
+    .header button:active{
+      transform: translateY(-50%) scale(0.98) !important;
+      background: rgba(255,255,255,0.30) !important;
+    }
+
+    /* 下タブ：ガラス・浮かせる・アクティブの下線 */
+    .bottom-nav{
+      background: rgba(255,255,255,0.75);
+      border-top: 1px solid rgba(255,255,255,0.35);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 -2px 8px rgba(0,0,0,.05);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .nav-item{
+      color: rgba(100,116,139,1);
+      position: relative;
+    }
+    .nav-item.active{
+      color: var(--brand);
+    }
+    .nav-item.active::after{
+      content:"";
+      position:absolute;
+      bottom:-2px;
+      width: 28px;
+      height: 3px;
+      border-radius: 999px;
+      background: var(--brand);
+    }
+    .nav-item svg{
+      transition: transform .18s ease, opacity .18s ease;
+      opacity: .95;
+    }
+    .nav-item:active svg{
+      transform: scale(0.94);
+    }
+
+    /* 地図上の凡例：ちょい上品に */
+    .map-legend{
+      background: rgba(255,255,255,0.78) !important;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(15,23,42,0.08);
+      box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    }
+
+    /* リストのドロワー：角丸＋影 */
+    .shop-list-drawer{
+      border-top-left-radius: 22px;
+      border-top-right-radius: 22px;
+      box-shadow: 0 -2px 8px rgba(0,0,0,.08);
+      border-top: 1px solid rgba(15,23,42,0.06);
+    }
+    .drawer-handle{
+      background: rgba(248,250,252,0.75);
+    }
+
+    /* 検索：角丸・フォーカス時のリング */
+    .search-input{
+      border-radius: 14px !important;
+      border: 1px solid rgba(15,23,42,0.10) !important;
+      background: rgba(255,255,255,0.9);
+      box-shadow: 0 1px 0 rgba(2,6,23,.03);
+    }
+    .search-input:focus{
+      border-color: rgba(239,68,68,0.55) !important;
+      box-shadow: 0 0 0 4px rgba(239,68,68,0.14);
+    }
+
+    /* フィルタボタン：少し押しやすく */
+    .filter-toggle-btn{
+      border-radius: 14px !important;
+      border: 1px solid rgba(15,23,42,0.10) !important;
+      box-shadow: 0 1px 0 rgba(2,6,23,.03);
+    }
+    .filter-toggle-btn.active{
+      background: #10b981 !important;
+      border-color: transparent !important;
+      box-shadow: none;
+    }
+
+    /* 店カード：立体感＋ホバー/タップ */
+    .shop-list-item{
+      background: rgba(248,250,252,0.8) !important;
+      border: 1px solid rgba(15,23,42,0.06);
+      box-shadow: 0 2px 8px rgba(0,0,0,.08);
+      border-radius: 18px !important;
+    }
+    .shop-list-item:active{
+      transform: scale(0.985);
+      box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    }
+
+    /* バッジ：統一感 */
+    .badge-open{ box-shadow: none; }
+    .badge-soon{ box-shadow: none; }
+    .badge-distance{ border: 1px solid rgba(2,132,199,.20); }
+
+    /* モーダル：ガラス感＋角丸強め */
+    .modal-content{
+      border-radius: 26px 26px 0 0 !important;
+      box-shadow: 0 -4px 12px rgba(0,0,0,.1) !important;
+      border: 1px solid rgba(255,255,255,0.35);
+    }
+    .modal-header{
+      background: rgba(255,255,255,0.92) !important;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .modal-title h2{
+      letter-spacing: .2px;
+    }
+
+    /* 主要ボタン：シンプルな青 */
+    .btn-primary{
+      background: #3b82f6 !important;
+      box-shadow: none;
+    }
+    .btn-secondary{
+      background: rgba(241,245,249,0.9) !important;
+      border: 1px solid rgba(15,23,42,0.08);
+    }
+    .btn:active{
+      transform: scale(0.985);
+    }
+
+    /* ナビボタン：カードっぽく */
+    .btn-nav{
+      border-radius: 14px !important;
+      border: 1px solid rgba(15,23,42,0.10) !important;
+      background: rgba(255,255,255,0.85) !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    }
+    .btn-nav:active{
+      transform: scale(0.985);
+    }
+
+    /* Leafletのポップアップも馴染ませる */
+    .leaflet-popup-content-wrapper{
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.15);
+    }
+    .leaflet-popup-tip{
+      box-shadow: 0 2px 8px rgba(0,0,0,.15);
+    }
   </style>
 </head>
 <body>
@@ -1687,11 +1888,141 @@
           <div class="stats-card" style="margin-top:16px;">
             <div class="stats-title">📝 変更履歴</div>
             <div class="version-info">
-              <div class="version-current">現在のバージョン: <strong>v1.13.11</strong></div>
-              <div class="version-date">最終更新: 2026/01/16</div>
+              <div class="version-current">現在のバージョン: <strong>v1.15.3</strong></div>
+              <div class="version-date">最終更新: 2026/01/17</div>
             </div>
             
             <div class="changelog">
+              <!-- v1.15.3 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.15.3</span>
+                  <span class="version-date-small">2026/01/17</span>
+                </div>
+                <ul class="version-list">
+                  <li>🔗 共有リンクでチュートリアルをスキップ</li>
+                  <li>✅ ?shop=sugitaya が正常動作</li>
+                  <li>🎯 初回アクセスとしてカウントしない</li>
+                </ul>
+              </div>
+              
+              <!-- v1.15.2 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.15.2</span>
+                  <span class="version-date-small">2026/01/17</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 正しいボタンが点滅するように修正</li>
+                  <li>🔍 検索アイコンのセンタリング修正</li>
+                  <li>✅ 完璧な見た目</li>
+                </ul>
+              </div>
+              
+              <!-- v1.15.1 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.15.1</span>
+                  <span class="version-date-small">2026/01/17</span>
+                </div>
+                <ul class="version-list">
+                  <li>✨ 「今から」ボタンが緑点滅</li>
+                  <li>📏 誘導カードを大きく改善</li>
+                  <li>🎯 より目立つデザイン</li>
+                </ul>
+              </div>
+              
+              <!-- v1.15.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.15.0</span>
+                  <span class="version-date-small">2026/01/17</span>
+                </div>
+                <ul class="version-list">
+                  <li>📍 チュートリアル後に「今から」へ誘導</li>
+                  <li>✨ スムーズな導線を実現</li>
+                  <li>👥 スキップした人にも表示</li>
+                </ul>
+              </div>
+              
+              <!-- v1.14.4 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.14.4</span>
+                  <span class="version-date-small">2026/01/17</span>
+                </div>
+                <ul class="version-list">
+                  <li>🎉 チュートリアル完全動作！</li>
+                  <li>💬 吹き出しが正しい位置に表示</li>
+                  <li>✅ すべての問題を修正</li>
+                </ul>
+              </div>
+              
+              <!-- v1.14.3 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.14.3</span>
+                  <span class="version-date-small">2026/01/16</span>
+                </div>
+                <ul class="version-list">
+                  <li>✅ チュートリアル中は常にスクロール</li>
+                  <li>🎯 画面サイズに関わらず動作</li>
+                  <li>🐛 完全修正</li>
+                </ul>
+              </div>
+              
+              <!-- v1.14.2 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.14.2</span>
+                  <span class="version-date-small">2026/01/16</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 スマホでスクロールが確実に動作</li>
+                  <li>📱 getBoundingRect()で位置計算</li>
+                  <li>✅ チュートリアル完全修正</li>
+                </ul>
+              </div>
+              
+              <!-- v1.14.1 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.14.1</span>
+                  <span class="version-date-small">2026/01/16</span>
+                </div>
+                <ul class="version-list">
+                  <li>🎨 シンプルなデザインに変更</li>
+                  <li>⚫ タイトルを黒文字に</li>
+                  <li>🌟 ガラス効果は維持</li>
+                </ul>
+              </div>
+              
+              <!-- v1.14.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.14.0</span>
+                  <span class="version-date-small">2026/01/16</span>
+                </div>
+                <ul class="version-list">
+                  <li>🎨 デザインを一新（ガラスモーフィズム）</li>
+                  <li>🌈 グラデーション＋影で立体感</li>
+                  <li>✋ タップ時の気持ちいいフィードバック</li>
+                </ul>
+              </div>
+              
+              <!-- v1.13.12 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.13.12</span>
+                  <span class="version-date-small">2026/01/16</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 スマホでボタンが見える位置までスクロール</li>
+                  <li>📱 画面サイズに関わらず動作</li>
+                  <li>✅ Step 4完全修正</li>
+                </ul>
+              </div>
+              
               <!-- v1.13.11 -->
               <div class="version-section">
                 <div class="version-header">
@@ -2477,7 +2808,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
   <script>
     // App Version (手動で更新)
-    const APP_VERSION = "1.13.11";
+    const APP_VERSION = "1.15.3";
     
     // 更新チェック機能（HTMLのみ）
     async function checkUpdate() {
@@ -3335,8 +3666,19 @@
         const detailModal = document.getElementById('shop-detail-modal');
         const modalBody = detailModal?.querySelector('.modal-body');
         const sections = modalBody?.querySelectorAll('.section');
-        const lastSection = sections?.[sections.length - 1];
-        targetElement = lastSection?.querySelector('button.btn-primary');
+        
+        // 「来店情報」セクションを探す
+        let checkinSection = null;
+        sections?.forEach(section => {
+          const title = section.querySelector('.section-title');
+          if (title && title.textContent.includes('来店情報')) {
+            checkinSection = section;
+          }
+        });
+        
+        // 訪問記録ボタンを取得
+        const actionButtons = checkinSection?.querySelector('.action-buttons');
+        targetElement = actionButtons?.querySelector('button.btn-primary');
       }
       
       if (!targetElement) return;
@@ -3390,10 +3732,155 @@
       
       // マーカーを再描画
       updateMarkers();
+      
+      // 初回訪問時は誘導カードを表示
+      const hasSeenGuide = localStorage.getItem('hasSeenNearbyGuide');
+      if (!hasSeenGuide) {
+        setTimeout(() => {
+          showNearbyGuide();
+          localStorage.setItem('hasSeenNearbyGuide', 'true');
+        }, 1000);
+      }
     }
     
     function completeTutorial() {
-      skipTutorial(); // 同じ処理
+      // モーダルを閉じる
+      const detailModal = document.getElementById('shop-detail-modal');
+      if (detailModal) {
+        detailModal.style.display = 'none';
+      }
+      
+      skipTutorial(); // チュートリアル終了処理
+      
+      // 誘導カードを表示
+      setTimeout(() => showNearbyGuide(), 500);
+    }
+    
+    function showNearbyGuide() {
+      // すでに表示されている場合は削除
+      document.getElementById('nearby-guide')?.remove();
+      
+      const guide = document.createElement('div');
+      guide.id = 'nearby-guide';
+      guide.style.cssText = `
+        position: fixed;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: white;
+        padding: 20px 28px;
+        border-radius: 20px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        cursor: pointer;
+        animation: slideUpBounce 0.6s ease;
+        min-width: 320px;
+        max-width: 90%;
+      `;
+      
+      guide.innerHTML = `
+        <div style="flex: 1;">
+          <div style="font-weight: 700; font-size: 18px; color: #111827; margin-bottom: 4px;">
+            近くのお店を見てみよう
+          </div>
+          <div style="font-size: 13px; color: #6b7280;">
+            「今から」ボタンをタップ
+          </div>
+        </div>
+        <div style="font-size: 28px; animation: pulse 2s infinite; flex-shrink: 0;">👉</div>
+      `;
+      
+      // アニメーション追加
+      if (!document.getElementById('nearby-guide-style')) {
+        const style = document.createElement('style');
+        style.id = 'nearby-guide-style';
+        style.textContent = `
+          @keyframes slideUpBounce {
+            0% {
+              opacity: 0;
+              transform: translate(-50%, 20px);
+            }
+            60% {
+              opacity: 1;
+              transform: translate(-50%, -5px);
+            }
+            80% {
+              transform: translate(-50%, 2px);
+            }
+            100% {
+              transform: translate(-50%, 0);
+            }
+          }
+          @keyframes pulse {
+            0%, 100% {
+              transform: scale(1);
+            }
+            50% {
+              transform: scale(1.2);
+            }
+          }
+          @keyframes greenBlink {
+            0%, 100% {
+              background: #10b981;
+              box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+            50% {
+              background: #34d399;
+              box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+            }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+      
+      // 「今から」ボタンを緑点滅
+      const filterBtn = document.getElementById('btn-nearby');
+      if (filterBtn && !filterBtn.classList.contains('active')) {
+        filterBtn.style.animation = 'greenBlink 1.5s ease-in-out infinite';
+        filterBtn.style.background = '#10b981';
+        filterBtn.style.color = 'white';
+      }
+      
+      // クリックで「今から」ボタンを有効化
+      guide.addEventListener('click', () => {
+        guide.remove();
+        
+        // 「今から」ボタンを探して有効化
+        if (filterBtn) {
+          // アニメーションを停止
+          filterBtn.style.animation = '';
+          filterBtn.style.background = '';
+          filterBtn.style.color = '';
+          
+          if (!filterBtn.classList.contains('active')) {
+            filterBtn.click();
+          }
+        }
+      });
+      
+      document.body.appendChild(guide);
+      
+      // 5秒後に自動で消える
+      setTimeout(() => {
+        if (guide.parentElement) {
+          guide.style.opacity = '0';
+          guide.style.transition = 'opacity 0.3s ease';
+          setTimeout(() => {
+            guide.remove();
+            
+            // ボタンのアニメーションも停止
+            if (filterBtn) {
+              filterBtn.style.animation = '';
+              filterBtn.style.background = '';
+              filterBtn.style.color = '';
+            }
+          }, 300);
+        }
+      }, 5000);
     }
     
     function restartTutorial() {
@@ -3483,11 +3970,13 @@
               
               // 訪問記録までスクロール
               const detailModal = document.getElementById('shop-detail-modal');
+              const modalContent = detailModal?.querySelector('.modal-content');
               const modalBody = detailModal?.querySelector('.modal-body');
               const sections = modalBody?.querySelectorAll('.section');
               
               console.log('Step 4: Modal elements', {
                 detailModal: !!detailModal,
+                modalContent: !!modalContent,
                 modalBody: !!modalBody,
                 sectionsCount: sections?.length
               });
@@ -3504,19 +3993,95 @@
               });
               
               console.log('Step 4: Starting scroll', {
-                modalBody: !!modalBody,
+                modalContent: !!modalContent,
                 sections: sections?.length,
                 targetSection: !!targetSection
               });
               
-              if (targetSection && modalBody) {
-                // modal-body内でスクロール
-                const targetPosition = targetSection.offsetTop - modalBody.offsetTop;
+              if (targetSection && modalContent) {
+                // 訪問記録ボタンの位置を取得
+                const actionButtons = targetSection.querySelector('.action-buttons');
+                const checkinButton = actionButtons?.querySelector('button.btn-primary');
                 
-                // scrollTopを直接設定（より確実）
-                modalBody.scrollTop = targetPosition;
-                
-                console.log('Step 4: Scrolled to', targetPosition, 'scrollTop =', modalBody.scrollTop);
+                if (checkinButton) {
+                  const scrollCheck = {
+                    scrollHeight: modalContent.scrollHeight,
+                    clientHeight: modalContent.clientHeight,
+                    offsetHeight: modalContent.offsetHeight,
+                    needScroll: modalContent.scrollHeight > modalContent.clientHeight
+                  };
+                  console.log('Step 4: Scroll check:', scrollCheck);
+                  console.log('Step 4: scrollHeight:', modalContent.scrollHeight);
+                  console.log('Step 4: clientHeight:', modalContent.clientHeight);
+                  console.log('Step 4: Need scroll?', modalContent.scrollHeight > modalContent.clientHeight);
+                  
+                  // スクロールが必要なときだけ動かす（PC対策）
+                  // ただし、ボタンが画面外なら強制的にスクロール
+                  const btnRect = checkinButton.getBoundingClientRect();
+                  const modalRect = modalContent.getBoundingClientRect();
+                  const buttonIsVisible = (
+                    btnRect.top >= modalRect.top &&
+                    btnRect.bottom <= modalRect.bottom
+                  );
+                  
+                  console.log('Step 4: Button visibility check:', {
+                    btnRect_top: btnRect.top,
+                    btnRect_bottom: btnRect.bottom,
+                    modalRect_top: modalRect.top,
+                    modalRect_bottom: modalRect.bottom,
+                    buttonIsVisible: buttonIsVisible
+                  });
+                  
+                  // チュートリアル中は常にスクロール（確実にボタンを表示）
+                  console.log('Step 4: Starting scroll animation');
+                  
+                  // レイアウト確定後に測る（iPhone系で効きやすい）
+                  requestAnimationFrame(() => {
+                    const bodyRect = modalContent.getBoundingClientRect();
+                    const btnRect2 = checkinButton.getBoundingClientRect();
+                    
+                    // modalContentの「今のスクロール位置 + (ボタンの画面上の位置 - bodyの画面上の位置)」
+                    const targetTop = modalContent.scrollTop + (btnRect2.top - bodyRect.top) - 100;
+                    
+                    console.log('Step 4: Scroll calculation', {
+                      bodyRect_top: bodyRect.top,
+                      btnRect_top: btnRect2.top,
+                      currentScrollTop: modalContent.scrollTop,
+                      targetTop: targetTop,
+                      willScrollTo: Math.max(0, targetTop)
+                    });
+                    
+                    // 詳細ログ（展開されない場合用）
+                    console.log('=== Scroll Details ===');
+                    console.log('bodyRect.top:', bodyRect.top);
+                    console.log('btnRect.top:', btnRect2.top);
+                    console.log('current scrollTop:', modalContent.scrollTop);
+                    console.log('targetTop:', targetTop);
+                    console.log('will scroll to:', Math.max(0, targetTop));
+                    console.log('======================');
+                    
+                    // スクロール実行
+                    console.log('→ Calling scrollTo with:', Math.max(0, targetTop));
+                    modalContent.scrollTo({
+                      top: Math.max(0, targetTop),
+                      behavior: 'smooth'
+                    });
+                    console.log('→ scrollTo called');
+                    
+                    // 実際のスクロール位置を確認
+                    setTimeout(() => {
+                      console.log('Step 4: After scroll', {
+                        scrollTop: modalContent.scrollTop
+                      });
+                      console.log('=== After Scroll ===');
+                      console.log('actual scrollTop:', modalContent.scrollTop);
+                      console.log('expected:', Math.max(0, targetTop));
+                      console.log('====================');
+                    }, 100);
+                  });
+                } else {
+                  console.log('Step 4: Button not found');
+                }
               } else {
                 console.error('Step 4: Cannot scroll - missing elements');
               }
@@ -3635,9 +4200,13 @@
       initRecordForm();
       initResizeHandle();
       
-      // チュートリアル（初回のみ）
+      // URLパラメータをチェック
+      const urlParams = new URLSearchParams(window.location.search);
+      const shopParam = urlParams.get('shop');
+      
+      // チュートリアル（初回のみ、かつURLパラメータがない場合）
       setTimeout(() => {
-        if (!localStorage.getItem('hasCompletedTutorial')) {
+        if (!shopParam && !localStorage.getItem('hasCompletedTutorial')) {
           startTutorial();
         }
       }, 1000);
