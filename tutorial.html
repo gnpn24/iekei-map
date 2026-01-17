@@ -2988,341 +2988,28 @@
     // Shop Data
     const shops = [
       {
-        id: "yoshimuraya",
-        name: "家系総本山 吉村家",
-        category: "総本山",
-        area: "横浜駅西口",
-        lat: 35.4629487,
-        lng: 139.6150264,
-        parent: null,
-        description: "1974年創業の家系ラーメン発祥店。濃厚豚骨醤油スープに太麺、好みを調節できる独自スタイルを確立した名店。",
-        googleMapUrl: "https://www.google.co.jp/maps/place/%E5%AE%B6%E7%B3%BB%E7%B7%8F%E6%9C%AC%E5%B1%B1+%E5%90%89%E6%9D%91%E5%AE%B6/@35.4629487,139.6150264,154m/data=!3m2!1e3!5s0x60185c0c430436f7:0xf13df3160648aa53!4m15!1m8!3m7!1s0x60185c0c4307d32f:0xc9ce8a60cdd2d672!2z5a6257O757eP5pys5bGxIOWQieadkeWutg!8m2!3d35.4630187!4d139.6150749!10e9!16s%2Fg%2F1tfg31bf!3m5!1s0x60185c0c4307d32f:0xc9ce8a60cdd2d672!8m2!3d35.4630187!4d139.6150749!16s%2Fg%2F1tfg31bf?hl=ja&entry=ttu&g_ep=EgoyMDI1MTIwOS4wIKXMDSoASAFQAw%3D%3D",
-        websiteUrl: "http://ieke1.com/",
+        id: 'yoshimuraya',
+        name: '家系総本山 吉村家',
+        lat: 35.4630187,
+        lng: 139.6150749,
+        category: '総本山',
+        area: '横浜駅西口',
+        address: '神奈川県横浜市西区南幸2-12-6',
         openingHours: {
-          mon: {times:[]},
-          tue: {times:[{start:"11:00",end:"20:00"}]},
-          wed: {times:[{start:"11:00",end:"20:00"}]},
-          thu: {times:[{start:"11:00",end:"20:00"}]},
-          fri: {times:[{start:"11:00",end:"20:00"}]},
-          sat: {times:[{start:"11:00",end:"20:00"}]},
-          sun: {times:[{start:"11:00",end:"20:00"}]}
-        }
-      },
-      {
-        id: "sugitaya",
-        name: "杉田家本店",
-        category: "直系",
-        area: "新杉田",
-        lat: 35.3881631,
-        lng: 139.6182152,
-        parent: "yoshimuraya",
-        description: "吉村家直系第1号店として1999年開店。朝5時から営業し、濃厚な豚骨醤油スープで行列が絶えない老舗直系店。",
-        googleMapUrl: "https://www.google.co.jp/maps/place/%E6%9D%89%E7%94%B0%E5%AE%B6/@35.3881631,139.041433,158103m/data=!3m1!1e3!4m10!1m2!2m1!1z5p2J55Sw5a62!3m6!1s0x6018435d664217b9:0x50a70700f361edb7!8m2!3d35.3881631!4d139.6182152!15sCgnmnYnnlLDlrrYiA4gBAVoMIgrmnYnnlLAg5a62kgEQcmFtZW5fcmVzdGF1cmFudJoBRENpOURRVWxSUVVOdlpFTm9kSGxqUmpsdlQyc3dlV1ZJVmt0T2JHZDBVMFJHTkdSWFozcFNSRXAwVjFSYVdGWkhZeEFC4AEA-gEECAAQHQ!16s%2Fg%2F1z449y7b2?hl=ja&entry=ttu&g_ep=EgoyMDI1MTIwOS4wIKXMDSoASAFQAw%3D%3D",
-        websiteUrl: "https://sugitaya.com/",
-        openingHours: {
-          mon: {times:[{start:"05:00",end:"22:00"}]},
-          tue: {times:[{start:"05:00",end:"22:00"}]},
-          wed: {times:[{start:"05:00",end:"22:00"}]},
-          thu: {times:[{start:"05:00",end:"22:00"}]},
-          fri: {times:[{start:"05:00",end:"22:00"}]},
-          sat: {times:[{start:"05:00",end:"22:00"}]},
-          sun: {times:[]}
-        }
-      },
-      {
-        id: "suehiroya",
-        name: "末廣家",
-        category: "直系",
-        area: "六角橋",
-        lat: 35.4880323,
-        lng: 139.6221691,
-        parent: "yoshimuraya",
-        description: "吉村家直系店の一つ。六角橋で濃厚な直系家系ラーメンを提供し、直系王道の味継承店として人気。",
-        googleMapUrl: "https://www.google.co.jp/maps/place/%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%B3+%E6%9C%AB%E5%BB%A3%E5%AE%B6/@35.4880323,139.6221691,1234m/data=!3m2!1e3!4b1!4m6!3m5!1s0x60185ea40ab2abe7:0xa69bc35f35258466!8m2!3d35.4880323!4d139.624744!16s%2Fg%2F12qfxwkw6?hl=ja&entry=ttu&g_ep=EgoyMDI1MTIwOS4wIKXMDSoASAFQAw%3D%3D",
-        websiteUrl: "https://x.com/2525_2929",
-        openingHours: {
-          mon: {times:[]},
-          tue: {times:[{start:"11:00",end:"21:00"}]},
-          wed: {times:[{start:"11:00",end:"21:00"}]},
-          thu: {times:[{start:"11:00",end:"21:00"}]},
-          fri: {times:[{start:"11:00",end:"21:00"}]},
-          sat: {times:[{start:"11:00",end:"21:00"}]},
-          sun: {times:[]}
-        }
-      },
-      {
-        id: "tsuruichiya-neo",
-        name: "鶴一家 neo",
-        category: "直系",
-        area: "鶴屋町",
-        lat: 35.4694779,
-        lng: 139.6208343,
-        parent: "sugitaya",
-        description: "横浜駅近く鶴屋町の家系ラーメン店。深夜まで営業し、濃厚な豚骨醤油スープが特徴。",
-        googleMapUrl: "https://www.google.com/maps/place/%E9%B6%B4%E4%B8%80%E5%AE%B6+neo/@35.4694779,139.6208343,15z/data=!4m6!3m5!1s0x60185dd1f76c0b3b:0x56351e864f67679e!8m2!3d35.4694779!4d139.6208343!16s%252Fg%252F11xkgw9v4y?hl=ja",
-        websiteUrl: "",
-        openingHours: {
-          mon: {times:[{start:"10:00",end:"07:00"}]},
-          tue: {times:[{start:"10:00",end:"07:00"}]},
-          wed: {times:[{start:"10:00",end:"07:00"}]},
-          thu: {times:[{start:"10:00",end:"07:00"}]},
-          fri: {times:[{start:"10:00",end:"07:00"}]},
-          sat: {times:[{start:"10:00",end:"07:00"}]},
-          sun: {times:[{start:"10:00",end:"07:00"}]}
-        }
-      },
-      {
-        id: "giftmachida-yokohama",
-        name: "町田商店 横浜駅前店",
-        category: "資本系",
-        area: "横浜駅西口",
-        lat: 35.4691844,
-        lng: 139.6178902,
-        parent: null,
-        description: "",
-        googleMapUrl: "https://maps.app.goo.gl/aseCNy64UcjRWuaR7",
-        websiteUrl: "https://www.machidashoten.com/",
-        openingHours: {
-          mon: {times:[{start:"11:00",end:"03:00"}]},
-          tue: {times:[{start:"11:00",end:"03:00"}]},
-          wed: {times:[{start:"11:00",end:"03:00"}]},
-          thu: {times:[{start:"11:00",end:"03:00"}]},
-          fri: {times:[{start:"11:00",end:"03:00"}]},
-          sat: {times:[{start:"11:00",end:"03:00"}]},
-          sun: {times:[{start:"11:00",end:"03:00"}]}
-        }
-      },
-      {
-        id: "ginya-yokohama",
-        name: "銀家 横浜西口店",
-        category: "資本系",
-        area: "横浜駅西口",
-        lat: 35.463601,
-        lng: 139.6133207,
-        parent: null,
-        description: "",
-        googleMapUrl: "https://www.google.com/maps/place/%E6%A8%AA%E6%B5%9C%E5%AE%B6%E7%B3%BB%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%B3+%E9%8A%80%E5%AE%B6+%E6%A8%AA%E6%B5%9C%E8%A5%BF%E5%8F%A3%E3%83%91%E3%83%AB%E3%83%8A%E3%83%BC%E3%83%89%E5%BA%97/@35.4636011,139.6133207,17z",
-        websiteUrl: "https://www.ginya-web.com/",
-        openingHours: {
-          mon: {times:[{start:"00:00",end:"24:00"}]},
-          tue: {times:[{start:"00:00",end:"24:00"}]},
-          wed: {times:[{start:"00:00",end:"24:00"}]},
-          thu: {times:[{start:"00:00",end:"24:00"}]},
-          fri: {times:[{start:"00:00",end:"24:00"}]},
-          sat: {times:[{start:"00:00",end:"24:00"}]},
-          sun: {times:[{start:"00:00",end:"24:00"}]}
-        }
-      },
-      {
-        id: "ookuraya",
-        name: "おーくら家",
-        category: "有名店",
-        area: "東神奈川駅",
-        lat: 35.4770278,
-        lng: 139.6317667,
-        parent: null,
-        description: "",
-        googleMapUrl: "",
-        websiteUrl: "",
-        openingHours: {
-          mon: {times:[{start:"10:00",end:"00:00"}]},
-          tue: {times:[{start:"10:00",end:"00:00"}]},
-          wed: {times:[{start:"10:00",end:"00:00"}]},
-          thu: {times:[{start:"10:00",end:"00:00"}]},
-          fri: {times:[{start:"10:00",end:"00:00"}]},
-          sat: {times:[{start:"10:00",end:"00:00"}]},
-          sun: {times:[{start:"10:00",end:"00:00"}]}
-        }
-      },
-      {
-        id: "oudou-torakichihikari",
-        name: "とらきち家 光",
-        category: "王道家",
-        area: "六角橋",
-        lat: 35.4847199,
-        lng: 139.609521,
-        parent: null,
-        description: "",
-        googleMapUrl: "https://www.google.com/maps/place/%E3%81%A8%E3%82%89%E3%81%8D%E3%81%A1%E5%AE%B6+%E5%85%89/@35.4847199,139.609521,15z",
-        websiteUrl: "https://x.com/torakichi_ya",
-        openingHours: {
-          mon: {times:[{start:"11:00",end:"23:00"}]},
-          tue: {times:[{start:"11:00",end:"23:00"}]},
-          wed: {times:[{start:"11:00",end:"23:00"}]},
-          thu: {times:[{start:"11:00",end:"23:00"}]},
-          fri: {times:[{start:"11:00",end:"23:00"}]},
-          sat: {times:[{start:"11:00",end:"23:00"}]},
-          sun: {times:[{start:"11:00",end:"23:00"}]}
-        }
-      },
-      {
-        id: "ichikakuya-yokohama",
-        name: "壱角家 横浜西口店",
-        category: "不明",
-        area: "横浜駅西口",
-        lat: 35.4681493,
-        lng: 139.5860072,
-        parent: null,
-        description: "",
-        googleMapUrl: "https://www.google.com/maps/place/%E8%A5%BF%E9%8E%8C%E5%AE%B6/@35.4681493,139.5860072,14z",
-        websiteUrl: "",
-        openingHours: {
-          mon: {times:[{start:"11:00",end:"01:00"}]},
-          tue: {times:[{start:"11:00",end:"01:00"}]},
-          wed: {times:[{start:"11:00",end:"01:00"}]},
-          thu: {times:[{start:"11:00",end:"01:00"}]},
-          fri: {times:[{start:"11:00",end:"01:00"}]},
-          sat: {times:[{start:"11:00",end:"01:00"}]},
-          sun: {times:[{start:"11:00",end:"01:00"}]}
-        }
-      },
-      {
-        id: "suzukiya",
-        name: "寿々㐂家",
-        category: "有名店",
-        area: "上星川駅",
-        lat: 35.4712388,
-        lng: 139.5400947,
-        parent: null,
-        description: "",
-        googleMapUrl: "https://www.google.com/maps/place/%E5%AF%BF%E3%80%85%E3%90%82%E5%AE%B6/@35.4712388,139.5400947,14z",
-        websiteUrl: "https://x.com/suzukiya224",
-        openingHours: {
-          mon: {times:[{start:"11:00",end:"21:00"}]},
-          tue: {times:[{start:"11:00",end:"21:00"}]},
-          wed: {times:[]},
-          thu: {times:[{start:"11:00",end:"21:00"}]},
-          fri: {times:[{start:"11:00",end:"21:00"}]},
-          sat: {times:[{start:"11:00",end:"21:00"}]},
-          sun: {times:[{start:"11:00",end:"21:00"}]}
-        }
-      },
-      {
-        id: "nonoya",
-        name: "らーめん野々家",
-        category: "有名店",
-        area: "大倉山",
-        lat: 35.5112787,
-        lng: 139.5824951,
-        parent: null,
-        description: "",
-        googleMapUrl: "https://www.google.com/maps/place/%E3%82%89%E3%83%BC%E3%82%81%E3%82%93%E9%87%8E%E3%80%85%E5%AE%B6/@35.5112787,139.5824951,14z",
-        websiteUrl: "https://x.com/ramen_nonoya",
-        openingHours: {
-          mon: {times:[{start:"11:00",end:"14:00"},{start:"17:30",end:"20:00"}]},
-          tue: {times:[{start:"11:00",end:"14:00"},{start:"17:30",end:"20:00"}]},
-          wed: {times:[]},
-          thu: {times:[]},
-          fri: {times:[{start:"11:00",end:"14:00"},{start:"17:30",end:"20:00"}]},
-          sat: {times:[{start:"11:00",end:"14:00"},{start:"17:30",end:"20:00"}]},
-          sun: {times:[{start:"11:00",end:"14:00"},{start:"17:30",end:"20:00"}]}
-        }
-      },
-      {
-        id: "oudou-kidouya",
-        name: "鬼道家",
-        category: "有名店",
-        area: "仙台",
-        lat: 38.2645786,
-        lng: 140.8666282,
-        parent: "yoshimuraya",
-        description: "仙台にオープンした王道家系統のお店。",
-        googleMapUrl: "https://www.google.com/maps/place/%E9%AC%BC%E9%81%93%E5%AE%B6/@38.2645786,140.8666282,16z/data=!4m6!3m5!1s0x5f89877591c28d59:0xf2d316766b1b9666!8m2!3d38.2645786!4d140.8666282!16s%2Fg%2F11bbxlkl66?entry=ttu&g_ep=EgoyMDI2MDEwNi4wIKXMDSoASAFQAw%3D%3D",
-        websiteUrl: "https://x.com/kidouya_sendai",
-        openingHours: {
-          mon: {times:[{start:"11:00",end:"14:30"},{start:"17:00",end:"01:00"}]},
-          tue: {times:[{start:"11:00",end:"14:30"},{start:"17:00",end:"01:00"}]},
-          wed: {times:[{start:"11:00",end:"14:30"},{start:"17:00",end:"01:00"}]},
-          thu: {times:[{start:"11:00",end:"14:30"},{start:"17:00",end:"01:00"}]},
-          fri: {times:[{start:"11:00",end:"14:30"},{start:"17:00",end:"01:00"}]},
-          sat: {times:[{start:"11:00",end:"15:00"},{start:"15:30",end:"01:00"}]},
-          sun: {times:[{start:"11:00",end:"15:00"},{start:"15:30",end:"01:00"}]}
-        }
-      },
-      {
-        id: "kan2ya-kamata",
-        name: "環2家 蒲田店",
-        category: "直系",
-        area: "蒲田",
-        lat: 35.5637182,
-        lng: 139.7161694,
-        parent: "yoshimuraya",
-        description: "吉村家直系店。定休日は毎月第2月曜日と第4月曜日。",
-        googleMapUrl: "https://www.google.com/maps/place/%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%B3+%E7%92%B02%E5%AE%B6+%E8%92%B2%E7%94%B0%E5%BA%97/@35.5637182,139.7161694,17z",
-        websiteUrl: "https://kan2ya.com/",
-        openingHours: {
-          mon: {times:[]},
-          tue: {times:[{start:"11:00",end:"21:30"}]},
-          wed: {times:[{start:"11:00",end:"21:30"}]},
-          thu: {times:[{start:"11:00",end:"21:30"}]},
-          fri: {times:[{start:"11:00",end:"21:30"}]},
-          sat: {times:[{start:"11:00",end:"21:30"}]},
-          sun: {times:[{start:"11:00",end:"21:30"}]}
-        }
-      },
-      {
-        id: "daikiya-kamata",
-        name: "大輝家",
-        category: "派生",
-        area: "蒲田",
-        lat: 35.5613702,
-        lng: 139.7226429,
-        parent: null,
-        description: "横浜家系ラーメン。平日は朝7時から営業。",
-        googleMapUrl: "https://www.google.com/maps/place/%E6%A8%AA%E6%B5%9C%E5%AE%B6%E7%B3%BB%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%B3+%E5%A4%A7%E8%BC%9D%E5%AE%B6/@35.5613702,139.7226429,17z",
-        websiteUrl: "https://twitter.com/daikiya007",
-        openingHours: {
-          mon: {times:[{start:"07:00",end:"24:00"}]},
-          tue: {times:[{start:"07:00",end:"24:00"}]},
-          wed: {times:[{start:"07:00",end:"24:00"}]},
-          thu: {times:[{start:"07:00",end:"24:00"}]},
-          fri: {times:[{start:"07:00",end:"24:00"}]},
-          sat: {times:[{start:"11:00",end:"24:00"}]},
-          sun: {times:[{start:"11:00",end:"24:00"}]}
-        }
-      },
-      {
-        id: "hiiki-kamata",
-        name: "らーめん飛粋",
-        category: "派生",
-        area: "蒲田",
-        lat: 35.564036,
-        lng: 139.7173084,
-        parent: null,
-        description: "家系ラーメン店。日曜定休。",
-        googleMapUrl: "https://www.google.com/maps/place/%E3%82%89%E3%83%BC%E3%82%81%E3%82%93%E9%A3%9B%E7%B2%8B/@35.564036,139.7173084,17z",
-        websiteUrl: "https://hiiki.co.jp/",
-        openingHours: {
-          mon: {times:[{start:"11:00",end:"16:00"},{start:"17:00",end:"21:00"}]},
-          tue: {times:[{start:"11:00",end:"16:00"},{start:"17:00",end:"21:00"}]},
-          wed: {times:[{start:"11:00",end:"16:00"},{start:"17:00",end:"21:00"}]},
-          thu: {times:[{start:"11:00",end:"16:00"},{start:"17:00",end:"21:00"}]},
-          fri: {times:[{start:"11:00",end:"16:00"},{start:"17:00",end:"21:00"}]},
-          sat: {times:[{start:"11:00",end:"20:00"}]},
-          sun: {times:[]}
-        }
-      },
-      {
-        id: "uradaikiya-aomono",
-        name: "裏大輝家 青物横丁店",
-        category: "派生",
-        area: "青物横丁",
-        lat: 35.6108836,
-        lng: 139.7419512,
-        parent: "daikiya-kamata",
-        description: "大輝家グループの2号店。",
-        googleMapUrl: "https://www.google.com/maps/place/%E8%A3%8F%E5%A4%A7%E8%BC%9D%E5%AE%B6+%E9%9D%92%E7%89%A9%E6%A8%AA%E4%B8%81%E5%BA%97/@35.6108836,139.7419512,17z",
-        websiteUrl: "https://twitter.com/daikiyaasahi",
-        openingHours: {
-          mon: {times:[{start:"11:00",end:"15:00"},{start:"17:00",end:"23:00"}]},
-          tue: {times:[{start:"11:00",end:"15:00"},{start:"17:00",end:"23:00"}]},
-          wed: {times:[{start:"11:00",end:"15:00"},{start:"17:00",end:"23:00"}]},
-          thu: {times:[{start:"11:00",end:"15:00"},{start:"17:00",end:"23:00"}]},
-          fri: {times:[{start:"11:00",end:"15:00"},{start:"17:00",end:"23:00"}]},
-          sat: {times:[{start:"11:00",end:"15:00"},{start:"17:00",end:"23:00"}]},
-          sun: {times:[{start:"11:00",end:"15:00"},{start:"17:00",end:"23:00"}]}
-        }
-      },
+          mon: { times: [{ start: '11:00', end: '20:00' }] },
+          tue: { times: [{ start: '11:00', end: '20:00' }] },
+          wed: { times: [{ start: '11:00', end: '20:00' }] },
+          thu: { times: [{ start: '11:00', end: '20:00' }] },
+          fri: { times: [{ start: '11:00', end: '20:00' }] },
+          sat: { times: [{ start: '11:00', end: '20:00' }] },
+          sun: { times: [{ start: '11:00', end: '20:00' }] }
+        },
+        regularHoliday: [],
+        specialHours: {},
+        googleMapUrl: 'https://www.google.co.jp/maps/place/%E5%AE%B6%E7%B3%BB%E7%B7%8F%E6%9C%AC%E5%B1%B1+%E5%90%89%E6%9D%91%E5%AE%B6/@35.4629487,139.6150264,154m',
+        websiteUrl: 'http://ieke1.com/',
+        lineage: 'yoshimuraya'
+      }
     ];
     
     // State
@@ -3411,7 +3098,7 @@
     };
     
     function startTutorial() {
-      console.log('startTutorial called');
+      console.log('startTutorial called - starting tutorial directly');
       
       // 二重起動ガード
       if (tutorialActive) {
@@ -3419,14 +3106,12 @@
         return;
       }
       
-      if (localStorage.getItem('hasCompletedTutorial')) {
-        console.log('Tutorial already completed, skipping');
-        return;
-      }
-      
+      // tutorial.htmlでは完了チェックをスキップして直接開始
       tutorialActive = true;
       tutorialStep = tutorialSteps.WELCOME;
-      showWelcomeCard();
+      
+      // 歓迎カードをスキップして直接チュートリアル開始
+      startTutorialGuide();
       console.log('Tutorial started');
     }
     
@@ -3467,7 +3152,7 @@
         <p style="font-size: 16px; color: #6b7280; line-height: 1.6; margin-bottom: 24px;">
           近くの家系ラーメン店を<br>探して、行って、記録できます
         </p>
-        <button id="start-tutorial-btn" style="
+        <button onclick="startTutorialGuide()" style="
           width: 100%;
           padding: 16px;
           background: #ef4444;
@@ -3478,7 +3163,7 @@
           font-size: 18px;
           cursor: pointer;
         ">はじめる</button>
-        <button id="skip-tutorial-btn" style="
+        <button onclick="skipTutorial()" style="
           width: 100%;
           margin-top: 12px;
           padding: 12px;
@@ -3490,28 +3175,6 @@
         ">スキップ</button>
       `;
       document.body.appendChild(card);
-      
-      // はじめるボタン：/tutorial.htmlへ
-      document.getElementById('start-tutorial-btn').onclick = () => {
-        localStorage.setItem('hasCompletedTutorial', 'true');
-        location.href = '/tutorial.html';
-      };
-      
-      // スキップボタン：そのままアプリ使用
-      document.getElementById('skip-tutorial-btn').onclick = () => {
-        localStorage.setItem('hasCompletedTutorial', 'true');
-        card.remove();
-        overlay.remove();
-        
-        // 「今から」誘導カード表示
-        const hasSeenGuide = localStorage.getItem('hasSeenNearbyGuide');
-        if (!hasSeenGuide) {
-          tset(() => {
-            showNearbyGuide();
-            localStorage.setItem('hasSeenNearbyGuide', 'true');
-          }, 1000);
-        }
-      };
     }
     
     function startTutorialGuide() {
@@ -3929,13 +3592,21 @@
     }
     
     function completeTutorial() {
-      // モーダルを閉じる
-      const detailModal = document.getElementById('shop-detail-modal');
-      if (detailModal) {
-        detailModal.style.display = 'none';
-      }
+      // チュートリアル完了メッセージ
+      clearTutorialTimers();
+      document.body.classList.remove('tutorial-active');
+      document.getElementById('tutorial-header')?.remove();
+      document.getElementById('tutorial-overlay')?.remove();
+      document.getElementById('tutorial-spotlight')?.remove();
+      removeTooltips();
+      document.getElementById('shop-detail-modal')?.classList.remove('active');
       
-      skipTutorial(); // チュートリアル終了処理（誘導カードもここで表示される）
+      const msg = document.createElement('div');
+      msg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10000;background:white;padding:40px 60px;border-radius:24px;box-shadow:0 8px 32px rgba(0,0,0,0.2);text-align:center;';
+      msg.innerHTML = '<div style="font-size:48px;margin-bottom:16px;">✨</div><div style="font-size:20px;font-weight:600;color:#111827;margin-bottom:8px;">完了しました！</div><div style="font-size:14px;color:#6b7280;">アプリを使ってみよう</div>';
+      document.body.appendChild(msg);
+      
+      setTimeout(() => { location.href = '/'; }, 2000);
     }
     
     function showNearbyGuide() {
@@ -4064,7 +3735,82 @@
     }
     
     function restartTutorial() {
-      location.href = '/tutorial.html';
+      clearTutorialTimers();  // タイマーを全てクリア
+      
+      // 開いているモーダルを全て閉じる
+      const shopDetailModal = document.getElementById('shop-detail-modal');
+      const recordModal = document.getElementById('record-modal');
+      const changelogModal = document.getElementById('changelog-modal');
+      
+      if (shopDetailModal) {
+        shopDetailModal.classList.remove('active');
+        shopDetailModal.style.display = '';  // displayをリセット
+        
+        // modal-contentのスクロール位置をリセット
+        const modalContent = shopDetailModal.querySelector('.modal-content');
+        if (modalContent) {
+          modalContent.scrollTop = 0;
+        }
+      }
+      if (recordModal) {
+        recordModal.classList.remove('active');
+        recordModal.style.display = '';
+      }
+      if (changelogModal) {
+        changelogModal.classList.remove('active');
+        changelogModal.style.display = '';
+      }
+      
+      // 既存のチュートリアルをクリーンアップ
+      document.getElementById('tutorial-welcome')?.remove();
+      document.getElementById('welcome-overlay')?.remove();
+      document.getElementById('tutorial-skip-btn')?.remove();
+      document.getElementById('tutorial-header')?.remove();
+      document.getElementById('tutorial-overlay')?.remove();
+      document.getElementById('tutorial-spotlight')?.remove();
+      removeTooltips();
+      
+      // bodyのクラスを削除
+      document.body.classList.remove('tutorial-active');
+      
+      // チュートリアル状態をリセット
+      tutorialActive = false;
+      tutorialStep = tutorialSteps.WELCOME;
+      
+      // マーカーのスタイルをリセット
+      Object.keys(markers).forEach(shopId => {
+        const marker = markers[shopId];
+        const icon = marker.getElement();
+        if (icon) {
+          icon.style.opacity = '1';
+          icon.style.pointerEvents = 'auto';
+          icon.style.filter = 'none';
+          icon.style.zIndex = '';
+        }
+      });
+      
+      // MAPタブに移動
+      const mapTab = document.getElementById('tab-map');
+      const tabs = document.querySelectorAll('.tab-content');
+      tabs.forEach(tab => tab.classList.remove('active'));
+      mapTab?.classList.add('active');
+      
+      const navItems = document.querySelectorAll('.nav-item');
+      navItems.forEach(item => item.classList.remove('active'));
+      navItems[0]?.classList.add('active');
+      
+      // 地図をリセット
+      if (map) {
+        map.setView([35.45, 139.62], 11);
+      }
+      
+      // マーカーを再描画
+      updateMarkers();
+      
+      // チュートリアルを再開
+      localStorage.removeItem('hasCompletedTutorial');
+      localStorage.removeItem('hasSeenNearbyGuide');
+      tset(() => startTutorial(), 500);
     }
     
     // チュートリアル進行管理
@@ -4397,9 +4143,9 @@
       const urlParams = new URLSearchParams(window.location.search);
       const shopParam = urlParams.get('shop');
       
-      // チュートリアル（初回のみ、かつURLパラメータがない場合）
+      // tutorial.htmlは常にチュートリアル開始
       tset(() => {
-        if (!shopParam && !localStorage.getItem('hasCompletedTutorial')) {
+        if (!shopParam) {
           startTutorial();
         }
       }, 1000);
