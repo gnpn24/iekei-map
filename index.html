@@ -73,7 +73,7 @@
       overflow: hidden;
       position: relative;
       /* PWA用: Safe Areaを考慮した高さ調整 */
-      padding-bottom: env(safe-area-inset-bottom);
+      padding-bottom: 4px;
       margin-bottom: calc(-1 * env(safe-area-inset-bottom));
     }
     
@@ -1733,63 +1733,13 @@
     /* 🔍 Padding可視化（デバッグ用） */
     /* Safe Areaが効いている場合：青い帯が表示される */
     /* Safe Areaがない場合：青い帯がない（0px） */
-    .content::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: env(safe-area-inset-bottom, 0px);
-      background: linear-gradient(to bottom, rgba(0, 150, 255, 0.5), rgba(0, 100, 255, 0.7));
-      pointer-events: none;
-      z-index: 9998;
-      border-top: 4px solid #0066ff;
-      border-bottom: 4px solid #0099ff;
-    }
     
-    .content::before {
-      content: 'Safe Area: ' attr(data-safe-area);
-      position: absolute;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 100, 255, 0.9);
-      color: white;
-      padding: 4px 12px;
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: bold;
-      z-index: 9999;
-      pointer-events: none;
-    }
     
-    .bottom-nav::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 0;
-      border-top: 4px solid #ff9900;
-      pointer-events: none;
-      z-index: 10000;
-    }
     
-    .bottom-nav::after {
-      content: 'Bottom Nav Start';
-      position: absolute;
-      top: 0;
-      left: 50%;
-      transform: translate(-50%, -100%);
-      background: rgba(255, 153, 0, 0.9);
-      color: white;
-      padding: 4px 12px;
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: bold;
-      z-index: 10001;
-      pointer-events: none;
-    }
+    
+    
+    
+    
     
     .bottom-nav {
       position: relative;
@@ -6181,24 +6131,7 @@
     window.saveVisitRecord = saveVisitRecord;
   
       
-      // 🔍 Safe Area値を表示
-      setTimeout(() => {
-        const content = document.querySelector('.content');
-        const bottomNav = document.querySelector('.bottom-nav');
-        
-        // bottom-navのpadding-bottomから実際の値を取得
-        const actualPadding = bottomNav ? getComputedStyle(bottomNav).paddingBottom : '0px';
-        
-        if (content) {
-          content.setAttribute('data-safe-area', actualPadding);
-        }
-        
-        console.log('🔍 Safe Area Debug:', {
-          'bottom-nav padding-bottom': actualPadding,
-          'innerHeight': window.innerHeight,
-          'rect.bottom': bottomNav?.getBoundingClientRect().bottom
-        });
-      }, 1000);
+      
       // 🔍 デバッグ: Safe Area & Padding 確認（画面表示）
       setTimeout(() => {
         const bottomNav = document.querySelector('.bottom-nav');
