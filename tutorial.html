@@ -72,6 +72,9 @@
       flex: 1;
       overflow: hidden;
       position: relative;
+      /* PWA用: Safe Areaを考慮した高さ調整 */
+      padding-bottom: 4px;
+      margin-bottom: calc(-1 * env(safe-area-inset-bottom));
     }
     
     .tab-content {
@@ -1726,26 +1729,41 @@
     .leaflet-popup-tip{
       box-shadow: 0 2px 8px rgba(0,0,0,.15);
     }
-  </style>
+  
+    /* 🔍 Padding可視化（デバッグ用） */
+    /* Safe Areaが効いている場合：青い帯が表示される */
+    /* Safe Areaがない場合：青い帯がない（0px） */
+    
+    
+    
+    
+    
+    
+    
+    
+    .bottom-nav {
+      position: relative;
+    }
+    </style></style>
 </head>
 <body>
   <div class="app-container">
     <div class="header">
-      <h1>🍜 家系ラーメンmap</h1>
-      <button onclick="restartTutorial()" style="
+      <h1>🎓 チュートリアル</h1>
+      <button onclick="location.href='/'" style="
         position: absolute;
         right: 16px;
         top: 50%;
         transform: translateY(-50%);
         padding: 8px 12px;
-        background: #ef4444;
+        background: #3b82f6;
         color: white;
         border: none;
         border-radius: 8px;
         font-size: 12px;
-        font-weight: 700;
+        font-weight: 600;
         cursor: pointer;
-      ">チュートリアル</button>
+      ">mapへ戻る</button>
     </div>
     
     <div class="content">
@@ -3538,61 +3556,13 @@
     }
     
     function skipTutorial() {
-      clearTutorialTimers();  // タイマーを全てクリア
-      tutorialActive = false;
+      clearTutorialTimers();
       
-      // bodyからクラスを削除
-      document.body.classList.remove('tutorial-active');
-      
-      // モーダルのスクロール位置をリセット
-      const detailModal = document.getElementById('shop-detail-modal');
-      const modalContent = detailModal?.querySelector('.modal-content');
-      if (modalContent) {
-        modalContent.scrollTop = 0;
-        console.log('★★ skipTutorial: Reset modal scrollTop to 0 ★★');
-      }
-      
-      // すべてのチュートリアル要素を削除
-      document.getElementById('tutorial-welcome')?.remove();
-      document.getElementById('welcome-overlay')?.remove();
-      document.getElementById('tutorial-skip-btn')?.remove();
-      document.getElementById('tutorial-header')?.remove();
-      document.getElementById('tutorial-overlay')?.remove();
-      document.getElementById('tutorial-spotlight')?.remove();
-      removeTooltips();
-      
-      // 地図の操作を再有効化
-      if (map) {
-        map.dragging.enable();
-        map.touchZoom.enable();
-        map.doubleClickZoom.enable();
-        map.scrollWheelZoom.enable();
-        map.boxZoom.enable();
-        map.keyboard.enable();
-        if (map.tap) map.tap.enable();
-      }
-      
-      // localStorage保存
-      localStorage.setItem('hasCompletedTutorial', 'true');
-      
-      // MAP画面の通常状態に戻す
-      map.setView([35.45, 139.62], 11);
-      
-      // マーカーを再描画
-      updateMarkers();
-      
-      // 初回訪問時は誘導カードを表示
-      const hasSeenGuide = localStorage.getItem('hasSeenNearbyGuide');
-      if (!hasSeenGuide) {
-        tset(() => {
-          showNearbyGuide();
-          localStorage.setItem('hasSeenNearbyGuide', 'true');
-        }, 1000);
-      }
+      location.href = '/?showGuide=true';
     }
     
     function completeTutorial() {
-      // チュートリアル完了メッセージ
+      // チュートリアル完了 - すぐにindexへ（準備OK!が表示されるので重複メッセージ不要）
       clearTutorialTimers();
       document.body.classList.remove('tutorial-active');
       document.getElementById('tutorial-header')?.remove();
@@ -3601,12 +3571,7 @@
       removeTooltips();
       document.getElementById('shop-detail-modal')?.classList.remove('active');
       
-      const msg = document.createElement('div');
-      msg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10000;background:white;padding:40px 60px;border-radius:24px;box-shadow:0 8px 32px rgba(0,0,0,0.2);text-align:center;';
-      msg.innerHTML = '<div style="font-size:48px;margin-bottom:16px;">✨</div><div style="font-size:20px;font-weight:600;color:#111827;margin-bottom:8px;">完了しました！</div><div style="font-size:14px;color:#6b7280;">アプリを使ってみよう</div>';
-      document.body.appendChild(msg);
-      
-      setTimeout(() => { location.href = '/'; }, 2000);
+      location.href = '/?showGuide=true';
     }
     
     function showNearbyGuide() {
@@ -5119,6 +5084,18 @@
       currentShop = shops.find(s => s.id === shopId);
       if (!currentShop) return;
       
+      // チュートリアル中はモーダルのスクロールを無効化
+      if (tutorialActive) {
+        setTimeout(() => {
+          const detailModal = document.getElementById('shop-detail-modal');
+          const modalContent = detailModal?.querySelector('.modal-content');
+          if (modalContent) {
+            modalContent.style.overflow = 'hidden';
+            modalContent.style.touchAction = 'none';
+          }
+        }, 100);
+      }
+      
       // チュートリアル中はモーダルのスクロール位置を必ずトップにリセット
       if (tutorialActive) {
         const detailModal = document.getElementById('shop-detail-modal');
@@ -5847,7 +5824,10 @@
     window.editVisitRecord = editVisitRecord;
     window.deleteVisitRecord = deleteVisitRecord;
     window.saveVisitRecord = saveVisitRecord;
-  </script>
+  
+      
+      
+    </script>
   
   <!-- Share Modal -->
   <div id="share-modal" class="modal" onclick="closeShareModal()">
