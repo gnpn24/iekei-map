@@ -50,6 +50,7 @@
       flex-direction: column;
       height: 100vh; /* fallback for older browsers */
       height: 100dvh; /* dynamic viewport height - URLバー考慮 */
+      padding-top: env(safe-area-inset-top);
     }
     
     .header {
@@ -71,6 +72,9 @@
       flex: 1;
       overflow: hidden;
       position: relative;
+      /* PWA用: Safe Areaを考慮した高さ調整 */
+      padding-bottom: 4px;
+      margin-bottom: calc(-1 * env(safe-area-inset-bottom));
     }
     
     .tab-content {
@@ -88,6 +92,7 @@
       background: white;
       border-top: 1px solid #e5e7eb;
       padding: 4px 0;
+      padding-bottom: max(4px, env(safe-area-inset-bottom));
     }
     
     .nav-item {
@@ -2955,7 +2960,10 @@
         z-index: 10000;
         background: white;
         border-bottom: 1px solid #e5e7eb;
-        padding: 12px 16px;
+        padding-top: max(12px, env(safe-area-inset-top));
+        padding-bottom: 12px;
+        padding-left: 16px;
+        padding-right: 16px;
         display: flex;
         justify-content: space-between;
         align-items: center;
