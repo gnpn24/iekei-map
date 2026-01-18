@@ -6184,10 +6184,20 @@
       // 🔍 Safe Area値を表示
       setTimeout(() => {
         const content = document.querySelector('.content');
-        const safeArea = getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-bottom)') || '0px';
+        const bottomNav = document.querySelector('.bottom-nav');
+        
+        // bottom-navのpadding-bottomから実際の値を取得
+        const actualPadding = bottomNav ? getComputedStyle(bottomNav).paddingBottom : '0px';
+        
         if (content) {
-          content.setAttribute('data-safe-area', safeArea || '0px');
+          content.setAttribute('data-safe-area', actualPadding);
         }
+        
+        console.log('🔍 Safe Area Debug:', {
+          'bottom-nav padding-bottom': actualPadding,
+          'innerHeight': window.innerHeight,
+          'rect.bottom': bottomNav?.getBoundingClientRect().bottom
+        });
       }, 1000);
       // 🔍 デバッグ: Safe Area & Padding 確認（画面表示）
       setTimeout(() => {
