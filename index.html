@@ -1750,20 +1750,28 @@
   <div class="app-container">
     <div class="header">
       <h1>🍜 家系ラーメンmap</h1>
-      <button onclick="restartTutorial()" style="
+      <button onclick="openSettingsModal()" style="
         position: absolute;
         right: 16px;
         top: 50%;
         transform: translateY(-50%);
-        padding: 8px 12px;
-        background: #ef4444;
-        color: white;
+        width: 32px;
+        height: 32px;
+        background: white;
         border: none;
         border-radius: 8px;
-        font-size: 12px;
-        font-weight: 700;
         cursor: pointer;
-      ">チュートリアル</button>
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      ">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 6.5v-2M12 19.5v-2M17.5 12h2M4.5 12h2M15.73 8.27l1.42-1.42M6.85 17.15l1.42-1.42M17.15 15.73l1.42 1.42M6.27 6.85l1.42 1.42"/>
+        </svg>
+      </button>
     </div>
     
     <div class="content">
@@ -1899,801 +1907,7 @@
             <div id="visit-history-list"></div>
           </div>
           
-          <!-- 変更履歴 -->
-          <div class="stats-card" style="margin-top:16px;">
-            <div class="stats-title">📝 変更履歴</div>
-            <div class="version-info">
-              <div class="version-current">現在のバージョン: <strong>v1.18.1</strong></div>
-              <div class="version-date">最終更新: 2026/01/17</div>
-            </div>
-            
-            <div class="changelog">
-              <!-- v1.18.1 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.18.1</span>
-                  <span class="version-date-small">2026/01/17</span>
-                </div>
-                <ul class="version-list">
-                  <li>🚨 チュートリアル専用マーカー表示を修正</li>
-                  <li>📱 iOS PWA対応（safe-area）</li>
-                  <li>✅ チュートリアルが正常に進む</li>
-                </ul>
-              </div>
-              
-              <!-- v1.18.0 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.18.0</span>
-                  <span class="version-date-small">2026/01/17</span>
-                </div>
-                <ul class="version-list">
-                  <li>❌ 地図表示範囲連動機能を削除</li>
-                  <li>✅ MAPタブで全店舗表示</li>
-                  <li>👍 シンプルな挙動に</li>
-                </ul>
-              </div>
-              
-              <!-- v1.16.2 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.16.2</span>
-                  <span class="version-date-small">2026/01/17</span>
-                </div>
-                <ul class="version-list">
-                  <li>✨ 詳細モーダルを常にTOPから表示</li>
-                  <li>📜 スクロール位置を自動リセット</li>
-                  <li>👍 UX改善</li>
-                </ul>
-              </div>
-              
-              <!-- v1.16.1 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.16.1</span>
-                  <span class="version-date-small">2026/01/17</span>
-                </div>
-                <ul class="version-list">
-                  <li>🐛 2回目以降も完璧に動作</li>
-                  <li>📜 スクロール位置をリセット</li>
-                  <li>⏱️ 全タイマーを管理下に</li>
-                  <li>🎉 完璧な安定性</li>
-                </ul>
-              </div>
-              
-              <!-- v1.16.0 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.16.0</span>
-                  <span class="version-date-small">2026/01/17</span>
-                </div>
-                <ul class="version-list">
-                  <li>🐛 誘導カード2回表示を修正</li>
-                  <li>⏱️ タイマー管理システムを追加</li>
-                  <li>🛡️ 二重起動ガード実装</li>
-                  <li>🎉 完璧な安定性</li>
-                </ul>
-              </div>
-              
-              <!-- v1.15.6 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.15.6</span>
-                  <span class="version-date-small">2026/01/17</span>
-                </div>
-                <ul class="version-list">
-                  <li>🎯 スポットライトの位置を完全修正</li>
-                  <li>✅ 赤枠がピッタリ合う</li>
-                  <li>🎉 チュートリアル完璧動作！</li>
-                </ul>
-              </div>
-              
-              <!-- v1.15.5 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.15.5</span>
-                  <span class="version-date-small">2026/01/17</span>
-                </div>
-                <ul class="version-list">
-                  <li>🐛 モーダルが正常に開くように修正</li>
-                  <li>✅ Step 2→3 が完璧に動作</li>
-                  <li>🎉 チュートリアル完全修正</li>
-                </ul>
-              </div>
-              
-              <!-- v1.15.4 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.15.4</span>
-                  <span class="version-date-small">2026/01/17</span>
-                </div>
-                <ul class="version-list">
-                  <li>🐛 チュートリアル再起動を完全修正</li>
-                  <li>✅ モーダルが正常に表示</li>
-                  <li>🔄 状態を完全リセット</li>
-                </ul>
-              </div>
-              
-              <!-- v1.15.3 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.15.3</span>
-                  <span class="version-date-small">2026/01/17</span>
-                </div>
-                <ul class="version-list">
-                  <li>🔗 共有リンクでチュートリアルをスキップ</li>
-                  <li>✅ ?shop=sugitaya が正常動作</li>
-                  <li>🎯 初回アクセスとしてカウントしない</li>
-                </ul>
-              </div>
-              
-              <!-- v1.15.2 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.15.2</span>
-                  <span class="version-date-small">2026/01/17</span>
-                </div>
-                <ul class="version-list">
-                  <li>🐛 正しいボタンが点滅するように修正</li>
-                  <li>🔍 検索アイコンのセンタリング修正</li>
-                  <li>✅ 完璧な見た目</li>
-                </ul>
-              </div>
-              
-              <!-- v1.15.1 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.15.1</span>
-                  <span class="version-date-small">2026/01/17</span>
-                </div>
-                <ul class="version-list">
-                  <li>✨ 「今から」ボタンが緑点滅</li>
-                  <li>📏 誘導カードを大きく改善</li>
-                  <li>🎯 より目立つデザイン</li>
-                </ul>
-              </div>
-              
-              <!-- v1.15.0 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.15.0</span>
-                  <span class="version-date-small">2026/01/17</span>
-                </div>
-                <ul class="version-list">
-                  <li>📍 チュートリアル後に「今から」へ誘導</li>
-                  <li>✨ スムーズな導線を実現</li>
-                  <li>👥 スキップした人にも表示</li>
-                </ul>
-              </div>
-              
-              <!-- v1.14.4 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.14.4</span>
-                  <span class="version-date-small">2026/01/17</span>
-                </div>
-                <ul class="version-list">
-                  <li>🎉 チュートリアル完全動作！</li>
-                  <li>💬 吹き出しが正しい位置に表示</li>
-                  <li>✅ すべての問題を修正</li>
-                </ul>
-              </div>
-              
-              <!-- v1.14.3 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.14.3</span>
-                  <span class="version-date-small">2026/01/16</span>
-                </div>
-                <ul class="version-list">
-                  <li>✅ チュートリアル中は常にスクロール</li>
-                  <li>🎯 画面サイズに関わらず動作</li>
-                  <li>🐛 完全修正</li>
-                </ul>
-              </div>
-              
-              <!-- v1.14.2 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.14.2</span>
-                  <span class="version-date-small">2026/01/16</span>
-                </div>
-                <ul class="version-list">
-                  <li>🐛 スマホでスクロールが確実に動作</li>
-                  <li>📱 getBoundingRect()で位置計算</li>
-                  <li>✅ チュートリアル完全修正</li>
-                </ul>
-              </div>
-              
-              <!-- v1.14.1 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.14.1</span>
-                  <span class="version-date-small">2026/01/16</span>
-                </div>
-                <ul class="version-list">
-                  <li>🎨 シンプルなデザインに変更</li>
-                  <li>⚫ タイトルを黒文字に</li>
-                  <li>🌟 ガラス効果は維持</li>
-                </ul>
-              </div>
-              
-              <!-- v1.14.0 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.14.0</span>
-                  <span class="version-date-small">2026/01/16</span>
-                </div>
-                <ul class="version-list">
-                  <li>🎨 デザインを一新（ガラスモーフィズム）</li>
-                  <li>🌈 グラデーション＋影で立体感</li>
-                  <li>✋ タップ時の気持ちいいフィードバック</li>
-                </ul>
-              </div>
-              
-              <!-- v1.13.12 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.13.12</span>
-                  <span class="version-date-small">2026/01/16</span>
-                </div>
-                <ul class="version-list">
-                  <li>🐛 スマホでボタンが見える位置までスクロール</li>
-                  <li>📱 画面サイズに関わらず動作</li>
-                  <li>✅ Step 4完全修正</li>
-                </ul>
-              </div>
-              
-              <!-- v1.13.11 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.13.11</span>
-                  <span class="version-date-small">2026/01/16</span>
-                </div>
-                <ul class="version-list">
-                  <li>🐛 scrollTopで確実にスクロール</li>
-                  <li>⚡ 待機時間を最適化</li>
-                  <li>✅ Step 4が確実に動作</li>
-                </ul>
-              </div>
-              
-              <!-- v1.13.10 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.13.10</span>
-                  <span class="version-date-small">2026/01/16</span>
-                </div>
-                <ul class="version-list">
-                  <li>🐛 更新バナーの無限表示を修正</li>
-                  <li>🔄 リロード時にキャッシュをクリア</li>
-                  <li>✅ 確実に最新版が読み込まれる</li>
-                </ul>
-              </div>
-              
-              <!-- v1.13.9 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.13.9</span>
-                  <span class="version-date-small">2026/01/16</span>
-                </div>
-                <ul class="version-list">
-                  <li>🐛 訪問記録ボタンの取得を修正</li>
-                  <li>🔍 「来店情報」セクションを明示的に検索</li>
-                  <li>✅ Step 4が完全動作</li>
-                </ul>
-              </div>
-              
-              <!-- v1.13.8 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.13.8</span>
-                  <span class="version-date-small">2026/01/16</span>
-                </div>
-                <ul class="version-list">
-                  <li>🐛 スクリプトエラーを修正</li>
-                  <li>✅ 二重クロージングを削除</li>
-                </ul>
-              </div>
-              
-              <!-- v1.13.7 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.13.7</span>
-                  <span class="version-date-small">2026/01/16</span>
-                </div>
-                <ul class="version-list">
-                  <li>🐛 Step 4のスクロールを修正</li>
-                  <li>📜 modal-body内でスクロール</li>
-                  <li>✅ スポットライトが確実に表示</li>
-                </ul>
-              </div>
-              
-              <!-- v1.13.6 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.13.6</span>
-                  <span class="version-date-small">2026/01/16</span>
-                </div>
-                <ul class="version-list">
-                  <li>📱 歓迎カードを大きく表示</li>
-                  <li>🎨 文字サイズを拡大</li>
-                  <li>🌟 背景オーバーレイを追加</li>
-                </ul>
-              </div>
-              
-              <!-- v1.13.5 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.13.5</span>
-                  <span class="version-date-small">2026/01/16</span>
-                </div>
-                <ul class="version-list">
-                  <li>📱 モーダルを大きく表示</li>
-                  <li>📜 スクロール位置を調整</li>
-                  <li>✅ Step 4が確実に表示される</li>
-                </ul>
-              </div>
-              
-              <!-- v1.13.4 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.13.4</span>
-                  <span class="version-date-small">2026/01/16</span>
-                </div>
-                <ul class="version-list">
-                  <li>🐛 Step 4で要素を再取得</li>
-                  <li>⏱️ スクロール待機時間を延長</li>
-                  <li>✅ 完了演出が確実に表示される</li>
-                </ul>
-              </div>
-              
-              <!-- v1.13.3 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.13.3</span>
-                  <span class="version-date-small">2026/01/16</span>
-                </div>
-                <ul class="version-list">
-                  <li>🐛 吹き出しが表示されない問題を修正</li>
-                  <li>🔒 途中で閉じられない問題を修正</li>
-                  <li>✅ 準備OK！まで完走できるように</li>
-                </ul>
-              </div>
-              
-              <!-- v1.13.2 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.13.2</span>
-                  <span class="version-date-small">2026/01/15</span>
-                </div>
-                <ul class="version-list">
-                  <li>✏️ 文言を分かりやすく修正</li>
-                  <li>⏱️ 待機時間を3秒→2秒に短縮</li>
-                  <li>🐛 スポットライト表示を改善</li>
-                </ul>
-              </div>
-              
-              <!-- v1.13.1 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.13.1</span>
-                  <span class="version-date-small">2026/01/15</span>
-                </div>
-                <ul class="version-list">
-                  <li>🔄 4ステップ構成に変更</li>
-                  <li>👆 ポップアップ→詳細の流れを追加</li>
-                  <li>📖 営業時間→訪問記録を順に表示</li>
-                </ul>
-              </div>
-              
-              <!-- v1.13.0 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.13.0</span>
-                  <span class="version-date-small">2026/01/15</span>
-                </div>
-                <ul class="version-list">
-                  <li>✨ チュートリアルを大幅リニューアル</li>
-                  <li>📊 進捗表示（1/3）で安心感UP</li>
-                  <li>💡 スポットライト方式で対象を強調</li>
-                  <li>🎯 3ステップに簡略化</li>
-                  <li>🎉 完了演出を追加</li>
-                </ul>
-              </div>
-              
-              <!-- v1.12.1 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.12.1</span>
-                  <span class="version-date-small">2026/01/15</span>
-                </div>
-                <ul class="version-list">
-                  <li>🔽 吹き出しをマーカーの下に配置</li>
-                  <li>⬆️ 矢印を上向きに変更</li>
-                  <li>👀 マーカーと吹き出しが被らない</li>
-                </ul>
-              </div>
-              
-              <!-- v1.12.0 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.12.0</span>
-                  <span class="version-date-small">2026/01/15</span>
-                </div>
-                <ul class="version-list">
-                  <li>🔨 チュートリアルを根本から作り直し</li>
-                  <li>✅ 吉村家だけ表示（他は非表示）</li>
-                  <li>🎯 位置ずれ・誤タップ問題を完全解決</li>
-                </ul>
-              </div>
-              
-              <!-- v1.11.5 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.11.5</span>
-                  <span class="version-date-small">2026/01/15</span>
-                </div>
-                <ul class="version-list">
-                  <li>🐛 吉村家マーカーが右上に飛ぶ問題を修正</li>
-                  <li>📍 transform-originを設定して位置を維持</li>
-                </ul>
-              </div>
-              
-              <!-- v1.11.4 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.11.4</span>
-                  <span class="version-date-small">2026/01/15</span>
-                </div>
-                <ul class="version-list">
-                  <li>🐛 吹き出しの位置が左上に飛ぶ問題を修正</li>
-                  <li>🔝 z-indexを上げて黒背景の上に表示</li>
-                </ul>
-              </div>
-              
-              <!-- v1.11.3 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.11.3</span>
-                  <span class="version-date-small">2026/01/15</span>
-                </div>
-                <ul class="version-list">
-                  <li>🐛 マーカーが全部グレーアウトする問題を修正</li>
-                  <li>🔒 チュートリアル中の地図操作を無効化</li>
-                  <li>✨ 吹き出しUIを大幅改善（矢印・アニメーション）</li>
-                </ul>
-              </div>
-              
-              <!-- v1.11.2 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.11.2</span>
-                  <span class="version-date-small">2026/01/15</span>
-                </div>
-                <ul class="version-list">
-                  <li>➕ ヘッダーに「チュートリアル」ボタンを追加</li>
-                  <li>🔄 いつでもチュートリアルを再実行可能に</li>
-                </ul>
-              </div>
-              
-              <!-- v1.11.1 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.11.1</span>
-                  <span class="version-date-small">2026/01/15</span>
-                </div>
-                <ul class="version-list">
-                  <li>🐛 吉村家のピンがクリックできない問題を修正</li>
-                  <li>✨ 吉村家以外のピンを薄く表示（グレーアウト）</li>
-                  <li>💡 吉村家のピンを強調表示（赤い影）</li>
-                </ul>
-              </div>
-              
-              <!-- v1.11.0 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.11.0</span>
-                  <span class="version-date-small">2026/01/15</span>
-                </div>
-                <ul class="version-list">
-                  <li>📖 初回ガイド機能を追加（3ステップ）</li>
-                  <li>👥 友達に見せやすく改善</li>
-                </ul>
-              </div>
-              
-              <!-- v1.10.0 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.10.0</span>
-                  <span class="version-date-small">2026/01/15</span>
-                </div>
-                <ul class="version-list">
-                  <li>🗺️ MAPタブのリストを地図表示範囲に連動</li>
-                  <li>🔄 地図を動かすと自動でリスト更新</li>
-                </ul>
-              </div>
-              
-              <!-- v1.9.0 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.9.0</span>
-                  <span class="version-date-small">2026/01/15</span>
-                </div>
-                <ul class="version-list">
-                  <li>🔔 更新通知機能を追加（HTMLのみ）</li>
-                  <li>🔄 PWA更新問題を解決</li>
-                  <li>📱 自動バージョンチェック</li>
-                </ul>
-              </div>
-              
-              <!-- v1.8.3 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.8.3</span>
-                  <span class="version-date-small">2026/01/15</span>
-                </div>
-                <ul class="version-list">
-                  <li>🕐 深夜またぎの閉店時刻計算を修正</li>
-                  <li>📍 位置情報チェックを厳密化</li>
-                </ul>
-              </div>
-              
-              <!-- v1.8.2 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.8.2</span>
-                  <span class="version-date-small">2026/01/15</span>
-                </div>
-                <ul class="version-list">
-                  <li>🐛 searchQuery未定義エラーを修正</li>
-                </ul>
-              </div>
-              
-              <!-- v1.8.1 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.8.1</span>
-                  <span class="version-date-small">2026/01/15</span>
-                </div>
-                <ul class="version-list">
-                  <li>✨ 営業判定ロジックを大幅改善（シンプル化）</li>
-                  <li>🔍 起動時データ検証を追加（重複防止）</li>
-                  <li>🧪 テスト可能な構造に</li>
-                </ul>
-              </div>
-              
-              <!-- v1.8.0 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.8.0</span>
-                  <span class="version-date-small">2026/01/15</span>
-                </div>
-                <ul class="version-list">
-                  <li>🐛 重複ID削除（裏大輝家）</li>
-                  <li>🎨 壊れたCSSを修正</li>
-                  <li>🆕 王道家カテゴリーを新設</li>
-                  <li>⏰ 深夜またぎ営業時間に対応済み確認</li>
-                </ul>
-              </div>
-              
-              <!-- v1.7.7 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.7.7</span>
-                  <span class="version-date-small">2026/01/15</span>
-                </div>
-                <ul class="version-list">
-                  <li>✂️ 下部余白を0に変更（最小化）</li>
-                </ul>
-              </div>
-              
-              <!-- v1.7.6 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.7.6</span>
-                  <span class="version-date-small">2026/01/15</span>
-                </div>
-                <ul class="version-list">
-                  <li>✂️ 下部ナビバーの下の余白のみを削減</li>
-                </ul>
-              </div>
-              
-              <!-- v1.7.5 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.7.5</span>
-                  <span class="version-date-small">2026/01/15</span>
-                </div>
-                <ul class="version-list">
-                  <li>✂️ 下部余白をさらに最小化</li>
-                  <li>📱 下部ナビバーをよりコンパクトに</li>
-                </ul>
-              </div>
-              
-              <!-- v1.7.4 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.7.4</span>
-                  <span class="version-date-small">2026/01/15</span>
-                </div>
-                <ul class="version-list">
-                  <li>✂️ 下部ナビバーの下の余白を最小化</li>
-                </ul>
-              </div>
-              
-              <!-- v1.7.3 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.7.3</span>
-                  <span class="version-date-small">2026/01/13</span>
-                </div>
-                <ul class="version-list">
-                  <li>✂️ 全タブの下部余白を最適化（70pxに統一）</li>
-                  <li>✨ すっきりしたUIに改善</li>
-                </ul>
-              </div>
-              
-              <!-- v1.7.2 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.7.2</span>
-                  <span class="version-date-small">2026/01/13</span>
-                </div>
-                <ul class="version-list">
-                  <li>🔄 PWAキャッシュ更新問題を修正</li>
-                  <li>✂️ 統計タブの下部余白を調整</li>
-                </ul>
-              </div>
-              
-              <!-- v1.7.1 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.7.1</span>
-                  <span class="version-date-small">2026/01/13</span>
-                </div>
-                <ul class="version-list">
-                  <li>🏪 裏大輝家 青物横丁店を追加</li>
-                  <li>🌳 家系図に大輝家グループを反映</li>
-                  <li>📊 合計58店舗に</li>
-                </ul>
-              </div>
-              
-              <!-- v1.7.0 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.7.0</span>
-                  <span class="version-date-small">2026/01/13</span>
-                </div>
-                <ul class="version-list">
-                  <li>🏪 蒲田エリアに3店舗追加（環2家・大輝家・飛粋）</li>
-                  <li>📐 モーダル高さを調整（82vh / 78vh）</li>
-                  <li>📊 合計57店舗に</li>
-                </ul>
-              </div>
-              
-              <!-- v1.6.2 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.6.2</span>
-                  <span class="version-date-small">2026/01/13</span>
-                </div>
-                <ul class="version-list">
-                  <li>🔧 PWAを絶対パスに変更（より確実に）</li>
-                  <li>🆕 manifest.jsonにscopeを追加</li>
-                </ul>
-              </div>
-              
-              <!-- v1.6.1 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.6.1</span>
-                  <span class="version-date-small">2026/01/13</span>
-                </div>
-                <ul class="version-list">
-                  <li>🐛 PWAパスの404エラーを修正</li>
-                  <li>🔧 manifest.jsonを相対パスに変更</li>
-                  <li>🔧 service-workerを相対パスに変更</li>
-                </ul>
-              </div>
-              
-              <!-- v1.6.0 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.6.0</span>
-                  <span class="version-date-small">2026/01/13</span>
-                </div>
-                <ul class="version-list">
-                  <li>📝 統計タブに変更履歴を追加</li>
-                  <li>🔢 バージョン管理を開始</li>
-                  <li>📜 過去のアップデート履歴を整理</li>
-                </ul>
-              </div>
-              
-              <!-- v1.5.0 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.5.0</span>
-                  <span class="version-date-small">2026/01/12</span>
-                </div>
-                <ul class="version-list">
-                  <li>✨ 店舗シェア機能を追加（X / LINE / コピー）</li>
-                  <li>🔗 URLから直接店舗詳細を開けるように</li>
-                  <li>🐛 PWAのパス問題を修正</li>
-                </ul>
-              </div>
-              
-              <!-- v1.4.0 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.4.0</span>
-                  <span class="version-date-small">2026/01/12</span>
-                </div>
-                <ul class="version-list">
-                  <li>🔍 相関図に検索機能を追加</li>
-                  <li>📁 相関図に折りたたみ機能を追加</li>
-                  <li>🌳 家系図を3世代表示（孫世代対応）</li>
-                  <li>💅 相関図のカードをコンパクトに</li>
-                </ul>
-              </div>
-              
-              <!-- v1.3.0 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.3.0</span>
-                  <span class="version-date-small">2026/01/12</span>
-                </div>
-                <ul class="version-list">
-                  <li>📱 PWA対応を実装（ホーム画面に追加可能）</li>
-                  <li>🎨 アプリアイコンを追加（8サイズ）</li>
-                  <li>💾 オフライン動作対応</li>
-                </ul>
-              </div>
-              
-              <!-- v1.2.0 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.2.0</span>
-                  <span class="version-date-small">2026/01/12</span>
-                </div>
-                <ul class="version-list">
-                  <li>🔍 検索機能を実装</li>
-                  <li>📍 今からモードの距離表示を改善</li>
-                  <li>🎯 検索ボタンをUI改善</li>
-                </ul>
-              </div>
-              
-              <!-- v1.1.0 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.1.0</span>
-                  <span class="version-date-small">2026/01/11</span>
-                </div>
-                <ul class="version-list">
-                  <li>🏪 新規店舗を14店追加</li>
-                  <li>🕐 24時間営業に対応</li>
-                  <li>⏰ 営業ステータスを3段階に（閉店間近を追加）</li>
-                  <li>🎨 アイコンをSVGに統一</li>
-                </ul>
-              </div>
-              
-              <!-- v1.0.0 -->
-              <div class="version-section">
-                <div class="version-header">
-                  <span class="version-number">v1.0.0</span>
-                  <span class="version-date-small">2026/01/09</span>
-                </div>
-                <ul class="version-list">
-                  <li>🎉 初回リリース</li>
-                  <li>🗺️ 地図表示機能</li>
-                  <li>📝 訪問記録機能</li>
-                  <li>📊 統計表示機能</li>
-                  <li>⭐ お気に入り・行きたい機能</li>
-                  <li>✏️ 記録の編集・削除機能</li>
-                  <li>📸 画像アップロード（自動圧縮）</li>
-                </ul>
-              </div>
-            </div>
-          </div>
+          
         </div>
       </div>
     </div>
@@ -3395,7 +2609,7 @@
         warnings.forEach(w => console.warn(w));
         console.warn(`合計: ${warnings.length}件の警告`);
       } else {
-        console.log('✅ データ検証OK: 全て正常です');
+        // console.log('✅ データ検証OK: 全て正常です');
       }
       
       return warnings;
@@ -3429,7 +2643,7 @@
     };
     
     function startTutorial() {
-      console.log('startTutorial called');
+      // console.log('startTutorial called');
       
       // 二重起動ガード
       if (tutorialActive) {
@@ -3445,7 +2659,7 @@
       tutorialActive = true;
       tutorialStep = tutorialSteps.WELCOME;
       showWelcomeCard();
-      console.log('Tutorial started');
+      // console.log('Tutorial started');
     }
     
     function showWelcomeCard() {
@@ -4681,7 +3895,7 @@
     
     // Map Functions
     function initMap() {
-      console.log('initMap called');
+      // console.log('initMap called');
       map = L.map('map').setView([35.45, 139.62], 11);
       
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -4690,7 +3904,7 @@
       }).addTo(map);
       
       updateMarkers();
-      console.log('initMap completed');
+      // console.log('initMap completed');
     }
     
     function initResizeHandle() {
@@ -6132,75 +5346,247 @@
   
       
       
-      // 🔍 デバッグ: Safe Area & Padding 確認（画面表示）
-      setTimeout(() => {
-        const bottomNav = document.querySelector('.bottom-nav');
-        if (bottomNav) {
-          const computedStyle = window.getComputedStyle(bottomNav);
-          const rect = bottomNav.getBoundingClientRect();
-          
-          // デバッグパネルを作成
-          const debugPanel = document.createElement('div');
-          debugPanel.id = 'debug-panel';
-          debugPanel.style.cssText = `
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.95);
-            color: #00ff00;
-            padding: 20px;
-            border-radius: 12px;
-            font-family: monospace;
-            font-size: 11px;
-            line-height: 1.6;
-            z-index: 99999;
-            max-width: 90%;
-            max-height: 80%;
-            overflow-y: auto;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-          `;
-          
-          const gap = window.innerHeight - rect.bottom;
-          
-          debugPanel.innerHTML = `
-            <div style="font-size: 14px; font-weight: bold; margin-bottom: 12px; color: #00ffff;">
-              📱 Debug Info
-              <button onclick="this.parentElement.parentElement.remove()" style="
-                float: right;
-                background: #ff4444;
-                color: white;
-                border: none;
-                padding: 4px 12px;
-                border-radius: 4px;
-                cursor: pointer;
-              ">閉じる</button>
-            </div>
-            
-            <div style="color: #ffff00; margin-top: 8px;">📱 Bottom Nav</div>
-            padding-bottom: <span style="color: #fff;">${computedStyle.paddingBottom}</span><br>
-            height: <span style="color: #fff;">${computedStyle.height}</span><br>
-            
-            <div style="color: #ffff00; margin-top: 8px;">📐 Viewport</div>
-            innerHeight: <span style="color: #fff;">${window.innerHeight}px</span><br>
-            
-            <div style="color: #ffff00; margin-top: 8px;">📏 Position</div>
-            rect.top: <span style="color: #fff;">${rect.top}px</span><br>
-            rect.bottom: <span style="color: #fff;">${rect.bottom}px</span><br>
-            rect.height: <span style="color: #fff;">${rect.height}px</span><br>
-            
-            <div style="color: #ffff00; margin-top: 8px; font-weight: bold;">
-              ⚠️ 画面下の余白
-            </div>
-            <div style="font-size: 16px; color: ${gap === 0 ? '#00ff00' : '#ff4444'}; font-weight: bold;">
-              ${gap}px ${gap === 0 ? '✅ 完璧！' : '❌ 余白あり'}
-            </div>
-          `;
-          
-          document.body.appendChild(debugPanel);
+      
+    
+    // 設定モーダル
+    function openSettingsModal() {
+      document.getElementById('settings-modal').classList.add('active');
+    }
+    
+    function closeSettingsModal() {
+      document.getElementById('settings-modal').classList.remove('active');
+    }
+    
+    function openTutorial() {
+      closeSettingsModal();
+      location.href = '/tutorial.html';
+    }
+    
+
+    
+    // デバッグメニュー
+    function showDebugMenu() {
+      closeSettingsModal();
+      document.getElementById('debug-menu-modal').classList.add('active');
+    }
+    
+    function closeDebugMenu() {
+      document.getElementById('debug-menu-modal').classList.remove('active');
+    }
+    
+    // Debug Info表示
+    function toggleOldVersions() {
+      const content = document.getElementById('old-versions-content');
+      const text = document.getElementById('old-versions-toggle-text');
+      const icon = document.getElementById('old-versions-toggle-icon');
+      
+      if (content.style.display === 'none') {
+        content.style.display = 'block';
+        text.textContent = '過去のバージョンを隠す';
+        icon.textContent = '▲';
+      } else {
+        content.style.display = 'none';
+        text.textContent = '過去のバージョンを表示';
+        icon.textContent = '▼';
+      }
+    }
+    
+    function showDebugInfo() {
+      const bottomNav = document.querySelector('.bottom-nav');
+      if (!bottomNav) return;
+      
+      const computedStyle = window.getComputedStyle(bottomNav);
+      const rect = bottomNav.getBoundingClientRect();
+      const gap = window.innerHeight - rect.bottom;
+      
+      const debugPanel = document.createElement('div');
+      debugPanel.id = 'debug-panel';
+      debugPanel.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.95);
+        color: #00ff00;
+        padding: 20px;
+        border-radius: 12px;
+        font-family: monospace;
+        font-size: 11px;
+        line-height: 1.6;
+        z-index: 99999;
+        max-width: 90%;
+        max-height: 80%;
+        overflow-y: auto;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      `;
+      
+      debugPanel.innerHTML = `
+        <div style="font-size: 14px; font-weight: bold; margin-bottom: 12px; color: #00ffff;">
+          📱 Debug Info
+          <button onclick="this.parentElement.parentElement.remove()" style="
+            float: right;
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+          ">閉じる</button>
+        </div>
+        
+        <div style="color: #ffff00; margin-top: 8px;">📱 Bottom Nav</div>
+        padding-bottom: <span style="color: #fff;">${computedStyle.paddingBottom}</span><br>
+        height: <span style="color: #fff;">${computedStyle.height}</span><br>
+        
+        <div style="color: #ffff00; margin-top: 8px;">📐 Viewport</div>
+        innerHeight: <span style="color: #fff;">${window.innerHeight}px</span><br>
+        
+        <div style="color: #ffff00; margin-top: 8px;">📏 Position</div>
+        rect.top: <span style="color: #fff;">${rect.top}px</span><br>
+        rect.bottom: <span style="color: #fff;">${rect.bottom}px</span><br>
+        rect.height: <span style="color: #fff;">${rect.height}px</span><br>
+        
+        <div style="color: #ffff00; margin-top: 8px; font-weight: bold;">
+          ⚠️ 画面下の余白
+        </div>
+        <div style="font-size: 16px; color: ${gap === 0 ? '#00ff00' : '#ff4444'}; font-weight: bold;">
+          ${gap}px ${gap === 0 ? '✅ 完璧！' : '❌ 余白あり'}
+        </div>
+      `;
+      
+      document.body.appendChild(debugPanel);
+      closeDebugMenu();
+    }
+    
+    // Padding可視化トグル
+    let paddingVisualizationEnabled = false;
+    
+    function togglePaddingVisualization() {
+      paddingVisualizationEnabled = !paddingVisualizationEnabled;
+      const status = document.getElementById('padding-viz-status');
+      
+      if (paddingVisualizationEnabled) {
+        status.textContent = 'ON';
+        status.style.color = '#10b981';
+        addPaddingVisualization();
+      } else {
+        status.textContent = 'OFF';
+        status.style.color = '#9ca3af';
+        removePaddingVisualization();
+      }
+    }
+    
+    function addPaddingVisualization() {
+      const style = document.createElement('style');
+      style.id = 'padding-visualization-style';
+      style.textContent = `
+        .bottom-nav::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 0;
+          border-top: 4px solid #ff9900;
+          pointer-events: none;
+          z-index: 10000;
         }
-      }, 2000);
-    </script>
+        
+        .bottom-nav::after {
+          content: 'Bottom Nav (padding: ' attr(data-padding) ')';
+          position: absolute;
+          top: 0;
+          left: 50%;
+          transform: translate(-50%, -100%);
+          background: rgba(255, 153, 0, 0.9);
+          color: white;
+          padding: 4px 12px;
+          border-radius: 4px;
+          font-size: 11px;
+          font-weight: bold;
+          z-index: 10001;
+          pointer-events: none;
+        }
+      `;
+      document.head.appendChild(style);
+      
+      // padding値をセット
+      const bottomNav = document.querySelector('.bottom-nav');
+      if (bottomNav) {
+        const padding = window.getComputedStyle(bottomNav).paddingBottom;
+        bottomNav.setAttribute('data-padding', padding);
+      }
+    }
+    
+    function removePaddingVisualization() {
+      document.getElementById('padding-visualization-style')?.remove();
+    }
+    
+    // データ検証ログ表示
+    function showDataValidationLog() {
+      // データ検証を実行してコンソールログを表示
+      // （実際のログはブラウザのコンソールで確認）
+      
+      console.log('='.repeat(50));
+      console.log('📋 データ検証ログ');
+      console.log('='.repeat(50));
+      
+      validateShopsData();
+      
+      console.log('='.repeat(50));
+      
+      // ユーザーに通知
+      const logPanel = document.createElement('div');
+      logPanel.id = 'validation-log-panel';
+      logPanel.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.95);
+        color: #00ff00;
+        padding: 30px 40px;
+        border-radius: 12px;
+        font-family: monospace;
+        font-size: 14px;
+        line-height: 1.8;
+        z-index: 99999;
+        text-align: center;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      `;
+      
+      logPanel.innerHTML = `
+        <div style="font-size: 48px; margin-bottom: 16px;">📋</div>
+        <div style="font-size: 16px; font-weight: bold; margin-bottom: 12px; color: #00ffff;">
+          データ検証ログ
+        </div>
+        <div style="color: #fff; margin-bottom: 20px;">
+          ブラウザのコンソールを<br>
+          確認してください
+        </div>
+        <button onclick="this.parentElement.remove()" style="
+          background: #3b82f6;
+          color: white;
+          border: none;
+          padding: 10px 24px;
+          border-radius: 8px;
+          cursor: pointer;
+          font-size: 14px;
+          font-weight: bold;
+        ">OK</button>
+      `;
+      
+      document.body.appendChild(logPanel);
+      
+      // 3秒後に自動で閉じる
+      setTimeout(() => {
+        logPanel.remove();
+      }, 3000);
+      
+      closeDebugMenu();
+    }
+    
+    </script></script>
   
   <!-- Share Modal -->
   <div id="share-modal" class="modal" onclick="closeShareModal()">
@@ -6233,5 +5619,982 @@
   </div>
   
   
-</body>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="modal">
+    <div class="modal-content" style="max-width: 400px; border-radius: 16px;">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="font-size: 18px; font-weight: 700;">設定</h2>
+        <button onclick="closeSettingsModal()" style="
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          border: none;
+          background: #f3f4f6;
+          color: #6b7280;
+          font-size: 20px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        ">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 0;">
+        <!-- メニューリスト -->
+        <div style="background: #f9fafb; padding: 12px 0;">
+          
+          <!-- チュートリアル -->
+          <div onclick="openTutorial()" style="
+            background: white;
+            padding: 16px 20px;
+            margin-bottom: 1px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          ">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="font-size: 24px;">📚</div>
+              <div>
+                <div style="font-weight: 600; font-size: 15px; color: #111827;">チュートリアル</div>
+                <div style="font-size: 13px; color: #6b7280;">もう一度見る</div>
+              </div>
+            </div>
+            <div style="color: #9ca3af; font-size: 18px;">›</div>
+          </div>
+          
+          <!-- 変更履歴 -->
+          <div style="background: white; padding: 20px;">
+            <div class="stats-title">📝 変更履歴</div>
+            <div class="version-info">
+              <div class="version-current">現在のバージョン: <strong>v1.18.1</strong></div>
+              <div class="version-date">最終更新: 2026/01/17</div>
+            </div>
+            
+            <div class="changelog">
+              <!-- v1.18.1 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.18.1</span>
+                  <span class="version-date-small">2026/01/17</span>
+                </div>
+                <ul class="version-list">
+                  <li>🚨 チュートリアル専用マーカー表示を修正</li>
+                  <li>📱 iOS PWA対応（safe-area）</li>
+                  <li>✅ チュートリアルが正常に進む</li>
+                </ul>
+              </div>
+              
+              <!-- 過去のバージョン（折りたたみ） -->
+              <div style="margin-top: 16px;">
+                <button onclick="toggleOldVersions()" style="
+                  width: 100%;
+                  padding: 12px;
+                  background: #f3f4f6;
+                  border: none;
+                  border-radius: 8px;
+                  color: #6b7280;
+                  font-size: 14px;
+                  font-weight: 600;
+                  cursor: pointer;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  gap: 8px;
+                ">
+                  <span id="old-versions-toggle-text">過去のバージョンを表示</span>
+                  <span id="old-versions-toggle-icon">▼</span>
+                </button>
+                
+                <div id="old-versions-content" style="display: none; margin-top: 16px;">
+              
+              <!-- v1.18.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.18.0</span>
+                  <span class="version-date-small">2026/01/17</span>
+                </div>
+                <ul class="version-list">
+                  <li>❌ 地図表示範囲連動機能を削除</li>
+                  <li>✅ MAPタブで全店舗表示</li>
+                  <li>👍 シンプルな挙動に</li>
+                </ul>
+              </div>
+              
+              <!-- v1.16.2 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.16.2</span>
+                  <span class="version-date-small">2026/01/17</span>
+                </div>
+                <ul class="version-list">
+                  <li>✨ 詳細モーダルを常にTOPから表示</li>
+                  <li>📜 スクロール位置を自動リセット</li>
+                  <li>👍 UX改善</li>
+                </ul>
+              </div>
+              
+              <!-- v1.16.1 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.16.1</span>
+                  <span class="version-date-small">2026/01/17</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 2回目以降も完璧に動作</li>
+                  <li>📜 スクロール位置をリセット</li>
+                  <li>⏱️ 全タイマーを管理下に</li>
+                  <li>🎉 完璧な安定性</li>
+                </ul>
+              </div>
+              
+              <!-- v1.16.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.16.0</span>
+                  <span class="version-date-small">2026/01/17</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 誘導カード2回表示を修正</li>
+                  <li>⏱️ タイマー管理システムを追加</li>
+                  <li>🛡️ 二重起動ガード実装</li>
+                  <li>🎉 完璧な安定性</li>
+                </ul>
+              </div>
+              
+              <!-- v1.15.6 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.15.6</span>
+                  <span class="version-date-small">2026/01/17</span>
+                </div>
+                <ul class="version-list">
+                  <li>🎯 スポットライトの位置を完全修正</li>
+                  <li>✅ 赤枠がピッタリ合う</li>
+                  <li>🎉 チュートリアル完璧動作！</li>
+                </ul>
+              </div>
+              
+              <!-- v1.15.5 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.15.5</span>
+                  <span class="version-date-small">2026/01/17</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 モーダルが正常に開くように修正</li>
+                  <li>✅ Step 2→3 が完璧に動作</li>
+                  <li>🎉 チュートリアル完全修正</li>
+                </ul>
+              </div>
+              
+              <!-- v1.15.4 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.15.4</span>
+                  <span class="version-date-small">2026/01/17</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 チュートリアル再起動を完全修正</li>
+                  <li>✅ モーダルが正常に表示</li>
+                  <li>🔄 状態を完全リセット</li>
+                </ul>
+              </div>
+              
+              <!-- v1.15.3 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.15.3</span>
+                  <span class="version-date-small">2026/01/17</span>
+                </div>
+                <ul class="version-list">
+                  <li>🔗 共有リンクでチュートリアルをスキップ</li>
+                  <li>✅ ?shop=sugitaya が正常動作</li>
+                  <li>🎯 初回アクセスとしてカウントしない</li>
+                </ul>
+              </div>
+              
+              <!-- v1.15.2 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.15.2</span>
+                  <span class="version-date-small">2026/01/17</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 正しいボタンが点滅するように修正</li>
+                  <li>🔍 検索アイコンのセンタリング修正</li>
+                  <li>✅ 完璧な見た目</li>
+                </ul>
+              </div>
+              
+              <!-- v1.15.1 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.15.1</span>
+                  <span class="version-date-small">2026/01/17</span>
+                </div>
+                <ul class="version-list">
+                  <li>✨ 「今から」ボタンが緑点滅</li>
+                  <li>📏 誘導カードを大きく改善</li>
+                  <li>🎯 より目立つデザイン</li>
+                </ul>
+              </div>
+              
+              <!-- v1.15.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.15.0</span>
+                  <span class="version-date-small">2026/01/17</span>
+                </div>
+                <ul class="version-list">
+                  <li>📍 チュートリアル後に「今から」へ誘導</li>
+                  <li>✨ スムーズな導線を実現</li>
+                  <li>👥 スキップした人にも表示</li>
+                </ul>
+              </div>
+              
+              <!-- v1.14.4 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.14.4</span>
+                  <span class="version-date-small">2026/01/17</span>
+                </div>
+                <ul class="version-list">
+                  <li>🎉 チュートリアル完全動作！</li>
+                  <li>💬 吹き出しが正しい位置に表示</li>
+                  <li>✅ すべての問題を修正</li>
+                </ul>
+              </div>
+              
+              <!-- v1.14.3 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.14.3</span>
+                  <span class="version-date-small">2026/01/16</span>
+                </div>
+                <ul class="version-list">
+                  <li>✅ チュートリアル中は常にスクロール</li>
+                  <li>🎯 画面サイズに関わらず動作</li>
+                  <li>🐛 完全修正</li>
+                </ul>
+              </div>
+              
+              <!-- v1.14.2 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.14.2</span>
+                  <span class="version-date-small">2026/01/16</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 スマホでスクロールが確実に動作</li>
+                  <li>📱 getBoundingRect()で位置計算</li>
+                  <li>✅ チュートリアル完全修正</li>
+                </ul>
+              </div>
+              
+              <!-- v1.14.1 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.14.1</span>
+                  <span class="version-date-small">2026/01/16</span>
+                </div>
+                <ul class="version-list">
+                  <li>🎨 シンプルなデザインに変更</li>
+                  <li>⚫ タイトルを黒文字に</li>
+                  <li>🌟 ガラス効果は維持</li>
+                </ul>
+              </div>
+              
+              <!-- v1.14.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.14.0</span>
+                  <span class="version-date-small">2026/01/16</span>
+                </div>
+                <ul class="version-list">
+                  <li>🎨 デザインを一新（ガラスモーフィズム）</li>
+                  <li>🌈 グラデーション＋影で立体感</li>
+                  <li>✋ タップ時の気持ちいいフィードバック</li>
+                </ul>
+              </div>
+              
+              <!-- v1.13.12 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.13.12</span>
+                  <span class="version-date-small">2026/01/16</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 スマホでボタンが見える位置までスクロール</li>
+                  <li>📱 画面サイズに関わらず動作</li>
+                  <li>✅ Step 4完全修正</li>
+                </ul>
+              </div>
+              
+              <!-- v1.13.11 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.13.11</span>
+                  <span class="version-date-small">2026/01/16</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 scrollTopで確実にスクロール</li>
+                  <li>⚡ 待機時間を最適化</li>
+                  <li>✅ Step 4が確実に動作</li>
+                </ul>
+              </div>
+              
+              <!-- v1.13.10 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.13.10</span>
+                  <span class="version-date-small">2026/01/16</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 更新バナーの無限表示を修正</li>
+                  <li>🔄 リロード時にキャッシュをクリア</li>
+                  <li>✅ 確実に最新版が読み込まれる</li>
+                </ul>
+              </div>
+              
+              <!-- v1.13.9 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.13.9</span>
+                  <span class="version-date-small">2026/01/16</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 訪問記録ボタンの取得を修正</li>
+                  <li>🔍 「来店情報」セクションを明示的に検索</li>
+                  <li>✅ Step 4が完全動作</li>
+                </ul>
+              </div>
+              
+              <!-- v1.13.8 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.13.8</span>
+                  <span class="version-date-small">2026/01/16</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 スクリプトエラーを修正</li>
+                  <li>✅ 二重クロージングを削除</li>
+                </ul>
+              </div>
+              
+              <!-- v1.13.7 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.13.7</span>
+                  <span class="version-date-small">2026/01/16</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 Step 4のスクロールを修正</li>
+                  <li>📜 modal-body内でスクロール</li>
+                  <li>✅ スポットライトが確実に表示</li>
+                </ul>
+              </div>
+              
+              <!-- v1.13.6 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.13.6</span>
+                  <span class="version-date-small">2026/01/16</span>
+                </div>
+                <ul class="version-list">
+                  <li>📱 歓迎カードを大きく表示</li>
+                  <li>🎨 文字サイズを拡大</li>
+                  <li>🌟 背景オーバーレイを追加</li>
+                </ul>
+              </div>
+              
+              <!-- v1.13.5 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.13.5</span>
+                  <span class="version-date-small">2026/01/16</span>
+                </div>
+                <ul class="version-list">
+                  <li>📱 モーダルを大きく表示</li>
+                  <li>📜 スクロール位置を調整</li>
+                  <li>✅ Step 4が確実に表示される</li>
+                </ul>
+              </div>
+              
+              <!-- v1.13.4 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.13.4</span>
+                  <span class="version-date-small">2026/01/16</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 Step 4で要素を再取得</li>
+                  <li>⏱️ スクロール待機時間を延長</li>
+                  <li>✅ 完了演出が確実に表示される</li>
+                </ul>
+              </div>
+              
+              <!-- v1.13.3 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.13.3</span>
+                  <span class="version-date-small">2026/01/16</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 吹き出しが表示されない問題を修正</li>
+                  <li>🔒 途中で閉じられない問題を修正</li>
+                  <li>✅ 準備OK！まで完走できるように</li>
+                </ul>
+              </div>
+              
+              <!-- v1.13.2 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.13.2</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>✏️ 文言を分かりやすく修正</li>
+                  <li>⏱️ 待機時間を3秒→2秒に短縮</li>
+                  <li>🐛 スポットライト表示を改善</li>
+                </ul>
+              </div>
+              
+              <!-- v1.13.1 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.13.1</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>🔄 4ステップ構成に変更</li>
+                  <li>👆 ポップアップ→詳細の流れを追加</li>
+                  <li>📖 営業時間→訪問記録を順に表示</li>
+                </ul>
+              </div>
+              
+              <!-- v1.13.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.13.0</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>✨ チュートリアルを大幅リニューアル</li>
+                  <li>📊 進捗表示（1/3）で安心感UP</li>
+                  <li>💡 スポットライト方式で対象を強調</li>
+                  <li>🎯 3ステップに簡略化</li>
+                  <li>🎉 完了演出を追加</li>
+                </ul>
+              </div>
+              
+              <!-- v1.12.1 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.12.1</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>🔽 吹き出しをマーカーの下に配置</li>
+                  <li>⬆️ 矢印を上向きに変更</li>
+                  <li>👀 マーカーと吹き出しが被らない</li>
+                </ul>
+              </div>
+              
+              <!-- v1.12.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.12.0</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>🔨 チュートリアルを根本から作り直し</li>
+                  <li>✅ 吉村家だけ表示（他は非表示）</li>
+                  <li>🎯 位置ずれ・誤タップ問題を完全解決</li>
+                </ul>
+              </div>
+              
+              <!-- v1.11.5 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.11.5</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 吉村家マーカーが右上に飛ぶ問題を修正</li>
+                  <li>📍 transform-originを設定して位置を維持</li>
+                </ul>
+              </div>
+              
+              <!-- v1.11.4 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.11.4</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 吹き出しの位置が左上に飛ぶ問題を修正</li>
+                  <li>🔝 z-indexを上げて黒背景の上に表示</li>
+                </ul>
+              </div>
+              
+              <!-- v1.11.3 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.11.3</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 マーカーが全部グレーアウトする問題を修正</li>
+                  <li>🔒 チュートリアル中の地図操作を無効化</li>
+                  <li>✨ 吹き出しUIを大幅改善（矢印・アニメーション）</li>
+                </ul>
+              </div>
+              
+              <!-- v1.11.2 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.11.2</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>➕ ヘッダーに「チュートリアル」ボタンを追加</li>
+                  <li>🔄 いつでもチュートリアルを再実行可能に</li>
+                </ul>
+              </div>
+              
+              <!-- v1.11.1 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.11.1</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 吉村家のピンがクリックできない問題を修正</li>
+                  <li>✨ 吉村家以外のピンを薄く表示（グレーアウト）</li>
+                  <li>💡 吉村家のピンを強調表示（赤い影）</li>
+                </ul>
+              </div>
+              
+              <!-- v1.11.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.11.0</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>📖 初回ガイド機能を追加（3ステップ）</li>
+                  <li>👥 友達に見せやすく改善</li>
+                </ul>
+              </div>
+              
+              <!-- v1.10.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.10.0</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>🗺️ MAPタブのリストを地図表示範囲に連動</li>
+                  <li>🔄 地図を動かすと自動でリスト更新</li>
+                </ul>
+              </div>
+              
+              <!-- v1.9.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.9.0</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>🔔 更新通知機能を追加（HTMLのみ）</li>
+                  <li>🔄 PWA更新問題を解決</li>
+                  <li>📱 自動バージョンチェック</li>
+                </ul>
+              </div>
+              
+              <!-- v1.8.3 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.8.3</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>🕐 深夜またぎの閉店時刻計算を修正</li>
+                  <li>📍 位置情報チェックを厳密化</li>
+                </ul>
+              </div>
+              
+              <!-- v1.8.2 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.8.2</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 searchQuery未定義エラーを修正</li>
+                </ul>
+              </div>
+              
+              <!-- v1.8.1 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.8.1</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>✨ 営業判定ロジックを大幅改善（シンプル化）</li>
+                  <li>🔍 起動時データ検証を追加（重複防止）</li>
+                  <li>🧪 テスト可能な構造に</li>
+                </ul>
+              </div>
+              
+              <!-- v1.8.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.8.0</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 重複ID削除（裏大輝家）</li>
+                  <li>🎨 壊れたCSSを修正</li>
+                  <li>🆕 王道家カテゴリーを新設</li>
+                  <li>⏰ 深夜またぎ営業時間に対応済み確認</li>
+                </ul>
+              </div>
+              
+              <!-- v1.7.7 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.7.7</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>✂️ 下部余白を0に変更（最小化）</li>
+                </ul>
+              </div>
+              
+              <!-- v1.7.6 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.7.6</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>✂️ 下部ナビバーの下の余白のみを削減</li>
+                </ul>
+              </div>
+              
+              <!-- v1.7.5 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.7.5</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>✂️ 下部余白をさらに最小化</li>
+                  <li>📱 下部ナビバーをよりコンパクトに</li>
+                </ul>
+              </div>
+              
+              <!-- v1.7.4 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.7.4</span>
+                  <span class="version-date-small">2026/01/15</span>
+                </div>
+                <ul class="version-list">
+                  <li>✂️ 下部ナビバーの下の余白を最小化</li>
+                </ul>
+              </div>
+              
+              <!-- v1.7.3 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.7.3</span>
+                  <span class="version-date-small">2026/01/13</span>
+                </div>
+                <ul class="version-list">
+                  <li>✂️ 全タブの下部余白を最適化（70pxに統一）</li>
+                  <li>✨ すっきりしたUIに改善</li>
+                </ul>
+              </div>
+              
+              <!-- v1.7.2 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.7.2</span>
+                  <span class="version-date-small">2026/01/13</span>
+                </div>
+                <ul class="version-list">
+                  <li>🔄 PWAキャッシュ更新問題を修正</li>
+                  <li>✂️ 統計タブの下部余白を調整</li>
+                </ul>
+              </div>
+              
+              <!-- v1.7.1 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.7.1</span>
+                  <span class="version-date-small">2026/01/13</span>
+                </div>
+                <ul class="version-list">
+                  <li>🏪 裏大輝家 青物横丁店を追加</li>
+                  <li>🌳 家系図に大輝家グループを反映</li>
+                  <li>📊 合計58店舗に</li>
+                </ul>
+              </div>
+              
+              <!-- v1.7.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.7.0</span>
+                  <span class="version-date-small">2026/01/13</span>
+                </div>
+                <ul class="version-list">
+                  <li>🏪 蒲田エリアに3店舗追加（環2家・大輝家・飛粋）</li>
+                  <li>📐 モーダル高さを調整（82vh / 78vh）</li>
+                  <li>📊 合計57店舗に</li>
+                </ul>
+              </div>
+              
+              <!-- v1.6.2 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.6.2</span>
+                  <span class="version-date-small">2026/01/13</span>
+                </div>
+                <ul class="version-list">
+                  <li>🔧 PWAを絶対パスに変更（より確実に）</li>
+                  <li>🆕 manifest.jsonにscopeを追加</li>
+                </ul>
+              </div>
+              
+              <!-- v1.6.1 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.6.1</span>
+                  <span class="version-date-small">2026/01/13</span>
+                </div>
+                <ul class="version-list">
+                  <li>🐛 PWAパスの404エラーを修正</li>
+                  <li>🔧 manifest.jsonを相対パスに変更</li>
+                  <li>🔧 service-workerを相対パスに変更</li>
+                </ul>
+              </div>
+              
+              <!-- v1.6.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.6.0</span>
+                  <span class="version-date-small">2026/01/13</span>
+                </div>
+                <ul class="version-list">
+                  <li>📝 統計タブに変更履歴を追加</li>
+                  <li>🔢 バージョン管理を開始</li>
+                  <li>📜 過去のアップデート履歴を整理</li>
+                </ul>
+              </div>
+              
+              <!-- v1.5.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.5.0</span>
+                  <span class="version-date-small">2026/01/12</span>
+                </div>
+                <ul class="version-list">
+                  <li>✨ 店舗シェア機能を追加（X / LINE / コピー）</li>
+                  <li>🔗 URLから直接店舗詳細を開けるように</li>
+                  <li>🐛 PWAのパス問題を修正</li>
+                </ul>
+              </div>
+              
+              <!-- v1.4.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.4.0</span>
+                  <span class="version-date-small">2026/01/12</span>
+                </div>
+                <ul class="version-list">
+                  <li>🔍 相関図に検索機能を追加</li>
+                  <li>📁 相関図に折りたたみ機能を追加</li>
+                  <li>🌳 家系図を3世代表示（孫世代対応）</li>
+                  <li>💅 相関図のカードをコンパクトに</li>
+                </ul>
+              </div>
+              
+              <!-- v1.3.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.3.0</span>
+                  <span class="version-date-small">2026/01/12</span>
+                </div>
+                <ul class="version-list">
+                  <li>📱 PWA対応を実装（ホーム画面に追加可能）</li>
+                  <li>🎨 アプリアイコンを追加（8サイズ）</li>
+                  <li>💾 オフライン動作対応</li>
+                </ul>
+              </div>
+              
+              <!-- v1.2.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.2.0</span>
+                  <span class="version-date-small">2026/01/12</span>
+                </div>
+                <ul class="version-list">
+                  <li>🔍 検索機能を実装</li>
+                  <li>📍 今からモードの距離表示を改善</li>
+                  <li>🎯 検索ボタンをUI改善</li>
+                </ul>
+              </div>
+              
+              <!-- v1.1.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.1.0</span>
+                  <span class="version-date-small">2026/01/11</span>
+                </div>
+                <ul class="version-list">
+                  <li>🏪 新規店舗を14店追加</li>
+                  <li>🕐 24時間営業に対応</li>
+                  <li>⏰ 営業ステータスを3段階に（閉店間近を追加）</li>
+                  <li>🎨 アイコンをSVGに統一</li>
+                </ul>
+              </div>
+              
+              <!-- v1.0.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.0.0</span>
+                  <span class="version-date-small">2026/01/09</span>
+                </div>
+                <ul class="version-list">
+                  <li>🎉 初回リリース</li>
+                  <li>🗺️ 地図表示機能</li>
+                  <li>📝 訪問記録機能</li>
+                  <li>📊 統計表示機能</li>
+                  <li>⭐ お気に入り・行きたい機能</li>
+                  <li>✏️ 記録の編集・削除機能</li>
+                  <li>📸 画像アップロード（自動圧縮）</li>
+                </ul>
+              </div>
+            </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- デバッグ -->
+          <div onclick="showDebugMenu()" style="
+            background: white;
+            padding: 16px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          ">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="font-size: 24px;">🔧</div>
+              <div>
+                <div style="font-weight: 600; font-size: 15px; color: #111827;">デバッグ</div>
+                <div style="font-size: 13px; color: #6b7280;">開発者向け</div>
+              </div>
+            </div>
+            <div style="color: #9ca3af; font-size: 18px;">›</div>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Debug Menu Modal -->
+  <div id="debug-menu-modal" class="modal">
+    <div class="modal-content" style="max-width: 400px; border-radius: 16px;">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="font-size: 18px; font-weight: 700;">デバッグ</h2>
+        <button onclick="closeDebugMenu()" style="
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          border: none;
+          background: #f3f4f6;
+          color: #6b7280;
+          font-size: 20px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        ">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 0;">
+        <div style="background: #f9fafb; padding: 12px 0;">
+          
+          <!-- Debug Info -->
+          <div onclick="showDebugInfo()" style="
+            background: white;
+            padding: 16px 20px;
+            margin-bottom: 1px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          ">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="font-size: 24px;">📊</div>
+              <div>
+                <div style="font-weight: 600; font-size: 15px; color: #111827;">Debug Info</div>
+                <div style="font-size: 13px; color: #6b7280;">Padding/Viewport情報</div>
+              </div>
+            </div>
+            <div style="color: #9ca3af; font-size: 18px;">›</div>
+          </div>
+          
+          <!-- Padding可視化 -->
+          <div onclick="togglePaddingVisualization()" style="
+            background: white;
+            padding: 16px 20px;
+            margin-bottom: 1px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          ">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="font-size: 24px;">🎨</div>
+              <div>
+                <div style="font-weight: 600; font-size: 15px; color: #111827;">Padding可視化</div>
+                <div style="font-size: 13px; color: #6b7280;">境界線を表示/非表示</div>
+              </div>
+            </div>
+            <div id="padding-viz-status" style="color: #9ca3af; font-size: 13px;">OFF</div>
+          </div>
+          
+          <!-- データ検証ログ -->
+          <div onclick="showDataValidationLog()" style="
+            background: white;
+            padding: 16px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          ">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="font-size: 24px;">📋</div>
+              <div>
+                <div style="font-weight: 600; font-size: 15px; color: #111827;">データ検証ログ</div>
+                <div style="font-size: 13px; color: #6b7280;">shops.js検証結果</div>
+              </div>
+            </div>
+            <div style="color: #9ca3af; font-size: 18px;">›</div>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body></body>
 </html>
