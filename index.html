@@ -1747,6 +1747,25 @@
     </style></style>
 </head>
 <body>
+  <!-- ローディング画面 -->
+  <div id="loading-screen" style="
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+  ">
+    <div style="font-size: 48px; margin-bottom: 20px;">🍜</div>
+    <div style="font-size: 18px; font-weight: 600; color: #111827; margin-bottom: 12px;">店舗データを読み込み中...</div>
+    <div style="font-size: 14px; color: #6b7280;">Googleスプレッドシートから取得</div>
+  </div>
+  
   <div class="app-container">
     <div class="header">
       <h1>🍜 家系ラーメンmap</h1>
@@ -2218,386 +2237,57 @@
     window.addEventListener("load", () => setTimeout(checkUpdate, 800));
     
     // Shop Data
-    const shops = [
-      {
-        id: "yoshimuraya",
-        name: "家系総本山 吉村家",
-        category: "総本山",
-        area: "横浜駅西口",
-        lat: 35.4629487,
-        lng: 139.6150264,
-        parent: null,
-        description: "1974年創業の家系ラーメン発祥店。濃厚豚骨醤油スープに太麺、好みを調節できる独自スタイルを確立した名店。",
-        googleMapUrl: "https://www.google.co.jp/maps/place/%E5%AE%B6%E7%B3%BB%E7%B7%8F%E6%9C%AC%E5%B1%B1+%E5%90%89%E6%9D%91%E5%AE%B6/@35.4629487,139.6150264,154m/data=!3m2!1e3!5s0x60185c0c430436f7:0xf13df3160648aa53!4m15!1m8!3m7!1s0x60185c0c4307d32f:0xc9ce8a60cdd2d672!2z5a6257O757eP5pys5bGxIOWQieadkeWutg!8m2!3d35.4630187!4d139.6150749!10e9!16s%2Fg%2F1tfg31bf!3m5!1s0x60185c0c4307d32f:0xc9ce8a60cdd2d672!8m2!3d35.4630187!4d139.6150749!16s%2Fg%2F1tfg31bf?hl=ja&entry=ttu&g_ep=EgoyMDI1MTIwOS4wIKXMDSoASAFQAw%3D%3D",
-        websiteUrl: "http://ieke1.com/",
-        openingHours: {
-          mon: {times:[]},
-          tue: {times:[{start:"11:00",end:"20:00"}]},
-          wed: {times:[{start:"11:00",end:"20:00"}]},
-          thu: {times:[{start:"11:00",end:"20:00"}]},
-          fri: {times:[{start:"11:00",end:"20:00"}]},
-          sat: {times:[{start:"11:00",end:"20:00"}]},
-          sun: {times:[{start:"11:00",end:"20:00"}]}
+    // Google Apps Scriptからデータを読み込み
+    const SHOPS_API_URL = 'https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLjZX6umDjUxhE9JaJJJWAaY9nh6HUlaH_ovCItCnguSVoNRq5JqywYfDXtUHStAkPVXaaQvo5c6EDmphMq8MIxAj3WnvPO4S4U9iCtY_gmEnFJ3_I2lRoSLSqS9bGD2SeJijZNP42ZnZ-A69ERLZENZnf5n7UTPJ_P8_3P6twL_T7fxtZRO_56e5VcnaA0NVT_4wW-o9JZaVeft6s2NrIRAW81hA0xVbkvkmGTwQhBqaeZ-xrghp4S4Dus8GY-A7o8IDOEOz4bK6P7zUaHhbx-nfqHR5g&lib=My9qxavBn2s8CefOZHvO1sUnqP1_hoxbM';
+    let shops = []; // APIから読み込む
+    let shopsLoaded = false;
+    
+    // APIからデータを読み込む
+    async function loadShopsData() {
+      try {
+        console.log('📡 店舗データを読み込み中...');
+        const response = await fetch(SHOPS_API_URL);
+        const data = await response.json();
+        
+        if (data.ok && data.shops) {
+          shops = data.shops;
+          shopsLoaded = true;
+          console.log(`✅ ${shops.length}店舗のデータを読み込みました`);
+          console.log(`🕐 更新日時: ${new Date(data.updatedAt).toLocaleString('ja-JP')}`);
+          
+          // データ読み込み後に初期化
+          initializeApp();
+        } else {
+          throw new Error('データ形式が不正です');
         }
-      },
-      {
-        id: "sugitaya",
-        name: "杉田家本店",
-        category: "直系",
-        area: "新杉田",
-        lat: 35.3881631,
-        lng: 139.6182152,
-        parent: "yoshimuraya",
-        description: "吉村家直系第1号店として1999年開店。朝5時から営業し、濃厚な豚骨醤油スープで行列が絶えない老舗直系店。",
-        googleMapUrl: "https://www.google.co.jp/maps/place/%E6%9D%89%E7%94%B0%E5%AE%B6/@35.3881631,139.041433,158103m/data=!3m1!1e3!4m10!1m2!2m1!1z5p2J55Sw5a62!3m6!1s0x6018435d664217b9:0x50a70700f361edb7!8m2!3d35.3881631!4d139.6182152!15sCgnmnYnnlLDlrrYiA4gBAVoMIgrmnYnnlLAg5a62kgEQcmFtZW5fcmVzdGF1cmFudJoBRENpOURRVWxSUVVOdlpFTm9kSGxqUmpsdlQyc3dlV1ZJVmt0T2JHZDBVMFJHTkdSWFozcFNSRXAwVjFSYVdGWkhZeEFC4AEA-gEECAAQHQ!16s%2Fg%2F1z449y7b2?hl=ja&entry=ttu&g_ep=EgoyMDI1MTIwOS4wIKXMDSoASAFQAw%3D%3D",
-        websiteUrl: "https://sugitaya.com/",
-        openingHours: {
-          mon: {times:[{start:"05:00",end:"22:00"}]},
-          tue: {times:[{start:"05:00",end:"22:00"}]},
-          wed: {times:[{start:"05:00",end:"22:00"}]},
-          thu: {times:[{start:"05:00",end:"22:00"}]},
-          fri: {times:[{start:"05:00",end:"22:00"}]},
-          sat: {times:[{start:"05:00",end:"22:00"}]},
-          sun: {times:[]}
-        }
-      },
-      {
-        id: "suehiroya",
-        name: "末廣家",
-        category: "直系",
-        area: "六角橋",
-        lat: 35.48801524483289, 
-        lng: 139.62475063296804,
-        parent: "yoshimuraya",
-        description: "吉村家直系店の一つ。六角橋で濃厚な直系家系ラーメンを提供し、直系王道の味継承店として人気。",
-        googleMapUrl: "https://www.google.com/maps/place/%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%B3+%E6%9C%AB%E5%BB%A3%E5%AE%B6/@35.4880323,139.6221691,17z/data=!4m6!3m5!1s0x60185ea40ab2abe7:0xa69bc35f35258466!8m2!3d35.4880323!4d139.624744!16s%2Fg%2F12qfxwkw6?entry=ttu&g_ep=EgoyMDI2MDExMy4wIKXMDSoASAFQAw%3D%3D",
-        websiteUrl: "https://x.com/2525_2929",
-        openingHours: {
-          mon: {times:[]},
-          tue: {times:[{start:"11:00",end:"21:00"}]},
-          wed: {times:[{start:"11:00",end:"21:00"}]},
-          thu: {times:[{start:"11:00",end:"21:00"}]},
-          fri: {times:[{start:"11:00",end:"21:00"}]},
-          sat: {times:[{start:"11:00",end:"21:00"}]},
-          sun: {times:[]}
-        }
-      },
-      {
-        id: "tsuruichiya-neo",
-        name: "鶴一家 neo",
-        category: "直系",
-        area: "鶴屋町",
-        lat: 35.4694779,
-        lng: 139.6208343,
-        parent: "sugitaya",
-        description: "横浜駅近く鶴屋町の家系ラーメン店。深夜まで営業し、濃厚な豚骨醤油スープが特徴。",
-        googleMapUrl: "https://www.google.com/maps/place/%E9%B6%B4%E4%B8%80%E5%AE%B6+neo/@35.4694779,139.6208343,15z/data=!4m6!3m5!1s0x60185dd1f76c0b3b:0x56351e864f67679e!8m2!3d35.4694779!4d139.6208343!16s%252Fg%252F11xkgw9v4y?hl=ja",
-        websiteUrl: "",
-        openingHours: {
-          mon: {times:[{start:"10:00",end:"07:00"}]},
-          tue: {times:[{start:"10:00",end:"07:00"}]},
-          wed: {times:[{start:"10:00",end:"07:00"}]},
-          thu: {times:[{start:"10:00",end:"07:00"}]},
-          fri: {times:[{start:"10:00",end:"07:00"}]},
-          sat: {times:[{start:"10:00",end:"07:00"}]},
-          sun: {times:[{start:"10:00",end:"07:00"}]}
-        }
-      },
-      {
-        id: "giftmachida-yokohama",
-        name: "町田商店 横浜駅前店",
-        category: "資本系",
-        area: "横浜駅西口",
-        lat: 35.4691827,
-        lng: 139.6223681,
-        parent: null,
-        description: "",
-        googleMapUrl: "https://www.google.com/maps/place/%E6%A8%AA%E6%B5%9C%E5%AE%B6%E7%B3%BB%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%B3+%E7%94%BA%E7%94%B0%E5%95%86%E5%BA%97+%E6%A8%AA%E6%B5%9C%E9%A7%85%E5%89%8D%E5%BA%97/@35.4691827,139.6223681,17z/data=!3m1!4b1!4m6!3m5!1s0x60185c11ad8b4147:0x730f044ab8e935b!8m2!3d35.4691827!4d139.6223681!16s%2Fg%2F11bxfzv5gf?entry=ttu&g_ep=EgoyMDI2MDExMy4wIKXMDSoASAFQAw%3D%3D",
-        websiteUrl: "https://www.machidashoten.com/",
-        openingHours: {
-          mon: {times:[{start:"11:00",end:"03:00"}]},
-          tue: {times:[{start:"11:00",end:"03:00"}]},
-          wed: {times:[{start:"11:00",end:"03:00"}]},
-          thu: {times:[{start:"11:00",end:"03:00"}]},
-          fri: {times:[{start:"11:00",end:"03:00"}]},
-          sat: {times:[{start:"11:00",end:"03:00"}]},
-          sun: {times:[{start:"11:00",end:"03:00"}]}
-        }
-      },
-      {
-        id: "ginya-yokohama",
-        name: "銀家 横浜西口店",
-        category: "資本系",
-        area: "横浜駅西口",
-        lat: 35.4629514,
-        lng: 139.6140608,
-        parent: null,
-        description: "",
-        googleMapUrl: "https://www.google.co.jp/maps/place/%E6%A8%AA%E6%B5%9C%E5%AE%B6%E7%B3%BB%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%B3+%E9%8A%80%E5%AE%B6+%E6%A8%AA%E6%B5%9C%E8%A5%BF%E5%8F%A3%E3%83%91%E3%83%AB%E3%83%8A%E3%83%BC%E3%83%89%E5%BA%97/@35.4629514,139.6140608,618m/data=!3m1!1e3!4m10!1m2!2m1!1z44GO44KT44KE!3m6!1s0x60185de49aa4258b:0x2912046c12810368!8m2!3d35.4648554!4d139.619411!15sCgnjgY7jgpPjgoRaDCIK44GO44KTIOOChJIBEHJhbWVuX3Jlc3RhdXJhbnSaAURDaTlEUVVsUlFVTnZaRU5vZEhsalJqbHZUMnM0ZUZOdVdqTlJWRVpYVTIxU1YxRlZUakZSV0hCWVlsY3dkRTR4UlJBQuABAPoBBAgAEBs!16s%2Fg%2F11nnv02qyq?hl=ja&entry=ttu&g_ep=EgoyMDI2MDExMy4wIKXMDSoASAFQAw%3D%3D",
-        websiteUrl: "https://www.ginya-web.com/",
-        openingHours: {
-          mon: {times:[{start:"00:00",end:"24:00"}]},
-          tue: {times:[{start:"00:00",end:"24:00"}]},
-          wed: {times:[{start:"00:00",end:"24:00"}]},
-          thu: {times:[{start:"00:00",end:"24:00"}]},
-          fri: {times:[{start:"00:00",end:"24:00"}]},
-          sat: {times:[{start:"00:00",end:"24:00"}]},
-          sun: {times:[{start:"00:00",end:"24:00"}]}
-        }
-      },
-      {
-        id: "ookuraya",
-        name: "おーくら家",
-        category: "有名店",
-        area: "東神奈川駅",
-        lat: 35.4770278,
-        lng: 139.6336925,
-        parent: null,
-        description: "",
-        googleMapUrl: "https://www.google.com/maps/place/%E3%81%8A%E3%83%BC%E3%81%8F%E3%82%89%E5%AE%B6/@35.4770278,139.6336925,17z/data=!3m1!4b1!4m6!3m5!1s0x60185c3b47f28dff:0xfce5754c8a623a62!8m2!3d35.4770278!4d139.6362728!16s%2Fg%2F1tgj8svf?entry=ttu&g_ep=EgoyMDI2MDExMy4wIKXMDSoASAFQAw%3D%3D",
-        websiteUrl: "",
-        openingHours: {
-          mon: {times:[{start:"10:00",end:"00:00"}]},
-          tue: {times:[{start:"10:00",end:"00:00"}]},
-          wed: {times:[{start:"10:00",end:"00:00"}]},
-          thu: {times:[{start:"10:00",end:"00:00"}]},
-          fri: {times:[{start:"10:00",end:"00:00"}]},
-          sat: {times:[{start:"10:00",end:"00:00"}]},
-          sun: {times:[{start:"10:00",end:"00:00"}]}
-        }
-      },
-      {
-        id: "oudou-torakichihikari",
-        name: "とらきち家 光",
-        category: "王道家",
-        area: "六角橋",
-        lat: 35.4847002,
-        lng: 139.6249173,
-        parent: null,
-        description: "",
-        googleMapUrl: "https://www.google.com/maps/place/%E3%81%A8%E3%82%89%E3%81%8D%E3%81%A1%E5%AE%B6+%E5%85%89/@35.4847002,139.6249173,17z/data=!3m1!4b1!4m6!3m5!1s0x60185ea05f1ca015:0xa64e6032f80297de!8m2!3d35.4847002!4d139.6274976!16s%2Fg%2F1ptvsb4zx?entry=ttu&g_ep=EgoyMDI2MDExMy4wIKXMDSoASAFQAw%3D%3D",
-        websiteUrl: "https://x.com/torakichi_ya",
-        openingHours: {
-          mon: {times:[{start:"11:00",end:"23:00"}]},
-          tue: {times:[{start:"11:00",end:"23:00"}]},
-          wed: {times:[{start:"11:00",end:"23:00"}]},
-          thu: {times:[{start:"11:00",end:"23:00"}]},
-          fri: {times:[{start:"11:00",end:"23:00"}]},
-          sat: {times:[{start:"11:00",end:"23:00"}]},
-          sun: {times:[{start:"11:00",end:"23:00"}]}
-        }
-      },
-      {
-        id: "ichikakuya-higashikanagawa",
-        name: "壱角家 横浜西口店",
-        category: "不明",
-        area: "横浜駅西口",
-        lat: 35.4846997,
-        lng: 139.6171657,
-        parent: null,
-        description: "",
-        googleMapUrl: "https://www.google.com/maps/place/%E6%A8%AA%E6%B5%9C%E5%AE%B6%E7%B3%BB%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%B3+%E5%A3%B1%E8%A7%92%E5%AE%B6+%E6%9D%B1%E7%A5%9E%E5%A5%88%E5%B7%9D%E5%BA%97/@35.4846997,139.6171657,15z/data=!3m1!5s0x60185c224fe03663:0x4a6e2c337a9c3944!4m10!1m2!2m1!1z5aOx6KeS5a62IOaoqua1nOilv-WPo-W6lw!3m6!1s0x60185d53ef3f9021:0x6a88209e388785b7!8m2!3d35.478826!4d139.6318808!15sChnlo7Hop5LlrrYg5qiq5rWc6KW_5Y-j5bqXIgOIAQFaHyId5aOxIOinkiDlrrYg5qiq5rWcIOilv-WPoyDlupeSARByYW1lbl9yZXN0YXVyYW50mgFEQ2k5RFFVbFJRVU52WkVOb2RIbGpSamx2VDJ0c01XVkhNWFpXZWtKeFpEQkdXVmxWYjNwVVJteFdZVWhDTTJSV1JSQULgAQD6AQQIQRAg!16s%2Fg%2F11jfc3bq8_?entry=ttu&g_ep=EgoyMDI2MDExMy4wIKXMDSoASAFQAw%3D%3D",
-        websiteUrl: "https://gardengroup.co.jp/brand/ichikakuya/",
-        openingHours: {
-          mon: {times:[{start:"11:00",end:"01:00"}]},
-          tue: {times:[{start:"11:00",end:"01:00"}]},
-          wed: {times:[{start:"11:00",end:"01:00"}]},
-          thu: {times:[{start:"11:00",end:"01:00"}]},
-          fri: {times:[{start:"11:00",end:"01:00"}]},
-          sat: {times:[{start:"11:00",end:"01:00"}]},
-          sun: {times:[{start:"11:00",end:"01:00"}]}
-        }
-      },
-      {
-        id: "suzukiya",
-        name: "寿々㐂家",
-        category: "有名店",
-        area: "上星川駅",
-        lat: 35.4846922,
-        lng: 139.5861588,
-        parent: null,
-        description: "",
-        googleMapUrl: "https://www.google.com/maps/place/%E5%AF%BF%E3%80%85%E3%90%82%E5%AE%B6/@35.4846922,139.5861588,13z/data=!4m10!1m2!2m1!1z5a-_44CF45CC5a62!3m6!1s0x6018597a63694553:0x10ac0912a98e9a02!8m2!3d35.4712271!4d139.5761278!15sCgzlr7_jgIXjkILlrrZaECIO5a-_44CFIOOQgiDlrraSARByYW1lbl9yZXN0YXVyYW50mgEjQ2haRFNVaE5NRzluUzBWSlEwRm5TVVF4YTNSaFVVNW5FQUXgAQD6AQQIABAn!16s%2Fg%2F1yl57jb3n?entry=ttu&g_ep=EgoyMDI2MDExMy4wIKXMDSoASAFQAw%3D%3D",
-        websiteUrl: "https://x.com/suzukiya224",
-        openingHours: {
-          mon: {times:[{start:"11:00",end:"21:00"}]},
-          tue: {times:[{start:"11:00",end:"21:00"}]},
-          wed: {times:[]},
-          thu: {times:[{start:"11:00",end:"21:00"}]},
-          fri: {times:[{start:"11:00",end:"21:00"}]},
-          sat: {times:[{start:"11:00",end:"20:00"}]},
-          sun: {times:[{start:"11:00",end:"20:00"}]}
-        }
-      },
-      {
-        id: "nonoya",
-        name: "らーめん野々家",
-        category: "有名店",
-        area: "大倉山",
-        lat: 35.5203203,
-        lng: 139.620499,
-        parent: null,
-        description: "suzukiya",
-        googleMapUrl: "https://www.google.com/maps/place/%E3%82%89%E3%83%BC%E3%82%81%E3%82%93%E9%87%8E%E3%80%85%E5%AE%B6/@35.5203203,139.620499,17z/data=!3m1!4b1!4m6!3m5!1s0x60185f0021e5dca9:0x266e0fcf0790344b!8m2!3d35.5203203!4d139.620499!16s%2Fg%2F11yhl7hgt3?entry=ttu&g_ep=EgoyMDI2MDExMy4wIKXMDSoASAFQAw%3D%3D",
-        websiteUrl: "https://x.com/ramen_nonoya",
-        openingHours: {
-          mon: {times:[{start:"11:00",end:"14:00"},{start:"17:30",end:"20:00"}]},
-          tue: {times:[{start:"11:00",end:"14:00"},{start:"17:30",end:"20:00"}]},
-          wed: {times:[]},
-          thu: {times:[]},
-          fri: {times:[{start:"11:00",end:"14:00"},{start:"17:30",end:"20:00"}]},
-          sat: {times:[{start:"11:00",end:"14:00"},{start:"17:30",end:"20:00"}]},
-          sun: {times:[{start:"11:00",end:"14:00"},{start:"17:30",end:"20:00"}]}
-        }
-      },
-      {
-        id: "oudou-kidouya",
-        name: "鬼道家",
-        category: "有名店",
-        area: "仙台",
-        lat: 38.2645786,
-        lng: 140.8666282,
-        parent: "",
-        description: "仙台にオープンした王道家系統のお店。",
-        googleMapUrl: "https://www.google.com/maps/place/%E9%AC%BC%E9%81%93%E5%AE%B6/@38.2645786,140.8666282,16z/data=!4m6!3m5!1s0x5f89877591c28d59:0xf2d316766b1b9666!8m2!3d38.2645786!4d140.8666282!16s%2Fg%2F11bbxlkl66?entry=ttu&g_ep=EgoyMDI2MDEwNi4wIKXMDSoASAFQAw%3D%3D",
-        websiteUrl: "https://x.com/kidouya_sendai",
-        openingHours: {
-          mon: {times:[{start:"11:00",end:"14:30"},{start:"17:00",end:"01:00"}]},
-          tue: {times:[{start:"11:00",end:"14:30"},{start:"17:00",end:"01:00"}]},
-          wed: {times:[{start:"11:00",end:"14:30"},{start:"17:00",end:"01:00"}]},
-          thu: {times:[{start:"11:00",end:"14:30"},{start:"17:00",end:"01:00"}]},
-          fri: {times:[{start:"11:00",end:"14:30"},{start:"17:00",end:"01:00"}]},
-          sat: {times:[{start:"11:00",end:"15:00"},{start:"15:30",end:"01:00"}]},
-          sun: {times:[{start:"11:00",end:"15:00"},{start:"15:30",end:"01:00"}]}
-        }
-      },
-      {
-        id: "kan2ya-kamata",
-        name: "環2家 蒲田店",
-        category: "直系",
-        area: "蒲田",
-        lat: 35.5637182,
-        lng: 139.7161694,
-        parent: "yoshimuraya",
-        description: "吉村家直系店。定休日は毎月第2月曜日と第4月曜日。",
-        googleMapUrl: "https://www.google.com/maps/place/%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%B3+%E7%92%B02%E5%AE%B6+%E8%92%B2%E7%94%B0%E5%BA%97/@35.5637182,139.7161694,17z",
-        websiteUrl: "https://kan2ya.com/",
-        openingHours: {
-          mon: {times:[]},
-          tue: {times:[{start:"11:00",end:"21:30"}]},
-          wed: {times:[{start:"11:00",end:"21:30"}]},
-          thu: {times:[{start:"11:00",end:"21:30"}]},
-          fri: {times:[{start:"11:00",end:"21:30"}]},
-          sat: {times:[{start:"11:00",end:"21:30"}]},
-          sun: {times:[{start:"11:00",end:"21:30"}]}
-        }
-      },
-      {
-        id: "daikiya-kamata",
-        name: "大輝家",
-        category: "派生",
-        area: "蒲田",
-        lat: 35.5613702,
-        lng: 139.7226429,
-        parent: null,
-        description: "横浜家系ラーメン。平日は朝7時から営業。",
-        googleMapUrl: "https://www.google.com/maps/place/%E6%A8%AA%E6%B5%9C%E5%AE%B6%E7%B3%BB%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%B3+%E5%A4%A7%E8%BC%9D%E5%AE%B6/@35.5613702,139.7226429,17z",
-        websiteUrl: "https://twitter.com/daikiya007",
-        openingHours: {
-          mon: {times:[{start:"07:00",end:"24:00"}]},
-          tue: {times:[{start:"07:00",end:"24:00"}]},
-          wed: {times:[{start:"07:00",end:"24:00"}]},
-          thu: {times:[{start:"07:00",end:"24:00"}]},
-          fri: {times:[{start:"07:00",end:"24:00"}]},
-          sat: {times:[{start:"11:00",end:"24:00"}]},
-          sun: {times:[{start:"11:00",end:"24:00"}]}
-        }
-      },
-      {
-        id: "hiiki-kamata",
-        name: "らーめん飛粋",
-        category: "派生",
-        area: "蒲田",
-        lat: 35.564036,
-        lng: 139.7173084,
-        parent: null,
-        description: "家系ラーメン店。日曜定休。",
-        googleMapUrl: "https://www.google.com/maps/place/%E3%82%89%E3%83%BC%E3%82%81%E3%82%93%E9%A3%9B%E7%B2%8B/@35.564036,139.7173084,17z",
-        websiteUrl: "https://hiiki.co.jp/",
-        openingHours: {
-          mon: {times:[{start:"11:00",end:"16:00"},{start:"17:00",end:"21:00"}]},
-          tue: {times:[{start:"11:00",end:"16:00"},{start:"17:00",end:"21:00"}]},
-          wed: {times:[{start:"11:00",end:"16:00"},{start:"17:00",end:"21:00"}]},
-          thu: {times:[{start:"11:00",end:"16:00"},{start:"17:00",end:"21:00"}]},
-          fri: {times:[{start:"11:00",end:"16:00"},{start:"17:00",end:"21:00"}]},
-          sat: {times:[{start:"11:00",end:"20:00"}]},
-          sun: {times:[]}
-        }
-      },
-      {
-        id: "uradaikiya-aomono",
-        name: "裏大輝家 青物横丁店",
-        category: "派生",
-        area: "青物横丁",
-        lat: 35.6108836,
-        lng: 139.7419512,
-        parent: "daikiya-kamata",
-        description: "大輝家グループの2号店。",
-        googleMapUrl: "https://www.google.com/maps/place/%E8%A3%8F%E5%A4%A7%E8%BC%9D%E5%AE%B6+%E9%9D%92%E7%89%A9%E6%A8%AA%E4%B8%81%E5%BA%97/@35.6108836,139.7419512,17z",
-        websiteUrl: "https://twitter.com/daikiyaasahi",
-        openingHours: {
-          mon: {times:[{start:"11:00",end:"15:00"},{start:"17:00",end:"23:00"}]},
-          tue: {times:[{start:"11:00",end:"15:00"},{start:"17:00",end:"23:00"}]},
-          wed: {times:[{start:"11:00",end:"15:00"},{start:"17:00",end:"23:00"}]},
-          thu: {times:[{start:"11:00",end:"15:00"},{start:"17:00",end:"23:00"}]},
-          fri: {times:[{start:"11:00",end:"15:00"},{start:"17:00",end:"23:00"}]},
-          sat: {times:[{start:"11:00",end:"15:00"},{start:"17:00",end:"23:00"}]},
-          sun: {times:[{start:"11:00",end:"15:00"},{start:"17:00",end:"23:00"}]}
-        }
-      },
-            {
-        id: "oudou-osaka",
-        name: "我道家",
-        category: "派生",
-        area: "なんば",
-        lat: 34.5968947,
-        lng: 135.4957774,
-        parent: "",
-        description: "王道家直系。",
-        googleMapUrl: "https://www.google.com/maps/place/IEKEI+OSAKA+%E7%8E%8B%E9%81%93%E5%AE%B6%E7%9B%B4%E7%B3%BB+%E6%88%91%E9%81%93%E5%AE%B6/@34.5968947,135.4957774,11z/data=!3m1!5s0x6000e70e75512813:0xc71f0e6e37f3b3eb!4m6!3m5!1s0x6000e70057bf9ea9:0x9d20f11ea013437!8m2!3d34.6683904!4d135.4955867!16s%2Fg%2F11y698fhmg?entry=ttu&g_ep=EgoyMDI2MDExMy4wIKXMDSoASAFQAw%3D%3D",
-        websiteUrl: "https://x.com/iekei_osaka?s=21&t=hGRYxVS_XMT668ATcLZzmQ",
-        openingHours: {
-          mon: {times:[{start:"11:00",end:"03:00"}]},
-          tue: {times:[{start:"11:00",end:"03:00"}]},
-          wed: {times:[{start:"11:00",end:"03:00"}]},
-          thu: {times:[{start:"11:00",end:"03:00"}]},
-          fri: {times:[{start:"11:00",end:"03:00"}]},
-          sat: {times:[{start:"11:00",end:"03:00"}]},
-          sun: {times:[{start:"11:00",end:"03:00"}]}
-        }
-      },
-        {
-        id: "zushiya-kitakurihama",
-        name: "逗子家 本店",
-        category: "派生",
-        area: "北久里浜",
-        lat: 35.24995495279601,
-        lng: 139.68423226691638,
-        parent: "",
-        description: "",
-        googleMapUrl: "https://www.google.com/maps/place/%E9%80%97%E5%AD%90%E5%AE%B6+%E5%8C%97%E4%B9%85%E9%87%8C%E6%B5%9C%E6%9C%AC%E5%BA%97/@35.2499661,139.6817047,17z/data=!3m1!4b1!4m6!3m5!1s0x60183fd3104db62b:0xfa8649ab3c124a96!8m2!3d35.2499661!4d139.684285!16s%2Fg%2F1tkp4ym9?entry=ttu&g_ep=EgoyMDI2MDExMy4wIKXMDSoASAFQAw%3D%3D",
-        websiteUrl: "https://www.instagram.com/zushiya.honten",
-        openingHours: {
-          mon: {times:[]},
-          tue: {times:[{start:"10:00",end:"22:00"}]},
-          wed: {times:[{start:"10:00",end:"22:00"}]},
-          thu: {times:[{start:"10:00",end:"22:00"}]},
-          fri: {times:[{start:"10:00",end:"22:00"}]},
-          sat: {times:[{start:"10:00",end:"22:00"}]},
-          sun: {times:[{start:"10:00",end:"21:00"}]}
-        }
-      },
-    ];
+      } catch (error) {
+        console.error('❌ データ読み込みエラー:', error);
+        alert('店舗データの読み込みに失敗しました。\n再読み込みしてください。');
+      }
+    }
+    
+    // アプリ初期化（データ読み込み後に実行）
+    function initializeApp() {
+      console.log('🚀 アプリを初期化中...');
+      
+      // ローディング画面を非表示
+      const loadingScreen = document.getElementById('loading-screen');
+      if (loadingScreen) {
+        loadingScreen.style.display = 'none';
+      }
+      
+      // データ検証
+      validateShopsData();
+      
+      // 地図とUIを初期化
+      initMap();
+      initTabs();
+      renderShopList();
+      renderListTab();
+      renderLineageTab();
+      renderStatsTab();
+      initRecordForm();
+      initResizeHandle();
     
     // State
     let visits = JSON.parse(localStorage.getItem('iekei-visits') || '{}');
@@ -3644,9 +3334,6 @@
     
     // Initialize
     document.addEventListener('DOMContentLoaded', () => {
-      // データ検証（起動時）
-      validateShopsData();
-      
       // Service Worker登録（PWA対応）
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('service-worker.js')
@@ -3658,14 +3345,8 @@
           });
       }
       
-      initMap();
-      initTabs();
-      renderShopList();
-      renderListTab();
-      renderLineageTab();
-      renderStatsTab();
-      initRecordForm();
-      initResizeHandle();
+      // 店舗データをAPIから読み込み
+      loadShopsData();
       
       // URLパラメータをチェック
       const urlParams = new URLSearchParams(window.location.search);
