@@ -1763,7 +1763,7 @@
   ">
     <div style="font-size: 48px; margin-bottom: 20px;">🍜</div>
     <div style="font-size: 18px; font-weight: 600; color: #111827; margin-bottom: 12px;">店舗データを読み込み中...</div>
-    <div style="font-size: 14px; color: #6b7280;">Googleスプレッドシートから取得</div>
+    <div style="font-size: 14px; color: #6b7280;">最新のデータを取得中</div>
   </div>
   
   <div class="app-container">
@@ -1997,6 +1997,18 @@
         <div class="section">
           <div class="section-title">営業時間</div>
           <div class="hours-grid" id="detail-hours"></div>
+        </div>
+        
+        <div class="section" id="detail-note-section" style="display: none;">
+          <div class="section-title">📝 補足情報</div>
+          <div id="detail-note" style="
+            background: #f3f4f6;
+            padding: 12px;
+            border-radius: 8px;
+            color: #374151;
+            font-size: 14px;
+            line-height: 1.6;
+          "></div>
         </div>
         
         <div class="section">
@@ -2238,32 +2250,164 @@
     
     // Shop Data
     // Google Apps Scriptからデータを読み込み
-    const SHOPS_API_URL = 'https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLjZX6umDjUxhE9JaJJJWAaY9nh6HUlaH_ovCItCnguSVoNRq5JqywYfDXtUHStAkPVXaaQvo5c6EDmphMq8MIxAj3WnvPO4S4U9iCtY_gmEnFJ3_I2lRoSLSqS9bGD2SeJijZNP42ZnZ-A69ERLZENZnf5n7UTPJ_P8_3P6twL_T7fxtZRO_56e5VcnaA0NVT_4wW-o9JZaVeft6s2NrIRAW81hA0xVbkvkmGTwQhBqaeZ-xrghp4S4Dus8GY-A7o8IDOEOz4bK6P7zUaHhbx-nfqHR5g&lib=My9qxavBn2s8CefOZHvO1sUnqP1_hoxbM';
+        const SHOPS_API_URL = 'https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLjZX6umDjUxhE9JaJJJWAaY9nh6HUlaH_ovCItCnguSVoNRq5JqywYfDXtUHStAkPVXaaQvo5c6EDmphMq8MIxAj3WnvPO4S4U9iCtY_gmEnFJ3_I2lRoSLSqS9bGD2SeJijZNP42ZnZ-A69ERLZENZnf5n7UTPJ_P8_3P6twL_T7fxtZRO_56e5VcnaA0NVT_4wW-o9JZaVeft6s2NrIRAW81hA0xVbkvkmGTwQhBqaeZ-xrghp4S4Dus8GY-A7o8IDOEOz4bK6P7zUaHhbx-nfqHR5g&lib=My9qxavBn2s8CefOZHvO1sUnqP1_hoxbM';
     let shops = []; // APIから読み込む
     let shopsLoaded = false;
     
+    // フォールバックデータ（吉村家のみ）
+    const FALLBACK_SHOPS = [
+      {
+        id: "yoshimuraya",
+        name: "家系総本山 吉村家",
+        category: "総本山",
+        area: "横浜駅",
+        lat: 35.4629487,
+        lng: 139.6150264,
+        parent: null,
+        description: "1974年創業の家系ラーメン発祥店。濃厚豚骨醤油スープに太麺",
+        googleMapUrl: "https://www.google.co.jp/maps/place/%E5%AE%B6%E7%B3%BB%E7%B7%8F%E6%9C%AC%E5%B1%B1+%E5%90%89%E6%9D%91%E5%AE%B6/@35.4629487,139.6150264,154m/",
+        websiteUrl: "http://ieke1.com/",
+        openingHours: {
+          mon: {times:[{start:"11:00",end:"20:00"}]},
+          tue: {times:[{start:"11:00",end:"20:00"}]},
+          wed: {times:[{start:"11:00",end:"20:00"}]},
+          thu: {times:[{start:"11:00",end:"20:00"}]},
+          fri: {times:[{start:"11:00",end:"20:00"}]},
+          sat: {times:[{start:"11:00",end:"20:00"}]},
+          sun: {times:[{start:"11:00",end:"20:00"}]}
+        },
+        note: ""
+      }
+    ];
+    
     // APIからデータを読み込む
     async function loadShopsData() {
+      const CACHE_KEY = 'iekei-shops-cache';
+      const CACHE_TIMESTAMP_KEY = 'iekei-shops-timestamp';
+      
+      // 1. キャッシュがあれば即表示
+      const cachedData = localStorage.getItem(CACHE_KEY);
+      const cachedTimestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
+      
+      if (cachedData) {
+        try {
+          shops = JSON.parse(cachedData);
+          console.log(`📦 キャッシュから${shops.length}店舗を読み込みました`);
+          console.log(`🕐 キャッシュ日時: ${new Date(cachedTimestamp).toLocaleString('ja-JP')}`);
+          initializeApp();
+        } catch (e) {
+          console.warn('キャッシュ読み込みエラー:', e);
+        }
+      }
+      
+      // 2. 裏でAPIから最新データを取得
       try {
-        console.log('📡 店舗データを読み込み中...');
+        console.log('📡 最新データを確認中...');
         const response = await fetch(SHOPS_API_URL);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
         
         if (data.ok && data.shops) {
-          shops = data.shops;
-          shopsLoaded = true;
-          console.log(`✅ ${shops.length}店舗のデータを読み込みました`);
-          console.log(`🕐 更新日時: ${new Date(data.updatedAt).toLocaleString('ja-JP')}`);
-          
-          // データ読み込み後に初期化
-          initializeApp();
-        } else {
-          throw new Error('データ形式が不正です');
+          // 3. updatedAtが違っていたら更新
+          if (data.updatedAt !== cachedTimestamp) {
+            shops = data.shops;
+            localStorage.setItem(CACHE_KEY, JSON.stringify(shops));
+            localStorage.setItem(CACHE_TIMESTAMP_KEY, data.updatedAt);
+            
+            console.log(`✅ ${shops.length}店舗のデータを更新しました`);
+            console.log(`🕐 更新日時: ${new Date(data.updatedAt).toLocaleString('ja-JP')}`);
+            
+            // トースト通知
+            if (cachedData) {
+              showToast('店舗データが更新されました');
+              // 再初期化
+              initializeApp();
+            } else {
+              // 初回読み込み
+              initializeApp();
+            }
+          } else {
+            console.log('✅ データは最新です');
+          }
         }
       } catch (error) {
         console.error('❌ データ読み込みエラー:', error);
-        alert('店舗データの読み込みに失敗しました。\n再読み込みしてください。');
+        
+        // 4. 通信失敗時の処理
+        if (cachedData) {
+          // キャッシュがあれば黙って使う
+          console.log('📦 キャッシュを使用します');
+        } else {
+          // キャッシュもない場合はフォールバック
+          const loadingScreen = document.getElementById('loading-screen');
+          if (loadingScreen) {
+            loadingScreen.innerHTML = `
+              <div style="font-size: 48px; margin-bottom: 20px;">❌</div>
+              <div style="font-size: 18px; font-weight: 600; color: #ef4444; margin-bottom: 12px;">データ読み込みエラー</div>
+              <div style="font-size: 14px; color: #6b7280; margin-bottom: 20px;">店舗データの取得に失敗しました</div>
+              <div style="display: flex; gap: 12px;">
+                <button onclick="location.reload()" style="
+                  padding: 12px 24px;
+                  background: #3b82f6;
+                  color: white;
+                  border: none;
+                  border-radius: 8px;
+                  font-size: 16px;
+                  font-weight: 600;
+                  cursor: pointer;
+                ">再読み込み</button>
+                <button onclick="useFallbackData()" style="
+                  padding: 12px 24px;
+                  background: #6b7280;
+                  color: white;
+                  border: none;
+                  border-radius: 8px;
+                  font-size: 16px;
+                  font-weight: 600;
+                  cursor: pointer;
+                ">スキップ（吉村家のみ）</button>
+              </div>
+            `;
+          }
+        }
       }
+    }
+    
+    // フォールバックデータを使用
+    function useFallbackData() {
+      shops = FALLBACK_SHOPS;
+      console.log('📦 フォールバックデータを使用（吉村家のみ）');
+      initializeApp();
+    }
+    
+    // トースト通知
+    function showToast(message) {
+      const toast = document.createElement('div');
+      toast.style.cssText = `
+        position: fixed;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #111827;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        z-index: 10000;
+        animation: slideUp 0.3s ease;
+      `;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
     }
     
     // アプリ初期化（データ読み込み後に実行）
@@ -2288,6 +2432,7 @@
       renderStatsTab();
       initRecordForm();
       initResizeHandle();
+    }
     
     // State
     let visits = JSON.parse(localStorage.getItem('iekei-visits') || '{}');
@@ -4371,6 +4516,16 @@
       }
       
       renderHours();
+      
+      // noteの表示
+      const noteSection = document.getElementById('detail-note-section');
+      const noteElement = document.getElementById('detail-note');
+      if (currentShop.note && currentShop.note.trim()) {
+        noteElement.textContent = currentShop.note;
+        noteSection.style.display = 'block';
+      } else {
+        noteSection.style.display = 'none';
+      }
       
       // 来店情報を常に表示
       if (visitData.logs.length > 0) {
