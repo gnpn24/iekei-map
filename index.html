@@ -1943,7 +1943,7 @@
                 <button class="filter-toggle-btn" id="btn-nearby">
                   <svg style="width:14px;height:14px;vertical-align:middle;margin-right:2px;" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                  </svg>今から
+                  </svg>現在地
                 </button>
               </div>
             </div>
@@ -1970,6 +1970,7 @@
               <option value="直系">直系</option>
               <option value="有名店">有名店</option>
               <option value="王道家">王道家</option>
+              <option value="王道乃印">王道乃印</option>
               <option value="派生">派生</option>
               <option value="資本系">資本系</option>
               <option value="不明">不明</option>
@@ -1980,7 +1981,7 @@
             <button class="filter-toggle-btn" id="list-btn-nearby">
               <svg style="width:14px;height:14px;vertical-align:middle;margin-right:2px;" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-              </svg>今から
+              </svg>現在地
             </button>
           </div>
         </div>
@@ -3738,9 +3739,9 @@
         renderListTab();
       });
       
-      // 今からボタン
+      // マップタブの現在地ボタン（トグル式）
       document.getElementById('btn-nearby').addEventListener('click', () => {
-        handleNearbyMode();
+        handleNearbyModeToggle();
       });
       
       // リストタブのカテゴリーフィルタ
@@ -3758,9 +3759,9 @@
         renderListTab();
       });
       
-      // リストタブの今からボタン
+      // リストタブの今からボタン（トグル式）
       document.getElementById('list-btn-nearby')?.addEventListener('click', () => {
-        handleNearbyMode();
+        handleNearbyModeToggle();
       });
       
       // モーダルのスワイプで閉じる
@@ -3774,7 +3775,7 @@
     function initTabs() {
       document.querySelectorAll('.nav-item').forEach(btn => {
         btn.addEventListener('click', () => {
-          // 真ん中の「今から」ボタンの場合
+          // 真ん中の「今から」ボタンの場合（常にオン）
           if (btn.id === 'btn-nearby-center') {
             // 現在マップタブにいない場合は、まずマップタブに遷移
             const currentTab = document.querySelector('.tab-content.active');
@@ -3794,11 +3795,8 @@
               }
             }
             
-            // 「今から」機能を実行
-            const mapNearbyBtn = document.getElementById('btn-nearby');
-            if (mapNearbyBtn) {
-              mapNearbyBtn.click();
-            }
+            // 「今から」機能を実行（常にオン）
+            handleNearbyMode();
             return;
           }
           
@@ -4082,9 +4080,15 @@
             </svg>
           </a>` : '';
         
+        // 王道家・王道乃印の場合は黄色背景
+        const isOudouya = shop.category === '王道家' || shop.category === '王道乃印';
+        const nameStyle = isOudouya 
+          ? 'font-weight:bold;font-size:16px;margin-bottom:8px;padding:4px 8px;padding-right:28px;background:#fef08a;border-radius:8px;' 
+          : 'font-weight:bold;font-size:16px;margin-bottom:8px;padding-right:28px;';
+        
         const popup = `<div style="padding:8px;min-width:200px;position:relative;">
           <button onclick="markers['${shop.id}'].closePopup(); event.stopPropagation();" style="position:absolute;top:4px;right:4px;width:24px;height:24px;border:none;background:#f3f4f6;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:#6b7280;padding:0;">×</button>
-          <div style="font-weight:bold;font-size:16px;margin-bottom:8px;padding-right:28px;">${shop.name}</div>
+          <div style="${nameStyle}">${shop.name}</div>
           <div style="font-size:12px;margin-bottom:8px">
             <span style="background:#dbeafe;color:#1e40af;padding:4px 8px;border-radius:12px;margin-right:8px">${shop.category}</span>
             <span style="color:#6b7280">${shop.area}</span>
@@ -4219,68 +4223,55 @@
       return R * c;
     }
     
+    // 下部バーの「今から」ボタン用（常にオン）
     function handleNearbyMode() {
+      // 常にオンにする（トグルではなく）
+      // 既にオンの場合は何もしない
       if (nearbyMode) {
-        // オフにする
-        nearbyMode = false;
-        showOpenOnly = false;
-        document.getElementById('btn-nearby').classList.remove('active');
-        document.getElementById('btn-open-toggle').classList.remove('active');
-        document.getElementById('list-btn-nearby')?.classList.remove('active');
-        document.getElementById('list-btn-open-toggle')?.classList.remove('active');
-        
-        // ユーザーマーカーを削除
-        if (userMarker) {
-          userMarker.remove();
-          userMarker = null;
-        }
-        userLocation = null;
-        
-        renderShopList();
-        updateMarkers();
-        renderListTab();
-      } else {
-        // オンにする - 位置情報取得
-        if (!navigator.geolocation) {
-          alert('お使いのブラウザは位置情報に対応していません。');
-          return;
-        }
-        
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            userLocation = {
-              lat: position.coords.latitude,
-              lng: position.coords.longitude
-            };
-            
-            nearbyMode = true;
-            showOpenOnly = true;
-            document.getElementById('btn-nearby').classList.add('active');
-            document.getElementById('btn-open-toggle').classList.add('active');
-            document.getElementById('list-btn-nearby')?.classList.add('active');
-            document.getElementById('list-btn-open-toggle')?.classList.add('active');
-            
-            // 地図に青い点を表示
-            if (userMarker) {
-              userMarker.remove();
-            }
-            
-            const userIcon = L.divIcon({
-              className: 'user-marker',
-              html: '<div style="width:16px;height:16px;border-radius:50%;background:#3b82f6;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);"></div>',
-              iconSize: [16, 16],
-              iconAnchor: [8, 8]
-            });
-            
-            userMarker = L.marker([userLocation.lat, userLocation.lng], { icon: userIcon }).addTo(map);
-            
-            // 地図を現在地中心に
-            map.setView([userLocation.lat, userLocation.lng], 13, { animate: true });
-            
-            renderShopList();
-            updateMarkers();
-            renderListTab();
-          },
+        return;
+      }
+      
+      // オンにする - 位置情報取得
+      if (!navigator.geolocation) {
+        alert('お使いのブラウザは位置情報に対応していません。');
+        return;
+      }
+      
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          userLocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          
+          nearbyMode = true;
+          showOpenOnly = true;
+          document.getElementById('btn-nearby').classList.add('active');
+          document.getElementById('btn-open-toggle').classList.add('active');
+          document.getElementById('list-btn-nearby')?.classList.add('active');
+          document.getElementById('list-btn-open-toggle')?.classList.add('active');
+          
+          // 地図に青い点を表示
+          if (userMarker) {
+            userMarker.remove();
+          }
+          
+          const userIcon = L.divIcon({
+            className: 'user-marker',
+            html: '<div style="width:16px;height:16px;border-radius:50%;background:#3b82f6;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);"></div>',
+            iconSize: [16, 16],
+            iconAnchor: [8, 8]
+          });
+          
+          userMarker = L.marker([userLocation.lat, userLocation.lng], { icon: userIcon }).addTo(map);
+          
+          // 地図を現在地中心に
+          map.setView([userLocation.lat, userLocation.lng], 13, { animate: true });
+          
+          renderShopList();
+          updateMarkers();
+          renderListTab();
+        },
           (error) => {
             let errorMessage = '位置情報の取得に失敗しました。\n\n';
             
@@ -4306,7 +4297,33 @@
             alert(errorMessage);
             console.error('Geolocation error:', error);
           }
-        );
+      );
+    }
+    
+    // リストの「今から」ボタン用（トグル式）
+    function handleNearbyModeToggle() {
+      if (nearbyMode) {
+        // オフにする
+        nearbyMode = false;
+        showOpenOnly = false;
+        document.getElementById('btn-nearby').classList.remove('active');
+        document.getElementById('btn-open-toggle').classList.remove('active');
+        document.getElementById('list-btn-nearby')?.classList.remove('active');
+        document.getElementById('list-btn-open-toggle')?.classList.remove('active');
+        
+        // ユーザーマーカーを削除
+        if (userMarker) {
+          userMarker.remove();
+          userMarker = null;
+        }
+        userLocation = null;
+        
+        renderShopList();
+        updateMarkers();
+        renderListTab();
+      } else {
+        // オンにする（handleNearbyModeを呼ぶ）
+        handleNearbyMode();
       }
     }
     
