@@ -2115,21 +2115,17 @@
         </div>
         
         <div class="section">
-          <div class="section-title">営業時間</div>
-          <div class="hours-grid" id="detail-hours"></div>
+          <div class="section-title" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;" onclick="toggleHours()">
+            <span>営業時間</span>
+            <span id="hours-toggle" style="font-size: 14px; color: #6b7280;">▼</span>
+          </div>
+          <div style="background: #f9fafb; border-radius: 12px; padding: 12px; margin-top: 8px;">
+            <div id="detail-hours-today"></div>
+            <div id="detail-hours-all" style="display: none;"></div>
+            <div id="detail-note-inline" style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 13px; line-height: 1.6;"></div>
+          </div>
         </div>
         
-        <div class="section" id="detail-note-section" style="display: none;">
-          <div class="section-title">📝 補足情報</div>
-          <div id="detail-note" style="
-            background: #f3f4f6;
-            padding: 12px;
-            border-radius: 8px;
-            color: #374151;
-            font-size: 14px;
-            line-height: 1.6;
-          "></div>
-        </div>
         
         <div class="section">
           <div class="section-title">ナビゲーション</div>
@@ -2294,7 +2290,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
   <script>
     // App Version (手動で更新)
-    const APP_VERSION = "1.18.1";
+    const APP_VERSION = "1.19.0";
     
     // 更新チェック機能（HTMLのみ）
     async function checkUpdate() {
@@ -2388,7 +2384,7 @@
         googleMapUrl: "https://www.google.co.jp/maps/place/%E5%AE%B6%E7%B3%BB%E7%B7%8F%E6%9C%AC%E5%B1%B1+%E5%90%89%E6%9D%91%E5%AE%B6/@35.4629487,139.6150264,154m/",
         websiteUrl: "http://ieke1.com/",
         openingHours: {
-          mon: {times:[{start:"11:00",end:"20:00"}]},
+          mon: {times:[]},
           tue: {times:[{start:"11:00",end:"20:00"}]},
           wed: {times:[{start:"11:00",end:"20:00"}]},
           thu: {times:[{start:"11:00",end:"20:00"}]},
@@ -2396,7 +2392,7 @@
           sat: {times:[{start:"11:00",end:"20:00"}]},
           sun: {times:[{start:"11:00",end:"20:00"}]}
         },
-        note: ""
+        note: "祝日の場合は翌日定休日"
       }
     ];
     
@@ -4676,14 +4672,13 @@
       
       renderHours();
       
-      // noteの表示
-      const noteSection = document.getElementById('detail-note-section');
-      const noteElement = document.getElementById('detail-note');
+      // noteの表示（営業時間セクション内）
+      const noteElement = document.getElementById('detail-note-inline');
       if (currentShop.note && currentShop.note.trim()) {
-        noteElement.textContent = currentShop.note;
-        noteSection.style.display = 'block';
+        noteElement.innerHTML = `<strong>補足:</strong> ${currentShop.note}`;
+        noteElement.style.display = 'block';
       } else {
-        noteSection.style.display = 'none';
+        noteElement.style.display = 'none';
       }
       
       // 来店情報を常に表示
@@ -4867,25 +4862,96 @@
     function renderHours() {
       const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
       const dayNames = { mon: '月', tue: '火', wed: '水', thu: '木', fri: '金', sat: '土', sun: '日' };
-      const today = days[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
       
-      const hoursHTML = days.map(day => {
+      // 現在の日時
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      const systemDayIndex = now.getDay() === 0 ? 6 : now.getDay() - 1; // 月=0, 日=6
+      
+      // 深夜帯（0:00-5:00）で前日の営業時間が24時を超える場合、前日を「今日」とする
+      let actualToday = days[systemDayIndex];
+      
+      if (currentHour >= 0 && currentHour < 5) {
+        const yesterdayIndex = systemDayIndex === 0 ? 6 : systemDayIndex - 1;
+        const yesterday = days[yesterdayIndex];
+        const yesterdayData = currentShop.openingHours[yesterday];
+        
+        // 前日の営業時間が24時を超えているかチェック
+        if (yesterdayData && yesterdayData.times.length > 0) {
+          for (const time of yesterdayData.times) {
+            const endHour = parseInt(time.end.split(':')[0]);
+            const endMinute = parseInt(time.end.split(':')[1]);
+            
+            // 終了時刻が24時以降（例: 25:00 = 翌1:00）
+            if (endHour >= 24) {
+              const actualEndHour = endHour - 24;
+              const currentTotalMinutes = currentHour * 60 + currentMinute;
+              const endTotalMinutes = actualEndHour * 60 + endMinute;
+              
+              // 現在時刻が前日の営業時間内
+              if (currentTotalMinutes <= endTotalMinutes) {
+                actualToday = yesterday;
+                break;
+              }
+            }
+          }
+        }
+      }
+      
+      const today = actualToday;
+      
+      // 今日の営業時間のみ
+      const todayData = currentShop.openingHours[today];
+      const isClosed = todayData.times.length === 0;
+      const todayHTML = `
+        <div class="hours-row today">
+          <span class="hours-day" style="color: #3b82f6; font-weight: 600;">${dayNames[today]}曜日</span>
+          <span class="hours-time" style="color: ${isClosed ? '#ef4444' : '#3b82f6'}; font-weight: 600;">
+            ${isClosed ? '定休日' : todayData.times.map(t => `${t.start}-${t.end}`).join(', ')}
+          </span>
+        </div>
+      `;
+      
+      // 全曜日の営業時間
+      const allHoursHTML = days.map(day => {
         const dayData = currentShop.openingHours[day];
         const isToday = day === today;
+        const isClosed = dayData.times.length === 0;
         
         return `
           <div class="hours-row ${isToday ? 'today' : ''}">
-            <span class="hours-day">${dayNames[day]}曜日</span>
-            <span class="hours-time">
-              ${dayData.times.length === 0 ? '定休日' : 
-                dayData.times.map(t => `${t.start}-${t.end}`).join(', ')}
+            <span class="hours-day" style="${isToday ? 'color: #3b82f6; font-weight: 600;' : ''}">${dayNames[day]}曜日</span>
+            <span class="hours-time" style="${isClosed ? 'color: #ef4444;' : ''} ${isToday ? 'color: #3b82f6; font-weight: 600;' : ''}">
+              ${isClosed ? '定休日' : dayData.times.map(t => `${t.start}-${t.end}`).join(', ')}
             </span>
           </div>
         `;
       }).join('');
       
-      document.getElementById('detail-hours').innerHTML = hoursHTML;
+      document.getElementById('detail-hours-today').innerHTML = todayHTML;
+      document.getElementById('detail-hours-all').innerHTML = allHoursHTML;
     }
+    
+    function toggleHours() {
+      const todayEl = document.getElementById('detail-hours-today');
+      const allEl = document.getElementById('detail-hours-all');
+      const toggleIcon = document.getElementById('hours-toggle');
+      
+      if (allEl.style.display === 'none') {
+        // 展開
+        todayEl.style.display = 'none';
+        allEl.style.display = 'block';
+        toggleIcon.textContent = '▲';
+      } else {
+        // 折りたたみ
+        todayEl.style.display = 'block';
+        allEl.style.display = 'none';
+        toggleIcon.textContent = '▼';
+      }
+    }
+    
+    window.toggleHours = toggleHours;
     
     function renderVisitHistory(logs) {
       const historyHTML = logs.slice().reverse().map((log, idx) => {
@@ -5705,21 +5771,26 @@
           <div style="background: white; padding: 20px;">
             <div class="stats-title">📝 変更履歴</div>
             <div class="version-info">
-              <div class="version-current">現在のバージョン: <strong>v1.18.1</strong></div>
-              <div class="version-date">最終更新: 2026/01/17</div>
+              <div class="version-current">現在のバージョン: <strong>v1.19.0</strong></div>
+              <div class="version-date">最終更新: 2026/01/21</div>
             </div>
             
             <div class="changelog">
-              <!-- v1.18.1 -->
+              <!-- v1.19.0 -->
               <div class="version-section">
                 <div class="version-header">
-                  <span class="version-number">v1.18.1</span>
-                  <span class="version-date-small">2026/01/17</span>
+                  <span class="version-number">v1.19.0</span>
+                  <span class="version-date-small">2026/01/21</span>
                 </div>
                 <ul class="version-list">
-                  <li>🚨 チュートリアル専用マーカー表示を修正</li>
-                  <li>📱 iOS PWA対応（safe-area）</li>
-                  <li>✅ チュートリアルが正常に進む</li>
+                  <li>📅 営業時間を折りたたみ式に変更（Googleマップ風）</li>
+                  <li>🕐 深夜帯の営業時間表示を修正（24時超え対応）</li>
+                  <li>📝 補足情報を営業時間セクション内に統合</li>
+                  <li>🎨 下部ナビのスタイル改善（グレーアウト無効化）</li>
+                  <li>🍜 「今から」ボタンでマップ画面に自動遷移</li>
+                  <li>🗺️ ポップアップにGoogleマップアイコン追加</li>
+                  <li>📱 Android PWAでナビバーに隠れる問題を修正</li>
+                  <li>🐛 ヘッダーボタンのクリック時ズレを完全修正</li>
                 </ul>
               </div>
               
@@ -5745,6 +5816,18 @@
                 </button>
                 
                 <div id="old-versions-content" style="display: none; margin-top: 16px;">
+              
+              <!-- v1.18.1 -->\n              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.18.1</span>
+                  <span class="version-date-small">2026/01/17</span>
+                </div>
+                <ul class="version-list">
+                  <li>🚨 チュートリアル専用マーカー表示を修正</li>
+                  <li>📱 iOS PWA対応（safe-area）</li>
+                  <li>✅ チュートリアルが正常に進む</li>
+                </ul>
+              </div>
               
               <!-- v1.18.0 -->
               <div class="version-section">
