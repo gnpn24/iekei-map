@@ -1001,11 +1001,41 @@
       margin-top: 16px;
     }
     
+    .visit-card-wrapper {
+      position: relative;
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+    
     .visit-card {
       background: #f9fafb;
       border-radius: 12px;
       padding: 12px;
-      margin-bottom: 8px;
+      cursor: pointer;
+      transition: transform 0.3s ease, background 0.2s;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .visit-card:active {
+      background: #f3f4f6;
+    }
+    
+    .visit-delete-btn {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      background: #ef4444;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 20px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 80px;
+      border-radius: 0 12px 12px 0;
     }
     
     .visit-date {
@@ -1113,14 +1143,14 @@
     
     .rating-input {
       display: flex;
-      gap: 8px;
-      margin-top: 8px;
+      gap: 4px;
+      margin-top: 4px;
     }
     
     .star-btn {
       background: none;
       border: none;
-      font-size: 32px;
+      font-size: 24px;
       cursor: pointer;
       padding: 0;
       color: #d1d5db;
@@ -1181,6 +1211,39 @@
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 12px;
+    }
+    
+    /* iOS風セグメントコントロール */
+    .segment-control {
+      display: flex;
+      background: #e5e7eb;
+      border-radius: 8px;
+      padding: 2px;
+      gap: 2px;
+    }
+    
+    .segment-btn {
+      flex: 1;
+      padding: 8px 12px;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #6b7280;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    .segment-btn.active {
+      background: white;
+      color: #000000;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .segment-btn:active {
+      transform: scale(0.98);
     }
     
     /* List Tab */
@@ -2226,15 +2289,11 @@
       </div>
       <div class="modal-body">
         <form id="record-form">
-          <div class="form-group">
-            <label class="form-label">来店日時 *</label>
-            <input type="datetime-local" class="form-input datetime-input" id="input-visited-at" required>
-          </div>
-          
+          <!-- 来店日時 | 待ち時間 -->
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">気温（°C）</label>
-              <input type="number" class="form-input" id="input-temp" step="0.1" placeholder="例: 25">
+              <label class="form-label">来店日時 *</label>
+              <input type="datetime-local" class="form-input datetime-input" id="input-visited-at" required>
             </div>
             <div class="form-group">
               <label class="form-label">待ち時間（分）</label>
@@ -2242,28 +2301,76 @@
             </div>
           </div>
           
-          <div class="form-group">
-            <label class="form-label">天気</label>
-            <select class="form-input" id="input-weather">
-              <option value="">選択してください</option>
-              <option value="晴れ">☀️ 晴れ</option>
-              <option value="曇り">☁️ 曇り</option>
-              <option value="雨">🌧️ 雨</option>
-              <option value="雪">❄️ 雪</option>
-            </select>
+          <!-- 気温 | 天気 -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">気温（°C）</label>
+              <input type="number" class="form-input" id="input-temp" step="0.1" placeholder="例: 25">
+            </div>
+            <div class="form-group">
+              <label class="form-label">天気</label>
+              <select class="form-input" id="input-weather">
+                <option value="">選択してください</option>
+                <option value="晴れ">☀️ 晴れ</option>
+                <option value="曇り">☁️ 曇り</option>
+                <option value="雨">🌧️ 雨</option>
+                <option value="雪">❄️ 雪</option>
+              </select>
+            </div>
           </div>
           
-          <div class="form-group">
-            <label class="form-label">評価</label>
-            <div class="rating-input" id="rating-input"></div>
+          <!-- 評価+注文内容+オプション | 麺・味・油 -->
+          <div class="form-row" style="align-items: stretch;">
+            <!-- 左側: 評価+注文内容+オプション (3等分) -->
+            <div style="flex:1;display:flex;flex-direction:column;">
+              <div class="form-group" style="margin:0;flex:1;display:flex;flex-direction:column;">
+                <label class="form-label">評価</label>
+                <div class="rating-input" id="rating-input" style="flex:1;display:flex;align-items:center;"></div>
+              </div>
+              
+              <div class="form-group" style="margin:16px 0 0 0;flex:1;display:flex;flex-direction:column;">
+                <label class="form-label">注文内容</label>
+                <input type="text" class="form-input" id="input-order" placeholder="例: ラーメン並ほうれん草増し" style="flex:1;">
+              </div>
+              
+              <div class="form-group" style="margin:16px 0 0 0;flex:1;display:flex;flex-direction:column;">
+                <label class="form-label">オプション</label>
+                <input type="text" class="form-input" id="input-options" placeholder="例: ライス" style="flex:1;">
+              </div>
+            </div>
+            
+            <!-- 右側: 麺・味・油 (3等分) -->
+            <div style="flex:1;display:flex;flex-direction:column;">
+              <div class="form-group" style="margin:0;flex:1;display:flex;flex-direction:column;justify-content:center;">
+                <label class="form-label">麺の硬さ</label>
+                <div class="segment-control">
+                  <button type="button" class="segment-btn" data-value="硬麺" onclick="selectSegment(this, 'noodle-firmness')">硬麺</button>
+                  <button type="button" class="segment-btn active" data-value="普通" onclick="selectSegment(this, 'noodle-firmness')">普通</button>
+                  <button type="button" class="segment-btn" data-value="柔麺" onclick="selectSegment(this, 'noodle-firmness')">柔麺</button>
+                </div>
+              </div>
+              
+              <div class="form-group" style="margin:16px 0 0 0;flex:1;display:flex;flex-direction:column;justify-content:center;">
+                <label class="form-label">味の濃さ</label>
+                <div class="segment-control">
+                  <button type="button" class="segment-btn" data-value="濃いめ" onclick="selectSegment(this, 'flavor-intensity')">濃いめ</button>
+                  <button type="button" class="segment-btn active" data-value="普通" onclick="selectSegment(this, 'flavor-intensity')">普通</button>
+                  <button type="button" class="segment-btn" data-value="薄め" onclick="selectSegment(this, 'flavor-intensity')">薄め</button>
+                </div>
+              </div>
+              
+              <div class="form-group" style="margin:16px 0 0 0;flex:1;display:flex;flex-direction:column;justify-content:center;">
+                <label class="form-label">油の量</label>
+                <div class="segment-control">
+                  <button type="button" class="segment-btn" data-value="多め" onclick="selectSegment(this, 'oil-amount')">多め</button>
+                  <button type="button" class="segment-btn active" data-value="普通" onclick="selectSegment(this, 'oil-amount')">普通</button>
+                  <button type="button" class="segment-btn" data-value="少なめ" onclick="selectSegment(this, 'oil-amount')">少なめ</button>
+                </div>
+              </div>
+            </div>
           </div>
           
-          <div class="form-group">
-            <label class="form-label">注文内容</label>
-            <input type="text" class="form-input" id="input-order" placeholder="例: ラーメン（麺硬め、味濃いめ、油多め）">
-          </div>
-          
-          <div class="form-group">
+          <div class="form-group" style="margin-top:24px;">
             <label class="form-label">メモ</label>
             <textarea class="form-input" id="input-memo" placeholder="味の感想など..."></textarea>
           </div>
@@ -2282,7 +2389,28 @@
             </div>
           </div>
           
-          <button type="button" class="btn btn-primary" style="width:100%;margin-top:16px;" onclick="saveVisitRecord(event)">保存</button>
+          <div style="display:flex;gap:8px;margin-top:16px;">
+            <button type="button" class="btn btn-primary" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;" onclick="saveVisitRecord(event)">
+              <svg style="width:18px;height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                <polyline points="17 21 17 13 7 13 7 21"/>
+                <polyline points="7 3 7 8 15 8"/>
+              </svg>
+              保存
+            </button>
+            <button type="button" class="btn" style="flex:1;background:#000000;color:white;border:none;display:flex;align-items:center;justify-content:center;gap:6px;" onclick="saveAndTweet(event)">
+              <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              </svg>
+              保存してシェア
+            </button>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:4px;">
+            <div style="flex:1;"></div>
+            <div style="flex:1;text-align:center;font-size:12px;color:#6b7280;">
+              Xの投稿画面で写真を追加してください。
+            </div>
+          </div>
         </form>
       </div>
     </div>
@@ -2371,7 +2499,7 @@
     let shops = []; // APIから読み込む
     let shopsLoaded = false;
     
-    // フォールバックデータ（吉村家のみ）
+    // フォールバックデータ（吉村家と王道家）
     const FALLBACK_SHOPS = [
       {
         id: "yoshimuraya",
@@ -2394,6 +2522,28 @@
           sun: {times:[{start:"11:00",end:"20:00"}]}
         },
         note: "祝日の場合は翌日定休日"
+      },
+      {
+        id: "oudouya",
+        name: "王道家",
+        category: "王道家",
+        area: "柏",
+        lat: 35.8631125139897,
+        lng: 139.96741231188827,
+        parent: null,
+        description: "王道家系ラーメン",
+        googleMapUrl: "https://maps.app.goo.gl/LrRgGGTRYJ3z9YKz8",
+        websiteUrl: "https://oudouya.com/",
+        openingHours: {
+          mon: {times:[]},
+          tue: {times:[{start:"11:00",end:"25:00"}]},
+          wed: {times:[{start:"11:00",end:"25:00"}]},
+          thu: {times:[{start:"11:00",end:"25:00"}]},
+          fri: {times:[{start:"11:00",end:"25:00"}]},
+          sat: {times:[{start:"11:00",end:"25:00"}]},
+          sun: {times:[{start:"11:00",end:"25:00"}]}
+        },
+        note: "月曜定休"
       }
     ];
     
@@ -4080,10 +4230,10 @@
             </svg>
           </a>` : '';
         
-        // 王道家・王道乃印の場合は黄色背景
+        // 王道家・王道乃印の場合は看板風デザイン（黄色背景+赤い上下縁）
         const isOudouya = shop.category === '王道家' || shop.category === '王道乃印';
         const nameStyle = isOudouya 
-          ? 'font-weight:bold;font-size:16px;margin-bottom:8px;padding:4px 8px;padding-right:28px;background:#fef08a;border-radius:8px;' 
+          ? 'font-weight:bold;font-size:16px;margin-bottom:8px;padding:8px 12px;padding-right:40px;background:#FDCD00;color:#000000;border:4px solid #dc2626;border-radius:0;' 
           : 'font-weight:bold;font-size:16px;margin-bottom:8px;padding-right:28px;';
         
         const popup = `<div style="padding:8px;min-width:200px;position:relative;">
@@ -4784,17 +4934,13 @@
       
       modal.classList.add('active');
       
-      // チュートリアル中は、モーダル表示後に必ずscrollTopをリセット
-      if (tutorialActive) {
-        // モーダルのアニメーションが開始した後にリセット
-        setTimeout(() => {
-          const modalContent = modal.querySelector('.modal-content');
-          if (modalContent) {
-            modalContent.scrollTop = 0;
-            console.log('★★ showShopDetail: Force reset scrollTop to 0 after modal shown ★★');
-          }
-        }, 50);
-      }
+      // モーダルを開く時に常にスクロール位置を最上部にリセット
+      setTimeout(() => {
+        const modalContent = modal.querySelector('.modal-content');
+        if (modalContent) {
+          modalContent.scrollTop = 0;
+        }
+      }, 50);
     }
     
     // グローバルスコープに公開（Leafletポップアップから呼び出すため）
@@ -4973,35 +5119,217 @@
     function renderVisitHistory(logs) {
       const historyHTML = logs.slice().reverse().map((log, idx) => {
         const originalIdx = logs.length - 1 - idx; // 元の配列でのインデックス
+        
+        // カスタマイズ情報を1行にまとめる
+        const customize = [log.noodleFirmness, log.flavorIntensity, log.oilAmount]
+          .filter(Boolean)
+          .join('/') || '普通/普通/普通';
+        
         return `
-        <div class="visit-card">
-          <div style="display:flex;justify-content:space-between;align-items:start;">
-            <div class="visit-date">${formatDateTime(log.visitedAt)}</div>
-            <div style="display:flex;gap:8px;">
-              <button onclick="editVisitRecord(${originalIdx})" style="padding:4px 12px;background:#3b82f6;color:white;border:none;border-radius:8px;font-size:12px;cursor:pointer;">編集</button>
-              <button onclick="deleteVisitRecord(${originalIdx})" style="padding:4px 12px;background:#ef4444;color:white;border:none;border-radius:8px;font-size:12px;cursor:pointer;">削除</button>
+        <div class="visit-card-wrapper" data-index="${originalIdx}">
+          <div class="visit-card" onclick="showVisitDetail(${originalIdx})" style="display:flex;gap:12px;align-items:start;">
+            <!-- 左側: メイン情報 -->
+            <div style="flex:1;min-width:0;">
+              <!-- 日時と評価 -->
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <div class="visit-date" style="margin:0;">${formatDateTime(log.visitedAt)}</div>
+                ${log.rating > 0 ? `
+                  <div style="color:#fbbf24;font-size:14px;">
+                    ${'★'.repeat(log.rating)}${'☆'.repeat(5 - log.rating)}
+                  </div>
+                ` : ''}
+              </div>
+              
+              <!-- 注文内容 -->
+              ${log.order ? `
+                <div style="font-size:14px;color:#1f2937;margin-bottom:4px;">
+                  ${log.order}${log.options ? ' + ' + log.options : ''}
+                </div>
+              ` : ''}
+              
+              <!-- カスタマイズ -->
+              <div style="font-size:13px;color:#6b7280;margin-bottom:4px;">
+                ${customize}
+              </div>
+              
+              <!-- メモ -->
+              ${log.memo ? `
+                <div class="visit-memo" style="margin:0;font-size:13px;color:#4b5563;line-height:1.4;">
+                  ${log.memo.substring(0, 40)}${log.memo.length > 40 ? '...' : ''}
+                </div>
+              ` : ''}
             </div>
+            
+            <!-- 右側: 写真サムネイル -->
+            ${log.photo ? `
+              <img src="${log.photo}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;flex-shrink:0;" alt="Visit photo">
+            ` : ''}
           </div>
-          ${log.weather || log.temperature || log.waitMinutes ? `
-            <div class="visit-details">
-              ${log.weather ? `${log.weather}` : ''}
-              ${log.temperature ? ` ${log.temperature}°C` : ''}
-              ${log.waitMinutes ? ` • 待ち時間: ${log.waitMinutes}分` : ''}
-            </div>
-          ` : ''}
-          ${log.rating > 0 ? `
-            <div class="visit-rating">
-              ${'★'.repeat(log.rating)}${'☆'.repeat(5 - log.rating)}
-            </div>
-          ` : ''}
-          ${log.order ? `<div class="visit-order"><strong>注文:</strong> ${log.order}</div>` : ''}
-          ${log.memo ? `<div class="visit-memo">${log.memo}</div>` : ''}
-          ${log.photo ? `<img src="${log.photo}" class="visit-photo" alt="Visit photo">` : ''}
+          <div class="visit-delete-btn" onclick="deleteVisitRecord(${originalIdx}); event.stopPropagation();">削除</div>
         </div>
       `;
       }).join('');
       
       document.getElementById('detail-visits').innerHTML = historyHTML;
+      
+      // スワイプ機能を追加
+      initSwipeToDelete();
+    }
+    
+    // スワイプで削除ボタンを表示
+    function initSwipeToDelete() {
+      const wrappers = document.querySelectorAll('.visit-card-wrapper');
+      
+      wrappers.forEach(wrapper => {
+        const card = wrapper.querySelector('.visit-card');
+        let startX = 0;
+        let currentX = 0;
+        let isDragging = false;
+        
+        card.addEventListener('touchstart', (e) => {
+          startX = e.touches[0].clientX;
+          isDragging = true;
+          card.style.transition = 'none';
+        });
+        
+        card.addEventListener('touchmove', (e) => {
+          if (!isDragging) return;
+          currentX = e.touches[0].clientX;
+          const diff = currentX - startX;
+          
+          // 左スワイプのみ
+          if (diff < 0 && diff > -80) {
+            card.style.transform = `translateX(${diff}px)`;
+          }
+        });
+        
+        card.addEventListener('touchend', () => {
+          if (!isDragging) return;
+          isDragging = false;
+          card.style.transition = 'transform 0.3s ease';
+          
+          const diff = currentX - startX;
+          
+          // 40px以上左にスワイプしたら削除ボタン表示
+          if (diff < -40) {
+            card.style.transform = 'translateX(-80px)';
+          } else {
+            card.style.transform = 'translateX(0)';
+          }
+        });
+      });
+    }
+    
+    // 訪問記録の詳細を表示
+    let viewingLogIndex = null;
+    
+    function showVisitDetail(logIndex) {
+      if (!currentShop) return;
+      
+      const log = visits[currentShop.id].logs[logIndex];
+      if (!log) return;
+      
+      viewingLogIndex = logIndex;
+      
+      // 詳細表示用のモーダルを作成
+      const detailHTML = `
+        <div class="visit-detail-content">
+          <div style="margin-bottom:16px;">
+            <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">来店日時</div>
+            <div style="font-size:15px;font-weight:600;">${formatDateTime(log.visitedAt)}</div>
+          </div>
+          
+          ${log.rating > 0 ? `
+            <div style="margin-bottom:16px;">
+              <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">評価</div>
+              <div style="font-size:20px;color:#fbbf24;">
+                ${'★'.repeat(log.rating)}${'☆'.repeat(5 - log.rating)}
+              </div>
+            </div>
+          ` : ''}
+          
+          ${log.weather || log.temperature || log.waitMinutes ? `
+            <div style="margin-bottom:16px;">
+              <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">訪問時の情報</div>
+              <div style="font-size:14px;">
+                ${log.weather ? `${log.weather}` : ''}
+                ${log.temperature ? ` ${log.temperature}°C` : ''}
+                ${log.waitMinutes ? ` • 待ち時間: ${log.waitMinutes}分` : ''}
+              </div>
+            </div>
+          ` : ''}
+          
+          ${log.order ? `
+            <div style="margin-bottom:16px;">
+              <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">注文内容</div>
+              <div style="font-size:14px;background:#f3f4f6;padding:12px;border-radius:8px;">${log.order}</div>
+            </div>
+          ` : ''}
+          
+          ${log.options ? `
+            <div style="margin-bottom:16px;">
+              <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">オプション</div>
+              <div style="font-size:14px;background:#f3f4f6;padding:12px;border-radius:8px;">${log.options}</div>
+            </div>
+          ` : ''}
+          
+          ${log.noodleFirmness || log.flavorIntensity || log.oilAmount ? `
+            <div style="margin-bottom:16px;">
+              <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">カスタマイズ</div>
+              <div style="font-size:14px;display:flex;gap:12px;">
+                ${log.noodleFirmness ? `<span>麺: ${log.noodleFirmness}</span>` : ''}
+                ${log.flavorIntensity ? `<span>味: ${log.flavorIntensity}</span>` : ''}
+                ${log.oilAmount ? `<span>油: ${log.oilAmount}</span>` : ''}
+              </div>
+            </div>
+          ` : ''}
+          
+          ${log.memo ? `
+            <div style="margin-bottom:16px;">
+              <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">メモ</div>
+              <div style="font-size:14px;line-height:1.6;">${log.memo}</div>
+            </div>
+          ` : ''}
+          
+          ${log.photo ? `
+            <div style="margin-bottom:16px;">
+              <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">写真</div>
+              <img src="${log.photo}" style="width:100%;border-radius:8px;margin-top:8px;" alt="Visit photo">
+            </div>
+          ` : ''}
+          
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button onclick="deleteVisitFromDetail(${logIndex})" class="btn" style="flex:1;background:#ef4444;color:white;border:none;">
+              削除
+            </button>
+            <button onclick="editVisitRecord(${logIndex})" class="btn btn-primary" style="flex:1;">
+              編集する
+            </button>
+          </div>
+        </div>
+      `;
+      
+      // record-modalを再利用して詳細表示
+      document.getElementById('record-form').style.display = 'none';
+      document.querySelector('#record-modal .modal-header h2').textContent = '訪問記録';
+      
+      const modalBody = document.querySelector('#record-modal .modal-body');
+      const existingDetail = modalBody.querySelector('.visit-detail-content');
+      if (existingDetail) {
+        existingDetail.remove();
+      }
+      
+      modalBody.insertAdjacentHTML('afterbegin', detailHTML);
+      document.getElementById('record-modal').classList.add('active');
+      
+      // スクロール位置をリセット
+      setTimeout(() => {
+        const modal = document.getElementById('record-modal');
+        const modalContent = modal?.querySelector('.modal-content');
+        if (modalContent) {
+          modalContent.scrollTop = 0;
+        }
+      }, 50);
     }
     
     function toggleWantToGo() {
@@ -5057,6 +5385,28 @@
       renderListTab();
     }
     
+    // Segment Control
+    function selectSegment(button, groupName) {
+      // 同じグループ内の他のボタンからactiveを削除
+      const parent = button.parentElement;
+      parent.querySelectorAll('.segment-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      // クリックされたボタンにactiveを追加
+      button.classList.add('active');
+    }
+    
+    function restoreSegmentValue(groupName, value) {
+      const buttons = document.querySelectorAll(`[onclick*="${groupName}"]`);
+      buttons.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.value === value) {
+          btn.classList.add('active');
+        }
+      });
+    }
+    
     // Record Modal
     function openRecordModal() {
       // チュートリアル中は訪問記録モーダルを開かない
@@ -5084,12 +5434,100 @@
       // モーダルのタイトルをリセット
       document.querySelector('#record-modal .modal-header h2').textContent = '訪問記録';
       
+      // 天気と気温を自動取得
+      fetchCurrentWeather();
+      
+      // フォームを表示状態にする
+      document.getElementById('record-form').style.display = 'block';
+      
+      // 詳細表示があれば削除
+      const modalBody = document.querySelector('#record-modal .modal-body');
+      const existingDetail = modalBody.querySelector('.visit-detail-content');
+      if (existingDetail) {
+        existingDetail.remove();
+      }
+      
       document.getElementById('record-modal').classList.add('active');
+      
+      // モーダルを開く時にスクロール位置を最上部にリセット
+      setTimeout(() => {
+        const modal = document.getElementById('record-modal');
+        const modalContent = modal?.querySelector('.modal-content');
+        if (modalContent) {
+          modalContent.scrollTop = 0;
+        }
+      }, 50);
+    }
+    
+    // 現在の天気を取得して自動挿入
+    async function fetchCurrentWeather() {
+      if (!currentShop || !currentShop.lat || !currentShop.lng) return;
+      
+      try {
+        // Open-Meteo API (無料、登録不要)
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${currentShop.lat}&longitude=${currentShop.lng}&current=temperature_2m,weather_code&timezone=Asia/Tokyo`;
+        
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('天気情報の取得に失敗しました');
+        
+        const data = await response.json();
+        
+        // 気温を挿入
+        if (data.current && data.current.temperature_2m) {
+          document.getElementById('input-temp').value = data.current.temperature_2m;
+        }
+        
+        // 天気コードを天気に変換して挿入
+        if (data.current && data.current.weather_code !== undefined) {
+          const weatherText = getWeatherText(data.current.weather_code);
+          document.getElementById('input-weather').value = weatherText;
+        }
+        
+        console.log('✅ 天気情報を自動取得しました');
+      } catch (error) {
+        console.log('⚠️ 天気情報の取得に失敗:', error.message);
+        // エラーでも何もしない（手動入力できる）
+      }
+    }
+    
+    // WMO天気コードを日本語に変換（4つの選択肢に対応）
+    function getWeatherText(code) {
+      // 晴れ系 (0-3)
+      if (code >= 0 && code <= 2) return '晴れ';
+      
+      // 曇り系 (3, 45, 48)
+      if (code === 3 || code === 45 || code === 48) return '曇り';
+      
+      // 雪系 (71-77, 85-86)
+      if ((code >= 71 && code <= 77) || code === 85 || code === 86) return '雪';
+      
+      // 雨系 (それ以外の降水)
+      if (code >= 51) return '雨';
+      
+      return '晴れ'; // デフォルト
     }
     
     function closeRecordModal() {
+      // 編集中の場合は確認ダイアログを表示
+      if (editingLogIndex !== null) {
+        if (!confirm('編集をキャンセルしますか?')) {
+          return;
+        }
+      }
+      
       document.getElementById('record-modal').classList.remove('active');
       editingLogIndex = null; // 編集モードをリセット
+      viewingLogIndex = null; // 閲覧モードもリセット
+      
+      // フォームを表示状態に戻す(次回開くときのため)
+      document.getElementById('record-form').style.display = 'block';
+      
+      // 詳細表示があれば削除
+      const modalBody = document.querySelector('#record-modal .modal-body');
+      const existingDetail = modalBody.querySelector('.visit-detail-content');
+      if (existingDetail) {
+        existingDetail.remove();
+      }
     }
     
     function editVisitRecord(logIndex) {
@@ -5100,16 +5538,30 @@
       
       editingLogIndex = logIndex;
       
+      // 詳細表示を削除してフォームを表示
+      const modalBody = document.querySelector('#record-modal .modal-body');
+      const existingDetail = modalBody.querySelector('.visit-detail-content');
+      if (existingDetail) {
+        existingDetail.remove();
+      }
+      document.getElementById('record-form').style.display = 'block';
+      
       // フォームに既存データを入力
       document.getElementById('input-visited-at').value = log.visitedAt;
       document.getElementById('input-temp').value = log.temperature || '';
       document.getElementById('input-wait').value = log.waitMinutes || '';
       document.getElementById('input-weather').value = log.weather || '';
       document.getElementById('input-order').value = log.order || '';
+      document.getElementById('input-options').value = log.options || '';
       document.getElementById('input-memo').value = log.memo || '';
       
       currentRating = log.rating || 0;
       renderRatingInput();
+      
+      // セグメントボタンの復元
+      restoreSegmentValue('noodle-firmness', log.noodleFirmness || '普通');
+      restoreSegmentValue('flavor-intensity', log.flavorIntensity || '普通');
+      restoreSegmentValue('oil-amount', log.oilAmount || '普通');
       
       currentPhoto = log.photo || null;
       if (currentPhoto) {
@@ -5122,7 +5574,14 @@
       // モーダルのタイトルを変更
       document.querySelector('#record-modal .modal-header h2').textContent = '訪問記録を編集';
       
-      document.getElementById('record-modal').classList.add('active');
+      // モーダルを開く時にスクロール位置を最上部にリセット
+      setTimeout(() => {
+        const modal = document.getElementById('record-modal');
+        const modalContent = modal?.querySelector('.modal-content');
+        if (modalContent) {
+          modalContent.scrollTop = 0;
+        }
+      }, 50);
     }
     
     function deleteVisitRecord(logIndex) {
@@ -5132,6 +5591,26 @@
       
       visits[currentShop.id].logs.splice(logIndex, 1);
       saveVisits();
+      
+      // 画面を更新
+      updateMarkers();
+      renderShopList(document.getElementById('filter-category').value);
+      renderListTab();
+      renderLineageTab();
+      showShopDetail(currentShop.id);
+    }
+    
+    // 詳細表示画面から削除
+    function deleteVisitFromDetail(logIndex) {
+      if (!currentShop) return;
+      
+      if (!confirm('この訪問記録を削除しますか?')) return;
+      
+      visits[currentShop.id].logs.splice(logIndex, 1);
+      saveVisits();
+      
+      // モーダルを閉じる
+      closeRecordModal();
       
       // 画面を更新
       updateMarkers();
@@ -5242,6 +5721,10 @@
         weather: document.getElementById('input-weather').value || null,
         rating: currentRating,
         order: document.getElementById('input-order').value || '',
+        options: document.getElementById('input-options').value || '',
+        noodleFirmness: document.querySelector('[onclick*="noodle-firmness"].active')?.dataset.value || '普通',
+        flavorIntensity: document.querySelector('[onclick*="flavor-intensity"].active')?.dataset.value || '普通',
+        oilAmount: document.querySelector('[onclick*="oil-amount"].active')?.dataset.value || '普通',
         memo: document.getElementById('input-memo').value || '',
         photo: currentPhoto || null
       };
@@ -5263,6 +5746,90 @@
       
       // 画面を更新
       tset(() => {
+        updateMarkers();
+        renderShopList(document.getElementById('filter-category').value);
+        renderListTab();
+        renderLineageTab();
+        
+        closeRecordModal();
+        showShopDetail(currentShop.id);
+      }, 100);
+      
+      return false;
+    }
+    
+    // Xに投稿する関数
+    function saveAndTweet(event) {
+      event.preventDefault();
+      
+      if (!currentShop) {
+        alert('店舗情報が見つかりません');
+        return;
+      }
+      
+      const visitedAt = document.getElementById('input-visited-at').value;
+      if (!visitedAt) {
+        alert('来店日時を入力してください');
+        return;
+      }
+      
+      // まず保存
+      const visitRecord = {
+        visitedAt: visitedAt,
+        waitMinutes: document.getElementById('input-wait').value ? parseInt(document.getElementById('input-wait').value) : null,
+        temperature: document.getElementById('input-temp').value ? parseFloat(document.getElementById('input-temp').value) : null,
+        weather: document.getElementById('input-weather').value || null,
+        rating: currentRating,
+        order: document.getElementById('input-order').value || '',
+        options: document.getElementById('input-options').value || '',
+        noodleFirmness: document.querySelector('[onclick*="noodle-firmness"].active')?.dataset.value || '普通',
+        flavorIntensity: document.querySelector('[onclick*="flavor-intensity"].active')?.dataset.value || '普通',
+        oilAmount: document.querySelector('[onclick*="oil-amount"].active')?.dataset.value || '普通',
+        memo: document.getElementById('input-memo').value || '',
+        photo: currentPhoto || null
+      };
+      
+      if (!visits[currentShop.id]) {
+        visits[currentShop.id] = { logs: [], wantToGo: false };
+      }
+      
+      if (editingLogIndex !== null) {
+        visits[currentShop.id].logs[editingLogIndex] = visitRecord;
+      } else {
+        visits[currentShop.id].logs.push(visitRecord);
+      }
+      
+      saveVisits();
+      editingLogIndex = null;
+      
+      // ツイート内容を生成
+      let tweetText = `${currentShop.name}\n\n`;
+      
+      if (visitRecord.order) {
+        tweetText += `${visitRecord.order}\n`;
+      }
+      
+      if (visitRecord.options) {
+        tweetText += `${visitRecord.options}\n`;
+      }
+      
+      if (visitRecord.order || visitRecord.options) {
+        tweetText += `\n`;
+      }
+      
+      if (visitRecord.memo) {
+        tweetText += `${visitRecord.memo}\n\n`;
+      }
+      
+      tweetText += `#${currentShop.name.replace(/\s/g, '')}\n`;
+      tweetText += `https://iekei-map.pages.dev/`;
+      
+      // Twitterインテント URLを開く
+      const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
+      window.open(twitterUrl, '_blank');
+      
+      // 画面を更新
+      setTimeout(() => {
         updateMarkers();
         renderShopList(document.getElementById('filter-category').value);
         renderListTab();
@@ -5463,6 +6030,10 @@
     window.editVisitRecord = editVisitRecord;
     window.deleteVisitRecord = deleteVisitRecord;
     window.saveVisitRecord = saveVisitRecord;
+    window.saveAndTweet = saveAndTweet;
+    window.selectSegment = selectSegment;
+    window.showVisitDetail = showVisitDetail;
+    window.deleteVisitFromDetail = deleteVisitFromDetail;
   
       
       
@@ -5793,7 +6364,7 @@
             </div>
             
             <div class="changelog">
-              <!-- v1.19.0 -->
+              <!-- v1.20.0 -->
               <div class="version-section">
                 <div class="version-header">
                   <span class="version-number">v1.19.0</span>
