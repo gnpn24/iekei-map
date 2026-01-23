@@ -170,6 +170,10 @@
       transition: color 0.2s, transform 0.1s, opacity 0.1s;
       position: relative;
       z-index: 1;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
     
     /* 通常ボタンのactive状態（グレーアウトを完全無効化） */
@@ -680,8 +684,14 @@
     }
     
     .badge-category {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       background: #dbeafe;
       color: #1e40af;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
     }
     
     .badge-status {
@@ -1098,25 +1108,25 @@
     }
     
     .form-group {
-      margin-bottom: 16px;
+      margin-bottom: 12px;
       box-sizing: border-box;
     }
     
     .form-label {
       display: block;
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 500;
       color: #374151;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
     
     .form-input {
       width: 100%;
       max-width: 100%;
-      padding: 10px 12px;
+      padding: 8px 10px;
       border: 1px solid #d1d5db;
       border-radius: 8px;
-      font-size: 15px;
+      font-size: 14px;
       box-sizing: border-box;
     }
     
@@ -1137,20 +1147,20 @@
     }
     
     textarea.form-input {
-      min-height: 80px;
+      min-height: 60px;
       resize: vertical;
     }
     
     .rating-input {
       display: flex;
       gap: 4px;
-      margin-top: 4px;
+      margin-top: 2px;
     }
     
     .star-btn {
       background: none;
       border: none;
-      font-size: 24px;
+      font-size: 22px;
       cursor: pointer;
       padding: 0;
       color: #d1d5db;
@@ -1210,7 +1220,7 @@
     .form-row {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
+      gap: 8px;
     }
     
     /* iOS風セグメントコントロール */
@@ -1224,11 +1234,11 @@
     
     .segment-btn {
       flex: 1;
-      padding: 8px 12px;
+      padding: 6px 8px;
       border: none;
       background: transparent;
       border-radius: 6px;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 500;
       color: #6b7280;
       cursor: pointer;
@@ -2323,54 +2333,54 @@
           <div class="form-row" style="align-items: stretch;">
             <!-- 左側: 評価+注文内容+オプション (3等分) -->
             <div style="flex:1;display:flex;flex-direction:column;">
-              <div class="form-group" style="margin:0;flex:1;display:flex;flex-direction:column;">
+              <div class="form-group" style="margin:0;flex:1;min-height:56px;display:flex;flex-direction:column;justify-content:center;">
                 <label class="form-label">評価</label>
-                <div class="rating-input" id="rating-input" style="flex:1;display:flex;align-items:center;"></div>
+                <div class="rating-input" id="rating-input"></div>
               </div>
               
-              <div class="form-group" style="margin:16px 0 0 0;flex:1;display:flex;flex-direction:column;">
+              <div class="form-group" style="margin:12px 0 0 0;flex:1;min-height:56px;display:flex;flex-direction:column;justify-content:center;">
                 <label class="form-label">注文内容</label>
-                <input type="text" class="form-input" id="input-order" placeholder="例: ラーメン並ほうれん草増し" style="flex:1;">
+                <input type="text" class="form-input" id="input-order" placeholder="例: ラーメン並ほうれん草増し">
               </div>
               
-              <div class="form-group" style="margin:16px 0 0 0;flex:1;display:flex;flex-direction:column;">
+              <div class="form-group" style="margin:12px 0 0 0;flex:1;min-height:56px;display:flex;flex-direction:column;justify-content:center;">
                 <label class="form-label">オプション</label>
-                <input type="text" class="form-input" id="input-options" placeholder="例: ライス" style="flex:1;">
+                <input type="text" class="form-input" id="input-options" placeholder="例: ライス">
               </div>
             </div>
             
             <!-- 右側: 麺・味・油 (3等分) -->
             <div style="flex:1;display:flex;flex-direction:column;">
-              <div class="form-group" style="margin:0;flex:1;display:flex;flex-direction:column;justify-content:center;">
+              <div class="form-group" style="margin:0;flex:1;min-height:56px;display:flex;flex-direction:column;justify-content:center;">
                 <label class="form-label">麺の硬さ</label>
                 <div class="segment-control">
-                  <button type="button" class="segment-btn" data-value="硬麺" onclick="selectSegment(this, 'noodle-firmness')">硬麺</button>
+                  <button type="button" class="segment-btn" data-value="硬め" onclick="selectSegment(this, 'noodle-firmness')">硬</button>
                   <button type="button" class="segment-btn active" data-value="普通" onclick="selectSegment(this, 'noodle-firmness')">普通</button>
-                  <button type="button" class="segment-btn" data-value="柔麺" onclick="selectSegment(this, 'noodle-firmness')">柔麺</button>
+                  <button type="button" class="segment-btn" data-value="柔らかめ" onclick="selectSegment(this, 'noodle-firmness')">柔</button>
                 </div>
               </div>
               
-              <div class="form-group" style="margin:16px 0 0 0;flex:1;display:flex;flex-direction:column;justify-content:center;">
+              <div class="form-group" style="margin:12px 0 0 0;flex:1;min-height:56px;display:flex;flex-direction:column;justify-content:center;">
                 <label class="form-label">味の濃さ</label>
                 <div class="segment-control">
-                  <button type="button" class="segment-btn" data-value="濃いめ" onclick="selectSegment(this, 'flavor-intensity')">濃いめ</button>
+                  <button type="button" class="segment-btn" data-value="濃いめ" onclick="selectSegment(this, 'flavor-intensity')">濃</button>
                   <button type="button" class="segment-btn active" data-value="普通" onclick="selectSegment(this, 'flavor-intensity')">普通</button>
-                  <button type="button" class="segment-btn" data-value="薄め" onclick="selectSegment(this, 'flavor-intensity')">薄め</button>
+                  <button type="button" class="segment-btn" data-value="薄め" onclick="selectSegment(this, 'flavor-intensity')">薄</button>
                 </div>
               </div>
               
-              <div class="form-group" style="margin:16px 0 0 0;flex:1;display:flex;flex-direction:column;justify-content:center;">
+              <div class="form-group" style="margin:12px 0 0 0;flex:1;min-height:56px;display:flex;flex-direction:column;justify-content:center;">
                 <label class="form-label">油の量</label>
                 <div class="segment-control">
-                  <button type="button" class="segment-btn" data-value="多め" onclick="selectSegment(this, 'oil-amount')">多め</button>
+                  <button type="button" class="segment-btn" data-value="多め" onclick="selectSegment(this, 'oil-amount')">多</button>
                   <button type="button" class="segment-btn active" data-value="普通" onclick="selectSegment(this, 'oil-amount')">普通</button>
-                  <button type="button" class="segment-btn" data-value="少なめ" onclick="selectSegment(this, 'oil-amount')">少なめ</button>
+                  <button type="button" class="segment-btn" data-value="少なめ" onclick="selectSegment(this, 'oil-amount')">少</button>
                 </div>
               </div>
             </div>
           </div>
           
-          <div class="form-group" style="margin-top:24px;">
+          <div class="form-group" style="margin-top:16px;">
             <label class="form-label">メモ</label>
             <textarea class="form-input" id="input-memo" placeholder="味の感想など..."></textarea>
           </div>
@@ -2419,7 +2429,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
   <script>
     // App Version (手動で更新)
-    const APP_VERSION = "1.19.0";
+    const APP_VERSION = "1.20.0";
     
     // 更新チェック機能（HTMLのみ）
     async function checkUpdate() {
@@ -3765,11 +3775,12 @@
       const shopParam = urlParams.get('shop');
       
       // チュートリアル（初回のみ、かつURLパラメータがない場合）
-      tset(() => {
-        if (!shopParam && !localStorage.getItem('hasCompletedTutorial')) {
-          startTutorial();
-        }
-      }, 1000);
+      // 自動起動は無効化（設定画面から手動で開く）
+      // tset(() => {
+      //   if (!shopParam && !localStorage.getItem('hasCompletedTutorial')) {
+      //     startTutorial();
+      //   }
+      // }, 1000);
       
       // チュートリアル完了後の誘導カード
       if (urlParams.get('showGuide') === 'true') {
@@ -4215,6 +4226,17 @@
         // 本日の営業時間を取得
         const todayHours = getTodayHours(shop.openingHours);
         
+        // 営業ステータスを取得
+        const openStatus = getOpenStatus(shop.openingHours);
+        let statusBadge = '';
+        if (openStatus.state === 'open') {
+          statusBadge = '<span style="display:inline-flex;align-items:center;justify-content:center;background:#10b981;color:white;padding:2px 8px;border-radius:12px;font-size:10px;">営業中</span>';
+        } else if (openStatus.state === 'soon') {
+          statusBadge = '<span style="display:inline-flex;align-items:center;justify-content:center;background:#f59e0b;color:white;padding:2px 8px;border-radius:12px;font-size:10px;">閉店間近</span>';
+        } else {
+          statusBadge = '<span style="display:inline-flex;align-items:center;justify-content:center;background:#9ca3af;color:white;padding:2px 8px;border-radius:12px;font-size:10px;">時間外</span>';
+        }
+        
         const divIcon = L.divIcon({
           className: 'custom-marker',
           html: `<div style="width:40px;height:40px;border-radius:50%;background:${color};border:3px solid white;box-shadow:0 4px 12px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:20px;color:white;font-weight:bold;cursor:pointer">${icon}</div>`,
@@ -4236,19 +4258,23 @@
           ? 'font-weight:bold;font-size:16px;margin-bottom:8px;padding:8px 12px;padding-right:40px;background:#FDCD00;color:#000000;border:4px solid #dc2626;border-radius:0;' 
           : 'font-weight:bold;font-size:16px;margin-bottom:8px;padding-right:28px;';
         
-        const popup = `<div style="padding:8px;min-width:200px;position:relative;">
-          <button onclick="markers['${shop.id}'].closePopup(); event.stopPropagation();" style="position:absolute;top:4px;right:4px;width:24px;height:24px;border:none;background:#f3f4f6;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:#6b7280;padding:0;">×</button>
+        const popup = `<div style="padding:8px;min-width:180px;max-width:240px;position:relative;">
+          <button onclick="markers['${shop.id}'].closePopup(); event.stopPropagation();" style="position:absolute;top:4px;right:4px;width:20px;height:20px;border:none;background:#f3f4f6;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:#6b7280;padding:0;">×</button>
           <div style="${nameStyle}">${shop.name}</div>
-          <div style="font-size:12px;margin-bottom:8px">
-            <span style="background:#dbeafe;color:#1e40af;padding:4px 8px;border-radius:12px;margin-right:8px">${shop.category}</span>
-            <span style="color:#6b7280">${shop.area}</span>
+          <div style="font-size:11px;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+            <span style="background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:8px;font-size:10px">${shop.category}</span>
+            ${statusBadge}
           </div>
-          <div style="font-size:12px;color:#6b7280;margin-bottom:12px">
-            <strong>本日:</strong> ${todayHours}
+          <div style="font-size:11px;color:#6b7280;margin-bottom:8px">
+            ${todayHours}
           </div>
-          <div style="display:flex;gap:8px;align-items:stretch;">
-            <button onclick="showShopDetail('${shop.id}')" style="flex:1;background:#3b82f6;color:white;padding:10px;border:none;border-radius:12px;font-weight:600;cursor:pointer;height:40px;display:flex;align-items:center;justify-content:center;">詳細・訪問記録</button>
-            ${googleMapLink}
+          <div style="display:flex;gap:6px;align-items:stretch;">
+            <button onclick="showShopDetail('${shop.id}')" style="flex:1;background:#3b82f6;color:white;padding:6px 8px;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:12px;height:32px;display:flex;align-items:center;justify-content:center;">詳細・訪問</button>
+            ${googleMapLink ? `<a href="${shop.googleMapUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" style="width:32px;height:32px;background:#34a853;color:white;border:none;border-radius:8px;cursor:pointer;text-decoration:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="Googleマップで開く">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+              </svg>
+            </a>` : ''}
           </div>
         </div>`;
         
@@ -4256,8 +4282,7 @@
           .addTo(map)
           .bindPopup(popup, { 
             closeButton: false,
-            autoPan: true,           // 自動的にパン（移動）
-            autoPanPadding: [50, 50] // 上下左右に50pxの余白
+            offset: [0, -20]  // アイコンの上部と吹き出しの下部をくっつける
           });
         
         markers[shop.id] = marker;
@@ -4338,11 +4363,13 @@
               </div>
               <div class="shop-meta">
                 <span class="badge badge-category">${shop.category}</span>
-                <svg style="width:14px;height:14px;color:#6b7280;margin-left:4px;margin-right:-2px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                </svg>
-                <span style="color:#6b7280;font-size:13px;">${shop.area}</span>
-                ${isSoon ? '<span class="badge-soon">閉店間近</span>' : (isOpen ? '<span class="badge-open">営業中</span>' : '<span class="badge-closed">営業時間外</span>')}
+                <span style="display:inline-flex;align-items:center;justify-content:center;gap:2px;color:#6b7280;border:1px solid #d1d5db;padding:2px 8px;border-radius:12px;font-size:11px;">
+                  <svg style="width:12px;height:12px;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                  </svg>
+                  ${shop.area}
+                </span>
+                ${isSoon ? '<span class="badge-soon">閉店間近</span>' : (isOpen ? '<span class="badge-open">営業中</span>' : '<span class="badge-closed">時間外</span>')}
               </div>
             </div>
             <svg style="width:20px;height:20px;color:#9ca3af;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -4356,8 +4383,14 @@
     function focusShop(shopId) {
       const shop = shops.find(s => s.id === shopId);
       if (shop && markers[shopId]) {
-        map.setView([shop.lat, shop.lng], 15, { animate: true });
-        markers[shopId].openPopup();
+        // ポップアップの高さ分（約80px）を考慮して少し下にオフセット
+        const latOffset = 0.002; // 緯度で約220m、画面で約80-100px相当
+        map.setView([shop.lat - latOffset, shop.lng], 15, { animate: true });
+        
+        // 少し遅延させてポップアップを開く（アニメーション後）
+        setTimeout(() => {
+          markers[shopId].openPopup();
+        }, 300);
       }
     }
     
@@ -4567,7 +4600,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                 </svg>
                 <span style="color:#6b7280;font-size:13px;">${shop.area}</span>
-                ${isSoon ? '<span class="badge-soon">閉店間近</span>' : (isOpen ? '<span class="badge-open">営業中</span>' : '<span class="badge-closed">営業時間外</span>')}
+                ${isSoon ? '<span class="badge-soon">閉店間近</span>' : (isOpen ? '<span class="badge-open">営業中</span>' : '<span class="badge-closed">時間外</span>')}
               </div>
               <div style="color:#6b7280;font-size:12px;margin-top:4px;">${hoursText}</div>
             </div>
@@ -4834,7 +4867,7 @@
         statusBadge.textContent = '営業中';
       } else {
         statusBadge.className = 'badge badge-closed';
-        statusBadge.textContent = '営業時間外';
+        statusBadge.textContent = '時間外';
       }
       
       renderHours();
@@ -6359,12 +6392,32 @@
           <div style="background: white; padding: 20px;">
             <div class="stats-title">📝 変更履歴</div>
             <div class="version-info">
-              <div class="version-current">現在のバージョン: <strong>v1.19.0</strong></div>
-              <div class="version-date">最終更新: 2026/01/21</div>
+              <div class="version-current">現在のバージョン: <strong>v1.20.0</strong></div>
+              <div class="version-date">最終更新: 2026/01/25</div>
             </div>
             
             <div class="changelog">
               <!-- v1.20.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.20.0</span>
+                  <span class="version-date-small">2026/01/25</span>
+                </div>
+                <ul class="version-list">
+                  <li>📝 訪問記録フォームをモバイル向けにコンパクト化</li>
+                  <li>⚖️ 訪問記録フォームの左右列の高さを完全統一</li>
+                  <li>🔘 セグメントボタンを1文字表記に変更（硬/普通/柔）</li>
+                  <li>🎯 チュートリアル自動起動を無効化（設定から手動起動）</li>
+                  <li>📱 iOSタップ時のグレー背景を完全無効化</li>
+                  <li>🗺️ ポップアップを上部表示＋コンパクト化</li>
+                  <li>🎯 リストタップ時に店舗を画面中央に表示</li>
+                  <li>🏷️ ポップアップに営業ステータスバッジを追加</li>
+                  <li>🏷️ リストのバッジデザインを統一（カテゴリ・エリア・営業）</li>
+                  <li>⏰ 営業時間外を「時間外」に短縮</li>
+                </ul>
+              </div>
+              
+              <!-- v1.19.0 -->
               <div class="version-section">
                 <div class="version-header">
                   <span class="version-number">v1.19.0</span>
