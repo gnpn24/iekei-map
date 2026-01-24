@@ -2162,6 +2162,7 @@
         <div class="modal-title-row">
           <div class="modal-title">
             <h2 id="detail-name"></h2>
+            <div id="detail-name-hiragana" style="color:#9ca3af;font-size:13px;margin-top:0px;margin-bottom:8px;display:none;"></div>
             <div class="modal-badges">
               <span class="badge badge-category" id="detail-category"></span>
               <span id="detail-status-badge"></span>
@@ -2235,6 +2236,12 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
               </svg>
               <span>ホームページ</span>
+            </a>
+            <a class="btn-nav" id="nav-x" href="#" target="_blank" rel="noopener noreferrer">
+              <svg style="width:18px;height:18px;" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              </svg>
+              <span>X (Twitter)</span>
             </a>
           </div>
         </div>
@@ -2514,6 +2521,7 @@
       {
         id: "yoshimuraya",
         name: "家系総本山 吉村家",
+        nameHiragana: "よしむらや",
         category: "総本山",
         area: "横浜駅",
         lat: 35.4629487,
@@ -2522,6 +2530,7 @@
         description: "1974年創業の家系ラーメン発祥店。濃厚豚骨醤油スープに太麺",
         googleMapUrl: "https://www.google.co.jp/maps/place/%E5%AE%B6%E7%B3%BB%E7%B7%8F%E6%9C%AC%E5%B1%B1+%E5%90%89%E6%9D%91%E5%AE%B6/@35.4629487,139.6150264,154m/",
         websiteUrl: "http://ieke1.com/",
+        xURL: "https://x.com/yoshimuraya1974",
         openingHours: {
           mon: {times:[]},
           tue: {times:[{start:"11:00",end:"20:00"}]},
@@ -4208,7 +4217,8 @@
       if (searchQuery) {
         filteredShops = filteredShops.filter(shop => 
           shop.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          shop.area.toLowerCase().includes(searchQuery.toLowerCase())
+          shop.area.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (shop.nameHiragana && shop.nameHiragana.includes(searchQuery))
         );
       }
       
@@ -4311,7 +4321,8 @@
       if (searchQuery) {
         filteredShops = filteredShops.filter(shop => 
           shop.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          shop.area.toLowerCase().includes(searchQuery.toLowerCase())
+          shop.area.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (shop.nameHiragana && shop.nameHiragana.includes(searchQuery))
         );
       }
       
@@ -4533,7 +4544,8 @@
       if (searchQuery) {
         filteredShops = filteredShops.filter(shop => 
           shop.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          shop.area.toLowerCase().includes(searchQuery.toLowerCase())
+          shop.area.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (shop.nameHiragana && shop.nameHiragana.includes(searchQuery))
         );
       }
       
@@ -4854,6 +4866,16 @@
       const isSoon = openStatus.state === 'soon';
       
       document.getElementById('detail-name').textContent = currentShop.name;
+      
+      // ひらがな表示
+      const hiraganaEl = document.getElementById('detail-name-hiragana');
+      if (currentShop.nameHiragana) {
+        hiraganaEl.textContent = currentShop.nameHiragana;
+        hiraganaEl.style.display = 'block';
+      } else {
+        hiraganaEl.style.display = 'none';
+      }
+      
       document.getElementById('detail-category').textContent = currentShop.category;
       document.getElementById('detail-area').textContent = currentShop.area;
       document.getElementById('detail-description').textContent = currentShop.description;
@@ -4926,6 +4948,7 @@
       // リンクの設定
       const hasGoogleMap = !!currentShop.googleMapUrl;
       const hasWebsite = !!currentShop.websiteUrl;
+      const hasX = !!currentShop.xURL;
       
       if (currentShop.googleMapUrl) {
         document.getElementById('nav-google-map').href = currentShop.googleMapUrl;
@@ -4941,9 +4964,16 @@
         document.getElementById('nav-website').style.display = 'none';
       }
       
+      if (currentShop.xURL) {
+        document.getElementById('nav-x').href = currentShop.xURL;
+        document.getElementById('nav-x').style.display = 'flex';
+      } else {
+        document.getElementById('nav-x').style.display = 'none';
+      }
+      
       // リンクセクション全体の表示制御
       const linkSection = document.getElementById('link-section');
-      if (hasGoogleMap || hasWebsite) {
+      if (hasGoogleMap || hasWebsite || hasX) {
         linkSection.style.display = 'block';
       } else {
         linkSection.style.display = 'none';
