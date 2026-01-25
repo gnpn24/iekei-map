@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="description" content="家系ラーメン店を探して記録するアプリ">
+  <meta name="description" content="家系ラーメンMAPは、全国の家系ラーメン店を地図で探し、来店を記録できる無料アプリです。営業時間・訪問履歴・待ち時間も管理できます。">
   <meta name="theme-color" content="#C41E3A">
   
   <!-- PWA Manifest -->
@@ -22,7 +22,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-40.png">
   <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-29.png">
   
-  <title>🍜 家系ラーメン巡り</title>
+  <title>家系ラーメンMAP｜全国の家系ラーメンを探して記録できる地図アプリ</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
   <style>
     * {
@@ -1969,6 +1969,11 @@
     <div class="content">
       <!-- Map Tab -->
       <div id="tab-map" class="tab-content active">
+        <!-- SEO用説明文（非表示だがGoogleには読まれる） -->
+        <div style="display:none;">
+          <h1>家系ラーメンMAP - 全国の家系ラーメン店を地図で探して記録</h1>
+          <p>家系ラーメンMAPは、全国の家系ラーメン店を地図で探し、来店を記録できる無料アプリです。営業時間・訪問履歴・待ち時間も管理できます。</p>
+        </div>
         <div class="map-view">
           <div class="map-container">
             <div id="map"></div>
@@ -4865,6 +4870,9 @@
       const isOpen = openStatus.state !== 'closed';
       const isSoon = openStatus.state === 'soon';
       
+      // SEO: ページタイトルを動的に変更
+      document.title = `${currentShop.name}｜営業時間・来店記録 - 家系ラーメンMAP`;
+      
       document.getElementById('detail-name').textContent = currentShop.name;
       
       // ひらがな表示
@@ -5013,6 +5021,9 @@
     function closeShopDetail() {
       // チュートリアル中は閉じない
       if (tutorialActive) return;
+      
+      // SEO: ページタイトルを元に戻す
+      document.title = '家系ラーメンMAP｜全国の家系ラーメンを探して記録できる地図アプリ';
       
       document.getElementById('shop-detail-modal').classList.remove('active');
     }
@@ -5868,23 +5879,35 @@
       // ツイート内容を生成
       let tweetText = `${currentShop.name}\n\n`;
       
+      // 注文内容
       if (visitRecord.order) {
         tweetText += `${visitRecord.order}\n`;
       }
       
+      // オプション（あれば）
       if (visitRecord.options) {
         tweetText += `${visitRecord.options}\n`;
       }
       
-      if (visitRecord.order || visitRecord.options) {
+      tweetText += `\n`;
+      
+      // 待ち時間（あれば）
+      if (visitRecord.waitMinutes) {
+        tweetText += `待ち${visitRecord.waitMinutes}分\n`;
+      }
+      
+      // メモ（あれば）
+      if (visitRecord.memo) {
+        tweetText += `${visitRecord.memo}\n`;
+      }
+      
+      // 待ち時間かメモがあれば改行
+      if (visitRecord.waitMinutes || visitRecord.memo) {
         tweetText += `\n`;
       }
       
-      if (visitRecord.memo) {
-        tweetText += `${visitRecord.memo}\n\n`;
-      }
-      
-      tweetText += `#${currentShop.name.replace(/\s/g, '')}\n`;
+      tweetText += `今日の一杯を記録 🍜\n`;
+      tweetText += `#${currentShop.name.replace(/\s/g, '')} #家系ラーメンマップ\n`;
       tweetText += `https://iekei-map.pages.dev/`;
       
       // Twitterインテント URLを開く
