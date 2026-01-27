@@ -24,6 +24,7 @@
   
   <title>家系ラーメンMAP｜全国の家系ラーメンを探して記録できる地図アプリ</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
   <style>
     * {
       margin: 0;
@@ -1918,13 +1919,311 @@
     
     
     
-    
-    
-    
-    
     .bottom-nav {
       position: relative;
     }
+    
+    /* ポスター風家系図 */
+    #lineage-poster {
+      background: #f6f0d7;
+      min-height: calc(100vh - 120px);
+    }
+    
+    #lineage-toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: linear-gradient(180deg, rgba(246,240,215,0.98), rgba(246,240,215,0.95));
+      border-bottom: 1px solid rgba(0,0,0,.10);
+      padding: 12px 16px;
+      backdrop-filter: blur(10px);
+    }
+    
+    #lineage-search-wrap {
+      position: relative;
+      margin-bottom: 12px;
+    }
+    
+    #lineage-search {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: 2px solid rgba(0,0,0,.14);
+      background: rgba(255,255,255,.7);
+      outline: none;
+    }
+    
+    #lineage-search::placeholder {
+      color: rgba(0,0,0,0.45);
+    }
+    
+    #lineage-suggestions {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(100% + 8px);
+      background: rgba(255,255,255,.95);
+      border: 2px solid rgba(0,0,0,.14);
+      border-radius: 12px;
+      overflow: hidden;
+      display: none;
+      max-height: 52vh;
+      overflow-y: auto;
+      box-shadow: 0 12px 35px rgba(0,0,0,.20);
+      z-index: 20;
+    }
+    
+    .lineage-sitem {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      border-top: 1px solid rgba(0,0,0,.08);
+      cursor: pointer;
+    }
+    
+    .lineage-sitem:first-child {
+      border-top: none;
+    }
+    
+    .lineage-sitem:active {
+      background: rgba(0,0,0,.04);
+    }
+    
+    .lineage-smain {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    
+    .lineage-sname {
+      font-weight: 900;
+      font-size: 14px;
+      color: #1b1b1b;
+    }
+    
+    .lineage-smeta {
+      font-size: 12px;
+      opacity: .75;
+      color: #1b1b1b;
+    }
+    
+    .lineage-sbadge {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(0,0,0,.18);
+      background: rgba(0,0,0,.04);
+      white-space: nowrap;
+    }
+    
+    #lineage-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 12px;
+      align-items: center;
+    }
+    
+    .lineage-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(0,0,0,.16);
+      background: rgba(255,255,255,.55);
+      white-space: nowrap;
+    }
+    
+    .lineage-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+    
+    .lineage-dot.yosh { background: #c62828; }
+    .lineage-dot.honmoku { background: #d32f2f; }
+    .lineage-dot.oud { background: #f9a825; }
+    .lineage-dot.rokkaku { background: #e57373; }
+    .lineage-dot.musa { background: #f57c00; }
+    .lineage-dot.isse { background: #8e24aa; }
+    .lineage-dot.oth { background: #455a64; }
+    .lineage-dot.closed { background: #c7c7c7; }
+    
+    .lineage-section {
+      padding: 14px;
+      border-top: 1px solid rgba(0,0,0,.08);
+    }
+    
+    .lineage-section-title {
+      font-weight: 1000;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 16px;
+    }
+    
+    .lineage-section-box {
+      position: relative;
+      border: 2px solid rgba(0,0,0,.10);
+      background: rgba(255,255,255,.35);
+      border-radius: 12px;
+      padding: 12px 10px 14px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      transform-origin: 0 0;
+      transition: transform 0.2s ease;
+    }
+    
+    .lineage-lane {
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      padding: 0 10px;
+      min-height: 78px;
+      position: relative;
+      z-index: 2;
+    }
+    
+    .lineage-lane + .lineage-lane {
+      margin-top: 24px;
+    }
+    
+    .lineage-node {
+      width: 128px;
+      min-width: 128px;
+      height: 54px;
+      border-radius: 4px;
+      color: #fff;
+      padding: 6px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 3px;
+      position: relative;
+      user-select: none;
+      cursor: pointer;
+      border: 2px solid rgba(0,0,0,.20);
+      box-shadow: 0 2px 0 rgba(0,0,0,.10);
+      text-align: center;
+    }
+    
+    .lineage-node-name {
+      font-size: 12px;
+      font-weight: 1000;
+      line-height: 1.15;
+      word-break: break-word;
+    }
+    
+    .lineage-node-meta {
+      font-size: 10px;
+      opacity: .9;
+      line-height: 1.1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .lineage-node.closed {
+      filter: grayscale(.2);
+      background: #666 !important;
+      border-style: dashed;
+    }
+    
+    .lineage-node.selected {
+      outline: 4px solid rgba(196,30,58,.35);
+      outline-offset: 2px;
+      transform: translateY(-1px);
+    }
+    
+    .lineage-node.g-yosh { background: #c62828; }
+    .lineage-node.g-yosh-light { background: #ef5350; }
+    .lineage-node.g-honmoku { background: #d32f2f; }
+    .lineage-node.g-oud { background: #f9a825; }
+    .lineage-node.g-oud-light { background: #fff59d; color: #000; }
+    .lineage-node.g-rokkaku { background: #e57373; }
+    .lineage-node.g-musa { background: #f57c00; }
+    .lineage-node.g-isse { background: #8e24aa; }
+    .lineage-node.g-oth { background: #455a64; }
+    
+    .lineage-wires {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+    }
+    
+    .lineage-wire {
+      stroke: #000000;
+      stroke-width: 2;
+      fill: none;
+    }
+    
+    #lineage-info {
+      position: sticky;
+      bottom: 0;
+      background: rgba(246,240,215,.94);
+      border-top: 1px solid rgba(0,0,0,.12);
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .lineage-info-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    
+    #lineage-info-title {
+      font-weight: 1000;
+      font-size: 14px;
+    }
+    
+    #lineage-info-sub {
+      font-size: 12px;
+      opacity: .8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    #lineage-reset-btn {
+      border: 2px solid rgba(0,0,0,.18);
+      background: rgba(255,255,255,.65);
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-weight: 900;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    
+    @media (min-width: 860px) {
+      #lineage-toolbar {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 12px;
+      }
+      #lineage-search-wrap {
+        flex: 1;
+        margin-bottom: 0;
+      }
+    }
+    
     </style></style>
 </head>
 <body>
@@ -2004,9 +2303,12 @@
                   <option value="all">すべて表示</option>
                   <option value="総本山">総本山</option>
                   <option value="直系">直系</option>
-                  <option value="有名店">有名店</option>
+                  <option value="本牧家">本牧家</option>
                   <option value="王道家">王道家</option>
-                  <option value="派生">派生</option>
+                  <option value="王道乃印">王道乃印</option>
+                  <option value="新中野武蔵家">新中野武蔵家</option>
+                  <option value="壱系">壱系</option>
+                  <option value="オリジナル">オリジナル</option>
                   <option value="資本系">資本系</option>
                   <option value="不明">不明</option>
                   <option value="want">☆ 行きたい</option>
@@ -2046,10 +2348,12 @@
               <option value="all">すべて表示</option>
               <option value="総本山">総本山</option>
               <option value="直系">直系</option>
-              <option value="有名店">有名店</option>
+              <option value="本牧家">本牧家</option>
               <option value="王道家">王道家</option>
               <option value="王道乃印">王道乃印</option>
-              <option value="派生">派生</option>
+              <option value="新中野武蔵家">新中野武蔵家</option>
+              <option value="壱系">壱系</option>
+              <option value="オリジナル">オリジナル</option>
               <option value="資本系">資本系</option>
               <option value="不明">不明</option>
               <option value="want">☆ 行きたい</option>
@@ -2068,17 +2372,30 @@
       
       <!-- Lineage Tab -->
       <div id="tab-lineage" class="tab-content">
-        <div class="lineage-search-container">
-          <input 
-            type="text" 
-            id="lineage-search" 
-            class="lineage-search-input" 
-            placeholder="店舗名で検索..."
-          />
-          <button class="lineage-search-clear" id="lineage-search-clear" style="display:none;">×</button>
-        </div>
-        <div class="lineage-container" id="lineage-direct">
-          <!-- JavaScriptで動的に生成 -->
+        <!-- ポスター風家系図 -->
+        <div id="lineage-poster">
+          <div id="lineage-toolbar">
+            <div id="lineage-search-wrap">
+              <input id="lineage-search" type="text" placeholder="店名で検索 → 選ぶとジャンプ" autocomplete="off" />
+              <div id="lineage-suggestions"></div>
+            </div>
+            <div id="lineage-legend">
+              <span class="lineage-chip"><span class="lineage-dot yosh"></span>吉村家系</span>
+              <span class="lineage-chip"><span class="lineage-dot oud"></span>王道家系</span>
+              <span class="lineage-chip"><span class="lineage-dot musa"></span>新中野武蔵家系</span>
+              <span class="lineage-chip"><span class="lineage-dot dai"></span>大輝家系</span>
+              <span class="lineage-chip"><span class="lineage-dot oth"></span>その他</span>
+              <span class="lineage-chip"><span class="lineage-dot closed"></span>閉店</span>
+            </div>
+          </div>
+          <div id="lineage-sections"></div>
+          <div id="lineage-info">
+            <div class="lineage-info-left">
+              <div id="lineage-info-title">店をタップすると情報が出ます</div>
+              <div id="lineage-info-sub">検索からもジャンプできます</div>
+            </div>
+            <button id="lineage-reset-btn">選択解除</button>
+          </div>
         </div>
       </div>
       
@@ -2148,7 +2465,7 @@
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12M8 12h12M8 17h12M3 7h.01M3 12h.01M3 17h.01"/>
         </svg>
-        <span>相関図</span>
+        <span>家系図</span>
       </button>
       <button class="nav-item" data-tab="stats">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2719,7 +3036,7 @@
       initTabs();
       renderShopList();
       renderListTab();
-      renderLineageTab();
+      // renderLineageTab(); // タブ表示時に初期化
       renderStatsTab();
       initRecordForm();
       initResizeHandle();
@@ -2745,7 +3062,7 @@
     
     // Data Validation（起動時チェック）
     function validateShopsData() {
-      const validCategories = ['総本山', '直系', '有名店', '王道家', '派生', '資本系', '不明'];
+      const validCategories = ['総本山', '直系', '本牧家', '六角家', '王道家', '王道乃印', '新中野武蔵家', '壱系', 'オリジナル', '資本系', '不明'];
       const ids = new Set();
       const warnings = [];
       
@@ -3347,8 +3664,7 @@
         const filterBtn = document.getElementById('btn-nearby');
         if (filterBtn) {
           filterBtn.style.animation = '';
-          filterBtn.style.background = '';
-          filterBtn.style.color = '';
+          filterBtn.style.transform = '';
         }
       }
       
@@ -3356,34 +3672,27 @@
       guide.id = 'nearby-guide';
       guide.style.cssText = `
         position: fixed;
-        bottom: 80px;
+        bottom: 85px;
         left: 50%;
         transform: translateX(-50%);
         background: white;
-        padding: 20px 28px;
-        border-radius: 20px;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        padding: 12px 20px;
+        border-radius: 16px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
         z-index: 9999;
         display: flex;
+        flex-direction: column;
         align-items: center;
-        justify-content: space-between;
-        gap: 16px;
+        gap: 8px;
         cursor: pointer;
         animation: slideUpBounce 0.6s ease;
-        min-width: 320px;
-        max-width: 90%;
       `;
       
       guide.innerHTML = `
-        <div style="flex: 1;">
-          <div style="font-weight: 700; font-size: 18px; color: #111827; margin-bottom: 4px;">
-            近くのお店を見てみよう
-          </div>
-          <div style="font-size: 13px; color: #6b7280;">
-            「今から」ボタンをタップ
-          </div>
+        <div style="font-weight: 700; font-size: 15px; color: #111827; white-space: nowrap;">
+          近くのお店を見てみよう
         </div>
-        <div style="font-size: 28px; animation: pulse 2s infinite; flex-shrink: 0;">👉</div>
+        <div style="font-size: 24px; animation: bounceDown 1s infinite;">⬇️</div>
       `;
       
       // アニメーション追加
@@ -3394,34 +3703,34 @@
           @keyframes slideUpBounce {
             0% {
               opacity: 0;
-              transform: translate(-50%, 20px);
+              transform: translateY(20px);
             }
             60% {
               opacity: 1;
-              transform: translate(-50%, -5px);
+              transform: translateY(-5px);
             }
             80% {
-              transform: translate(-50%, 2px);
+              transform: translateY(2px);
             }
             100% {
-              transform: translate(-50%, 0);
+              transform: translateY(0);
             }
           }
-          @keyframes pulse {
+          @keyframes bounceDown {
             0%, 100% {
-              transform: scale(1);
+              transform: translateY(0);
             }
             50% {
-              transform: scale(1.2);
+              transform: translateY(8px);
             }
           }
-          @keyframes greenBlink {
+          @keyframes greenPulse {
             0%, 100% {
-              background: #10b981;
+              transform: scale(1);
               box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
             }
             50% {
-              background: #34d399;
+              transform: scale(1.05);
               box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
             }
           }
@@ -3429,22 +3738,28 @@
         document.head.appendChild(style);
       }
       
-      // 「今から」ボタンを緑点滅
-      const filterBtn = document.getElementById('btn-nearby');
-      if (filterBtn && !filterBtn.classList.contains('active')) {
-        filterBtn.style.animation = 'greenBlink 1.5s ease-in-out infinite';
-        filterBtn.style.background = '#10b981';
-        filterBtn.style.color = 'white';
+      // 「今から」ボタンを強調（下部ナビのボタン）
+      const nearbyNavBtn = document.querySelector('.nearby-btn');
+      if (nearbyNavBtn && !nearbyNavBtn.classList.contains('active')) {
+        nearbyNavBtn.style.animation = 'greenPulse 1.5s ease-in-out infinite';
+      }
+      
+      // アニメーションを止める関数
+      function stopNearbyAnimation() {
+        if (nearbyNavBtn) {
+          nearbyNavBtn.style.animation = '';
+          nearbyNavBtn.style.transform = '';
+        }
       }
       
       // クリックで「今から」ボタンを有効化
       guide.addEventListener('click', () => {
         guide.remove();
-        resetNearbyButtonStyle();  // スタイルをリセット
+        stopNearbyAnimation();
         
-        // 「今から」ボタンを探して有効化
-        if (filterBtn && !filterBtn.classList.contains('active')) {
-          filterBtn.click();
+        // 「今から」ボタンをクリック
+        if (nearbyNavBtn && !nearbyNavBtn.classList.contains('active')) {
+          nearbyNavBtn.click();
         }
       });
       
@@ -3457,7 +3772,7 @@
           guide.style.transition = 'opacity 0.3s ease';
           tset(() => {
             guide.remove();
-            resetNearbyButtonStyle();  // スタイルをリセット
+            stopNearbyAnimation();  // アニメーションを止める
           }, 300);
         }
       }, 5000);
@@ -3789,12 +4104,11 @@
       const shopParam = urlParams.get('shop');
       
       // チュートリアル（初回のみ、かつURLパラメータがない場合）
-      // 自動起動は無効化（設定画面から手動で開く）
-      // tset(() => {
-      //   if (!shopParam && !localStorage.getItem('hasCompletedTutorial')) {
-      //     startTutorial();
-      //   }
-      // }, 1000);
+      setTimeout(() => {
+        if (!shopParam && !localStorage.getItem('hasCompletedTutorial')) {
+          startTutorial();
+        }
+      }, 1000);
       
       // チュートリアル完了後の誘導カード
       if (urlParams.get('showGuide') === 'true') {
@@ -3952,6 +4266,13 @@
         btn.addEventListener('click', () => {
           // 真ん中の「今から」ボタンの場合（常にオン）
           if (btn.id === 'btn-nearby-center') {
+            // アニメーションを停止
+            const nearbyNavBtn = document.querySelector('.nearby-btn');
+            if (nearbyNavBtn) {
+              nearbyNavBtn.style.animation = '';
+              nearbyNavBtn.style.transform = '';
+            }
+            
             // 現在マップタブにいない場合は、まずマップタブに遷移
             const currentTab = document.querySelector('.tab-content.active');
             if (currentTab && currentTab.id !== 'tab-map') {
@@ -3983,6 +4304,24 @@
           
           btn.classList.add('active');
           document.getElementById(`tab-${tab}`).classList.add('active');
+          
+          // SEO: タブに応じてページタイトルを変更
+          if (tab === 'lineage') {
+            document.title = '家系家系図 - 家系ラーメンMAP';
+            // 家系図タブが表示されたら描画（初回のみ）
+            if (!window.lineageRendered) {
+              setTimeout(() => {
+                renderLineageTab();
+                window.lineageRendered = true;
+              }, 100);
+            }
+          } else if (tab === 'stats') {
+            document.title = '統計 - 家系ラーメンMAP';
+          } else if (tab === 'list') {
+            document.title = '店舗リスト - 家系ラーメンMAP';
+          } else if (tab === 'map') {
+            document.title = '家系ラーメンMAP｜全国の家系ラーメンを探して記録できる地図アプリ';
+          }
           
           if (tab === 'map' && map) {
             setTimeout(() => map.invalidateSize(), 100);
@@ -4218,6 +4557,9 @@
         filteredShops = shops.filter(s => s.category === categoryFilter);
       }
       
+      // 座標がない店舗を除外（家系図専用データ）
+      filteredShops = filteredShops.filter(shop => shop.lat && shop.lng);
+      
       // 検索フィルター
       if (searchQuery) {
         filteredShops = filteredShops.filter(shop => 
@@ -4321,6 +4663,9 @@
       } else {
         filteredShops = shops.filter(s => s.category === categoryFilter);
       }
+      
+      // 座標がない店舗を除外（家系図専用データ）
+      filteredShops = filteredShops.filter(shop => shop.lat && shop.lng);
       
       // 検索フィルター
       if (searchQuery) {
@@ -4630,170 +4975,10 @@
     }
     
     // Lineage Tab
-    function renderLineageTab() {
-      // 展開状態を管理（グローバル変数）
-      window.lineageExpanded = window.lineageExpanded || {};
-      
-      // 検索クエリを取得
-      const searchQuery = (document.getElementById('lineage-search')?.value || '').toLowerCase();
-      
-      // 店舗が検索にマッチするかチェック
-      const matchesSearch = (shop) => {
-        if (!searchQuery) return true;
-        return shop.name.toLowerCase().includes(searchQuery) || 
-               shop.area.toLowerCase().includes(searchQuery);
-      };
-      
-      // 子孫に検索マッチがあるかチェック（再帰）
-      const hasMatchingDescendant = (shopId) => {
-        const children = shops.filter(s => s.parent === shopId);
-        return children.some(child => 
-          matchesSearch(child) || hasMatchingDescendant(child.id)
-        );
-      };
-      
-      // parentを持つ店舗を階層的に整理
-      const buildTree = (parentId) => {
-        return shops
-          .filter(s => s.parent === parentId)
-          .sort((a, b) => {
-            const order = { '直系': 1, '派生': 2, '有名店': 3, '資本系': 4 };
-            return (order[a.category] || 9) - (order[b.category] || 9);
-          });
-      };
-      
-      // カテゴリごとにグループ化
-      const groupByCategory = (parentId) => {
-        const children = buildTree(parentId);
-        const grouped = {};
-        children.forEach(shop => {
-          if (!grouped[shop.category]) {
-            grouped[shop.category] = [];
-          }
-          grouped[shop.category].push(shop);
-        });
-        return grouped;
-      };
-      
-      // 店舗カードを生成
-      const renderShopCard = (shop, level = 0) => {
-        const isVisited = visits[shop.id]?.logs?.length > 0;
-        const children = buildTree(shop.id);
-        const hasChildren = children.length > 0;
-        const isExpanded = window.lineageExpanded[shop.id];
-        
-        // 検索フィルタリング
-        const isMatch = matchesSearch(shop);
-        const hasMatchInDescendants = hasMatchingDescendant(shop.id);
-        
-        // 検索中で、自分も子孫もマッチしない場合は非表示
-        if (searchQuery && !isMatch && !hasMatchInDescendants) {
-          return '';
-        }
-        
-        // 検索中の場合、自動展開
-        const shouldExpand = searchQuery ? (isExpanded || hasMatchInDescendants) : isExpanded;
-        
-        // 検索ハイライトクラス
-        const searchClass = searchQuery ? (isMatch ? 'search-match' : 'search-dimmed') : '';
-        
-        return `
-          <div class="lineage-item" style="margin-left: ${level * 24}px;">
-            <div class="lineage-shop-card ${isVisited ? 'visited' : ''} ${searchClass}" onclick="showShopDetail('${shop.id}')">
-              <div class="lineage-shop-main">
-                ${hasChildren ? `<span class="lineage-toggle" onclick="event.stopPropagation(); toggleLineageShop('${shop.id}')">
-                  ${shouldExpand ? '▼' : '▶'}
-                </span>` : '<span style="width:16px;display:inline-block;"></span>'}
-                <div class="lineage-shop-name">${shop.name}</div>
-                <span class="lineage-badge ${shop.category}">${shop.category}</span>
-              </div>
-              <div class="lineage-shop-area">${shop.area}</div>
-            </div>
-            ${hasChildren && shouldExpand ? `
-              <div class="lineage-children">
-                ${children.map(child => renderShopCard(child, level + 1)).join('')}
-              </div>
-            ` : ''}
-          </div>
-        `;
-      };
-      
-      // カテゴリセクションを生成
-      const renderCategorySection = (category, shops) => {
-        const categoryId = `category-${category}`;
-        
-        // 検索中はカテゴリマッチがあれば自動展開
-        const hasMatch = searchQuery && shops.some(s => 
-          matchesSearch(s) || hasMatchingDescendant(s.id)
-        );
-        const isExpanded = searchQuery ? true : (window.lineageExpanded[categoryId] !== false);
-        
-        // 検索でフィルタされた店舗のみレンダリング
-        const renderedShops = shops.map(shop => renderShopCard(shop, 0)).filter(Boolean);
-        
-        // 検索中で、マッチする店舗がない場合はカテゴリごと非表示
-        if (searchQuery && renderedShops.length === 0) {
-          return '';
-        }
-        
-        return `
-          <div class="lineage-category-section">
-            <div class="lineage-category-header" onclick="toggleLineageCategory('${categoryId}')">
-              <span class="lineage-category-toggle">${isExpanded ? '▼' : '▶'}</span>
-              <span class="lineage-category-title">📁 ${category}</span>
-              <span class="lineage-category-count">(${shops.length}店)</span>
-            </div>
-            ${isExpanded ? `
-              <div class="lineage-category-content">
-                ${renderedShops.join('')}
-              </div>
-            ` : ''}
-          </div>
-        `;
-      };
-      
-      // 吉村家の子をカテゴリ別に表示
-      const yoshimurayaChildren = groupByCategory('yoshimuraya');
-      const rootShops = buildTree(null).filter(s => s.id !== 'yoshimuraya');
-      
-      const html = `
-        <div class="lineage-root-card">
-          <div class="lineage-root-icon">🏮</div>
-          <div class="lineage-root-name">吉村家</div>
-          <div class="lineage-root-subtitle">家系ラーメンの総本山</div>
-        </div>
-        
-        <div class="lineage-tree">
-          ${Object.entries(yoshimurayaChildren).map(([category, shops]) => 
-            renderCategorySection(category, shops)
-          ).join('')}
-        </div>
-        
-        ${rootShops.length > 0 ? `
-          <div class="lineage-other-section">
-            <div class="lineage-other-title">吉村家系以外</div>
-            ${rootShops.map(shop => renderShopCard(shop, 0)).join('')}
-          </div>
-        ` : ''}
-      `;
-      
-      document.getElementById('lineage-direct').innerHTML = html;
-    }
-    
-    // 店舗の展開/折りたたみ
-    function toggleLineageShop(shopId) {
-      window.lineageExpanded[shopId] = !window.lineageExpanded[shopId];
-      renderLineageTab();
-    }
+    // 家系図用のグローバル変数
+    let lineageNetwork = null;
     
     // カテゴリの展開/折りたたみ
-    function toggleLineageCategory(categoryId) {
-      if (window.lineageExpanded[categoryId] === undefined) {
-        window.lineageExpanded[categoryId] = true;
-      }
-      window.lineageExpanded[categoryId] = !window.lineageExpanded[categoryId];
-      renderLineageTab();
-    }
     
     // Stats Tab
     function renderStatsTab() {
@@ -4848,6 +5033,680 @@
       
       document.getElementById('visit-history-list').innerHTML = historyHTML || 
         '<div class="empty-state"><div class="empty-state-icon">🍜</div><div>まだ訪問記録がありません</div></div>';
+    }
+    
+    // ポスター風家系図の実装
+    let lineagePinchHandler = null;
+    
+    // HTMLエスケープ関数
+    function escapeHtml(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+    
+    function renderLineageTab() {
+      try {
+        const sectionsEl = document.getElementById('lineage-sections');
+        if (!sectionsEl) {
+          console.log('lineage-sections not found');
+          return;
+        }
+        
+        console.log('renderLineageTab: start');
+        
+        // カテゴリーベースで独立セクションを検出
+        const separateSections = {};
+        const oudouCategories = ['王道家', '王道乃印']; // 王道家系カテゴリー
+        const honmokuCategories = ['本牧家']; // 本牧家系カテゴリー（本牧家のみ）
+        const rokkakuCategories = ['六角家']; // 六角家系カテゴリー
+        const musashiCategories = ['新中野武蔵家']; // 新中野武蔵家系カテゴリー
+        const isseCategories = ['壱系']; // 壱系カテゴリー
+        
+        // カテゴリーが存在するかチェック
+        shops.forEach(shop => {
+          if (oudouCategories.includes(shop.category)) {
+            separateSections['王道家系'] = true;
+          } else if (honmokuCategories.includes(shop.category)) {
+            separateSections['本牧家系'] = true;
+          } else if (rokkakuCategories.includes(shop.category)) {
+            separateSections['六角家系'] = true;
+          } else if (musashiCategories.includes(shop.category)) {
+            separateSections['新中野武蔵家系'] = true;
+          } else if (isseCategories.includes(shop.category)) {
+            separateSections['壱系'] = true;
+          }
+        });
+        
+        console.log('Separate sections:', Object.keys(separateSections));
+        
+        // グループ分け（表示順を保つためMapを使用）
+        const groups = new Map();
+        
+        // 1. 吉村家系
+        groups.set('yosh', { title: '吉村家系', shops: [], color: 'yosh' });
+        
+        // 2. 本牧家系（独立セクション）
+        if (separateSections['本牧家系']) {
+          groups.set('本牧家系', { title: '本牧家系', shops: [], color: 'honmoku', isSeparate: true });
+        }
+        
+        // 3. 王道家系（独立セクション）
+        if (separateSections['王道家系']) {
+          groups.set('王道家系', { title: '王道家系', shops: [], color: 'oud', isSeparate: true });
+        }
+        
+        // 4. 六角家系（独立セクション）
+        if (separateSections['六角家系']) {
+          groups.set('六角家系', { title: '六角家系', shops: [], color: 'rokkaku', isSeparate: true });
+        }
+        
+        // 5. 新中野武蔵家系（独立セクション）
+        if (separateSections['新中野武蔵家系']) {
+          groups.set('新中野武蔵家系', { title: '新中野武蔵家系', shops: [], color: 'musa', isSeparate: true });
+        }
+        
+        // 6. 壱系（独立セクション）
+        if (separateSections['壱系']) {
+          groups.set('壱系', { title: '壱系', shops: [], color: 'isse', isSeparate: true });
+        }
+        
+        // 7. オリジナル・その他
+        groups.set('oth', { title: 'オリジナル', shops: [], color: 'oth' });
+        
+        // 店舗をグループに振り分け
+        shops.forEach(shop => {
+          const rootId = getLineageRootId(shop.id);
+          
+          // 優先順位付き振り分け
+          
+          // 1. 新中野武蔵家系（最優先）
+          if (musashiCategories.includes(shop.category)) {
+            if (groups.has('新中野武蔵家系')) {
+              groups.get('新中野武蔵家系').shops.push(shop);
+            }
+            // 武蔵家 中野本店（ルート）は六角家系にも表示
+            if (shop.id === 'musashiya') {
+              if (groups.has('六角家系')) {
+                groups.get('六角家系').shops.push(shop);
+              }
+            }
+          }
+          // 2. 六角家系（六角家自身 または 六角家を祖先に持つ）
+          else if (hasAncestor(shop.id, 'rokkakuya')) {
+            if (groups.has('六角家系')) {
+              groups.get('六角家系').shops.push(shop);
+            }
+            // 六角家（ルート）は本牧家系にも表示
+            if (shop.id === 'rokkakuya') {
+              if (groups.has('本牧家系')) {
+                groups.get('本牧家系').shops.push(shop);
+              }
+            }
+          }
+          // 3. 本牧家系（categoryが本牧家 かつ 六角家系でない）
+          else if (honmokuCategories.includes(shop.category)) {
+            if (groups.has('本牧家系')) {
+              groups.get('本牧家系').shops.push(shop);
+            }
+            // 本牧家（ルート）は吉村家系にも表示
+            if (shop.id === 'honmokuya') {
+              groups.get('yosh').shops.push(shop);
+            }
+          }
+          // 4. 王道家系
+          else if (oudouCategories.includes(shop.category)) {
+            if (groups.has('王道家系')) {
+              groups.get('王道家系').shops.push(shop);
+            }
+            // 王道家（ルート）は吉村家系にも表示
+            if (shop.id === 'oudouya') {
+              groups.get('yosh').shops.push(shop);
+            }
+          }
+          // 5. 壱系
+          else if (isseCategories.includes(shop.category)) {
+            if (groups.has('壱系')) {
+              groups.get('壱系').shops.push(shop);
+            }
+            // 壱系のルートは吉村家系にも表示（該当する場合）
+            if (shop.category === shop.name && shop.parent === 'yoshimuraya') {
+              groups.get('yosh').shops.push(shop);
+            }
+          }
+          // 6. 吉村家系
+          else if (rootId === 'yoshimuraya') {
+            groups.get('yosh').shops.push(shop);
+          }
+          // 7. オリジナル・その他
+          else {
+            groups.get('oth').shops.push(shop);
+          }
+        });
+        
+        console.log('Groups:', Array.from(groups.keys()).map(k => `${k}: ${groups.get(k).shops.length}`));
+        
+        // セクションを描画
+        sectionsEl.innerHTML = '';
+        groups.forEach((group, key) => {
+          if (group.shops.length > 0) {
+            renderLineageSection(group.title, group.color, group.shops, sectionsEl, key);
+          }
+        });
+        
+        console.log('renderLineageTab: sections rendered');
+        
+        // UI初期化
+        initLineageUI();
+        initLineagePinchZoom();
+        
+        console.log('renderLineageTab: complete');
+      } catch (error) {
+        console.error('renderLineageTab error:', error);
+        console.error('Error stack:', error.stack);
+      }
+    }
+    
+    function getLineageRootId(id) {
+      let cur = shops.find(s => s.id === id);
+      const seen = new Set();
+      while (cur && cur.parent) {
+        if (seen.has(cur.id)) break;
+        seen.add(cur.id);
+        cur = shops.find(s => s.id === cur.parent);
+      }
+      return cur ? cur.id : null;
+    }
+    
+    // 指定された祖先を持つか判定
+    function hasAncestor(shopId, ancestorId) {
+      let cur = shops.find(s => s.id === shopId);
+      const seen = new Set();
+      while (cur) {
+        if (cur.id === ancestorId) return true;
+        if (!cur.parent || seen.has(cur.id)) break;
+        seen.add(cur.id);
+        cur = shops.find(s => s.id === cur.parent);
+      }
+      return false;
+    }
+    
+    function renderLineageSection(title, colorClass, items, container, sectionId) {
+      // 独立セクションのルート店舗を特定
+      const separateSectionRoots = {
+        '本牧家系': 'honmokuya',
+        '王道家系': 'oudouya',
+        '六角家系': 'rokkakuya',
+        '新中野武蔵家系': 'musashiya'
+      };
+      
+      let roots;
+      if (separateSectionRoots[sectionId]) {
+        // 独立セクション: 特定IDの店舗をルートとする
+        const rootId = separateSectionRoots[sectionId];
+        roots = items.filter(s => s.id === rootId);
+      } else {
+        // 通常セクション: parentがない店舗をルートとする
+        roots = items.filter(s => !s.parent);
+      }
+      
+      if (roots.length === 0) return;
+      
+      const levels = computeLineageLevels(items, roots);
+      const order = buildLineageOrder(items, roots);
+      
+      const maxLevel = Math.max(...Array.from(levels.values()));
+      const lanes = [];
+      for (let lv = 0; lv <= maxLevel; lv++) {
+        lanes.push(order.filter(id => levels.get(id) === lv));
+      }
+      
+      const section = document.createElement('div');
+      section.className = 'lineage-section';
+      section.id = `lineage-section-${sectionId}`;
+      section.innerHTML = `
+        <div class="lineage-section-title">
+          <span class="lineage-dot ${colorClass}"></span>${title}
+        </div>
+        <div class="lineage-section-box" data-group="${colorClass}">
+          <svg class="lineage-wires"></svg>
+          <div class="lineage-lanes"></div>
+        </div>
+      `;
+      
+      const lanesEl = section.querySelector('.lineage-lanes');
+      
+      // 全レベルを通常通り描画
+      lanes.forEach((laneIds, lv) => {
+        const lane = document.createElement('div');
+        lane.className = 'lineage-lane';
+        lane.dataset.level = lv;
+        
+        laneIds.forEach(id => {
+          const shop = shops.find(s => s.id === id);
+          if (shop) {
+            // 王道家系の場合、カテゴリーで色を分ける
+            let nodeColor = colorClass;
+            if (shop.category === '王道乃印') {
+              nodeColor = 'oud-light'; // 薄い黄色
+            }
+            
+            const node = createLineageNode(shop, nodeColor);
+            node.dataset.level = lv;
+            node.dataset.parent = shop.parent || '';
+            lane.appendChild(node);
+          }
+        });
+        
+        lanesEl.appendChild(lane);
+      });
+      
+      container.appendChild(section);
+      
+      // DOMに追加された後に位置を調整してワイヤーを描画
+      setTimeout(() => {
+        adjustChildNodesPosition(section, levels);
+        drawLineageWires(section, items, levels, order);
+      }, 0);
+    }
+    
+    // Level 2以降のノードを親の横位置に合わせる
+    function adjustChildNodesPosition(section, levels) {
+      const box = section.querySelector('.lineage-section-box');
+      const boxRect = box.getBoundingClientRect();
+      const nodes = section.querySelectorAll('.lineage-node');
+      
+      // 各ノードの位置を記録
+      const positions = new Map();
+      nodes.forEach(node => {
+        const rect = node.getBoundingClientRect();
+        positions.set(node.dataset.id, {
+          x: rect.left - boxRect.left,
+          y: rect.top - boxRect.top,
+          width: rect.width
+        });
+      });
+      
+      // Level 2以降のノードを調整
+      const level2Plus = Array.from(nodes).filter(n => parseInt(n.dataset.level) >= 2);
+      
+      // 親ごとにグループ化
+      const byParent = new Map();
+      level2Plus.forEach(node => {
+        const parentId = node.dataset.parent;
+        if (!parentId) return;
+        if (!byParent.has(parentId)) {
+          byParent.set(parentId, []);
+        }
+        byParent.get(parentId).push(node);
+      });
+      
+      // 親ごとに子を配置
+      byParent.forEach((children, parentId) => {
+        const parentPos = positions.get(parentId);
+        if (!parentPos) return;
+        
+        let currentX = parentPos.x;
+        
+        children.forEach(node => {
+          const currentPos = positions.get(node.dataset.id);
+          if (currentPos) {
+            const offsetX = currentX - currentPos.x;
+            node.style.transform = `translateX(${offsetX}px)`;
+            
+            // 移動後の位置を更新（Level 3以降の配置に使う）
+            positions.set(node.dataset.id, {
+              x: currentX,
+              y: currentPos.y,
+              width: currentPos.width
+            });
+            
+            // 次の子は現在の幅 + gap分右に配置
+            currentX += currentPos.width + 18; // 18はgapX
+          }
+        });
+      });
+    }
+    
+    function createLineageNode(shop, colorClass) {
+      // 本当に閉店している店舗のみ閉店扱い（営業時間がnullまたは全日休み）
+      const isClosed = !shop.openingHours || 
+                       (shop.openingHours && 
+                        Object.keys(shop.openingHours).length === 0);
+      
+      // 独立セクションへのジャンプリンク生成
+      let jumpLink = '';
+      const isInOwnSection = (
+        (colorClass === 'oud' && shop.id === 'oudouya') ||
+        (colorClass === 'honmoku' && shop.id === 'honmokuya') ||
+        (colorClass === 'rokkaku' && shop.id === 'rokkakuya') ||
+        (colorClass === 'musa' && shop.id === 'musashiya')
+      );
+      
+      if (!isInOwnSection) {
+        if (shop.id === 'oudouya') {
+          jumpLink = `<span class="lineage-jump" data-target="王道家系" style="font-size:10px;margin-left:4px;color:#0066cc;cursor:pointer;user-select:none;">[→王道家系]</span>`;
+        } else if (shop.id === 'honmokuya') {
+          jumpLink = `<span class="lineage-jump" data-target="本牧家系" style="font-size:10px;margin-left:4px;color:#0066cc;cursor:pointer;user-select:none;">[→本牧家系]</span>`;
+        } else if (shop.id === 'rokkakuya') {
+          jumpLink = `<span class="lineage-jump" data-target="六角家系" style="font-size:10px;margin-left:4px;color:#0066cc;cursor:pointer;user-select:none;">[→六角家系]</span>`;
+        } else if (shop.id === 'musashiya') {
+          jumpLink = `<span class="lineage-jump" data-target="新中野武蔵家系" style="font-size:10px;margin-left:4px;color:#0066cc;cursor:pointer;user-select:none;">[→新中野武蔵家系]</span>`;
+        }
+      }
+      
+      // 色分け
+      let nodeColorClass = colorClass;
+      
+      // 王道家系セクション内: 王道乃印は薄い黄色
+      if (colorClass === 'oud' && shop.category === '王道乃印') {
+        nodeColorClass = 'oud-light';
+      }
+      // 吉村家系セクション内: 非直系（直系以外でparentがyoshimuraya）は薄い赤
+      else if (colorClass === 'yosh' && shop.parent === 'yoshimuraya' && shop.category !== '直系') {
+        nodeColorClass = 'yosh-light';
+      }
+      
+      const node = document.createElement('div');
+      node.className = `lineage-node g-${nodeColorClass}${isClosed ? ' closed' : ''}`;
+      node.dataset.id = shop.id;
+      node.innerHTML = `
+        <div class="lineage-node-name">${escapeHtml(shop.name)}${jumpLink}</div>
+        <div class="lineage-node-meta">${escapeHtml(shop.area || '')}</div>
+      `;
+      
+      // ジャンプリンクのクリックイベント
+      if (jumpLink) {
+        const linkEl = node.querySelector('.lineage-jump');
+        if (linkEl) {
+          linkEl.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const targetName = linkEl.getAttribute('data-target');
+            const targetSection = document.getElementById(`lineage-section-${targetName}`);
+            if (targetSection) {
+              targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          });
+        }
+      }
+      
+      node.addEventListener('click', () => selectLineageNode(shop.id));
+      return node;
+    }
+    
+    function drawLineageWires(section, items, levels, order) {
+      const svg = section.querySelector('.lineage-wires');
+      const box = section.querySelector('.lineage-section-box');
+      const nodes = section.querySelectorAll('.lineage-node');
+      
+      if (!svg || !box || nodes.length === 0) return;
+      
+      // SVGのサイズを設定
+      const boxRect = box.getBoundingClientRect();
+      svg.setAttribute('width', box.scrollWidth);
+      svg.setAttribute('height', box.scrollHeight);
+      svg.style.width = box.scrollWidth + 'px';
+      svg.style.height = box.scrollHeight + 'px';
+      
+      const positions = new Map();
+      nodes.forEach(node => {
+        const rect = node.getBoundingClientRect();
+        positions.set(node.dataset.id, {
+          x: rect.left - boxRect.left + box.scrollLeft + rect.width / 2,
+          y: rect.top - boxRect.top + box.scrollTop + rect.height / 2
+        });
+      });
+      
+      const paths = [];
+      items.forEach(shop => {
+        if (!shop.parent) return;
+        const childPos = positions.get(shop.id);
+        const parentPos = positions.get(shop.parent);
+        if (!childPos || !parentPos) return;
+        
+        const midY = (parentPos.y + childPos.y) / 2;
+        paths.push(`M ${parentPos.x} ${parentPos.y} L ${parentPos.x} ${midY} L ${childPos.x} ${midY} L ${childPos.x} ${childPos.y}`);
+      });
+      
+      svg.innerHTML = paths.map(d => `<path class="lineage-wire" d="${d}"/>`).join('');
+      
+      console.log('Wires drawn:', paths.length, 'paths');
+    }
+    
+    function computeLineageLevels(items, roots) {
+      const children = new Map();
+      items.forEach(s => {
+        if (!s.parent) return;
+        if (!children.has(s.parent)) children.set(s.parent, []);
+        children.get(s.parent).push(s.id);
+      });
+      
+      const levels = new Map();
+      const q = roots.map(r => ({ id: r.id, level: 0 }));
+      roots.forEach(r => levels.set(r.id, 0));
+      
+      while (q.length) {
+        const cur = q.shift();
+        const kids = children.get(cur.id) || [];
+        kids.forEach(kid => {
+          const nextLevel = cur.level + 1;
+          if (!levels.has(kid) || nextLevel < levels.get(kid)) {
+            levels.set(kid, nextLevel);
+            q.push({ id: kid, level: nextLevel });
+          }
+        });
+      }
+      
+      items.forEach(s => {
+        if (!levels.has(s.id)) levels.set(s.id, 0);
+      });
+      
+      return levels;
+    }
+    
+    function buildLineageOrder(items, roots) {
+      const children = new Map();
+      items.forEach(s => {
+        if (!s.parent) return;
+        if (!children.has(s.parent)) children.set(s.parent, []);
+        children.get(s.parent).push(s.id);
+      });
+      
+      const order = [];
+      const q = roots.map(r => r.id);
+      const seen = new Set();
+      
+      while (q.length) {
+        const id = q.shift();
+        if (seen.has(id)) continue;
+        seen.add(id);
+        order.push(id);
+        
+        // JSON順のまま（ソートしない）
+        const kids = children.get(id) || [];
+        q.push(...kids);
+      }
+      
+      items.forEach(s => {
+        if (!seen.has(s.id)) order.push(s.id);
+      });
+      
+      return order;
+    }
+    
+    function initLineageUI() {
+      const input = document.getElementById('lineage-search');
+      const sug = document.getElementById('lineage-suggestions');
+      const info = document.getElementById('lineage-info');
+      const infoTitle = document.getElementById('lineage-info-title');
+      const infoSub = document.getElementById('lineage-info-sub');
+      const resetBtn = document.getElementById('lineage-reset-btn');
+      
+      if (!input || !sug) return;
+      
+      // 検索
+      function renderLineageSuggestions(list) {
+        if (!list.length) {
+          sug.style.display = 'none';
+          sug.innerHTML = '';
+          return;
+        }
+        
+        sug.innerHTML = list.map(s => {
+          const openStatus = getOpenStatus(s.openingHours);
+          const isClosed = openStatus.state === 'closed';
+          const badge = isClosed ? '閉店' : '営業中';
+          return `
+            <div class="lineage-sitem" data-id="${s.id}">
+              <div class="lineage-smain">
+                <div class="lineage-sname">${escapeHtml(s.name)}</div>
+                <div class="lineage-smeta">${escapeHtml(s.area || '')}</div>
+              </div>
+              <div class="lineage-sbadge">${badge}</div>
+            </div>
+          `;
+        }).join('');
+        sug.style.display = 'block';
+      }
+      
+      function searchLineage(q) {
+        const nq = q.trim().toLowerCase().replace(/[\s　]+/g, '');
+        if (!nq) return [];
+        
+        const exact = shops.filter(s =>
+          s.name.toLowerCase() === nq ||
+          (s.nameHiragana && s.nameHiragana === nq)
+        );
+        if (exact.length) return exact;
+        
+        return shops.filter(s =>
+          s.name.toLowerCase().includes(nq) ||
+          (s.nameHiragana && s.nameHiragana.includes(nq)) ||
+          (s.area && s.area.toLowerCase().includes(nq))
+        ).slice(0, 12);
+      }
+      
+      input.addEventListener('input', () => {
+        const result = searchLineage(input.value);
+        renderLineageSuggestions(result);
+      });
+      
+      sug.addEventListener('click', (e) => {
+        const item = e.target.closest('.lineage-sitem');
+        if (!item) return;
+        const id = item.getAttribute('data-id');
+        const shop = shops.find(s => s.id === id);
+        if (!shop) return;
+        
+        input.value = shop.name;
+        sug.style.display = 'none';
+        selectLineageNode(id);
+        
+        // ノードまでスクロール
+        const node = document.querySelector(`.lineage-node[data-id="${id}"]`);
+        if (node) {
+          node.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+        }
+      });
+      
+      document.addEventListener('click', (e) => {
+        if (e.target.closest('#lineage-search-wrap')) return;
+        sug.style.display = 'none';
+      });
+      
+      if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+          document.querySelectorAll('.lineage-node.selected').forEach(n => {
+            n.classList.remove('selected');
+          });
+          if (infoTitle) infoTitle.textContent = '店をタップすると情報が出ます';
+          if (infoSub) infoSub.textContent = '検索からもジャンプできます';
+        });
+      }
+    }
+    
+    function selectLineageNode(shopId) {
+      const shop = shops.find(s => s.id === shopId);
+      if (!shop) return;
+      
+      document.querySelectorAll('.lineage-node.selected').forEach(n => {
+        n.classList.remove('selected');
+      });
+      
+      const node = document.querySelector(`.lineage-node[data-id="${shopId}"]`);
+      if (node) node.classList.add('selected');
+      
+      const openStatus = getOpenStatus(shop.openingHours);
+      const isRealClosed = !shop.openingHours || Object.keys(shop.openingHours).length === 0;
+      
+      const infoTitle = document.getElementById('lineage-info-title');
+      const infoSub = document.getElementById('lineage-info-sub');
+      
+      if (infoTitle) {
+        // 閉店店舗のみ（閉店）を表示
+        infoTitle.textContent = isRealClosed ? `${shop.name}（閉店）` : shop.name;
+      }
+      
+      if (infoSub) {
+        const parent = shop.parent ? shops.find(s => s.id === shop.parent) : null;
+        const parentText = parent ? `修行元: ${parent.name}` : '修行元: なし（ルート）';
+        
+        // 状態表示
+        let statusText;
+        if (isRealClosed) {
+          statusText = '状態: 閉店';
+        } else if (openStatus.state === 'open') {
+          statusText = '状態: 営業中';
+        } else if (openStatus.state === 'soon') {
+          statusText = '状態: 閉店間近';
+        } else {
+          statusText = '状態: 営業時間外';
+        }
+        
+        infoSub.textContent = `${parentText} / ${statusText}`;
+      }
+    }
+    
+    function initLineagePinchZoom() {
+      const boxes = document.querySelectorAll('.lineage-section-box');
+      
+      boxes.forEach(box => {
+        let scale = 1;
+        let lastScale = 1;
+        let initialDistance = 0;
+        let isZooming = false;
+        
+        box.addEventListener('touchstart', (e) => {
+          if (e.touches.length === 2) {
+            isZooming = true;
+            initialDistance = getDistance(e.touches[0], e.touches[1]);
+            lastScale = scale;
+          }
+        });
+        
+        box.addEventListener('touchmove', (e) => {
+          if (isZooming && e.touches.length === 2) {
+            e.preventDefault();
+            const currentDistance = getDistance(e.touches[0], e.touches[1]);
+            const newScale = lastScale * (currentDistance / initialDistance);
+            scale = Math.max(0.5, Math.min(3, newScale));
+            box.style.transform = `scale(${scale})`;
+          }
+        });
+        
+        box.addEventListener('touchend', () => {
+          isZooming = false;
+        });
+      });
+    }
+    
+    function getDistance(touch1, touch2) {
+      const dx = touch1.clientX - touch2.clientX;
+      const dy = touch1.clientY - touch2.clientY;
+      return Math.sqrt(dx * dx + dy * dy);
     }
     
     // Shop Detail Modal
