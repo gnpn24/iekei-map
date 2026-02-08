@@ -2534,6 +2534,15 @@
       text-align: center;
     }
     
+    /* X(Twitter)ブラウザ専用スタイル */
+    .twitter-browser .header {
+      padding-top: 12px !important;
+    }
+    
+    .twitter-browser .stats-header {
+      padding-top: 20px !important;
+    }
+    
     </style></style>
 </head>
 <body>
@@ -3876,6 +3885,13 @@
     
     
     
+    
+    // X(Twitter)ブラウザ検出
+    const isTwitterBrowser = /Twitter/i.test(navigator.userAgent);
+    if (isTwitterBrowser) {
+      console.log('🐦 Xブラウザを検出しました');
+      document.documentElement.classList.add('twitter-browser');
+    }
     
     // Initialize
     document.addEventListener('DOMContentLoaded', () => {
@@ -5453,83 +5469,6 @@
             currentX += currentPos.width + 18; // 18はgapX
           }
         });
-      });
-      
-      // 衝突検出と解消
-      resolveOverlaps(section, positions, nodes);
-    }
-    
-    // 衝突検出と解消関数
-    function resolveOverlaps(section, positions, nodes) {
-      const BOX_PADDING = 10; // ボックス間の最小余白
-      const MAX_ITERATIONS = 50; // 最大反復回数
-      
-      // ノードの情報を配列に変換
-      const boxes = Array.from(nodes).map(node => {
-        const pos = positions.get(node.dataset.id);
-        if (!pos) return null;
-        
-        return {
-          node: node,
-          id: node.dataset.id,
-          level: parseInt(node.dataset.level),
-          x: pos.x,
-          y: pos.y,
-          width: pos.width,
-          height: 60 // ボックスの高さ（固定）
-        };
-      }).filter(b => b !== null);
-      
-      // 衝突判定
-      function isOverlapping(box1, box2) {
-        return !(
-          box1.x + box1.width + BOX_PADDING < box2.x ||
-          box1.x > box2.x + box2.width + BOX_PADDING ||
-          box1.y + box1.height + BOX_PADDING < box2.y ||
-          box1.y > box2.y + box2.height + BOX_PADDING
-        );
-      }
-      
-      let hasOverlap = true;
-      let iterations = 0;
-      
-      while (hasOverlap && iterations < MAX_ITERATIONS) {
-        hasOverlap = false;
-        
-        for (let i = 0; i < boxes.length; i++) {
-          for (let j = i + 1; j < boxes.length; j++) {
-            if (isOverlapping(boxes[i], boxes[j])) {
-              hasOverlap = true;
-              
-              // 同じレベルなら横にずらす、違うレベルなら縦にずらす
-              if (boxes[i].level === boxes[j].level) {
-                // 横にずらす（右側を右に）
-                boxes[j].x += 10;
-              } else {
-                // 縦にずらす（下のレベルを下に）
-                if (boxes[i].level < boxes[j].level) {
-                  boxes[j].y += 10;
-                } else {
-                  boxes[i].y += 10;
-                }
-              }
-            }
-          }
-        }
-        iterations++;
-      }
-      
-      // DOM に反映
-      boxes.forEach(box => {
-        const currentTransform = box.node.style.transform || '';
-        const xMatch = currentTransform.match(/translateX\(([^)]+)\)/);
-        const currentX = xMatch ? parseFloat(xMatch[1]) : 0;
-        
-        const pos = positions.get(box.id);
-        const offsetX = box.x - pos.x + currentX;
-        const offsetY = box.y - pos.y;
-        
-        box.node.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
       });
     }
     
