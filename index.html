@@ -39,7 +39,6 @@
       flex-direction: column;
       height: 100vh; /* fallback for older browsers */
       height: 100dvh; /* dynamic viewport height - URLバー考慮 */
-      padding-top: env(safe-area-inset-top);
     }
     
     /* headerレイアウトもついでに安定化（floatを卒業） */
@@ -52,6 +51,7 @@
       background: #FF0000;
       color: #000000;
       padding: 12px 16px 12px;
+      padding-top: max(12px, env(safe-area-inset-top));
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     
@@ -77,7 +77,7 @@
       align-items: center;
       justify-content: center;
       
-      background: white;
+      background: transparent;
       border: none;
       border-radius: 8px;
       padding: 0;
@@ -101,10 +101,10 @@
       touch-action: manipulation;
     }
     
-    /* 押してる間も絶対動かさない */
+    /* 押してる間に縮小で押す感を出す */
     .header-btn:active {
       top: 0 !important;
-      transform: none !important;
+      transform: scale(0.85) !important;
       padding: 0 !important;
     }
     
@@ -143,6 +143,7 @@
       padding: 2px 0;
       padding-bottom: max(2px, env(safe-area-inset-bottom));
       position: relative;
+      z-index: 100;
     }
     
     .nav-item {
@@ -1743,7 +1744,7 @@
     }
 
     /* チュートリアルボタン：ガラス＋押した感 */
-    .header button{
+    .header button, .header a.header-btn{
       background: rgba(255,255,255,0.22) !important;
       border: 1px solid rgba(255,255,255,0.28) !important;
       backdrop-filter: blur(10px);
@@ -2186,13 +2187,14 @@
     #lineage-info {
       position: sticky;
       bottom: 0;
-      background: rgba(246,240,215,.94);
+      background: rgb(246,240,215);
       border-top: 1px solid rgba(0,0,0,.12);
       padding: 10px 14px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 10px;
+      z-index: 10;
     }
     
     .lineage-info-left {
@@ -2238,6 +2240,309 @@
       }
     }
     
+    /* 新しい統計タブのスタイル（ChatGPTのデザイン） */
+    #tab-stats {
+      background: 
+        radial-gradient(1200px 800px at 20% -10%, rgba(110,231,183,.18), transparent 60%),
+        radial-gradient(1000px 700px at 110% 10%, rgba(59,130,246,.14), transparent 55%),
+        #0b0f14;
+      color: #e7edf7;
+      min-height: 100vh;
+    }
+    
+    /* 統計タブが表示されている時だけヘッダーを非表示 */
+    #tab-stats.active ~ .header {
+      display: none;
+    }
+    
+    body:has(#tab-stats.active) .header {
+      display: none;
+    }
+    
+    .stats-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 20px 16px 14px;
+      padding-top: max(20px, env(safe-area-inset-top));
+    }
+    
+    .stats-brand {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    
+    .stats-brand h1 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: .2px;
+      color: #e7edf7;
+    }
+    
+    .stats-sub {
+      font-size: 12px;
+      color: #9fb0c7;
+    }
+    
+    .stats-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.04);
+      font-size: 13px;
+      color: #e7edf7;
+    }
+    
+    .stats-pill #stats-data-status {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: #9fb0c7;
+    }
+    
+    .stats-new-container {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      padding: 12px;
+      padding-bottom: calc(50px + env(safe-area-inset-bottom, 0px));
+    }
+    @media (max-width: 768px) {
+      .stats-new-container {
+        grid-template-columns: 1fr;
+      }
+    }
+    .stats-new-card {
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      overflow: hidden;
+    }
+    .stats-new-full {
+      grid-column: 1 / -1;
+    }
+    .stats-new-head {
+      padding: 14px 14px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      background: rgba(255,255,255,.04);
+    }
+    .stats-new-title {
+      font-size: 14px;
+      font-weight: 700;
+      margin: 0;
+      letter-spacing: .2px;
+      color: #e7edf7;
+    }
+    .stats-new-body {
+      padding: 12px 14px 14px;
+    }
+    .stats-new-muted {
+      color: #9fb0c7;
+      font-size: 12px;
+    }
+    .stats-new-select {
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.08);
+      color: #e7edf7;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      outline: none;
+      width: 100%;
+      font-weight: 600;
+    }
+    .stats-new-select option {
+      background: #1a1f2e;
+      color: #e7edf7;
+    }
+    .stats-new-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.04);
+      font-size: 13px;
+      white-space: nowrap;
+      color: #e7edf7;
+    }
+    .stats-new-pill b {
+      color: #6ee7b7;
+      font-weight: 800;
+    }
+    .stats-new-summary {
+      font-size: 15px;
+      line-height: 1.55;
+      margin: 0;
+      color: #e7edf7;
+    }
+    .stats-new-summary b {
+      color: #6ee7b7;
+      font-weight: 750;
+    }
+    .stats-new-kpi {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    .stats-new-kpi-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .stats-new-kpi-box {
+      background: rgba(0,0,0,.22);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .stats-new-kpi-label {
+      color: #9fb0c7;
+      font-size: 12px;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    .stats-new-kpi-value {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: .2px;
+      color: #e7edf7;
+    }
+    .stats-new-kpi-hint {
+      margin-top: 6px;
+      color: #9fb0c7;
+      font-size: 11px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .stats-new-bar-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .stats-new-bar-item .top {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      margin-bottom: 6px;
+      color: #9fb0c7;
+      font-weight: 600;
+    }
+    .stats-new-bar {
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.08);
+      overflow: hidden;
+    }
+    .stats-new-bar > i {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, rgba(110,231,183,1), rgba(59,130,246,1));
+      border-radius: 999px;
+      transition: width .25s ease;
+    }
+    .stats-new-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .stats-new-item {
+      display: flex;
+      gap: 10px;
+      padding: 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.18);
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .stats-new-item:hover {
+      background: rgba(0,0,0,.28);
+      transform: translateY(-1px);
+    }
+    .stats-new-thumb {
+      width: 54px;
+      height: 54px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.08);
+      flex: 0 0 auto;
+      overflow: hidden;
+      object-fit: cover;
+    }
+    .stats-new-meta {
+      flex: 1;
+      min-width: 0;
+    }
+    .stats-new-meta .name {
+      font-size: 14px;
+      font-weight: 750;
+      margin: 0 0 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #e7edf7;
+    }
+    .stats-new-meta .subline {
+      font-size: 12px;
+      color: #9fb0c7;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .stats-new-right {
+      text-align: right;
+      flex: 0 0 auto;
+      color: #9fb0c7;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      justify-content: center;
+    }
+    .stats-new-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 34px;
+      padding: 6px 8px;
+      border-radius: 999px;
+      background: rgba(110,231,183,.12);
+      border: 1px solid rgba(110,231,183,.25);
+      color: #6ee7b7;
+      font-weight: 800;
+      font-size: 12px;
+      align-self: flex-end;
+    }
+    .stats-new-empty {
+      padding: 18px 14px;
+      color: #9fb0c7;
+      line-height: 1.6;
+      font-size: 13px;
+      text-align: center;
+    }
+    
+    /* X(Twitter)ブラウザ専用スタイル */
+    .twitter-browser .header {
+      padding-top: 12px !important;
+    }
+    
+    .twitter-browser .stats-header {
+      padding-top: 20px !important;
+    }
+    
     </style></style>
 </head>
 <body>
@@ -2264,7 +2569,12 @@
     <div class="header">
       <h1>🍜 家系ラーメンmap</h1>
       <div class="header-buttons">
-        <button onclick="location.reload()" class="header-btn" title="再読み込み">
+        <a href="https://x.com/iekei_map" target="_blank" class="header-btn" title="X公式アカウント" style="text-decoration:none;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="#6b7280">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+          </svg>
+        </a>
+        <button onclick="if(window.webkit?.messageHandlers?.reloadPage){window.webkit.messageHandlers.reloadPage.postMessage('')}else{location.reload()}" class="header-btn" title="再読み込み">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
           </svg>
@@ -2320,7 +2630,7 @@
                   <option value="本牧家">本牧家</option>
                   <option value="王道家">王道家</option>
                   <option value="王道乃印">王道乃印</option>
-                  <option value="新中野武蔵家">新中野武蔵家</option>
+                  <option value="武蔵家">武蔵家</option>
                   <option value="壱系">壱系</option>
                   <option value="オリジナル">オリジナル</option>
                   <option value="資本系">資本系</option>
@@ -2365,7 +2675,7 @@
               <option value="本牧家">本牧家</option>
               <option value="王道家">王道家</option>
               <option value="王道乃印">王道乃印</option>
-              <option value="新中野武蔵家">新中野武蔵家</option>
+              <option value="武蔵家">武蔵家</option>
               <option value="壱系">壱系</option>
               <option value="オリジナル">オリジナル</option>
               <option value="資本系">資本系</option>
@@ -2418,6 +2728,7 @@
               <div id="lineage-info-title">店をタップすると情報が出ます</div>
               <div id="lineage-info-sub">検索からもジャンプできます</div>
             </div>
+            <button id="lineage-detail-btn" style="display:none;margin-right:8px;border:2px solid rgba(0,0,0,.18);background:rgba(59,130,246,.9);color:white;padding:8px 12px;border-radius:10px;font-weight:900;cursor:pointer;white-space:nowrap;">詳細画面</button>
             <button id="lineage-reset-btn">選択解除</button>
           </div>
         </div>
@@ -2425,27 +2736,107 @@
       
       <!-- Stats Tab -->
       <div id="tab-stats" class="tab-content">
-        <div class="stats-container">
-          <div class="stats-card">
-            <div class="stats-title">統計情報</div>
-            <div class="stats-grid">
-              <div class="stat-box blue">
-                <div class="stat-number" id="stat-visited">0</div>
-                <div class="stat-box-label">訪問店舗</div>
-              </div>
-              <div class="stat-box green">
-                <div class="stat-number" id="stat-percent">0%</div>
-                <div class="stat-box-label">制覇率</div>
-              </div>
-              <div class="stat-box yellow">
-                <div class="stat-number" id="stat-rating">-</div>
-                <div class="stat-box-label">平均評価</div>
+        <div class="stats-header">
+          <div class="stats-brand">
+            <h1>家系ラーメンmap</h1>
+            <div class="stats-sub">統計・分析</div>
+          </div>
+        </div>
+        
+        <div class="stats-new-container">
+          
+          <!-- 期間選択 -->
+          <div class="stats-new-card">
+            <div class="stats-new-head">
+              <p class="stats-new-title">期間</p>
+              <span class="stats-new-muted" id="stats-period-hint">—</span>
+            </div>
+            <div class="stats-new-body">
+              <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+                <div style="flex:1 1 240px;min-width:220px;">
+                  <select id="stats-period-select" class="stats-new-select">
+                    <option value="7">直近7日</option>
+                    <option value="30" selected>直近30日</option>
+                    <option value="90">直近90日</option>
+                    <option value="365">直近1年</option>
+                    <option value="all">全期間</option>
+                  </select>
+                </div>
+                <div class="stats-new-pill">
+                  <span>記録数</span>
+                  <b id="stats-total-count">0</b>
+                </div>
               </div>
             </div>
-            <div class="section-title">訪問履歴</div>
-            <div id="visit-history-list"></div>
           </div>
           
+          <!-- ひと言サマリー -->
+          <div class="stats-new-card">
+            <div class="stats-new-head">
+              <p class="stats-new-title">ひと言サマリー</p>
+            </div>
+            <div class="stats-new-body">
+              <p class="stats-new-summary" id="stats-one-liner">データがありません。まず1件記録してみてください。</p>
+            </div>
+          </div>
+          
+          <!-- ダッシュボード -->
+          <div class="stats-new-card stats-new-full">
+            <div class="stats-new-head">
+              <p class="stats-new-title">ダッシュボード</p>
+            </div>
+            <div class="stats-new-body">
+              <div class="stats-new-kpi">
+                <div class="stats-new-kpi-box">
+                  <div class="stats-new-kpi-label">よく行く店</div>
+                  <div class="stats-new-kpi-value" id="stats-kpi-top-shop">—</div>
+                  <div class="stats-new-kpi-hint" id="stats-kpi-top-shop-hint">—</div>
+                </div>
+                <div class="stats-new-kpi-row">
+                  <div class="stats-new-kpi-box">
+                    <div class="stats-new-kpi-label">食べた杯数</div>
+                    <div class="stats-new-kpi-value" id="stats-kpi-bowls">0</div>
+                    <div class="stats-new-kpi-hint" id="stats-kpi-bowls-hint">—</div>
+                  </div>
+                  <div class="stats-new-kpi-box">
+                    <div class="stats-new-kpi-label">訪問店舗数</div>
+                    <div class="stats-new-kpi-value" id="stats-kpi-shops">0</div>
+                    <div class="stats-new-kpi-hint" id="stats-kpi-shops-hint">—</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 写真ギャラリー -->
+          <div class="stats-new-card stats-new-full">
+            <div class="stats-new-head">
+              <p class="stats-new-title">📸 訪問記録</p>
+            </div>
+            <div class="stats-new-body" style="padding:0;">
+              <div id="stats-photo-gallery" style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;"></div>
+            </div>
+          </div>
+          
+          <!-- よく行く店TOP3 -->
+          <div class="stats-new-card">
+            <div class="stats-new-head">
+              <p class="stats-new-title">よく行く店TOP3</p>
+            </div>
+            <div class="stats-new-body">
+              <div id="stats-top-shops" class="stats-new-list"></div>
+            </div>
+          </div>
+          
+          <!-- 提案 -->
+          <div class="stats-new-card stats-new-full">
+            <div class="stats-new-head">
+              <p class="stats-new-title">提案</p>
+            </div>
+            <div class="stats-new-body">
+              <div id="stats-suggestions" class="stats-new-list"></div>
+            </div>
+          </div>
           
         </div>
       </div>
@@ -2739,15 +3130,14 @@
           </div>
           
           <div class="form-group">
-            <label class="form-label">写真</label>
+            <label class="form-label">写真（最大4枚）</label>
             <div class="photo-upload">
-              <input type="file" id="input-photo" accept="image/*" style="display:none;" onchange="handlePhotoUpload(event)">
-              <div class="photo-upload-btn" onclick="document.getElementById('input-photo').click()">
-                📷 写真を追加
+              <input type="file" id="input-photo" accept="image/*" multiple style="display:none;" onchange="handlePhotoUpload(event)">
+              <div id="photo-previews" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+                <!-- 写真プレビューがここに表示される -->
               </div>
-              <div id="photo-preview" class="photo-preview" style="display:none;">
-                <img id="preview-img" src="" alt="Preview">
-                <button type="button" class="photo-remove" onclick="removePhoto()">✕</button>
+              <div class="photo-upload-btn" id="add-photo-btn" onclick="openPhotoPicker()" style="margin-top:8px;">
+                📷 写真を追加
               </div>
             </div>
           </div>
@@ -2810,22 +3200,20 @@
       const el = document.createElement("div");
       el.id = 'update-banner'; // IDを追加
       el.style.position = "fixed";
-      el.style.left = "12px";
-      el.style.right = "12px";
+      el.style.left = "50%";
+      el.style.transform = "translateX(-50%)";
       el.style.bottom = "72px"; // 下タブの上
       el.style.zIndex = "9999";
-      el.style.padding = "12px";
-      el.style.borderRadius = "12px";
+      el.style.padding = "12px 16px";
+      el.style.borderRadius = "24px";
       el.style.background = "rgba(0,0,0,0.85)";
       el.style.color = "#fff";
       el.style.fontSize = "14px";
+      el.style.whiteSpace = "nowrap";
       el.innerHTML = `
-        <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;">
-          <div>
-            <div style="font-weight:700;">更新があります</div>
-            <div style="opacity:.85;">${APP_VERSION} → ${remoteVersion}</div>
-          </div>
-          <button id="reloadBtn" style="padding:10px 12px;border-radius:10px;border:none;font-weight:700;background:#fff;cursor:pointer;">
+        <div style="display:flex;gap:12px;align-items:center;">
+          <span style="font-weight:700;">更新があります</span>
+          <button id="reloadBtn" style="padding:6px 12px;border-radius:16px;border:none;font-weight:700;background:#fff;cursor:pointer;font-size:13px;">
             再読み込み
           </button>
         </div>
@@ -2846,9 +3234,13 @@
           });
         }
         
-        // 強制リロード
+        // iOS: Swift経由でリロード
         setTimeout(() => {
-          location.reload(true);
+          if (window.webkit?.messageHandlers?.reloadPage) {
+            window.webkit.messageHandlers.reloadPage.postMessage('');
+          } else {
+            location.reload(true);
+          }
         }, 100);
       };
     }
@@ -2943,7 +3335,7 @@
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒でタイムアウト
         
-        const response = await fetch(SHOPS_API_URL, { 
+        const response = await fetch(SHOPS_API_URL, {
           signal: controller.signal,
           cache: 'no-cache'
         });
@@ -3081,6 +3473,18 @@
       renderStatsTab();
       initRecordForm();
       initResizeHandle();
+      
+      // キャッシュクリアボタンのイベントリスナー（iOS対応）
+      const clearCacheBtn = document.getElementById('clear-cache-btn');
+      if (clearCacheBtn) {
+        clearCacheBtn.addEventListener('click', clearCache);
+      }
+      
+      // 統計タブの期間選択イベントリスナー
+      const periodSelect = document.getElementById('stats-period-select');
+      if (periodSelect) {
+        periodSelect.addEventListener('change', renderStatsTab);
+      }
     }
     
     // ネイティブアプリ判定
@@ -3089,12 +3493,35 @@
     // State
     let visits = JSON.parse(localStorage.getItem('iekei-visits') || '{}');
     
+    // 既存データを新形式に変換（photo → photos）
+    function migratePhotoData(visits) {
+      Object.values(visits).forEach(visit => {
+        if (visit.logs && visit.logs.length > 0) {
+          visit.logs.forEach(log => {
+            // 古い形式（photo）を新形式（photos）に変換
+            if (log.photo && !log.photos) {
+              log.photos = [log.photo];
+              delete log.photo;
+            }
+            // photosがない場合は空配列を設定
+            if (!log.photos) {
+              log.photos = [];
+            }
+          });
+        }
+      });
+      return visits;
+    }
+    
+    // データ変換を実行
+    visits = migratePhotoData(visits);
+    
     // Swift側からデータを受け取る関数
     window.restoreVisitsFromNative = function(jsonString) {
       try {
         console.log('📖 Swift側からデータを受信:', jsonString.substring(0, 100));
         const data = JSON.parse(jsonString);
-        visits = data;
+        visits = migratePhotoData(data); // 変換を実行
         console.log('✅ 訪問記録を復元しました:', Object.keys(visits).length, '店舗');
         
         // UIを更新（モーダルが開いている場合）
@@ -3116,12 +3543,13 @@
     let markers = {};
     let currentShop = null;
     let currentRating = 0;
-    let currentPhoto = null;
+    let currentPhotos = []; // 最大4枚
     let editingLogIndex = null; // 編集中のログインデックス
     let showOpenOnly = false; // 営業中フィルタ
     let userLocation = null; // ユーザー位置
     let userMarker = null; // ユーザー位置マーカー
     let nearbyMode = false; // 今からモード
+    let isRequestingLocation = false; // 位置情報取得中フラグ
     
     // 検索クエリ（タブ統一、v1.9.0で分離予定）
     let searchQuery = '';
@@ -3130,7 +3558,7 @@
     
     // Data Validation（起動時チェック）
     function validateShopsData() {
-      const validCategories = ['総本山', '直系', '本牧家', '六角家', '王道家', '王道乃印', '新中野武蔵家', '壱系', 'オリジナル', '資本系', '不明'];
+      const validCategories = ['総本山', '直系', '本牧家', '六角家', '王道家', '王道乃印', '武蔵家', '壱系', 'オリジナル', '資本系', '不明'];
       const ids = new Set();
       const warnings = [];
       
@@ -3240,10 +3668,24 @@
       `;
       document.body.appendChild(card);
       
-      // はじめるボタン：/tutorial.htmlへ
+      // はじめるボタン：Tutorial.htmlへ
       document.getElementById('start-tutorial-btn').onclick = () => {
+        // ウェルカムカードを先に閉じる
+        card.remove();
+        overlay.remove();
+        
         localStorage.setItem('hasCompletedTutorial', 'true');
-        location.href = '/tutorial.html';
+        
+        // iOS版: Swift側にも保存
+        if (window.webkit?.messageHandlers?.setTutorialCompleted) {
+          window.webkit.messageHandlers.setTutorialCompleted.postMessage('');
+        }
+        
+        if (window.webkit?.messageHandlers?.openTutorial) {
+          window.webkit.messageHandlers.openTutorial.postMessage('');
+        } else {
+          location.href = '/tutorial.html';
+        }
       };
       
       // スキップボタン：そのままアプリ使用
@@ -3328,13 +3770,6 @@
       document.getElementById('nearby-guide')?.remove();
       
       // ボタンのスタイルをリセットする関数
-      function resetNearbyButtonStyle() {
-        const filterBtn = document.getElementById('btn-nearby');
-        if (filterBtn) {
-          filterBtn.style.animation = '';
-          filterBtn.style.transform = '';
-        }
-      }
       
       const guide = document.createElement('div');
       guide.id = 'nearby-guide';
@@ -3371,17 +3806,17 @@
           @keyframes slideUpBounce {
             0% {
               opacity: 0;
-              transform: translateY(20px);
+              transform: translateX(-50%) translateY(20px);
             }
             60% {
               opacity: 1;
-              transform: translateY(-5px);
+              transform: translateX(-50%) translateY(-5px);
             }
             80% {
-              transform: translateY(2px);
+              transform: translateX(-50%) translateY(2px);
             }
             100% {
-              transform: translateY(0);
+              transform: translateX(-50%) translateY(0);
             }
           }
           @keyframes bounceDown {
@@ -3451,6 +3886,13 @@
     
     
     
+    // X(Twitter)ブラウザ検出
+    const isTwitterBrowser = /Twitter/i.test(navigator.userAgent);
+    if (isTwitterBrowser) {
+      console.log('🐦 Xブラウザを検出しました');
+      document.documentElement.classList.add('twitter-browser');
+    }
+    
     // Initialize
     document.addEventListener('DOMContentLoaded', () => {
       // Service Worker登録（PWA対応、ネイティブアプリではスキップ）
@@ -3474,21 +3916,43 @@
       const shopParam = urlParams.get('shop');
       
       setTimeout(() => {
-        if (!localStorage.getItem('hasCompletedTutorial')) {
+        const hasCompleted = localStorage.getItem('hasCompletedTutorial');
+        console.log('🔍 hasCompletedTutorial チェック:', hasCompleted);
+        if (!hasCompleted) {
+          console.log('❌ Tutorial未完了 → ウェルカムカード表示');
           startTutorial();
+        } else {
+          console.log('✅ Tutorial完了済み → ウェルカムカードスキップ');
         }
-      }, 1000);
+      }, 1500);
       
-      // チュートリアル完了後の誘導カード
-      if (urlParams.get('showGuide') === 'true') {
-        setTimeout(() => {
-          showNearbyGuide();
-          localStorage.setItem('hasSeenNearbyGuide', 'true');
-          // URLからパラメータを削除（履歴をクリーンに）
-          window.history.replaceState({}, '', '/');
-        }, 1500);
-      }
-      
+      // チュートリアル完了後の誘導カード（Swift側のlocalStorage設定を待つため2秒後）
+      setTimeout(() => {
+        const showGuideParam = urlParams.get('showGuide');
+        const hasCompleted = localStorage.getItem('hasCompletedTutorial');
+        const hasSeenGuide = localStorage.getItem('hasSeenNearbyGuide');
+        console.log('🔍 誘導カードチェック:', { showGuideParam, hasCompleted, hasSeenGuide });
+        
+        if (showGuideParam === 'true') {
+          console.log('✅ showGuide=true → 誘導カード表示');
+          setTimeout(() => {
+            showNearbyGuide();
+            localStorage.setItem('hasSeenNearbyGuide', 'true');
+            // URLからパラメータを削除（履歴をクリーンに）
+            window.history.replaceState({}, '', '/');
+          }, 500);
+        }
+        // iOS版: hasCompletedTutorialがtrueで、まだ誘導カードを見ていない場合
+        else if (hasCompleted && !hasSeenGuide) {
+          console.log('✅ Tutorial完了済み & 誘導カード未表示 → 誘導カード表示');
+          setTimeout(() => {
+            showNearbyGuide();
+            localStorage.setItem('hasSeenNearbyGuide', 'true');
+          }, 500);
+        } else {
+          console.log('❌ 誘導カード表示条件を満たさない');
+        }
+      }, 2000);
       // カテゴリーフィルタ
       document.getElementById('filter-category').addEventListener('change', () => {
         renderShopList();
@@ -3655,6 +4119,12 @@
               }
               document.getElementById('tab-map').classList.add('active');
               
+              // ヘッダーを表示
+              const header = document.querySelector('.header');
+              if (header) {
+                header.style.display = 'flex';
+              }
+              
               if (map) {
                 setTimeout(() => map.invalidateSize(), 100);
               }
@@ -3690,6 +4160,16 @@
             document.title = '店舗リスト - 家系ラーメンMAP';
           } else if (tab === 'map') {
             document.title = '家系ラーメンMAP｜全国の家系ラーメンを探して記録できる地図アプリ';
+          }
+          
+          // ヘッダーの表示/非表示を制御
+          const header = document.querySelector('.header');
+          if (header) {
+            if (tab === 'stats') {
+              header.style.display = 'none';
+            } else {
+              header.style.display = 'flex';
+            }
           }
           
           if (tab === 'map' && map) {
@@ -3895,7 +4375,7 @@
       
       // 検索フィルター
       if (searchQuery) {
-        filteredShops = filteredShops.filter(shop => 
+        filteredShops = filteredShops.filter(shop =>
           shop.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           shop.area.toLowerCase().includes(searchQuery.toLowerCase()) ||
           (shop.nameHiragana && shop.nameHiragana.includes(searchQuery))
@@ -3935,7 +4415,7 @@
         });
         
         const popupId = `popup-${shop.id}`;
-        const googleMapLink = shop.googleMapUrl ? 
+        const googleMapLink = shop.googleMapUrl ?
           `<a href="${shop.googleMapUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" style="width:40px;height:40px;background:#34a853;color:white;border:none;border-radius:12px;cursor:pointer;text-decoration:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="Googleマップで開く">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
@@ -3944,8 +4424,8 @@
         
         // 王道家・王道乃印の場合は看板風デザイン（黄色背景+赤い上下縁）
         const isOudouya = shop.category === '王道家' || shop.category === '王道乃印';
-        const nameStyle = isOudouya 
-          ? 'font-weight:bold;font-size:16px;margin-bottom:8px;padding:8px 12px;padding-right:40px;background:#FDCD00;color:#000000;border:4px solid #dc2626;border-radius:0;' 
+        const nameStyle = isOudouya
+          ? 'font-weight:bold;font-size:16px;margin-bottom:8px;padding:8px 12px;padding-right:40px;background:#FDCD00;color:#000000;border:4px solid #dc2626;border-radius:0;'
           : 'font-weight:bold;font-size:16px;margin-bottom:8px;padding-right:28px;';
         
         const popup = `<div style="padding:8px;min-width:180px;max-width:240px;position:relative;">
@@ -3970,7 +4450,7 @@
         
         const marker = L.marker([shop.lat, shop.lng], { icon: divIcon })
           .addTo(map)
-          .bindPopup(popup, { 
+          .bindPopup(popup, {
             closeButton: false,
             offset: [0, -20]  // アイコンの上部と吹き出しの下部をくっつける
           });
@@ -4002,7 +4482,7 @@
       
       // 検索フィルター
       if (searchQuery) {
-        filteredShops = filteredShops.filter(shop => 
+        filteredShops = filteredShops.filter(shop =>
           shop.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           shop.area.toLowerCase().includes(searchQuery.toLowerCase()) ||
           (shop.nameHiragana && shop.nameHiragana.includes(searchQuery))
@@ -4113,8 +4593,17 @@
         return;
       }
       
+      isRequestingLocation = true;
+      
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          // 取得中にOFFにされた場合は処理しない
+          if (!isRequestingLocation) {
+            return;
+          }
+          
+          isRequestingLocation = false;
+          
           userLocation = {
             lat: position.coords.latitude,
             lng: position.coords.longitude
@@ -4149,6 +4638,8 @@
           renderListTab();
         },
         async (error) => {
+          isRequestingLocation = false;
+          
           let errorMessage = '位置情報の取得に失敗しました。\n\n';
           
           if (error.code === 1) {
@@ -4181,6 +4672,7 @@
       if (nearbyMode) {
         // オフにする
         nearbyMode = false;
+        isRequestingLocation = false; // 取得中フラグもクリア
         showOpenOnly = false;
         document.getElementById('btn-nearby').classList.remove('active');
         document.getElementById('btn-open-toggle').classList.remove('active');
@@ -4224,7 +4716,7 @@
       
       // 検索フィルター
       if (searchQuery) {
-        filteredShops = filteredShops.filter(shop => 
+        filteredShops = filteredShops.filter(shop =>
           shop.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           shop.area.toLowerCase().includes(searchQuery.toLowerCase()) ||
           (shop.nameHiragana && shop.nameHiragana.includes(searchQuery))
@@ -4313,57 +4805,335 @@
     
     // Stats Tab
     function renderStatsTab() {
-      const visitedShops = Object.entries(visits).filter(([_, v]) => v.logs?.length > 0);
-      const visitedCount = visitedShops.length;
-      const totalShops = shops.length;
-      const percent = ((visitedCount / totalShops) * 100).toFixed(0);
+      console.log('🎯 renderStatsTab() 開始');
+      const period = document.getElementById('stats-period-select')?.value || '30';
+      const stats = computeStats(visits, period);
+      console.log('📊 stats:', stats);
+
+
       
-      const allRatings = visitedShops.flatMap(([_, v]) => 
-        v.logs.filter(log => log.rating > 0).map(log => log.rating)
-      );
-      const avgRating = allRatings.length > 0 
-        ? (allRatings.reduce((a, b) => a + b, 0) / allRatings.length).toFixed(1)
-        : '-';
+      // 期間ヒント
+      document.getElementById('stats-period-hint').textContent = formatPeriodHint(period);
       
-      document.getElementById('stat-visited').textContent = visitedCount;
-      document.getElementById('stat-percent').textContent = `${percent}%`;
-      document.getElementById('stat-rating').textContent = avgRating;
+      // 記録数
+      document.getElementById('stats-total-count').textContent = String(stats.bowls);
       
-      const historyHTML = visitedShops
-        .sort((a, b) => {
-          const aLast = a[1].logs[a[1].logs.length - 1]?.visitedAt || '';
-          const bLast = b[1].logs[b[1].logs.length - 1]?.visitedAt || '';
-          return bLast.localeCompare(aLast);
-        })
-        .map(([shopId, visit]) => {
+      // ひと言サマリー
+      document.getElementById('stats-one-liner').innerHTML = buildOneLiner(stats, period);
+      
+      // ダッシュボード
+      const topShop = stats.topShop ? shops.find(s => s.id === stats.topShop.key) : null;
+      document.getElementById('stats-kpi-top-shop').textContent = topShop ? topShop.name : '—';
+      document.getElementById('stats-kpi-top-shop-hint').textContent = stats.topShop ? `この期間で ${stats.topShop.count}回` : '—';
+      
+      document.getElementById('stats-kpi-bowls').textContent = String(stats.bowls);
+      document.getElementById('stats-kpi-bowls-hint').textContent = stats.bowls ? `この期間の合計` : '—';
+      
+      document.getElementById('stats-kpi-shops').textContent = String(stats.visitedShops);
+      document.getElementById('stats-kpi-shops-hint').textContent = stats.visitedShops ? `全${shops.length}店舗中` : '—';
+      
+      // 写真ギャラリー
+      const photoGallery = document.getElementById('stats-photo-gallery');
+      const photosWithInfo = stats.logs
+        .filter(log => log.photos && log.photos.length > 0)
+        .map(log => {
+          const shop = shops.find(s => s.id === log.shopId);
+          return { log, shop };
+        }); // 新しい順（computeStatsで既にソート済み）
+      
+      console.log('📸 写真ギャラリー:', photosWithInfo.length, '件');
+      
+      if (!photosWithInfo.length) {
+        photoGallery.innerHTML = '<div style="padding:20px;text-align:center;color:#9ca3af;">写真付きの記録がまだありません</div>';
+      } else {
+        photoGallery.innerHTML = photosWithInfo.map(({ log, shop }) => {
+          console.log('📸 写真:', log.photos[0], 'shop:', shop?.name);
+          return `
+          <div style="aspect-ratio:1;background:transparent;cursor:pointer;position:relative;overflow:hidden;" 
+               onclick="showPhotoDetail('${shop.id}', '${log.visitedAt}')">
+            <img data-photo="${log.photos[0]}" style="width:100%;height:100%;object-fit:cover;background:#f3f4f6;" alt="${shop.name}">
+          </div>
+        `;
+        }).join('');
+        
+        // 写真を非同期で読み込む
+        photoGallery.querySelectorAll('img[data-photo]').forEach(async img => {
+          try {
+            const fileName = img.getAttribute('data-photo');
+            console.log('📸 ギャラリー: 写真を読み込み開始:', fileName);
+            const photoData = await loadPhotoFromFile(fileName);
+            console.log('📸 ギャラリー: photoData受信:', photoData ? photoData.substring(0, 50) + '...' : 'null');
+            img.src = photoData;
+            console.log('📸 ギャラリー: img.src設定完了');
+          } catch (e) {
+            console.error('写真の読み込みエラー:', e);
+          }
+        });
+      }
+      
+      // よく行く店TOP3
+      const topShopsBox = document.getElementById('stats-top-shops');
+      const top3 = topNCount(stats.shopCount, 3);
+      if (!top3.length) {
+        topShopsBox.innerHTML = '<div class="stats-new-empty">記録が増えると、TOP3が出ます。</div>';
+      } else {
+        topShopsBox.innerHTML = top3.map(([shopId, cnt]) => {
           const shop = shops.find(s => s.id === shopId);
-          const lastVisit = visit.logs[visit.logs.length - 1];
+          // 期間内のログから写真がある最新のものを探す
+          const shopLogs = stats.logs.filter(l => l.shopId === shopId);
+          const photoLog = shopLogs.find(l => l.photos && l.photos.length > 0);
+          const photoUrl = photoLog?.photos?.[0];
           
           return `
-            <div class="visit-card">
-              <div style="display:flex;justify-content:space-between;align-items:start;">
-                <div style="flex:1;">
-                  <div style="font-weight:600;margin-bottom:4px;">${shop.name}</div>
-                  <div style="font-size:12px;color:#6b7280;">
-                    ${formatDate(lastVisit.visitedAt)} • ${visit.logs.length}回訪問
-                  </div>
-                </div>
-                ${lastVisit.rating > 0 ? `
-                  <div style="display:flex;align-items:center;gap:4px;background:#fef3c7;padding:4px 8px;border-radius:12px;">
-                    <svg style="width:12px;height:12px;fill:#fbbf24;" viewBox="0 0 24 24">
-                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                    </svg>
-                    <span style="font-size:12px;font-weight:600;color:#92400e;">${lastVisit.rating}</span>
-                  </div>
-                ` : ''}
+            <div class="stats-new-item" onclick="showShopDetail('${shopId}')">
+              ${photoUrl ? `<img data-photo="${photoUrl}" class="stats-new-thumb" alt="${shop.name}">` : '<div class="stats-new-thumb"></div>'}
+              <div class="stats-new-meta">
+                <p class="name">${escapeHtml(shop.name)}</p>
+                <div class="subline">この期間の訪問回数</div>
               </div>
-              ${lastVisit.memo ? `<div style="font-size:13px;color:#4b5563;margin-top:8px;line-height:1.5;">${lastVisit.memo}</div>` : ''}
+              <div class="stats-new-right">
+                <span class="stats-new-badge">${cnt}回</span>
+                <span>期間内</span>
+              </div>
             </div>
           `;
         }).join('');
+        
+        // 写真を非同期で読み込む
+        document.querySelectorAll('#stats-top-shops [data-photo]').forEach(async (img) => {
+          const fileName = img.dataset.photo;
+          try {
+            const photoData = await loadPhotoFromFile(fileName);
+            img.src = photoData;
+          } catch (e) {
+            console.error('写真の読み込みエラー:', e);
+          }
+        });
+      }
       
-      document.getElementById('visit-history-list').innerHTML = historyHTML || 
-        '<div class="empty-state"><div class="empty-state-icon">🍜</div><div>まだ訪問記録がありません</div></div>';
+      // 提案
+      renderSuggestions(stats, period);
+    }
+    
+    // ヘルパー関数群
+    function formatPeriodHint(period) {
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      const fmt = (d) => `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())}`;
+      if (period === 'all') return `全期間（〜${fmt(now)}）`;
+      const r = dateRangeByPeriod(period);
+      return `${fmt(r.start)}〜${fmt(r.end)}`;
+    }
+    
+    function dateRangeByPeriod(period) {
+      const now = new Date();
+      if (period === 'all') return { start: new Date(0), end: now };
+      const days = parseInt(period);
+      const start = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+      return { start, end: now };
+    }
+    
+    function parseDateMaybe(str) {
+      if (!str) return null;
+      const d = new Date(str);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    
+    function inRange(date, range) {
+      if (!date) return false;
+      return date >= range.start && date <= range.end;
+    }
+    
+    function flattenLogs(visits) {
+      const allLogs = [];
+      Object.entries(visits).forEach(([shopId, visit]) => {
+        if (visit.logs && visit.logs.length > 0) {
+          visit.logs.forEach(log => {
+            allLogs.push({ ...log, shopId });
+          });
+        }
+      });
+      return allLogs;
+    }
+    
+    function mostCommon(map) {
+      if (!map || Object.keys(map).length === 0) return null;
+      let maxKey = null, maxVal = 0;
+      for (const [k, v] of Object.entries(map)) {
+        if (v > maxVal) { maxKey = k; maxVal = v; }
+      }
+      return maxKey ? { key: maxKey, count: maxVal } : null;
+    }
+    
+    function topNCount(map, n) {
+      return Object.entries(map)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, n);
+    }
+    
+    function ratioBarHTML(label, count, total) {
+      const pct = Math.round((count / total) * 100);
+      return `
+        <div class="stats-new-bar-item">
+          <div class="top">
+            <span>${escapeHtml(label)}</span>
+            <span>${count}回 (${pct}%)</span>
+          </div>
+          <div class="stats-new-bar">
+            <i data-width="${pct}" style="width:0%"></i>
+          </div>
+        </div>
+      `;
+    }
+    
+    function buildOneLiner(stats, period) {
+      if (!stats || stats.bowls === 0) return 'データがありません。まず1件記録してみてください。';
+      const p = period === 'all' ? '全期間' : `直近${period}日`;
+      const bits = [];
+      bits.push(`${p}で<b>${stats.bowls}杯</b>。`);
+      if (stats.hardTop) bits.push(`麺は<b>${escapeHtml(stats.hardTop.key)}</b>が多め。`);
+      if (stats.flavorTop) bits.push(`味は<b>${escapeHtml(stats.flavorTop.key)}</b>が多め。`);
+      if (stats.oilTop) bits.push(`油は<b>${escapeHtml(stats.oilTop.key)}</b>が多め。`);
+      if (stats.avgWait !== null) bits.push(`待ちは平均<b>${stats.avgWait}分</b>。`);
+      return bits.join(' ');
+    }
+    
+    function computeStats(visits, period) {
+      const allLogs = flattenLogs(visits);
+      const range = dateRangeByPeriod(period);
+      
+      const logs = allLogs
+        .map(l => ({ ...l, _d: parseDateMaybe(l.visitedAt) }))
+        .filter(l => inRange(l._d, range))
+        .sort((a, b) => (b._d?.getTime() || 0) - (a._d?.getTime() || 0));
+      
+      const bowls = logs.length;
+      
+      let waitSum = 0, waitN = 0;
+      const hardMap = {};
+      const flavorMap = {};
+      const oilMap = {};
+      const shopCount = {};
+      const photoCount = { yes: 0, no: 0 };
+      
+      for (const l of logs) {
+        if (typeof l.waitMinutes === 'number' && !isNaN(l.waitMinutes)) {
+          waitSum += l.waitMinutes;
+          waitN++;
+        }
+        if (l.noodleFirmness) hardMap[l.noodleFirmness] = (hardMap[l.noodleFirmness] || 0) + 1;
+        if (l.flavorIntensity) flavorMap[l.flavorIntensity] = (flavorMap[l.flavorIntensity] || 0) + 1;
+        if (l.oilAmount) oilMap[l.oilAmount] = (oilMap[l.oilAmount] || 0) + 1;
+        shopCount[l.shopId] = (shopCount[l.shopId] || 0) + 1;
+        if (l.photo) photoCount.yes++; else photoCount.no++;
+      }
+      
+      return {
+        logs,
+        bowls,
+        visitedShops: Object.keys(shopCount).length,
+        avgWait: waitN ? Math.round(waitSum / waitN) : null,
+        hardMap,
+        flavorMap,
+        oilMap,
+        hardTop: mostCommon(hardMap),
+        flavorTop: mostCommon(flavorMap),
+        oilTop: mostCommon(oilMap),
+        shopCount,
+        topShop: mostCommon(shopCount),
+        photoCount
+      };
+    }
+    
+    function renderSuggestions(stats, period) {
+      const box = document.getElementById('stats-suggestions');
+      
+      if (!stats.bowls) {
+        box.innerHTML = '<div class="stats-new-empty">まず1件記録すると提案できます。</div>';
+        return;
+      }
+      
+      const suggestions = [];
+      if (stats.topShop) {
+        const shop = shops.find(s => s.id === stats.topShop.key);
+        const shopLogs = stats.logs.filter(l => l.shopId === stats.topShop.key);
+        const photoLog = shopLogs.find(l => l.photos && l.photos.length > 0);
+        suggestions.push({
+          title: `いつもの一杯: ${shop.name}`,
+          desc: `この期間で ${stats.topShop.count}回。迷ったらここ。`,
+          photo: photoLog?.photos?.[0] || null
+        });
+      }
+      const line = [];
+      if (stats.hardTop) line.push(`麺は${stats.hardTop.key}`);
+      if (stats.flavorTop) line.push(`味は${stats.flavorTop.key}`);
+      if (stats.oilTop) line.push(`油は${stats.oilTop.key}`);
+      if (line.length) {
+        suggestions.push({
+          title: 'あなたの家系スタイル',
+          desc: line.join('、') + 'が多いです。'
+        });
+      }
+      
+      box.innerHTML = suggestions.slice(0, 3).map(s => `
+        <div class="stats-new-item" style="cursor:default;">
+          ${s.photo ? `<img data-photo="${s.photo}" class="stats-new-thumb" alt="">` : '<div class="stats-new-thumb"></div>'}
+          <div class="stats-new-meta">
+            <p class="name">${escapeHtml(s.title)}</p>
+            <div class="subline">${escapeHtml(s.desc)}</div>
+          </div>
+        </div>
+      `).join('');
+
+      // 提案カードの写真も非同期で読み込む
+      document.querySelectorAll('#stats-suggestions [data-photo]').forEach(async (img) => {
+        try {
+          const photoData = await loadPhotoFromFile(img.dataset.photo);
+          img.src = photoData;
+        } catch (e) {
+          console.error('提案カード写真エラー:', e);
+        }
+      });
+    }
+    
+    // 店舗別訪問回数を表示（既存機能を維持）
+    async function showShopVisitCounts() {
+      const visitedShops = Object.entries(visits).filter(([_, v]) => v.logs?.length > 0);
+      
+      // 訪問回数降順でソート
+      const sortedShops = visitedShops
+        .map(([shopId, visit]) => {
+          const shop = shops.find(s => s.id === shopId);
+          return {
+            shopId,
+            name: shop.name,
+            count: visit.logs.length
+          };
+        })
+        .sort((a, b) => b.count - a.count);
+      
+      const listHTML = sortedShops.map(({ shopId, name, count }) => `
+        <div onclick="showShopDetail('${shopId}')" style="
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          padding:12px 16px;
+          background:white;
+          border-bottom:1px solid #e5e7eb;
+          cursor:pointer;
+        ">
+          <div style="font-weight:600;font-size:15px;">${name}</div>
+          <div style="font-size:18px;font-weight:700;color:#3b82f6;">${count}回</div>
+        </div>
+      `).join('');
+      
+      const message = `
+        <div style="max-height:400px;overflow-y:auto;margin:-16px;">
+          ${listHTML}
+        </div>
+      `;
+      
+      await showCustomAlert(message, '訪問回数ランキング');
     }
     
     // ポスター風家系図の実装
@@ -4394,7 +5164,7 @@
         const oudouCategories = ['王道家', '王道乃印']; // 王道家系カテゴリー
         const honmokuCategories = ['本牧家']; // 本牧家系カテゴリー（本牧家のみ）
         const rokkakuCategories = ['六角家']; // 六角家系カテゴリー
-        const musashiCategories = ['新中野武蔵家']; // 新中野武蔵家系カテゴリー
+        const musashiCategories = ['武蔵家']; // 武蔵家系カテゴリー
         const isseCategories = ['壱系']; // 壱系カテゴリー
         
         // カテゴリーが存在するかチェック
@@ -4406,7 +5176,7 @@
           } else if (rokkakuCategories.includes(shop.category)) {
             separateSections['六角家系'] = true;
           } else if (musashiCategories.includes(shop.category)) {
-            separateSections['新中野武蔵家系'] = true;
+            separateSections['武蔵家系'] = true;
           } else if (isseCategories.includes(shop.category)) {
             separateSections['壱系'] = true;
           }
@@ -4435,9 +5205,9 @@
           groups.set('六角家系', { title: '六角家系', shops: [], color: 'rokkaku', isSeparate: true });
         }
         
-        // 5. 新中野武蔵家系（独立セクション）
-        if (separateSections['新中野武蔵家系']) {
-          groups.set('新中野武蔵家系', { title: '新中野武蔵家系', shops: [], color: 'musa', isSeparate: true });
+        // 5. 武蔵家系（独立セクション）
+        if (separateSections['武蔵家系']) {
+          groups.set('武蔵家系', { title: '新中野武蔵家系', shops: [], color: 'musa', isSeparate: true });
         }
         
         // 6. 壱系（独立セクション）
@@ -4454,10 +5224,10 @@
           
           // 優先順位付き振り分け
           
-          // 1. 新中野武蔵家系（最優先）
+          // 1. 武蔵家系（最優先）
           if (musashiCategories.includes(shop.category)) {
-            if (groups.has('新中野武蔵家系')) {
-              groups.get('新中野武蔵家系').shops.push(shop);
+            if (groups.has('武蔵家系')) {
+              groups.get('武蔵家系').shops.push(shop);
             }
             // 武蔵家 中野本店（ルート）は六角家系にも表示
             if (shop.id === 'musashiya') {
@@ -4570,7 +5340,7 @@
         '本牧家系': 'honmokuya',
         '王道家系': 'oudouya',
         '六角家系': 'rokkakuya',
-        '新中野武蔵家系': 'musashiya'
+        '武蔵家系': 'musashiya'
       };
       
       let roots;
@@ -4638,13 +5408,14 @@
       
       // DOMに追加された後に位置を調整してワイヤーを描画
       setTimeout(() => {
-        adjustChildNodesPosition(section, levels);
+        const minLevel = (colorClass === 'oth') ? 1 : 2;
+        adjustChildNodesPosition(section, levels, minLevel);
         drawLineageWires(section, items, levels, order);
       }, 0);
     }
     
-    // Level 2以降のノードを親の横位置に合わせる
-    function adjustChildNodesPosition(section, levels) {
+    // 子ノードを親の横位置に合わせる
+    function adjustChildNodesPosition(section, levels, minLevel) {
       const box = section.querySelector('.lineage-section-box');
       const boxRect = box.getBoundingClientRect();
       const nodes = section.querySelectorAll('.lineage-node');
@@ -4660,8 +5431,8 @@
         });
       });
       
-      // Level 2以降のノードを調整
-      const level2Plus = Array.from(nodes).filter(n => parseInt(n.dataset.level) >= 2);
+      // 指定レベル以降のノードを調整
+      const level2Plus = Array.from(nodes).filter(n => parseInt(n.dataset.level) >= minLevel);
       
       // 親ごとにグループ化
       const byParent = new Map();
@@ -4703,8 +5474,8 @@
     
     function createLineageNode(shop, colorClass) {
       // 本当に閉店している店舗のみ閉店扱い（営業時間がnullまたは全日休み）
-      const isClosed = !shop.openingHours || 
-                       (shop.openingHours && 
+      const isClosed = !shop.openingHours ||
+                       (shop.openingHours &&
                         Object.keys(shop.openingHours).length === 0);
       
       // 独立セクションへのジャンプリンク生成
@@ -4718,13 +5489,13 @@
       
       if (!isInOwnSection) {
         if (shop.id === 'oudouya') {
-          jumpLink = `<span class="lineage-jump" data-target="王道家系" style="font-size:10px;margin-left:4px;color:#0066cc;cursor:pointer;user-select:none;">[→王道家系]</span>`;
+          jumpLink = `<span class="lineage-jump" data-target="王道家系" style="font-size:10px;margin-left:4px;color:#000000;cursor:pointer;user-select:none;">[→王道家系]</span>`;
         } else if (shop.id === 'honmokuya') {
-          jumpLink = `<span class="lineage-jump" data-target="本牧家系" style="font-size:10px;margin-left:4px;color:#0066cc;cursor:pointer;user-select:none;">[→本牧家系]</span>`;
+          jumpLink = `<span class="lineage-jump" data-target="本牧家系" style="font-size:10px;margin-left:4px;color:#000000;cursor:pointer;user-select:none;">[→本牧家系]</span>`;
         } else if (shop.id === 'rokkakuya') {
-          jumpLink = `<span class="lineage-jump" data-target="六角家系" style="font-size:10px;margin-left:4px;color:#0066cc;cursor:pointer;user-select:none;">[→六角家系]</span>`;
+          jumpLink = `<span class="lineage-jump" data-target="六角家系" style="font-size:10px;margin-left:4px;color:#000000;cursor:pointer;user-select:none;">[→六角家系]</span>`;
         } else if (shop.id === 'musashiya') {
-          jumpLink = `<span class="lineage-jump" data-target="新中野武蔵家系" style="font-size:10px;margin-left:4px;color:#0066cc;cursor:pointer;user-select:none;">[→新中野武蔵家系]</span>`;
+          jumpLink = `<span class="lineage-jump" data-target="武蔵家系" style="font-size:10px;margin-left:4px;color:#000000;cursor:pointer;user-select:none;">[→武蔵家系]</span>`;
         }
       }
       
@@ -4757,7 +5528,16 @@
             const targetName = linkEl.getAttribute('data-target');
             const targetSection = document.getElementById(`lineage-section-${targetName}`);
             if (targetSection) {
-              targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              // 検索バーの高さを考慮してオフセット
+              const searchWrap = document.getElementById('lineage-search-wrap');
+              const headerHeight = searchWrap ? searchWrap.getBoundingClientRect().height + 40 : 80;
+              const rect = targetSection.getBoundingClientRect();
+              const scrollParent = targetSection.closest('.tab-content') || window;
+              if (scrollParent === window) {
+                window.scrollBy({ top: rect.top - headerHeight, behavior: 'smooth' });
+              } else {
+                scrollParent.scrollBy({ top: rect.top - scrollParent.getBoundingClientRect().top - headerHeight, behavior: 'smooth' });
+              }
             }
           });
         }
@@ -4950,6 +5730,10 @@
           });
           if (infoTitle) infoTitle.textContent = '店をタップすると情報が出ます';
           if (infoSub) infoSub.textContent = '検索からもジャンプできます';
+          
+          // 詳細画面ボタンを非表示
+          const detailBtn = document.getElementById('lineage-detail-btn');
+          if (detailBtn) detailBtn.style.display = 'none';
         });
       }
       
@@ -4962,11 +5746,16 @@
         compactToggle.addEventListener('click', () => {
           isCompact = !isCompact;
           if (isCompact) {
+            const originalHeight = sectionsEl.scrollHeight;
             sectionsEl.style.transform = 'scale(0.7)';
             sectionsEl.style.transformOrigin = 'top left';
+            sectionsEl.style.width = '143%';
+            sectionsEl.style.height = (originalHeight * 0.7) + 'px';
             compactToggle.classList.add('active');
           } else {
             sectionsEl.style.transform = 'scale(1)';
+            sectionsEl.style.width = '100%';
+            sectionsEl.style.height = 'auto';
             compactToggle.classList.remove('active');
           }
         });
@@ -5012,6 +5801,13 @@
         }
         
         infoSub.textContent = `${parentText} / ${statusText}`;
+      }
+      
+      // 詳細画面ボタンを表示
+      const detailBtn = document.getElementById('lineage-detail-btn');
+      if (detailBtn) {
+        detailBtn.style.display = 'block';
+        detailBtn.onclick = () => showShopDetail(shopId);
       }
     }
     
@@ -5071,7 +5867,7 @@
       if (visitData.logs.length > 0) {
         const lastVisit = visitData.logs[visitData.logs.length - 1];
         const avgRating = visitData.logs.filter(l => l.rating > 0).length > 0
-          ? (visitData.logs.filter(l => l.rating > 0).reduce((a, b) => a + b.rating, 0) / 
+          ? (visitData.logs.filter(l => l.rating > 0).reduce((a, b) => a + b.rating, 0) /
              visitData.logs.filter(l => l.rating > 0).length).toFixed(1)
           : '-';
         
@@ -5084,7 +5880,7 @@
         document.getElementById('detail-visit-count').textContent = '0';
         document.getElementById('detail-last-visit').textContent = '-';
         document.getElementById('detail-avg-rating').textContent = '-';
-        document.getElementById('detail-visits').innerHTML = 
+        document.getElementById('detail-visits').innerHTML =
           '<div class="empty-state"><div class="empty-state-icon">🍜</div><div style="font-size:14px;">まだ訪問記録がありません</div></div>';
       }
       
@@ -5143,9 +5939,9 @@
         linkSection.style.display = 'none';
       }
       
-      document.getElementById('nav-apple').href = 
+      document.getElementById('nav-apple').href =
         `https://maps.apple.com/?daddr=${currentShop.lat},${currentShop.lng}`;
-      document.getElementById('nav-google').href = 
+      document.getElementById('nav-google').href =
         `https://www.google.com/maps/dir/?api=1&destination=${currentShop.lat},${currentShop.lng}`;
       
       // モーダルを表示
@@ -5243,6 +6039,10 @@
     }
     
     function getShareUrl() {
+      // iOS版の場合は正しいWebのURLを返す
+      if (window.webkit?.messageHandlers) {
+        return `https://iekei-ramen-map.vercel.app/?shop=${currentShop.id}`;
+      }
       const baseUrl = window.location.href.split('?')[0];
       return `${baseUrl}?shop=${currentShop.id}`;
     }
@@ -5251,7 +6051,13 @@
       const text = getShareText();
       const url = getShareUrl();
       const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
-      window.open(shareUrl, '_blank', 'width=550,height=420');
+      
+      // iOS版: Swift側で開く
+      if (window.webkit?.messageHandlers?.openURL) {
+        window.webkit.messageHandlers.openURL.postMessage(shareUrl);
+      } else {
+        window.open(shareUrl, '_blank', 'width=550,height=420');
+      }
       closeShareModal();
     }
     
@@ -5259,22 +6065,84 @@
       const text = getShareText();
       const url = getShareUrl();
       const shareUrl = `https://line.me/R/share?text=${encodeURIComponent(text + '\n' + url)}`;
-      window.open(shareUrl, '_blank');
+      
+      // iOS版: Swift側で開く
+      if (window.webkit?.messageHandlers?.openURL) {
+        window.webkit.messageHandlers.openURL.postMessage(shareUrl);
+      } else {
+        window.open(shareUrl, '_blank');
+      }
       closeShareModal();
     }
     
     async function copyShareLink() {
-      const text = getShareText();
       const url = getShareUrl();
-      const fullText = text + '\n\n' + url;
       
       try {
-        await navigator.clipboard.writeText(fullText);
+        await navigator.clipboard.writeText(url);
         await showCustomAlert('リンクをコピーしました！');
         closeShareModal();
       } catch {
         await showCustomAlert('コピーに失敗しました');
       }
+    }
+    
+    // 写真詳細モーダル
+    function showPhotoDetail(shopId, visitedAt) {
+      const shop = shops.find(s => s.id === shopId);
+      if (!shop || !visits[shopId]) return;
+      
+      const log = visits[shopId].logs.find(l => l.visitedAt === visitedAt);
+      if (!log || !log.photos || log.photos.length === 0) return;
+      
+      // モーダルを表示
+      document.getElementById('photo-modal').classList.add('active');
+      
+      // 代表写真（最初の写真）を読み込み
+      loadPhotoFromFile(log.photos[0]).then(photoData => {
+        document.getElementById('photo-modal-img').src = photoData;
+      });
+      
+      // 情報を表示
+      let infoHTML = `
+        <div style="font-size:20px;font-weight:700;margin-bottom:8px;">${escapeHtml(shop.name)}</div>
+        <div style="font-size:14px;color:#6b7280;margin-bottom:12px;">📅 ${formatDateTime(log.visitedAt)}</div>
+      `;
+      
+      // 評価
+      if (log.rating && log.rating > 0) {
+        infoHTML += `<div style="margin-bottom:12px;">⭐ ${'★'.repeat(log.rating)}${'☆'.repeat(5 - log.rating)}</div>`;
+      }
+      
+      // 注文内容
+      if (log.order) {
+        infoHTML += `<div style="font-size:14px;margin-bottom:8px;">🍜 ${escapeHtml(log.order)}</div>`;
+      }
+      
+      // オプション
+      if (log.options) {
+        infoHTML += `<div style="font-size:14px;margin-bottom:8px;">🥚 ${escapeHtml(log.options)}</div>`;
+      }
+      
+      // 麺・味・油（全部普通以外の場合のみ）
+      const noodle = log.noodleFirmness || '普通';
+      const flavor = log.flavorIntensity || '普通';
+      const oil = log.oilAmount || '普通';
+      if (noodle !== '普通' || flavor !== '普通' || oil !== '普通') {
+        infoHTML += `<div style="font-size:13px;color:#6b7280;margin-top:8px;">📊 麺: ${noodle} / 味: ${flavor} / 油: ${oil}</div>`;
+      }
+      
+      document.getElementById('photo-modal-info').innerHTML = infoHTML;
+      
+      // 店舗詳細ボタン
+      document.getElementById('photo-modal-detail-btn').onclick = () => {
+        closePhotoModal();
+        showShopDetail(shopId);
+      };
+    }
+    
+    function closePhotoModal() {
+      document.getElementById('photo-modal').classList.remove('active');
     }
     
     // URLパラメータから店舗IDを取得して自動表示
@@ -5434,21 +6302,32 @@
             </div>
             
             <!-- 右側: 写真サムネイル -->
-            ${log.photo ? `
-              <img src="${log.photo}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;flex-shrink:0;" alt="Visit photo">
+            ${log.photos && log.photos.length > 0 ? `
+              <img data-photo="${log.photos[0]}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;flex-shrink:0;background:#f3f4f6;" alt="Visit photo">
             ` : ''}
           </div>
-          <div class="visit-delete-btn" data-delete-idx="${originalIdx}">削除</div>
         </div>
       `;
       }).join('');
-      
+
       document.getElementById('detail-visits').innerHTML = historyHTML;
+
+      // 写真を非同期で読み込む
+      document.querySelectorAll('[data-photo]').forEach(async (img) => {
+        const fileName = img.dataset.photo;
+        try {
+          const photoData = await loadPhotoFromFile(fileName);
+          img.src = photoData;
+        } catch (e) {
+          console.error('写真の読み込みエラー:', e);
+        }
+      });
+
+      // スワイプ機能を無効化（コメントアウト）
+      // initSwipeToDelete();
       
-      // スワイプ機能を追加
-      initSwipeToDelete();
-      
-      // 削除ボタンのイベントリスナーを追加（iOS対応）
+      // 削除ボタンのイベントリスナーも無効化（削除ボタンがないため）
+      /*
       console.log('🗑️ 削除ボタンのイベントリスナーを設定:', document.querySelectorAll('.visit-delete-btn').length, '個');
       document.querySelectorAll('.visit-delete-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -5459,6 +6338,7 @@
           deleteVisitRecord(idx);
         });
       });
+      */
     }
     
     // スワイプで削除ボタンを表示
@@ -5576,10 +6456,14 @@
             </div>
           ` : ''}
           
-          ${log.photo ? `
+          ${log.photos && log.photos.length > 0 ? `
             <div style="margin-bottom:16px;">
-              <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">写真</div>
-              <img src="${log.photo}" style="width:100%;border-radius:8px;margin-top:8px;" alt="Visit photo">
+              <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">写真 (${log.photos.length}枚)</div>
+              <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px;">
+                ${log.photos.map(photo => `
+                  <img data-photo="${photo}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;background:#f3f4f6;" alt="Visit photo">
+                `).join('')}
+              </div>
             </div>
           ` : ''}
           
@@ -5606,7 +6490,18 @@
       
       modalBody.insertAdjacentHTML('afterbegin', detailHTML);
       document.getElementById('record-modal').classList.add('active');
-      
+
+      // 写真を非同期で読み込む
+      document.querySelectorAll('.visit-detail-content [data-photo]').forEach(async (img) => {
+        const fileName = img.dataset.photo;
+        try {
+          const photoData = await loadPhotoFromFile(fileName);
+          img.src = photoData;
+        } catch (e) {
+          console.error('写真の読み込みエラー:', e);
+        }
+      });
+
       // スクロール位置をリセット
       setTimeout(() => {
         const modal = document.getElementById('record-modal');
@@ -5707,9 +6602,9 @@
       document.getElementById('record-form').reset();
       document.getElementById('input-visited-at').value = localDateTime;
       currentRating = 0;
-      currentPhoto = null;
+      currentPhotos = [];
       renderRatingInput();
-      document.getElementById('photo-preview').style.display = 'none';
+      renderPhotoPreview();
       
       // モーダルのタイトルをリセット
       document.querySelector('#record-modal .modal-header h2').textContent = '訪問記録';
@@ -5897,16 +6792,47 @@
       restoreSegmentValue('flavor-intensity', log.flavorIntensity || '普通');
       restoreSegmentValue('oil-amount', log.oilAmount || '普通');
       
-      currentPhoto = log.photo || null;
-      if (currentPhoto) {
-        document.getElementById('preview-img').src = currentPhoto;
-        document.getElementById('photo-preview').style.display = 'block';
+      currentPhotos = [];
+      if (log.photos && log.photos.length > 0) {
+        // 複数枚の写真をファイルから読み込んで表示
+        Promise.all(log.photos.map(photoFile => loadPhotoFromFile(photoFile)))
+          .then(photoDatas => {
+            currentPhotos = photoDatas;
+            renderPhotoPreview();
+          });
       } else {
-        document.getElementById('photo-preview').style.display = 'none';
+        renderPhotoPreview();
       }
       
       // モーダルのタイトルを変更
       document.querySelector('#record-modal .modal-header h2').textContent = '訪問記録を編集';
+      
+      // ボタンのイベントリスナーを再設定
+      setTimeout(() => {
+        // 保存ボタン
+        const saveBtn = document.getElementById('save-visit-btn');
+        if (saveBtn) {
+          const newBtn = saveBtn.cloneNode(true);
+          saveBtn.parentNode.replaceChild(newBtn, saveBtn);
+          newBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            saveVisitRecord(e);
+          });
+        }
+        
+        // 保存してシェアボタン
+        const saveAndTweetBtn = document.getElementById('save-and-tweet-btn');
+        if (saveAndTweetBtn) {
+          const newSaveAndTweetBtn = saveAndTweetBtn.cloneNode(true);
+          saveAndTweetBtn.parentNode.replaceChild(newSaveAndTweetBtn, saveAndTweetBtn);
+          newSaveAndTweetBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            saveAndTweet(e);
+          });
+        }
+      }, 100);
       
       // モーダルを開く時にスクロール位置を最上部にリセット
       setTimeout(() => {
@@ -5920,13 +6846,19 @@
     
     async function deleteVisitRecord(logIndex) {
       if (!currentShop) return;
-      
+
       const confirmed = await showCustomConfirm('この訪問記録を削除しますか？');
       if (!confirmed) return;
-      
+
+      // 写真ファイルも削除（複数対応）
+      const log = visits[currentShop.id].logs[logIndex];
+      if (log.photos && log.photos.length > 0) {
+        log.photos.forEach(photo => deletePhotoFile(photo));
+      }
+
       visits[currentShop.id].logs.splice(logIndex, 1);
       saveVisits();
-      
+
       // 画面を更新
       updateMarkers();
       renderShopList(document.getElementById('filter-category').value);
@@ -5938,16 +6870,22 @@
     // 詳細表示画面から削除
     async function deleteVisitFromDetail(logIndex) {
       if (!currentShop) return;
-      
+
       const confirmed = await showCustomConfirm('この訪問記録を削除しますか?');
       if (!confirmed) return;
-      
+
+      // 写真ファイルも削除（複数対応）
+      const log = visits[currentShop.id].logs[logIndex];
+      if (log.photos && log.photos.length > 0) {
+        log.photos.forEach(photo => deletePhotoFile(photo));
+      }
+
       visits[currentShop.id].logs.splice(logIndex, 1);
       saveVisits();
-      
+
       // モーダルを閉じる
       closeRecordModal();
-      
+
       // 画面を更新
       updateMarkers();
       renderShopList(document.getElementById('filter-category').value);
@@ -5984,32 +6922,110 @@
       renderRatingInput();
     }
     
-    function handlePhotoUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
+    // 写真選択を開く（iOS/Web両対応）
+    function openPhotoPicker() {
+      // iOS版: ネイティブ写真選択
+      if (window.webkit?.messageHandlers?.pickPhotos) {
+        console.log('📸 iOS: ネイティブ写真選択を開く');
+        window.webkit.messageHandlers.pickPhotos.postMessage('');
+      } 
+      // Web版: file input
+      else {
+        console.log('📸 Web: file inputを開く');
+        document.getElementById('input-photo').click();
+      }
+    }
+    
+    // iOS版: Swift側から写真データを受信
+    window.onPhotosSelected = function(base64Photos) {
+      console.log('📸 写真データを受信:', base64Photos.length, '枚');
       
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        // 画像を圧縮してから保存
-        compressImage(e.target.result, (compressedDataUrl) => {
-          currentPhoto = compressedDataUrl;
-          document.getElementById('preview-img').src = currentPhoto;
-          document.getElementById('photo-preview').style.display = 'block';
-        });
-      };
-      reader.readAsDataURL(file);
+      // 最大4枚まで
+      const remainingSlots = 4 - currentPhotos.length;
+      const photosToAdd = base64Photos.slice(0, remainingSlots);
+      
+      photosToAdd.forEach(photo => {
+        currentPhotos.push(photo);
+      });
+      
+      renderPhotoPreview();
+    };
+    
+    function handlePhotoUpload(event) {
+      const files = Array.from(event.target.files);
+      if (!files.length) return;
+      
+      // 最大4枚まで
+      const remainingSlots = 4 - currentPhotos.length;
+      const filesToAdd = files.slice(0, remainingSlots);
+      
+      filesToAdd.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          // 画像を圧縮してから保存
+          compressImage(e.target.result, (compressedDataUrl) => {
+            currentPhotos.push(compressedDataUrl);
+            renderPhotoPreview();
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+      
+      // input をリセット
+      event.target.value = '';
+    }
+    
+    function renderPhotoPreview() {
+      const container = document.getElementById('photo-previews');
+      container.innerHTML = currentPhotos.map((photo, index) => `
+        <div style="position:relative;aspect-ratio:1;background:#f3f4f6;border-radius:8px;overflow:hidden;">
+          <img src="${photo}" style="width:100%;height:100%;object-fit:cover;" alt="Photo ${index + 1}">
+          <button type="button" onclick="removePhotoAt(${index})" style="position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,0.6);color:white;border:none;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">×</button>
+          ${currentPhotos.length > 1 ? `
+            <div style="position:absolute;bottom:4px;left:4px;right:4px;display:flex;gap:4px;">
+              ${index > 0 ? `<button type="button" onclick="movePhotoLeft(${index})" style="flex:1;padding:4px;background:rgba(0,0,0,0.6);color:white;border:none;border-radius:4px;font-size:12px;cursor:pointer;">←</button>` : '<div style="flex:1;"></div>'}
+              ${index < currentPhotos.length - 1 ? `<button type="button" onclick="movePhotoRight(${index})" style="flex:1;padding:4px;background:rgba(0,0,0,0.6);color:white;border:none;border-radius:4px;font-size:12px;cursor:pointer;">→</button>` : '<div style="flex:1;"></div>'}
+            </div>
+          ` : ''}
+        </div>
+      `).join('');
+      
+      // 追加ボタンの表示/非表示
+      const addBtn = document.getElementById('add-photo-btn');
+      if (currentPhotos.length >= 4) {
+        addBtn.style.display = 'none';
+      } else {
+        addBtn.style.display = 'block';
+      }
+    }
+    
+    function removePhotoAt(index) {
+      currentPhotos.splice(index, 1);
+      renderPhotoPreview();
+    }
+    
+    function movePhotoLeft(index) {
+      if (index === 0) return;
+      [currentPhotos[index - 1], currentPhotos[index]] = [currentPhotos[index], currentPhotos[index - 1]];
+      renderPhotoPreview();
+    }
+    
+    function movePhotoRight(index) {
+      if (index === currentPhotos.length - 1) return;
+      [currentPhotos[index], currentPhotos[index + 1]] = [currentPhotos[index + 1], currentPhotos[index]];
+      renderPhotoPreview();
     }
     
     function compressImage(dataUrl, callback) {
       const img = new Image();
       img.onload = () => {
-        // 長辺を1280pxに制限
-        const MAX_SIZE = 1280;
+        // 長辺を800pxに制限（より積極的なリサイズ）
+        const MAX_SIZE = 800;
         let width = img.width;
         let height = img.height;
-        
+
         console.log(`📸 元の画像サイズ: ${width}x${height}`);
-        
+
         if (width > height && width > MAX_SIZE) {
           height = Math.round((height * MAX_SIZE) / width);
           width = MAX_SIZE;
@@ -6017,35 +7033,132 @@
           width = Math.round((width * MAX_SIZE) / height);
           height = MAX_SIZE;
         }
-        
+
         console.log(`📸 リサイズ後: ${width}x${height}`);
-        
+
         // Canvas で圧縮
         const canvas = document.createElement('canvas');
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
-        
-        // JPEG 0.7品質で出力（500KB以下を目標）
-        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
-        
+
+        // JPEG 0.5品質で出力（より積極的な圧縮、200KB前後を目標）
+        let quality = 0.5;
+        let compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+
         // ファイルサイズを計算（Base64のバイト数）
-        const sizeInBytes = Math.round((compressedDataUrl.length - 'data:image/jpeg;base64,'.length) * 0.75);
-        const sizeInKB = Math.round(sizeInBytes / 1024);
-        console.log(`📸 圧縮後のサイズ: ${sizeInKB}KB`);
-        
+        let sizeInBytes = Math.round((compressedDataUrl.length - 'data:image/jpeg;base64,'.length) * 0.75);
+        let sizeInKB = Math.round(sizeInBytes / 1024);
+
+        // 500KBを超える場合は品質をさらに下げる
+        if (sizeInKB > 500) {
+          quality = 0.3;
+          compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+          sizeInBytes = Math.round((compressedDataUrl.length - 'data:image/jpeg;base64,'.length) * 0.75);
+          sizeInKB = Math.round(sizeInBytes / 1024);
+          console.log(`📸 再圧縮（品質30%）: ${sizeInKB}KB`);
+        }
+
+        console.log(`📸 最終サイズ: ${sizeInKB}KB（品質${Math.round(quality * 100)}%）`);
+
         callback(compressedDataUrl);
       };
       img.src = dataUrl;
     }
     
-    function removePhoto() {
-      currentPhoto = null;
-      document.getElementById('input-photo').value = '';
-      document.getElementById('photo-preview').style.display = 'none';
+    // 写真をファイルとして保存してファイル名を取得
+    async function savePhotoToFile(base64Data) {
+      return new Promise((resolve) => {
+        window.onPhotoSaved = (fileName) => {
+          console.log('📸 写真をファイルとして保存しました:', fileName);
+          resolve(fileName);
+        };
+
+        if (isNativeApp) {
+          // ネイティブアプリの場合、Swift側に保存
+          window.webkit.messageHandlers.savePhoto.postMessage(base64Data);
+        } else {
+          // Web版の場合、Base64のまま返す（互換性のため）
+          resolve(base64Data);
+        }
+      });
+    }
+
+    // 写真をファイルから読み込む
+    async function loadPhotoFromFile(fileName) {
+      return new Promise((resolve) => {
+        // Base64データの場合はそのまま返す（旧データとの互換性）
+        if (fileName && fileName.startsWith('data:image')) {
+          resolve(fileName);
+          return;
+        }
+
+        // ユニークなコールバック名を生成
+        const callbackId = `onPhotoLoaded_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        window[callbackId] = (base64Data) => {
+          console.log('📸 写真をファイルから読み込みました:', fileName);
+          delete window[callbackId]; // コールバックをクリーンアップ
+          resolve(base64Data);
+        };
+
+        if (isNativeApp) {
+          // ネイティブアプリの場合、Swift側から読み込み
+          // Swift側にコールバック名を伝える必要がある...
+          // でも現在の実装では難しいので、別の方法を取ります
+          
+          // 一旦、古い方法に戻してシーケンシャルに処理
+          if (!window._photoLoadQueue) {
+            window._photoLoadQueue = [];
+            window._photoLoadProcessing = false;
+          }
+          
+          window._photoLoadQueue.push({ fileName, resolve });
+          
+          if (!window._photoLoadProcessing) {
+            processPhotoLoadQueue();
+          }
+        } else {
+          // Web版の場合、そのまま返す
+          delete window[callbackId];
+          resolve(fileName);
+        }
+      });
     }
     
+    function processPhotoLoadQueue() {
+      if (window._photoLoadQueue.length === 0) {
+        window._photoLoadProcessing = false;
+        return;
+      }
+      
+      window._photoLoadProcessing = true;
+      const { fileName, resolve } = window._photoLoadQueue.shift();
+      
+      window.onPhotoLoaded = (base64Data) => {
+        console.log('📸 写真をファイルから読み込みました:', fileName);
+        resolve(base64Data);
+        // 次のキューを処理
+        processPhotoLoadQueue();
+      };
+      
+      window.webkit.messageHandlers.loadPhoto.postMessage(fileName);
+    }
+
+    // 写真ファイルを削除
+    function deletePhotoFile(fileName) {
+      // Base64データの場合は何もしない（旧データとの互換性）
+      if (!fileName || fileName.startsWith('data:image')) {
+        return;
+      }
+
+      if (isNativeApp) {
+        window.webkit.messageHandlers.deletePhoto.postMessage(fileName);
+        console.log('📸 写真ファイルを削除しました:', fileName);
+      }
+    }
+
     async function saveVisitRecord(event) {
       event.preventDefault();
       
@@ -6059,7 +7172,16 @@
         await showCustomAlert('来店日時を入力してください');
         return;
       }
-      
+
+      // 写真をファイルとして保存（ファイル名のみを保存）
+      let photoFileNames = [];
+      for (const photo of currentPhotos) {
+        const fileName = await savePhotoToFile(photo);
+        if (fileName) {
+          photoFileNames.push(fileName);
+        }
+      }
+
       const visitRecord = {
         visitedAt: visitedAt,
         waitMinutes: document.getElementById('input-wait').value ? parseInt(document.getElementById('input-wait').value) : null,
@@ -6072,7 +7194,7 @@
         flavorIntensity: document.querySelector('[onclick*="flavor-intensity"].active')?.dataset.value || '普通',
         oilAmount: document.querySelector('[onclick*="oil-amount"].active')?.dataset.value || '普通',
         memo: document.getElementById('input-memo').value || '',
-        photo: currentPhoto || null
+        photos: photoFileNames
       };
       
       if (!visits[currentShop.id]) {
@@ -6119,6 +7241,15 @@
         return;
       }
       
+      // 写真をファイルとして保存（ファイル名のみを保存）
+      let photoFileNames = [];
+      for (const photo of currentPhotos) {
+        const fileName = await savePhotoToFile(photo);
+        if (fileName) {
+          photoFileNames.push(fileName);
+        }
+      }
+      
       // まず保存
       const visitRecord = {
         visitedAt: visitedAt,
@@ -6132,7 +7263,7 @@
         flavorIntensity: document.querySelector('[onclick*="flavor-intensity"].active')?.dataset.value || '普通',
         oilAmount: document.querySelector('[onclick*="oil-amount"].active')?.dataset.value || '普通',
         memo: document.getElementById('input-memo').value || '',
-        photo: currentPhoto || null
+        photos: photoFileNames
       };
       
       if (!visits[currentShop.id]) {
@@ -6182,9 +7313,16 @@
       tweetText += `#${currentShop.name.replace(/\s/g, '')} #家系ラーメンマップ\n`;
       tweetText += `https://iekei-map.pages.dev/`;
       
-      // Twitterインテント URLを開く
-      const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
-      window.open(twitterUrl, '_blank');
+      // X（Twitter）で投稿（x.comを使用）
+      const tweetUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
+      
+      if (isNativeApp) {
+        // iOSアプリの場合: location.hrefで開く（Xアプリに自動リダイレクト）
+        location.href = tweetUrl;
+      } else {
+        // Web版の場合: 新しいタブで開く
+        window.open(tweetUrl, '_blank');
+      }
       
       // 画面を更新
       setTimeout(() => {
@@ -6195,7 +7333,7 @@
         
         closeRecordModal();
         showShopDetail(currentShop.id);
-      }, 100);
+      }, 1500);  // Xアプリへの遷移を待つため少し長めに
       
       return false;
     }
@@ -6322,8 +7460,8 @@
       }
       
       // 24時間営業判定
-      if (todayHours.times.length === 1 && 
-          todayHours.times[0].start === '00:00' && 
+      if (todayHours.times.length === 1 &&
+          todayHours.times[0].start === '00:00' &&
           todayHours.times[0].end === '24:00') {
         return '24時間営業';
       }
@@ -6356,14 +7494,18 @@
       return `${year}/${month}/${day} ${hours}:${minutes}`;
     }
     
-    function getLineageName(lineage) {
-      const names = { root: '総本山', direct: '直系', derivative: '派生系' };
-      return names[lineage] || lineage;
-    }
     
     async function saveVisits() {
       try {
         const jsonString = JSON.stringify(visits);
+        
+        // デバッグ: Base64データが含まれていないかチェック
+        if (jsonString.includes('data:image')) {
+          console.error('⚠️ 警告: UserDefaultsにBase64データが含まれています！');
+          console.error('📊 JSONサイズ:', (jsonString.length / 1024).toFixed(2), 'KB');
+        } else {
+          console.log('✅ UserDefaultsにBase64データは含まれていません');
+        }
         
         // ネイティブアプリの場合、Swift側に保存
         if (isNativeApp) {
@@ -6417,7 +7559,37 @@
     
     function openTutorial() {
       closeSettingsModal();
-      location.href = '/tutorial.html';
+      if (window.webkit?.messageHandlers?.openTutorial) {
+        window.webkit.messageHandlers.openTutorial.postMessage('');
+      } else {
+        location.href = '/tutorial.html';
+      }
+    }
+    
+    async function clearCache() {
+      const confirmed = await showCustomConfirm(
+        '店舗データのキャッシュをクリアしますか？\n\n次回起動時に最新データを再取得します。\n（約3.5MB削減）'
+      );
+      
+      if (!confirmed) return;
+      
+      try {
+        // LocalStorageのキャッシュを削除
+        localStorage.removeItem('iekei-shops-cache');
+        localStorage.removeItem('iekei-shops-timestamp');
+        
+        console.log('🗑️ キャッシュをクリアしました');
+        
+        await showCustomAlert('キャッシュをクリアしました。\n\nアプリを再起動すると最新データが取得されます。');
+        
+        closeSettingsModal();
+        
+        // オプション: 即座に再読み込み
+        // location.reload();
+      } catch (e) {
+        console.error('❌ キャッシュクリアエラー:', e);
+        await showCustomAlert('キャッシュのクリアに失敗しました');
+      }
     }
     
 
@@ -6676,6 +7848,22 @@
     </div>
   </div>
   
+  <!-- Photo Detail Modal -->
+  <div id="photo-modal" class="modal" onclick="closePhotoModal()">
+    <div class="modal-content" onclick="event.stopPropagation()" style="max-width:500px;border-radius:16px;padding:0;max-height:90vh;overflow-y:auto;">
+      <div style="position:relative;">
+        <img id="photo-modal-img" style="width:100%;display:block;background:#000;" alt="Visit photo">
+        <button onclick="closePhotoModal()" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.6);color:white;border:none;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">×</button>
+      </div>
+      <div style="padding:20px;">
+        <div id="photo-modal-info"></div>
+        <button id="photo-modal-detail-btn" class="btn btn-primary" style="width:100%;margin-top:16px;">
+          店舗詳細を見る
+        </button>
+      </div>
+    </div>
+  </div>
+
   
 
   <!-- Settings Modal -->
@@ -6717,6 +7905,26 @@
               <div>
                 <div style="font-weight: 600; font-size: 15px; color: #111827;">チュートリアル</div>
                 <div style="font-size: 13px; color: #6b7280;">もう一度見る</div>
+              </div>
+            </div>
+            <div style="color: #9ca3af; font-size: 18px;">›</div>
+          </div>
+          
+          <!-- キャッシュクリア -->
+          <div id="clear-cache-btn" style="
+            background: white;
+            padding: 16px 20px;
+            margin-bottom: 1px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          ">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="font-size: 24px;">🗑️</div>
+              <div>
+                <div style="font-weight: 600; font-size: 15px; color: #111827;">キャッシュクリア</div>
+                <div style="font-size: 13px; color: #6b7280;">店舗データを再取得（約3.5MB削減）</div>
               </div>
             </div>
             <div style="color: #9ca3af; font-size: 18px;">›</div>
