@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <!-- Apple Smart Banner (iOSブラウザでApp Storeへ誘導) -->
+  <meta name="apple-itunes-app" content="app-id=6758105373">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
@@ -3891,6 +3893,15 @@
     if (isTwitterBrowser) {
       console.log('🐦 Xブラウザを検出しました');
       document.documentElement.classList.add('twitter-browser');
+    }
+    
+    // ネイティブアプリ内ではApple Smart Bannerを削除
+    if (isNativeApp) {
+      const smartBanner = document.querySelector('meta[name="apple-itunes-app"]');
+      if (smartBanner) {
+        smartBanner.remove();
+        console.log('📱 ネイティブアプリ内のためSmart Bannerを削除');
+      }
     }
     
     // Initialize
