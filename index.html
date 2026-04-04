@@ -1142,6 +1142,20 @@
     /* Visit Record Modal */
     .record-modal .modal-content {
       max-height: 78vh;
+      overflow-y: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .record-modal .modal-body {
+      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
+    }
+    .record-modal-footer {
+      padding: 12px 16px;
+      background: white;
+      border-top: 1px solid #f3f4f6;
+      flex-shrink: 0;
     }
     
     .form-group {
@@ -2106,6 +2120,19 @@
       border: 1px solid rgba(0,0,0,.16);
       background: rgba(255,255,255,.55);
       white-space: nowrap;
+      cursor: pointer;
+      transition: background 0.15s, box-shadow 0.15s;
+    }
+    .lineage-chip:hover {
+      background: rgba(255,255,255,.85);
+      box-shadow: 0 2px 6px rgba(0,0,0,.15);
+    }
+    .lineage-chip.no-jump {
+      cursor: default;
+    }
+    .lineage-chip.no-jump:hover {
+      background: rgba(255,255,255,.55);
+      box-shadow: none;
     }
     
     .lineage-dot {
@@ -2757,15 +2784,15 @@
           </div>
           <div id="lineage-legend-area">
             <div id="lineage-legend">
-              <span class="lineage-chip"><span class="lineage-dot yosh"></span>吉村家系</span>
-              <span class="lineage-chip"><span class="lineage-dot honmoku"></span>本牧家系</span>
-              <span class="lineage-chip"><span class="lineage-dot oud"></span>王道家系</span>
-              <span class="lineage-chip"><span class="lineage-dot rokkaku"></span>六角家系</span>
-              <span class="lineage-chip"><span class="lineage-dot musa"></span>新中野武蔵家系</span>
-              <span class="lineage-chip"><span class="lineage-dot taiki"></span>大輝家系</span>
-              <span class="lineage-chip"><span class="lineage-dot oth"></span>オリジナル</span>
-              <span class="lineage-chip"><span class="lineage-dot isse"></span>壱系（資本系）</span>
-              <span class="lineage-chip"><span class="lineage-dot closed"></span>閉店</span>
+              <span class="lineage-chip" data-section="yosh" onclick="jumpToLineageSection(this)"><span class="lineage-dot yosh"></span>吉村家系</span>
+              <span class="lineage-chip" data-section="本牧家系" onclick="jumpToLineageSection(this)"><span class="lineage-dot honmoku"></span>本牧家系</span>
+              <span class="lineage-chip" data-section="王道家系" onclick="jumpToLineageSection(this)"><span class="lineage-dot oud"></span>王道家系</span>
+              <span class="lineage-chip" data-section="六角家系" onclick="jumpToLineageSection(this)"><span class="lineage-dot rokkaku"></span>六角家系</span>
+              <span class="lineage-chip" data-section="武蔵家系" onclick="jumpToLineageSection(this)"><span class="lineage-dot musa"></span>新中野武蔵家系</span>
+              <span class="lineage-chip" data-section="大輝家系" onclick="jumpToLineageSection(this)"><span class="lineage-dot taiki"></span>大輝家系</span>
+              <span class="lineage-chip" data-section="oth" onclick="jumpToLineageSection(this)"><span class="lineage-dot oth"></span>オリジナル</span>
+              <span class="lineage-chip" data-section="壱系" onclick="jumpToLineageSection(this)"><span class="lineage-dot isse"></span>壱系（資本系）</span>
+              <span class="lineage-chip no-jump"><span class="lineage-dot closed"></span>閉店</span>
             </div>
           </div>
           <div id="lineage-sections"></div>
@@ -3188,29 +3215,28 @@
             </div>
           </div>
           
-          <div style="display:flex;gap:8px;margin-top:16px;">
-            <button type="button" id="save-visit-btn" class="btn btn-primary" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;">
-              <svg style="width:18px;height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-                <polyline points="17 21 17 13 7 13 7 21"/>
-                <polyline points="7 3 7 8 15 8"/>
-              </svg>
-              保存
-            </button>
-            <button type="button" id="save-and-tweet-btn" class="btn" style="flex:1;background:#000000;color:white;border:none;display:flex;align-items:center;justify-content:center;gap:6px;">
-              <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-              </svg>
-              保存してシェア
-            </button>
-          </div>
-          <div style="display:flex;gap:8px;margin-top:4px;">
-            <div style="flex:1;"></div>
-            <div style="flex:1;text-align:center;font-size:12px;color:#6b7280;">
-              Xの投稿画面で写真を追加してください。
-            </div>
-          </div>
         </form>
+      </div>
+      <div class="record-modal-footer">
+        <div style="display:flex;gap:8px;">
+          <button type="button" id="save-visit-btn" class="btn btn-primary" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <svg style="width:18px;height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+              <polyline points="17 21 17 13 7 13 7 21"/>
+              <polyline points="7 3 7 8 15 8"/>
+            </svg>
+            保存
+          </button>
+          <button type="button" id="save-and-tweet-btn" class="btn" style="flex:1;background:#000000;color:white;border:none;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+            保存してシェア
+          </button>
+        </div>
+        <div style="text-align:center;font-size:12px;color:#6b7280;margin-top:4px;">
+          Xの投稿画面で写真を追加してください。
+        </div>
       </div>
     </div>
   </div>
@@ -3218,7 +3244,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
   <script>
     // App Version (手動で更新)
-    const APP_VERSION = "1.20.0";
+    const APP_VERSION = "1.22.0";
     
     // 更新チェック機能（HTMLのみ）
     async function checkUpdate() {
@@ -4917,6 +4943,7 @@
       const shortNames = {
         '王道家（王道乃印）': '王道乃印',
         '王道家（との丸家）': 'との丸家',
+        '王道家（系列外）': '王道系列外',
         '吉村家（直系以外）': '吉村家',
         '壱系（資本系）': '資本系'
       };
@@ -4991,6 +5018,10 @@
           hoursText = todayHours === '定休日' ? '定休日' : '営業終了';
         }
         
+        // 営業時間検索中は営業ステータスバッジを非表示
+        const hasTimeFilter = advancedFilterSettings.day !== '' || advancedFilterSettings.time !== '';
+        const statusBadge = hasTimeFilter ? '' : (isSoon ? '<span class="badge-soon">閉店間近</span>' : (isOpen ? '<span class="badge-open">営業中</span>' : '<span class="badge-closed">時間外</span>'));
+        
         return `
           <div class="shop-list-item" onclick="showShopDetail('${shop.id}')">
             <div class="shop-icon ${isVisited ? 'visited' : 'unvisited'}">
@@ -5010,7 +5041,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                 </svg>
                 <span style="color:#6b7280;font-size:13px;">${shop.area}</span>
-                ${isSoon ? '<span class="badge-soon">閉店間近</span>' : (isOpen ? '<span class="badge-open">営業中</span>' : '<span class="badge-closed">時間外</span>')}
+                ${statusBadge}
               </div>
               <div style="color:#6b7280;font-size:12px;margin-top:4px;">${hoursText}</div>
             </div>
@@ -5757,6 +5788,20 @@
         .replace(/'/g, "&#039;");
     }
     
+    function jumpToLineageSection(chip) {
+      const sectionId = chip.dataset.section;
+      const target = document.getElementById(`lineage-section-${sectionId}`);
+      if (!target) return;
+      const tabContent = document.getElementById('tab-lineage');
+      if (!tabContent) return;
+      const legendArea = document.getElementById('lineage-legend-area');
+      const legendH = legendArea ? legendArea.offsetHeight : 0;
+      const containerRect = tabContent.getBoundingClientRect();
+      const targetRect = target.getBoundingClientRect();
+      const scrollOffset = targetRect.top - containerRect.top + tabContent.scrollTop - legendH - 20;
+      tabContent.scrollTo({ top: scrollOffset, behavior: 'smooth' });
+    }
+
     function renderLineageTab() {
       try {
         const sectionsEl = document.getElementById('lineage-sections');
@@ -7211,9 +7256,9 @@
       // スクロール位置をリセット
       setTimeout(() => {
         const modal = document.getElementById('record-modal');
-        const modalContent = modal?.querySelector('.modal-content');
-        if (modalContent) {
-          modalContent.scrollTop = 0;
+        const modalBody = modal?.querySelector('.modal-body');
+        if (modalBody) {
+          modalBody.scrollTop = 0;
         }
       }, 50);
     }
@@ -7333,9 +7378,9 @@
       // モーダルを開く時にスクロール位置を最上部にリセット
       setTimeout(() => {
         const modal = document.getElementById('record-modal');
-        const modalContent = modal?.querySelector('.modal-content');
-        if (modalContent) {
-          modalContent.scrollTop = 0;
+        const modalBody = modal?.querySelector('.modal-body');
+        if (modalBody) {
+          modalBody.scrollTop = 0;
         }
       }, 50);
     }
@@ -7543,9 +7588,9 @@
       // モーダルを開く時にスクロール位置を最上部にリセット
       setTimeout(() => {
         const modal = document.getElementById('record-modal');
-        const modalContent = modal?.querySelector('.modal-content');
-        if (modalContent) {
-          modalContent.scrollTop = 0;
+        const modalBody = modal?.querySelector('.modal-body');
+        if (modalBody) {
+          modalBody.scrollTop = 0;
         }
       }, 50);
     }
@@ -8572,13 +8617,13 @@
 
   <!-- Advanced Filter Modal -->
   <div id="advanced-filter-modal" class="modal" onclick="closeAdvancedFilterModal()">
-    <div class="modal-content" onclick="event.stopPropagation()" style="max-width:500px;border-radius:16px;max-height:85vh;overflow-y:auto;">
-      <div class="modal-header" style="display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid #e5e7eb;">
+    <div class="modal-content" onclick="event.stopPropagation()" style="max-width:500px;border-radius:16px;max-height:85vh;overflow-y:hidden;display:flex;flex-direction:column;">
+      <div class="modal-header" style="display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid #e5e7eb;flex-shrink:0;">
         <h2 style="font-size:18px;font-weight:700;">🔍 詳細検索</h2>
         <button onclick="closeAdvancedFilterModal()" style="width:32px;height:32px;border-radius:50%;border:none;background:#f3f4f6;cursor:pointer;font-size:18px;">×</button>
       </div>
       
-      <div style="padding:16px;">
+      <div style="padding:16px;overflow-y:auto;flex:1;min-height:0;">
         <!-- 家系 -->
         <div style="margin-bottom:20px;">
           <label style="display:flex;align-items:center;margin-bottom:10px;cursor:pointer;">
@@ -8695,6 +8740,9 @@
         </div>
 
         <!-- ボタン -->
+        <div style="height:8px;"></div>
+      </div>
+      <div style="padding:12px 16px;border-top:1px solid #f3f4f6;background:white;flex-shrink:0;">
         <div style="display:flex;gap:8px;">
           <button onclick="resetAdvancedFilter()" style="flex:1;padding:12px;border:1px solid #e5e7eb;border-radius:8px;background:white;cursor:pointer;font-weight:600;">リセット</button>
           <button onclick="applyAdvancedFilter()" style="flex:2;padding:12px;border:none;border-radius:8px;background:#3b82f6;color:white;cursor:pointer;font-weight:600;">検索する</button>
@@ -8774,7 +8822,7 @@
             <div class="stats-title">📝 変更履歴</div>
             <div class="version-info">
               <div class="version-current">現在のバージョン: <strong>v1.21.0</strong></div>
-              <div class="version-date">最終更新: 2026/04/04</div>
+              <div class="version-date">最終更新: 2026/03/30</div>
             </div>
             
             <div class="changelog">
