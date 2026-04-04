@@ -646,10 +646,12 @@
       max-height: 82vh;
       margin: 0 auto;
       border-radius: 24px 24px 0 0;
-      overflow-y: auto;
+      overflow-y: hidden;
       overflow-x: hidden;
       animation: slideUp 0.3s ease-out;
       box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
     }
     
     @keyframes slideUp {
@@ -855,6 +857,9 @@
     .modal-body {
       padding: 0 16px 24px;
       overflow-y: auto;
+      overflow-x: hidden;
+      flex: 1;
+      min-height: 0;
       -webkit-overflow-scrolling: touch; /* iPhoneで慣性スクロール */
     }
     
@@ -5790,16 +5795,17 @@
     
     function jumpToLineageSection(chip) {
       const sectionId = chip.dataset.section;
-      const target = document.getElementById(`lineage-section-${sectionId}`);
-      if (!target) return;
-      const tabContent = document.getElementById('tab-lineage');
-      if (!tabContent) return;
-      const legendArea = document.getElementById('lineage-legend-area');
-      const legendH = legendArea ? legendArea.offsetHeight : 0;
-      const containerRect = tabContent.getBoundingClientRect();
-      const targetRect = target.getBoundingClientRect();
-      const scrollOffset = targetRect.top - containerRect.top + tabContent.scrollTop - legendH - 20;
-      tabContent.scrollTo({ top: scrollOffset, behavior: 'smooth' });
+      const targetSection = document.getElementById(`lineage-section-${sectionId}`);
+      if (!targetSection) return;
+      const searchWrap = document.getElementById('lineage-search-wrap');
+      const headerHeight = searchWrap ? searchWrap.getBoundingClientRect().height + 32 : 120;
+      const rect = targetSection.getBoundingClientRect();
+      const scrollParent = targetSection.closest('.tab-content') || window;
+      if (scrollParent === window) {
+        window.scrollBy({ top: rect.top - headerHeight, behavior: 'smooth' });
+      } else {
+        scrollParent.scrollBy({ top: rect.top - scrollParent.getBoundingClientRect().top - headerHeight, behavior: 'smooth' });
+      }
     }
 
     function renderLineageTab() {
@@ -6257,7 +6263,7 @@
             if (targetSection) {
               // 検索バーの高さを考慮してオフセット
               const searchWrap = document.getElementById('lineage-search-wrap');
-              const headerHeight = searchWrap ? searchWrap.getBoundingClientRect().height + 40 : 80;
+              const headerHeight = searchWrap ? searchWrap.getBoundingClientRect().height + 32 : 120;
               const rect = targetSection.getBoundingClientRect();
               const scrollParent = targetSection.closest('.tab-content') || window;
               if (scrollParent === window) {
@@ -7218,14 +7224,6 @@
             </div>
           ` : ''}
           
-          <div style="display:flex;gap:8px;margin-top:8px;">
-            <button onclick="deleteVisitFromDetail(${logIndex})" class="btn" style="flex:1;background:#ef4444;color:white;border:none;">
-              削除
-            </button>
-            <button onclick="editVisitRecord(${logIndex})" class="btn btn-primary" style="flex:1;">
-              編集する
-            </button>
-          </div>
         </div>
       `;
       
@@ -7240,6 +7238,19 @@
       }
       
       modalBody.insertAdjacentHTML('afterbegin', detailHTML);
+
+      // フッターに削除・編集ボタンをセット
+      const footer = document.querySelector('#record-modal .record-modal-footer');
+      footer.innerHTML = `
+        <div style="display:flex;gap:8px;">
+          <button onclick="deleteVisitFromDetail(${logIndex})" class="btn" style="flex:1;background:#ef4444;color:white;border:none;">
+            削除
+          </button>
+          <button onclick="editVisitRecord(${logIndex})" class="btn btn-primary" style="flex:1;">
+            編集する
+          </button>
+        </div>
+      `;
       document.getElementById('record-modal').classList.add('active');
 
       // 写真を非同期で読み込む
@@ -7339,6 +7350,80 @@
     }
     
     // Record Modal
+    function restoreRecordModalFooter() {
+      const footer = document.querySelector('#record-modal .record-modal-footer');
+      if (!footer) return;
+      footer.innerHTML = `
+        <div style="display:flex;gap:8px;">
+          <button type="button" id="save-visit-btn" class="btn btn-primary" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <svg style="width:18px;height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+              <polyline points="17 21 17 13 7 13 7 21"/>
+              <polyline points="7 3 7 8 15 8"/>
+            </svg>
+            保存
+          </button>
+          <button type="button" id="save-and-tweet-btn" class="btn" style="flex:1;background:#000000;color:white;border:none;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+            保存してシェア
+          </button>
+        </div>
+        <div style="text-align:center;font-size:12px;color:#6b7280;margin-top:4px;">
+          Xの投稿画面で写真を追加してください。
+        </div>
+      `;
+      // イベントリスナーを再設定
+      document.getElementById('save-visit-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        saveVisitRecord(e);
+      });
+      document.getElementById('save-and-tweet-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        saveAndTweet(e);
+      });
+    }
+
+    function restoreRecordModalFooter() {
+      const footer = document.querySelector('#record-modal .record-modal-footer');
+      if (!footer) return;
+      footer.innerHTML = `
+        <div style="display:flex;gap:8px;">
+          <button type="button" id="save-visit-btn" class="btn btn-primary" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <svg style="width:18px;height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+              <polyline points="17 21 17 13 7 13 7 21"/>
+              <polyline points="7 3 7 8 15 8"/>
+            </svg>
+            保存
+          </button>
+          <button type="button" id="save-and-tweet-btn" class="btn" style="flex:1;background:#000000;color:white;border:none;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+            保存してシェア
+          </button>
+        </div>
+        <div style="text-align:center;font-size:12px;color:#6b7280;margin-top:4px;">
+          Xの投稿画面で写真を追加してください。
+        </div>
+      `;
+      // イベントリスナーを再設定
+      document.getElementById('save-visit-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        saveVisitRecord(e);
+      });
+      document.getElementById('save-and-tweet-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        saveAndTweet(e);
+      });
+    }
+
     function openRecordModal() {
       
       if (!currentShop) return;
@@ -7373,15 +7458,16 @@
         existingDetail.remove();
       }
       
+      // フッターを保存ボタンに戻す
+      restoreRecordModalFooter();
+
       document.getElementById('record-modal').classList.add('active');
-      
+
       // モーダルを開く時にスクロール位置を最上部にリセット
       setTimeout(() => {
         const modal = document.getElementById('record-modal');
-        const modalBody = modal?.querySelector('.modal-body');
-        if (modalBody) {
-          modalBody.scrollTop = 0;
-        }
+        const mb = modal?.querySelector('.modal-body');
+        if (mb) mb.scrollTop = 0;
       }, 50);
     }
     
@@ -7558,32 +7644,8 @@
       // モーダルのタイトルを変更
       document.querySelector('#record-modal .modal-header h2').textContent = '訪問記録を編集';
       
-      // ボタンのイベントリスナーを再設定
-      setTimeout(() => {
-        // 保存ボタン
-        const saveBtn = document.getElementById('save-visit-btn');
-        if (saveBtn) {
-          const newBtn = saveBtn.cloneNode(true);
-          saveBtn.parentNode.replaceChild(newBtn, saveBtn);
-          newBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            saveVisitRecord(e);
-          });
-        }
-        
-        // 保存してシェアボタン
-        const saveAndTweetBtn = document.getElementById('save-and-tweet-btn');
-        if (saveAndTweetBtn) {
-          const newSaveAndTweetBtn = saveAndTweetBtn.cloneNode(true);
-          saveAndTweetBtn.parentNode.replaceChild(newSaveAndTweetBtn, saveAndTweetBtn);
-          newSaveAndTweetBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            saveAndTweet(e);
-          });
-        }
-      }, 100);
+      // フッターを保存ボタンに戻す
+      restoreRecordModalFooter();
       
       // モーダルを開く時にスクロール位置を最上部にリセット
       setTimeout(() => {
