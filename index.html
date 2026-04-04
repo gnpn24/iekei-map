@@ -3,13 +3,55 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <!-- Apple Smart Banner (iOSブラウザでApp Storeへ誘導) -->
+  <meta name="apple-itunes-app" content="app-id=6758105373">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="description" content="家系ラーメンMAPは、全国の家系ラーメン店を地図で探し、来店を記録できる無料アプリです。営業時間・訪問履歴・待ち時間も管理できます。">
+  <meta name="description" content="家系ラーメンの家系図で店舗の繋がりを可視化。全国93店舗の家系ラーメン店を地図で探し、訪問記録・統計分析。吉村家系、武蔵家系など家系の繋がりがわかる。">
   <meta name="theme-color" content="#C41E3A">
   
-  <title>家系ラーメンMAP｜全国の家系ラーメンを探して記録できる地図アプリ</title>
+  <!-- OGP (Facebook, LINE等) -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="家系ラーメンMAP｜家系図で繋がりがわかる">
+  <meta property="og:description" content="家系ラーメンの家系図で店舗の繋がりを可視化。全国93店舗を地図で探せる。訪問記録・統計分析で家系ラーメンを極める。">
+  <meta property="og:url" content="https://iekei-map.pages.dev/">
+  <meta property="og:site_name" content="家系ラーメンMAP">
+  <meta property="og:locale" content="ja_JP">
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="家系ラーメンMAP｜家系図で繋がりがわかる">
+  <meta name="twitter:description" content="家系ラーメンの家系図で店舗の繋がりを可視化。全国93店舗を地図で探せる。">
+  
+  <!-- Keywords -->
+  <meta name="keywords" content="家系ラーメン,家系,家系図,ラーメン家系図,吉村家系,武蔵家系,ラーメンマップ,ラーメン記録,横浜,グルメ,訪問記録,食べ歩き,家系ラーメン地図">
+  
+  <title>家系ラーメンMAP｜家系図で繋がりがわかる地図アプリ</title>
+  
+  <!-- JSON-LD構造化データ（Google検索最適化） -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "家系ラーメンMAP",
+    "description": "家系ラーメンの家系図で店舗の繋がりを可視化。全国93店舗の家系ラーメン店を地図で探し、訪問記録・統計分析。",
+    "url": "https://iekei-map.pages.dev/",
+    "applicationCategory": "LifestyleApplication",
+    "operatingSystem": "iOS, Web",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "JPY"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5",
+      "ratingCount": "1"
+    }
+  }
+  </script>
+  
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
   <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
   <style>
@@ -616,6 +658,17 @@
       }
       to {
         transform: translateY(0);
+      }
+    }
+    
+    @keyframes slideUpCenter {
+      from {
+        transform: translate(-50%, 20%);
+        opacity: 0;
+      }
+      to {
+        transform: translate(-50%, -50%);
+        opacity: 1;
       }
     }
     
@@ -2067,6 +2120,8 @@
     .lineage-dot.oud { background: #f9a825; }
     .lineage-dot.rokkaku { background: #43a047; }
     .lineage-dot.musa { background: #f57c00; }
+    .lineage-dot.nonaka { background: #f57c00; }
+    .lineage-dot.taiki { background: #00acc1; }
     .lineage-dot.isse { background: #8e24aa; }
     .lineage-dot.oth { background: #455a64; }
     .lineage-dot.closed { background: #c7c7c7; }
@@ -2166,8 +2221,11 @@
     .lineage-node.g-oud-light { background: #fff59d; color: #000; }
     .lineage-node.g-rokkaku { background: #43a047; }
     .lineage-node.g-musa { background: #f57c00; }
+    .lineage-node.g-nonaka { background: #f57c00; }
+    .lineage-node.g-taiki { background: #00acc1; }
     .lineage-node.g-isse { background: #8e24aa; }
     .lineage-node.g-oth { background: #455a64; }
+    .lineage-node.g-closed { background: #c7c7c7; border-style: dashed; }
     
     .lineage-wires {
       position: absolute;
@@ -2623,21 +2681,12 @@
               </div>
               <div id="search-results" class="search-results" style="display:none;"></div>
               <div class="drawer-filter">
-                <select id="filter-category">
-                  <option value="all">すべて表示</option>
-                  <option value="総本山">総本山</option>
-                  <option value="直系">直系</option>
-                  <option value="本牧家">本牧家</option>
-                  <option value="王道家">王道家</option>
-                  <option value="王道乃印">王道乃印</option>
-                  <option value="武蔵家">武蔵家</option>
-                  <option value="壱系">壱系</option>
-                  <option value="オリジナル">オリジナル</option>
-                  <option value="資本系">資本系</option>
-                  <option value="不明">不明</option>
-                  <option value="want">☆ 行きたい</option>
-                  <option value="favorite">♡ お気に入り</option>
-                </select>
+                <button id="map-filter-advanced-btn" style="flex:1;padding:8px 12px;border:1px solid #e5e7eb;border-radius:12px;font-size:14px;background:white;cursor:pointer;display:flex;align-items:center;justify-content:space-between;min-width:120px;">
+                  <span id="map-filter-summary">すべて表示</span>
+                  <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </button>
                 <button class="filter-toggle-btn" id="btn-search-toggle">
                   <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -2650,6 +2699,7 @@
                   </svg>現在地
                 </button>
               </div>
+              <div id="map-result-count" style="font-size:12px;color:#6b7280;margin-top:8px;text-align:right;padding:0 12px;"></div>
             </div>
             <div class="drawer-content" id="shop-list"></div>
           </div>
@@ -2668,21 +2718,12 @@
           </div>
           <div id="list-search-results" class="search-results" style="display:none;"></div>
           <div style="display:flex;gap:6px;align-items:center;">
-            <select id="list-filter-category" style="flex:1;padding:8px 12px;border:1px solid #e5e7eb;border-radius:12px;font-size:14px;">
-              <option value="all">すべて表示</option>
-              <option value="総本山">総本山</option>
-              <option value="直系">直系</option>
-              <option value="本牧家">本牧家</option>
-              <option value="王道家">王道家</option>
-              <option value="王道乃印">王道乃印</option>
-              <option value="武蔵家">武蔵家</option>
-              <option value="壱系">壱系</option>
-              <option value="オリジナル">オリジナル</option>
-              <option value="資本系">資本系</option>
-              <option value="不明">不明</option>
-              <option value="want">☆ 行きたい</option>
-              <option value="favorite">♡ お気に入り</option>
-            </select>
+            <button id="list-filter-advanced-btn" style="flex:1;padding:8px 12px;border:1px solid #e5e7eb;border-radius:12px;font-size:14px;background:white;cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
+              <span id="list-filter-summary">すべて表示</span>
+              <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
             <button class="filter-toggle-btn" id="list-btn-open-toggle">営業中</button>
             <button class="filter-toggle-btn" id="list-btn-nearby">
               <svg style="width:14px;height:14px;vertical-align:middle;margin-right:2px;" fill="currentColor" viewBox="0 0 24 24">
@@ -2690,6 +2731,7 @@
               </svg>現在地
             </button>
           </div>
+          <div id="list-result-count" style="font-size:12px;color:#6b7280;margin-top:8px;text-align:right;"></div>
         </div>
         <div class="list-container" id="list-container"></div>
       </div>
@@ -2707,7 +2749,10 @@
                 <input id="lineage-search" type="text" placeholder="店名で検索 → 選ぶとジャンプ" autocomplete="off" />
                 <div id="lineage-suggestions"></div>
               </div>
-              <button id="lineage-compact-toggle">全体表示</button>
+              <div style="display:flex;gap:4px;">
+                <button id="lineage-zoom-out" style="width:36px;height:36px;padding:0;font-size:20px;line-height:1;" title="縮小">－</button>
+                <button id="lineage-zoom-in" style="width:36px;height:36px;padding:0;font-size:20px;line-height:1;" title="拡大">＋</button>
+              </div>
             </div>
           </div>
           <div id="lineage-legend-area">
@@ -2717,8 +2762,9 @@
               <span class="lineage-chip"><span class="lineage-dot oud"></span>王道家系</span>
               <span class="lineage-chip"><span class="lineage-dot rokkaku"></span>六角家系</span>
               <span class="lineage-chip"><span class="lineage-dot musa"></span>新中野武蔵家系</span>
-              <span class="lineage-chip"><span class="lineage-dot isse"></span>壱系</span>
+              <span class="lineage-chip"><span class="lineage-dot taiki"></span>大輝家系</span>
               <span class="lineage-chip"><span class="lineage-dot oth"></span>オリジナル</span>
+              <span class="lineage-chip"><span class="lineage-dot isse"></span>壱系（資本系）</span>
               <span class="lineage-chip"><span class="lineage-dot closed"></span>閉店</span>
             </div>
           </div>
@@ -2756,10 +2802,10 @@
                 <div style="flex:1 1 240px;min-width:220px;">
                   <select id="stats-period-select" class="stats-new-select">
                     <option value="7">直近7日</option>
-                    <option value="30" selected>直近30日</option>
+                    <option value="30">直近30日</option>
                     <option value="90">直近90日</option>
                     <option value="365">直近1年</option>
-                    <option value="all">全期間</option>
+                    <option value="all" selected>全期間</option>
                   </select>
                 </div>
                 <div class="stats-new-pill">
@@ -3333,7 +3379,7 @@
         
         // タイムアウト処理
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒でタイムアウト
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒でタイムアウト
         
         const response = await fetch(SHOPS_API_URL, {
           signal: controller.signal,
@@ -3348,6 +3394,12 @@
         const data = await response.json();
         
         if (data.shops && data.shops.length > 0) {
+          // デバッグログ追加
+          console.log('🔍 タイムスタンプ比較:');
+          console.log('  data.updatedAt:', data.updatedAt);
+          console.log('  cachedTimestamp:', cachedTimestamp);
+          console.log('  一致?', data.updatedAt === cachedTimestamp);
+          
           // 3. updatedAtが違っていたら更新
           if (data.updatedAt !== cachedTimestamp) {
             shops = data.shops;
@@ -3371,7 +3423,9 @@
           }
         }
       } catch (error) {
-        console.error('❌ データ読み込みエラー:', error);
+        // エラーメッセージを安全に取得（AbortSignalなどのクローン不可オブジェクトを除外）
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error('❌ データ読み込みエラー:', errorMessage);
         
         // タイムアウトかネットワークエラーか判定
         if (error.name === 'AbortError') {
@@ -3430,16 +3484,16 @@
       const toast = document.createElement('div');
       toast.style.cssText = `
         position: fixed;
-        bottom: 80px;
+        top: 50%;
         left: 50%;
-        transform: translateX(-50%);
+        transform: translate(-50%, -50%);
         background: #111827;
         color: white;
         padding: 12px 20px;
         border-radius: 8px;
         font-size: 14px;
         z-index: 10000;
-        animation: slideUp 0.3s ease;
+        animation: slideUpCenter 0.3s ease;
       `;
       toast.textContent = message;
       document.body.appendChild(toast);
@@ -3529,7 +3583,7 @@
           renderVisitHistory();
         }
       } catch (error) {
-        console.error('❌ データ復元エラー:', error);
+        console.error('❌ データ復元エラー:', error.message || String(error));
       }
     };
     
@@ -3558,7 +3612,22 @@
     
     // Data Validation（起動時チェック）
     function validateShopsData() {
-      const validCategories = ['総本山', '直系', '本牧家', '六角家', '王道家', '王道乃印', '武蔵家', '壱系', 'オリジナル', '資本系', '不明'];
+      const validCategories = [
+        '総本山', 
+        '直系', 
+        '吉村家（直系以外）',
+        '本牧家', 
+        '六角家', 
+        '王道家', 
+        '王道家（王道乃印）',
+        '王道家（との丸家）',
+        '武蔵家',
+        '大輝家',
+        '壱系', 
+        '壱系（資本系）',
+        'オリジナル', 
+        '不明'
+      ];
       const ids = new Set();
       const warnings = [];
       
@@ -3569,8 +3638,9 @@
         }
         ids.add(shop.id);
         
-        // 2. 位置情報欠損チェック（厳密版）
-        if (!Number.isFinite(shop.lat) || !Number.isFinite(shop.lng)) {
+        // 2. 位置情報欠損チェック（【閉店】を除外）
+        const isClosed = shop.name.includes('【閉店】');
+        if (!isClosed && (!Number.isFinite(shop.lat) || !Number.isFinite(shop.lng))) {
           warnings.push(`⚠️ 位置情報欠損: ${shop.name} (lat: ${shop.lat}, lng: ${shop.lng})`);
         }
         
@@ -3893,6 +3963,15 @@
       document.documentElement.classList.add('twitter-browser');
     }
     
+    // ネイティブアプリ内ではApple Smart Bannerを削除
+    if (isNativeApp) {
+      const smartBanner = document.querySelector('meta[name="apple-itunes-app"]');
+      if (smartBanner) {
+        smartBanner.remove();
+        console.log('📱 ネイティブアプリ内のためSmart Bannerを削除');
+      }
+    }
+    
     // Initialize
     document.addEventListener('DOMContentLoaded', () => {
       // Service Worker登録（PWA対応、ネイティブアプリではスキップ）
@@ -3953,11 +4032,6 @@
           console.log('❌ 誘導カード表示条件を満たさない');
         }
       }, 2000);
-      // カテゴリーフィルタ
-      document.getElementById('filter-category').addEventListener('change', () => {
-        renderShopList();
-        updateMarkers();
-      });
       
       // 検索トグルボタン（Mapタブ）
       const mapSearchBox = document.getElementById('map-search-box');
@@ -4051,14 +4125,34 @@
         renderLineageTab();
       });
       
-      // 営業中フィルタ
+      // 営業中フィルタ（または現在時刻ボタン）
       document.getElementById('btn-open-toggle').addEventListener('click', () => {
-        showOpenOnly = !showOpenOnly;
-        document.getElementById('btn-open-toggle').classList.toggle('active');
-        document.getElementById('list-btn-open-toggle')?.classList.toggle('active');
-        renderShopList();
-        updateMarkers();
-        renderListTab();
+        // 営業時間検索中の場合は、営業時間検索のみリセット + 営業中フィルタON
+        if (advancedFilterSettings.day !== '' || advancedFilterSettings.time !== '') {
+          advancedFilterSettings.day = '';
+          advancedFilterSettings.time = '';
+          // 営業中フィルタをON
+          showOpenOnly = true;
+          // ボタンテキストを更新
+          updateOpenButtonText();
+          // 詳細検索サマリーを更新
+          updateFilterSummary();
+          // activeクラスを付ける
+          document.getElementById('btn-open-toggle').classList.add('active');
+          document.getElementById('list-btn-open-toggle')?.classList.add('active');
+          // フィルタを再適用
+          renderShopList();
+          updateMarkers();
+          renderListTab();
+        } else {
+          // 通常の営業中フィルタトグル
+          showOpenOnly = !showOpenOnly;
+          document.getElementById('btn-open-toggle').classList.toggle('active');
+          document.getElementById('list-btn-open-toggle')?.classList.toggle('active');
+          renderShopList();
+          updateMarkers();
+          renderListTab();
+        }
       });
       
       // マップタブの現在地ボタン（トグル式）
@@ -4066,19 +4160,56 @@
         handleNearbyModeToggle();
       });
       
-      // リストタブのカテゴリーフィルタ
-      document.getElementById('list-filter-category')?.addEventListener('change', () => {
-        renderListTab();
+      // マップタブの詳細検索ボタン
+      document.getElementById('map-filter-advanced-btn')?.addEventListener('click', () => {
+        openAdvancedFilterModal();
       });
       
-      // リストタブの営業中フィルタ
+      // 詳細検索ボタン
+      document.getElementById('list-filter-advanced-btn')?.addEventListener('click', () => {
+        openAdvancedFilterModal();
+      });
+      
+      // 親チェックボックス: 家系
+      document.getElementById('category-parent-iekei')?.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        document.querySelectorAll('.category-iekei').forEach(cb => cb.checked = isChecked);
+      });
+      
+      // 親チェックボックス: 壱系
+      document.getElementById('category-parent-isse')?.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        document.querySelectorAll('.category-isse').forEach(cb => cb.checked = isChecked);
+      });
+      
+      // リストタブの営業中フィルタ（または現在時刻ボタン）
       document.getElementById('list-btn-open-toggle')?.addEventListener('click', () => {
-        showOpenOnly = !showOpenOnly;
-        document.getElementById('btn-open-toggle').classList.toggle('active');
-        document.getElementById('list-btn-open-toggle').classList.toggle('active');
-        renderShopList();
-        updateMarkers();
-        renderListTab();
+        // 営業時間検索中の場合は、営業時間検索のみリセット + 営業中フィルタON
+        if (advancedFilterSettings.day !== '' || advancedFilterSettings.time !== '') {
+          advancedFilterSettings.day = '';
+          advancedFilterSettings.time = '';
+          // 営業中フィルタをON
+          showOpenOnly = true;
+          // ボタンテキストを更新
+          updateOpenButtonText();
+          // 詳細検索サマリーを更新
+          updateFilterSummary();
+          // activeクラスを付ける
+          document.getElementById('btn-open-toggle').classList.add('active');
+          document.getElementById('list-btn-open-toggle')?.classList.add('active');
+          // フィルタを再適用
+          renderShopList();
+          updateMarkers();
+          renderListTab();
+        } else {
+          // 通常の営業中フィルタトグル
+          showOpenOnly = !showOpenOnly;
+          document.getElementById('btn-open-toggle').classList.toggle('active');
+          document.getElementById('list-btn-open-toggle').classList.toggle('active');
+          renderShopList();
+          updateMarkers();
+          renderListTab();
+        }
       });
       
       // リストタブの今からボタン（トグル式）
@@ -4088,6 +4219,14 @@
       
       // モーダルのスワイプで閉じる
       initModalSwipe();
+      
+      // 時刻入力: focus時に空なら12:00を設定
+      const filterTimeInput = document.getElementById('filter-time');
+      filterTimeInput?.addEventListener('focus', () => {
+        if (!filterTimeInput.value) {
+          filterTimeInput.value = '12:00';
+        }
+      });
       
       // URLパラメータから店舗を自動表示
       checkUrlParams();
@@ -4350,24 +4489,43 @@
       }
     }
     
+    // 詳細検索フィルター用のマーカー更新関数
+    
     function updateMarkers() {
       Object.values(markers).forEach(m => m.remove());
       markers = {};
       
+      let filteredShops = [...shops];
       
-      const categoryFilter = document.getElementById('filter-category').value;
-      let filteredShops;
-      
-      if (categoryFilter === 'want') {
-        // 行きたい店のみ
-        filteredShops = shops.filter(s => visits[s.id]?.wantToGo);
-      } else if (categoryFilter === 'favorite') {
-        // お気に入り店のみ
-        filteredShops = shops.filter(s => visits[s.id]?.favorite);
-      } else if (categoryFilter === 'all') {
-        filteredShops = [...shops];
-      } else {
-        filteredShops = shops.filter(s => s.category === categoryFilter);
+      // 詳細検索フィルターが設定されている場合
+      if (advancedFilterSettings.categories.length > 0 || 
+          advancedFilterSettings.wantToGo || 
+          advancedFilterSettings.favorite || 
+          (advancedFilterSettings.day !== '' && advancedFilterSettings.time !== '')) {
+        
+        // カテゴリフィルター（複数選択）
+        if (advancedFilterSettings.categories.length > 0) {
+          filteredShops = filteredShops.filter(s => 
+            advancedFilterSettings.categories.includes(s.category)
+          );
+        }
+        
+        // 行きたい
+        if (advancedFilterSettings.wantToGo) {
+          filteredShops = filteredShops.filter(s => visits[s.id]?.wantToGo);
+        }
+        
+        // お気に入り
+        if (advancedFilterSettings.favorite) {
+          filteredShops = filteredShops.filter(s => visits[s.id]?.favorite);
+        }
+        
+        // 営業時間フィルター
+        if (advancedFilterSettings.day !== '' && advancedFilterSettings.time !== '') {
+          filteredShops = filteredShops.filter(s => 
+            isOpenAtDayTime(s.openingHours, advancedFilterSettings.day, advancedFilterSettings.time)
+          );
+        }
       }
       
       // 座標がない店舗を除外（家系図専用データ）
@@ -4382,8 +4540,8 @@
         );
       }
       
-      // 営業中または今からモードの場合
-      if (showOpenOnly || nearbyMode) {
+      // 営業中フィルター
+      if (showOpenOnly) {
         filteredShops = filteredShops.filter(shop => isOpenNow(shop.openingHours));
       }
       
@@ -4459,23 +4617,447 @@
       });
     }
     
+    // 詳細検索モーダル関数
+    let advancedFilterSettings = {
+      categories: [],
+      wantToGo: false,
+      favorite: false,
+      day: '',
+      time: ''
+    };
+    
+    function openAdvancedFilterModal() {
+      document.getElementById('advanced-filter-modal').classList.add('active');
+    }
+    
+    function closeAdvancedFilterModal() {
+      document.getElementById('advanced-filter-modal').classList.remove('active');
+    }
+    
+    function resetAdvancedFilter() {
+      // チェックボックスをすべて解除
+      document.querySelectorAll('.category-iekei').forEach(cb => cb.checked = false);
+      document.querySelectorAll('.category-isse').forEach(cb => cb.checked = false);
+      document.getElementById('category-parent-iekei').checked = false;
+      document.getElementById('category-parent-isse').checked = false;
+      document.getElementById('filter-want').checked = false;
+      document.getElementById('filter-favorite').checked = false;
+      document.getElementById('filter-day').value = '';
+      document.getElementById('filter-time').value = '';
+      
+      // 設定をリセット
+      advancedFilterSettings = {
+        categories: [],
+        wantToGo: false,
+        favorite: false,
+        day: '',
+        time: ''
+      };
+      
+      // 表示を更新
+      document.getElementById('list-filter-summary').textContent = 'すべて表示';
+      document.getElementById('map-filter-summary').textContent = 'すべて表示';
+      
+      // モーダルを閉じる
+      closeAdvancedFilterModal();
+      
+      // リストとマップを再描画
+      renderListTab();  // リストタブのリスト
+      renderShopList(); // マップタブの下部リスト
+      updateMarkers();  // マップのマーカー
+    }
+    
+    function applyAdvancedFilter() {
+      // カテゴリ（家系 + 壱系）
+      const iekeiCategories = Array.from(
+        document.querySelectorAll('.category-iekei:checked')
+      ).map(cb => cb.value);
+      
+      const isseCategories = Array.from(
+        document.querySelectorAll('.category-isse:checked')
+      ).map(cb => cb.value);
+      
+      const selectedCategories = [...iekeiCategories, ...isseCategories];
+      
+      // 訪問状況
+      const wantToGo = document.getElementById('filter-want').checked;
+      const favorite = document.getElementById('filter-favorite').checked;
+      
+      // 営業時間
+      const day = document.getElementById('filter-day').value;
+      const time = document.getElementById('filter-time').value;
+      
+      // 設定を保存
+      advancedFilterSettings = {
+        categories: selectedCategories,
+        wantToGo,
+        favorite,
+        day,
+        time
+      };
+      
+      // サマリーを更新（新ルール）
+      let summary = '';
+      
+      // 営業時間が選択されている場合は最優先で先頭に表示
+      let timePart = '';
+      if (day !== '' && time !== '') {
+        const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+        timePart = `${dayNames[day]}曜 ${time}`;
+      }
+      
+      // カテゴリ部分の生成
+      let categoryPart = '';
+      if (selectedCategories.length > 0) {
+        // 家系グループの全カテゴリ（12項目）
+        const iekeiAll = ['直系', '吉村家（直系以外）', '王道家', '王道家（王道乃印）', '王道家（との丸家）', '王道家（系列外）', '本牧家', '六角家', '武蔵家', '野中家', '大輝家', 'オリジナル'];
+        // 壱系グループの全カテゴリ（2項目）
+        const isseAll = ['壱系', '壱系（資本系）'];
+        
+        const hasAllIekei = iekeiAll.every(cat => selectedCategories.includes(cat));
+        const hasAllIsse = isseAll.every(cat => selectedCategories.includes(cat));
+        
+        if (hasAllIekei && hasAllIsse) {
+          // 家系 + 壱系 全選択
+          categoryPart = '家系、壱系';
+        } else if (hasAllIekei) {
+          // 家系のみ全選択
+          const remainingIsse = selectedCategories.filter(cat => isseAll.includes(cat));
+          if (remainingIsse.length > 0) {
+            categoryPart = '家系、' + remainingIsse.join('、');
+          } else {
+            categoryPart = '家系';
+          }
+        } else if (hasAllIsse) {
+          // 壱系のみ全選択
+          const remainingIekei = selectedCategories.filter(cat => iekeiAll.includes(cat));
+          if (remainingIekei.length > 0) {
+            categoryPart = remainingIekei.join('、') + '、壱系';
+          } else {
+            categoryPart = '壱系';
+          }
+        } else {
+          // 個別選択：全件表示し、長い場合は「...」で省略
+          categoryPart = selectedCategories.join('、');
+        }
+      }
+      
+      // 最終的なサマリーを組み立て
+      if (timePart && categoryPart) {
+        // 営業時間 + カテゴリ：カテゴリ部分を5文字に制限、半角スペースで区切る
+        if (categoryPart.length > 5) {
+          categoryPart = categoryPart.substring(0, 5) + '...';
+        }
+        summary = `${timePart} ${categoryPart}`;
+      } else if (timePart) {
+        summary = timePart;
+      } else if (categoryPart) {
+        // カテゴリのみ：全体で10文字制限
+        if (categoryPart.length > 10) {
+          categoryPart = categoryPart.substring(0, 10) + '...';
+        }
+        summary = categoryPart;
+      } else if (wantToGo) {
+        summary = '☆ 行きたい';
+      } else if (favorite) {
+        summary = '♡ お気に入り';
+      } else {
+        summary = 'すべて表示';
+      }
+      
+      document.getElementById('list-filter-summary').textContent = summary;
+      document.getElementById('map-filter-summary').textContent = summary;
+      
+      // 営業中ボタンのテキストを更新
+      updateOpenButtonText();
+      
+      // モーダルを閉じる
+      closeAdvancedFilterModal();
+      
+      // リストとマップを再描画
+      renderListTab();  // リストタブのリスト
+      renderShopList(); // マップタブの下部リスト
+      updateMarkers();  // マップのマーカー
+    }
+    
+    // 営業中ボタンのテキストを更新
+    function updateOpenButtonText() {
+      const hasTimeFilter = advancedFilterSettings.day !== '' || advancedFilterSettings.time !== '';
+      const buttonText = hasTimeFilter ? '現在時刻' : '営業中';
+      
+      document.getElementById('btn-open-toggle').textContent = buttonText;
+      document.getElementById('list-btn-open-toggle').textContent = buttonText;
+      
+      // 営業時間検索中はactiveクラスを解除
+      if (hasTimeFilter) {
+        showOpenOnly = false;
+        document.getElementById('btn-open-toggle').classList.remove('active');
+        document.getElementById('list-btn-open-toggle')?.classList.remove('active');
+      }
+    }
+    
+    // 詳細検索サマリーを更新
+    function updateFilterSummary() {
+      const { categories, wantToGo, favorite, day, time } = advancedFilterSettings;
+      
+      let summary = '';
+      
+      // 営業時間部分
+      let timePart = '';
+      if (day !== '' && time !== '') {
+        const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+        timePart = `${dayNames[day]}曜 ${time}`;
+      }
+      
+      // カテゴリ部分
+      let categoryPart = '';
+      if (categories.length > 0) {
+        const iekeiAll = ['直系', '吉村家（直系以外）', '王道家', '王道家（王道乃印）', '王道家（との丸家）', '王道家（系列外）', '本牧家', '六角家', '武蔵家', '野中家', '大輝家', 'オリジナル'];
+        const isseAll = ['壱系', '壱系（資本系）'];
+        
+        const hasAllIekei = iekeiAll.every(cat => categories.includes(cat));
+        const hasAllIsse = isseAll.every(cat => categories.includes(cat));
+        
+        if (hasAllIekei && hasAllIsse) {
+          categoryPart = '家系、壱系';
+        } else if (hasAllIekei) {
+          const remainingIsse = categories.filter(cat => isseAll.includes(cat));
+          if (remainingIsse.length > 0) {
+            categoryPart = '家系、' + remainingIsse.join('、');
+          } else {
+            categoryPart = '家系';
+          }
+        } else if (hasAllIsse) {
+          const remainingIekei = categories.filter(cat => iekeiAll.includes(cat));
+          if (remainingIekei.length > 0) {
+            categoryPart = remainingIekei.join('、') + '、壱系';
+          } else {
+            categoryPart = '壱系';
+          }
+        } else {
+          categoryPart = categories.join('、');
+        }
+      }
+      
+      // サマリー組み立て
+      if (timePart && categoryPart) {
+        if (categoryPart.length > 5) {
+          categoryPart = categoryPart.substring(0, 5) + '...';
+        }
+        summary = `${timePart} ${categoryPart}`;
+      } else if (timePart) {
+        summary = timePart;
+      } else if (categoryPart) {
+        if (categoryPart.length > 10) {
+          categoryPart = categoryPart.substring(0, 10) + '...';
+        }
+        summary = categoryPart;
+      } else if (wantToGo) {
+        summary = '☆ 行きたい';
+      } else if (favorite) {
+        summary = '♡ お気に入り';
+      } else {
+        summary = 'すべて表示';
+      }
+      
+      document.getElementById('list-filter-summary').textContent = summary;
+      document.getElementById('map-filter-summary').textContent = summary;
+    }
+    
+    // 営業時間チェック関数（指定曜日・時刻）
+    function isOpenAtDayTime(openingHours, dayOfWeek, timeStr) {
+      if (!openingHours || dayOfWeek === '' || !timeStr) return true;
+      
+      console.log('🕐 isOpenAtDayTime check:', { dayOfWeek, timeStr, openingHours });
+      
+      const dayNames = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+      const dayKey = dayNames[parseInt(dayOfWeek)];
+      const dayData = openingHours[dayKey];
+      
+      console.log('  dayKey:', dayKey, 'dayData:', dayData);
+      
+      if (!dayData || !dayData.times || dayData.times.length === 0) {
+        console.log('  ❌ 定休日または営業時間データなし');
+        return false; // 定休日または営業時間データなし
+      }
+      
+      // 時刻を分に変換
+      const [hour, minute] = timeStr.split(':').map(Number);
+      const targetMinutes = hour * 60 + minute;
+      
+      console.log('  targetMinutes:', targetMinutes);
+      
+      // 営業時間の範囲をチェック
+      for (const timeRange of dayData.times) {
+        const [startHour, startMinute] = timeRange.start.split(':').map(Number);
+        const [endHour, endMinute] = timeRange.end.split(':').map(Number);
+        
+        const startMinutes = startHour * 60 + startMinute;
+        let endMinutes = endHour * 60 + endMinute;
+        
+        // 24時を超える場合の処理（例: 23:00-01:00）
+        if (endMinutes <= startMinutes) {
+          endMinutes += 24 * 60;
+        }
+        
+        console.log('  range:', timeRange.start, '-', timeRange.end, 'startMinutes:', startMinutes, 'endMinutes:', endMinutes);
+        
+        if (targetMinutes >= startMinutes && targetMinutes <= endMinutes) {
+          console.log('  ✅ MATCH!');
+          return true;
+        }
+      }
+      
+      console.log('  ❌ NO MATCH');
+      return false;
+    }
+    
+    // カテゴリ表示名を短縮する関数（リスト・カード表示用）
+    function getShortCategoryName(category) {
+      const shortNames = {
+        '王道家（王道乃印）': '王道乃印',
+        '王道家（との丸家）': 'との丸家',
+        '吉村家（直系以外）': '吉村家',
+        '壱系（資本系）': '資本系'
+      };
+      return shortNames[category] || category;
+    }
+    
+    function renderShopListWithAdvancedFilter() {
+      const container = document.getElementById('list-container');
+      
+      let filteredShops = [...shops];
+      
+      // カテゴリフィルター（複数選択）
+      if (advancedFilterSettings.categories.length > 0) {
+        filteredShops = filteredShops.filter(s => 
+          advancedFilterSettings.categories.includes(s.category)
+        );
+      }
+      
+      // 行きたい
+      if (advancedFilterSettings.wantToGo) {
+        filteredShops = filteredShops.filter(s => visits[s.id]?.wantToGo);
+      }
+      
+      // お気に入り
+      if (advancedFilterSettings.favorite) {
+        filteredShops = filteredShops.filter(s => visits[s.id]?.favorite);
+      }
+      
+      // 営業時間フィルター
+      if (advancedFilterSettings.day !== '' && advancedFilterSettings.time !== '') {
+        filteredShops = filteredShops.filter(s => 
+          isOpenAtDayTime(s.openingHours, advancedFilterSettings.day, advancedFilterSettings.time)
+        );
+      }
+      
+      // 座標がない店舗を除外
+      filteredShops = filteredShops.filter(shop => shop.lat && shop.lng);
+      
+      // 検索フィルター（既存の検索ボックス）
+      const searchQuery = document.getElementById('list-search-input')?.value.trim() || '';
+      if (searchQuery) {
+        filteredShops = filteredShops.filter(shop =>
+          shop.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          shop.area.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (shop.nameHiragana && shop.nameHiragana.includes(searchQuery))
+        );
+      }
+      
+      // HTMLを生成
+      if (!filteredShops.length) {
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:#9ca3af;">該当する店舗がありません</div>';
+        return;
+      }
+      
+      container.innerHTML = filteredShops.map(shop => {
+        const visitData = visits[shop.id];
+        const isVisited = visitData?.logs?.length > 0;
+        const visitCount = visitData?.logs?.length || 0;
+        const wantToGo = visitData?.wantToGo || false;
+        const favorite = visitData?.favorite || false;
+        
+        const todayHours = getTodayHours(shop.openingHours);
+        const openStatus = getOpenStatus(shop.openingHours);
+        const isOpen = openStatus.state === 'open';
+        const isSoon = openStatus.state === 'soon';
+        
+        // 営業時間の表示文言
+        let hoursText = '';
+        if (isOpen) {
+          hoursText = `本日: ${todayHours}`;
+        } else {
+          hoursText = todayHours === '定休日' ? '定休日' : '営業終了';
+        }
+        
+        return `
+          <div class="shop-list-item" onclick="showShopDetail('${shop.id}')">
+            <div class="shop-icon ${isVisited ? 'visited' : 'unvisited'}">
+              ${isVisited ? '✓' : '🍜'}
+            </div>
+            <div class="shop-info">
+              <div class="shop-name">
+                <span class="shop-name-text">${shop.name}</span>
+                <div class="shop-name-badges">
+                  ${wantToGo ? '<svg style="width:16px;height:16px;color:#eab308;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' : ''}
+                  ${favorite ? '<svg style="width:16px;height:16px;color:#ec4899;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>' : ''}
+                </div>
+              </div>
+              <div class="shop-meta">
+                <span class="badge badge-category">${getShortCategoryName(shop.category)}</span>
+                <svg style="width:14px;height:14px;color:#6b7280;margin-left:4px;margin-right:-2px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                </svg>
+                <span style="color:#6b7280;font-size:13px;">${shop.area}</span>
+                ${isSoon ? '<span class="badge-soon">閉店間近</span>' : (isOpen ? '<span class="badge-open">営業中</span>' : '<span class="badge-closed">時間外</span>')}
+              </div>
+              <div style="color:#6b7280;font-size:12px;margin-top:4px;">${hoursText}</div>
+            </div>
+            <svg style="width:20px;height:20px;color:#9ca3af;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+        `;
+      }).join('');
+    }
+    
     function renderShopList() {
       const container = document.getElementById('shop-list');
-      const categoryFilter = document.getElementById('filter-category').value;
       
-      let filteredShops;
+      let filteredShops = [...shops];
       
-      if (categoryFilter === 'want') {
-        // 行きたい店のみ
-        filteredShops = shops.filter(s => visits[s.id]?.wantToGo);
-      } else if (categoryFilter === 'favorite') {
-        // お気に入り店のみ
-        filteredShops = shops.filter(s => visits[s.id]?.favorite);
-      } else if (categoryFilter === 'all') {
-        filteredShops = [...shops];
-      } else {
-        filteredShops = shops.filter(s => s.category === categoryFilter);
+      // 詳細検索フィルターが設定されている場合
+      if (advancedFilterSettings.categories.length > 0 || 
+          advancedFilterSettings.wantToGo || 
+          advancedFilterSettings.favorite || 
+          (advancedFilterSettings.day !== '' && advancedFilterSettings.time !== '')) {
+        
+        // カテゴリフィルター（複数選択）
+        if (advancedFilterSettings.categories.length > 0) {
+          filteredShops = filteredShops.filter(s => 
+            advancedFilterSettings.categories.includes(s.category)
+          );
+        }
+        
+        // 行きたい
+        if (advancedFilterSettings.wantToGo) {
+          filteredShops = filteredShops.filter(s => visits[s.id]?.wantToGo);
+        }
+        
+        // お気に入り
+        if (advancedFilterSettings.favorite) {
+          filteredShops = filteredShops.filter(s => visits[s.id]?.favorite);
+        }
+        
+        // 営業時間フィルター
+        if (advancedFilterSettings.day !== '' && advancedFilterSettings.time !== '') {
+          filteredShops = filteredShops.filter(s => 
+            isOpenAtDayTime(s.openingHours, advancedFilterSettings.day, advancedFilterSettings.time)
+          );
+        }
       }
+      
       
       // 座標がない店舗を除外（家系図専用データ）
       filteredShops = filteredShops.filter(shop => shop.lat && shop.lng);
@@ -4502,13 +5084,20 @@
         })).sort((a, b) => a.distance - b.distance);
       }
       
-      // 検索結果件数を表示
+      // 検索結果件数を表示（表示件数と重複するため非表示）
       const resultsEl = document.getElementById('search-results');
-      if (searchQuery) {
-        resultsEl.textContent = `${filteredShops.length}件見つかりました`;
-        resultsEl.style.display = 'block';
-      } else {
-        resultsEl.style.display = 'none';
+      resultsEl.style.display = 'none';
+      
+      // マップタブの件数表示を更新
+      const mapCountEl = document.getElementById('map-result-count');
+      if (mapCountEl) {
+        mapCountEl.textContent = `表示件数：${filteredShops.length}件`;
+      }
+      
+      // リストタブの件数表示を更新
+      const countEl = document.getElementById('list-result-count');
+      if (countEl) {
+        countEl.textContent = `表示件数：${filteredShops.length}件`;
       }
       
       container.innerHTML = filteredShops.map(shop => {
@@ -4519,6 +5108,10 @@
         const isSoon = openStatus.state === 'soon';
         const wantToGo = visitData?.wantToGo || false;
         const favorite = visitData?.favorite || false;
+        
+        // 営業時間検索中は営業ステータスバッジを非表示
+        const hasTimeFilter = advancedFilterSettings.day !== '' || advancedFilterSettings.time !== '';
+        const statusBadge = hasTimeFilter ? '' : (isSoon ? '<span class="badge-soon">閉店間近</span>' : (isOpen ? '<span class="badge-open">営業中</span>' : '<span class="badge-closed">時間外</span>'));
         
         return `
           <div class="shop-list-item" onclick="focusShop('${shop.id}')">
@@ -4535,14 +5128,14 @@
                 </div>
               </div>
               <div class="shop-meta">
-                <span class="badge badge-category">${shop.category}</span>
+                <span class="badge badge-category">${getShortCategoryName(shop.category)}</span>
                 <span style="display:inline-flex;align-items:center;justify-content:center;gap:2px;color:#6b7280;border:1px solid #d1d5db;padding:2px 8px;border-radius:12px;font-size:11px;">
                   <svg style="width:12px;height:12px;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                   </svg>
                   ${shop.area}
                 </span>
-                ${isSoon ? '<span class="badge-soon">閉店間近</span>' : (isOpen ? '<span class="badge-open">営業中</span>' : '<span class="badge-closed">時間外</span>')}
+                ${statusBadge}
               </div>
             </div>
             <svg style="width:20px;height:20px;color:#9ca3af;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -4558,7 +5151,8 @@
       if (shop && markers[shopId]) {
         // ポップアップの高さ分（約80px）を考慮して少し下にオフセット
         const latOffset = 0.002; // 緯度で約220m、画面で約80-100px相当
-        map.setView([shop.lat - latOffset, shop.lng], 15, { animate: true });
+        // 現在のズームレベルを維持したまま地図を移動
+        map.setView([shop.lat - latOffset, shop.lng], map.getZoom(), { animate: true });
         
         // 少し遅延させてポップアップを開く（アニメーション後）
         setTimeout(() => {
@@ -4662,7 +5256,7 @@
           }
           
           await showCustomAlert(errorMessage);
-          console.error('Geolocation error:', error);
+          console.error('Geolocation error:', error.message || String(error));
         }
       );
     }
@@ -4697,8 +5291,17 @@
     
     // List Tab
     function renderListTab() {
+      // 詳細検索フィルターが設定されている場合はそちらを使用
+      if (advancedFilterSettings.categories.length > 0 || 
+          advancedFilterSettings.wantToGo || 
+          advancedFilterSettings.favorite || 
+          (advancedFilterSettings.day !== '' && advancedFilterSettings.time !== '')) {
+        renderShopListWithAdvancedFilter();
+        return;
+      }
+      
       const container = document.getElementById('list-container');
-      const categoryFilter = document.getElementById('list-filter-category')?.value || 'all';
+      const categoryFilter = 'all'; // 詳細検索を使わない場合はすべて表示
       
       let filteredShops;
       
@@ -4736,15 +5339,16 @@
         })).sort((a, b) => a.distance - b.distance);
       }
       
-      // 検索結果件数を表示
+      // 検索結果件数を表示（表示件数と重複するため非表示）
       const resultsEl = document.getElementById('list-search-results');
       if (resultsEl) {
-        if (searchQuery) {
-          resultsEl.textContent = `${filteredShops.length}件見つかりました`;
-          resultsEl.style.display = 'block';
-        } else {
-          resultsEl.style.display = 'none';
-        }
+        resultsEl.style.display = 'none';
+      }
+      
+      // リストタブの件数表示を更新
+      const countEl = document.getElementById('list-result-count');
+      if (countEl) {
+        countEl.textContent = `表示件数：${filteredShops.length}件`;
       }
       
       container.innerHTML = filteredShops.map(shop => {
@@ -4765,6 +5369,10 @@
           hoursText = todayHours === '定休日' ? '定休日' : '営業終了';
         }
         
+        // 営業時間検索中は営業ステータスバッジを非表示
+        const hasTimeFilter = advancedFilterSettings.day !== '' || advancedFilterSettings.time !== '';
+        const statusBadge = hasTimeFilter ? '' : (isSoon ? '<span class="badge-soon">閉店間近</span>' : (isOpen ? '<span class="badge-open">営業中</span>' : '<span class="badge-closed">時間外</span>'));
+        
         return `
           <div class="shop-list-item" onclick="showShopDetail('${shop.id}')">
             <div class="shop-icon ${isVisited ? 'visited' : 'unvisited'}">
@@ -4780,12 +5388,12 @@
                 </div>
               </div>
               <div class="shop-meta">
-                <span class="badge badge-category">${shop.category}</span>
+                <span class="badge badge-category">${getShortCategoryName(shop.category)}</span>
                 <svg style="width:14px;height:14px;color:#6b7280;margin-left:4px;margin-right:-2px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                 </svg>
                 <span style="color:#6b7280;font-size:13px;">${shop.area}</span>
-                ${isSoon ? '<span class="badge-soon">閉店間近</span>' : (isOpen ? '<span class="badge-open">営業中</span>' : '<span class="badge-closed">時間外</span>')}
+                ${statusBadge}
               </div>
               <div style="color:#6b7280;font-size:12px;margin-top:4px;">${hoursText}</div>
             </div>
@@ -4806,7 +5414,7 @@
     // Stats Tab
     function renderStatsTab() {
       console.log('🎯 renderStatsTab() 開始');
-      const period = document.getElementById('stats-period-select')?.value || '30';
+      const period = document.getElementById('stats-period-select')?.value || 'all';
       const stats = computeStats(visits, period);
       console.log('📊 stats:', stats);
 
@@ -5161,22 +5769,31 @@
         
         // カテゴリーベースで独立セクションを検出
         const separateSections = {};
-        const oudouCategories = ['王道家', '王道乃印']; // 王道家系カテゴリー
-        const honmokuCategories = ['本牧家']; // 本牧家系カテゴリー（本牧家のみ）
+        const oudouCategories = ['王道家', '王道家（王道乃印）', '王道家（系列外）']; // 王道家系カテゴリー
+        const tonomaruCategories = ['王道家（との丸家）']; // 王道家系（との丸家）カテゴリー
+        const honmokuCategories = ['本牧家']; // 本牧家系カテゴリー
         const rokkakuCategories = ['六角家']; // 六角家系カテゴリー
         const musashiCategories = ['武蔵家']; // 武蔵家系カテゴリー
-        const isseCategories = ['壱系']; // 壱系カテゴリー
+        const nonakaCategories = ['野中家']; // 野中家系カテゴリー
+        const taikiCategories = ['大輝家']; // 大輝家系カテゴリー
+        const isseCategories = ['壱系', '壱系（資本系）']; // 壱系カテゴリー
         
         // カテゴリーが存在するかチェック
         shops.forEach(shop => {
           if (oudouCategories.includes(shop.category)) {
             separateSections['王道家系'] = true;
+          } else if (tonomaruCategories.includes(shop.category)) {
+            separateSections['王道家系（との丸家）'] = true;
           } else if (honmokuCategories.includes(shop.category)) {
             separateSections['本牧家系'] = true;
           } else if (rokkakuCategories.includes(shop.category)) {
             separateSections['六角家系'] = true;
           } else if (musashiCategories.includes(shop.category)) {
             separateSections['武蔵家系'] = true;
+          } else if (nonakaCategories.includes(shop.category)) {
+            separateSections['野中家系'] = true;
+          } else if (taikiCategories.includes(shop.category)) {
+            separateSections['大輝家系'] = true;
           } else if (isseCategories.includes(shop.category)) {
             separateSections['壱系'] = true;
           }
@@ -5190,33 +5807,48 @@
         // 1. 吉村家系
         groups.set('yosh', { title: '吉村家系', shops: [], color: 'yosh' });
         
-        // 2. 本牧家系（独立セクション）
-        if (separateSections['本牧家系']) {
-          groups.set('本牧家系', { title: '本牧家系', shops: [], color: 'honmoku', isSeparate: true });
-        }
-        
-        // 3. 王道家系（独立セクション）
+        // 2. 王道家系（独立セクション）
         if (separateSections['王道家系']) {
           groups.set('王道家系', { title: '王道家系', shops: [], color: 'oud', isSeparate: true });
         }
         
-        // 4. 六角家系（独立セクション）
+        // 3. 王道家系（との丸家）（独立セクション）
+        if (separateSections['王道家系（との丸家）']) {
+          groups.set('王道家系（との丸家）', { title: '王道家系（との丸家）', shops: [], color: 'oud', isSeparate: true });
+        }
+        
+        // 4. 本牧家系（独立セクション）
+        if (separateSections['本牧家系']) {
+          groups.set('本牧家系', { title: '本牧家系', shops: [], color: 'honmoku', isSeparate: true });
+        }
+        
+        // 5. 六角家系（独立セクション）
         if (separateSections['六角家系']) {
           groups.set('六角家系', { title: '六角家系', shops: [], color: 'rokkaku', isSeparate: true });
         }
         
-        // 5. 武蔵家系（独立セクション）
+        // 6. 武蔵家系（独立セクション）
         if (separateSections['武蔵家系']) {
           groups.set('武蔵家系', { title: '新中野武蔵家系', shops: [], color: 'musa', isSeparate: true });
         }
         
-        // 6. 壱系（独立セクション）
-        if (separateSections['壱系']) {
-          groups.set('壱系', { title: '壱系', shops: [], color: 'isse', isSeparate: true });
+        // 7. 野中家系（独立セクション）
+        if (separateSections['野中家系']) {
+          groups.set('野中家系', { title: '野中家系', shops: [], color: 'nonaka', isSeparate: true });
         }
         
-        // 7. オリジナル・その他
+        // 8. 大輝家系（独立セクション）
+        if (separateSections['大輝家系']) {
+          groups.set('大輝家系', { title: '大輝家系', shops: [], color: 'taiki', isSeparate: true });
+        }
+        
+        // 9. オリジナル・その他
         groups.set('oth', { title: 'オリジナル', shops: [], color: 'oth' });
+        
+        // 9. 壱系（独立セクション）
+        if (separateSections['壱系']) {
+          groups.set('壱系', { title: '壱系（資本系）', shops: [], color: 'isse', isSeparate: true });
+        }
         
         // 店舗をグループに振り分け
         shops.forEach(shop => {
@@ -5268,6 +5900,38 @@
               groups.get('yosh').shops.push(shop);
             }
           }
+          // 4-2. 王道家系（との丸家）
+          else if (tonomaruCategories.includes(shop.category)) {
+            if (groups.has('王道家系（との丸家）')) {
+              groups.get('王道家系（との丸家）').shops.push(shop);
+            }
+            // との丸家 松飛台本店（ルート）は王道家系にも表示
+            if (shop.id === 'tonomaru') {
+              if (groups.has('王道家系')) {
+                groups.get('王道家系').shops.push(shop);
+              }
+            }
+          }
+          // 4-3. 野中家系
+          else if (nonakaCategories.includes(shop.category)) {
+            if (groups.has('野中家系')) {
+              groups.get('野中家系').shops.push(shop);
+            }
+            // 野中家のルートは吉村家系にも表示（該当する場合）
+            if (shop.parent === 'yoshimuraya' || hasAncestor(shop.id, 'yoshimuraya')) {
+              groups.get('yosh').shops.push(shop);
+            }
+          }
+          // 4-4. 大輝家系
+          else if (taikiCategories.includes(shop.category)) {
+            if (groups.has('大輝家系')) {
+              groups.get('大輝家系').shops.push(shop);
+            }
+            // 大輝家のルートは吉村家系にも表示（該当する場合）
+            if (shop.parent === 'yoshimuraya' || hasAncestor(shop.id, 'yoshimuraya')) {
+              groups.get('yosh').shops.push(shop);
+            }
+          }
           // 5. 壱系
           else if (isseCategories.includes(shop.category)) {
             if (groups.has('壱系')) {
@@ -5282,7 +5946,7 @@
           else if (rootId === 'yoshimuraya') {
             groups.get('yosh').shops.push(shop);
           }
-          // 7. オリジナル・その他
+          // 7. オリジナル・その他（「不明」もここに含む）
           else {
             groups.get('oth').shops.push(shop);
           }
@@ -5305,8 +5969,8 @@
         
         console.log('renderLineageTab: complete');
       } catch (error) {
-        console.error('renderLineageTab error:', error);
-        console.error('Error stack:', error.stack);
+        console.error('renderLineageTab error:', error.message || String(error));
+        console.error('Error stack:', error.stack || '');
       }
     }
     
@@ -5339,8 +6003,11 @@
       const separateSectionRoots = {
         '本牧家系': 'honmokuya',
         '王道家系': 'oudouya',
+        '王道家系（との丸家）': 'tonomaru',
         '六角家系': 'rokkakuya',
-        '武蔵家系': 'musashiya'
+        '武蔵家系': 'musashiya',
+        '野中家系': 'nonakaya',
+        '大輝家系': 'daikiya'
       };
       
       let roots;
@@ -5390,11 +6057,11 @@
           if (shop) {
             // 王道家系の場合、カテゴリーで色を分ける
             let nodeColor = colorClass;
-            if (shop.category === '王道乃印') {
+            if (shop.category === '王道家（王道乃印）') {
               nodeColor = 'oud-light'; // 薄い黄色
             }
             
-            const node = createLineageNode(shop, nodeColor);
+            const node = createLineageNode(shop, nodeColor, sectionId);
             node.dataset.level = lv;
             node.dataset.parent = shop.parent || '';
             lane.appendChild(node);
@@ -5472,24 +6139,28 @@
       });
     }
     
-    function createLineageNode(shop, colorClass) {
-      // 本当に閉店している店舗のみ閉店扱い（営業時間がnullまたは全日休み）
+    function createLineageNode(shop, colorClass, sectionId) {
+      // 閉店している店舗: 営業時間がnullまたは全日休み、または店名に【閉店】が含まれる
       const isClosed = !shop.openingHours ||
                        (shop.openingHours &&
-                        Object.keys(shop.openingHours).length === 0);
+                        Object.keys(shop.openingHours).length === 0) ||
+                       shop.name.includes('【閉店】');
       
       // 独立セクションへのジャンプリンク生成
       let jumpLink = '';
       const isInOwnSection = (
-        (colorClass === 'oud' && shop.id === 'oudouya') ||
-        (colorClass === 'honmoku' && shop.id === 'honmokuya') ||
-        (colorClass === 'rokkaku' && shop.id === 'rokkakuya') ||
-        (colorClass === 'musa' && shop.id === 'musashiya')
+        (sectionId === '王道家系' && shop.id === 'oudouya') ||
+        (sectionId === '王道家系（との丸家）' && shop.id === 'tonomaru') ||
+        (sectionId === '本牧家系' && shop.id === 'honmokuya') ||
+        (sectionId === '六角家系' && shop.id === 'rokkakuya') ||
+        (sectionId === '武蔵家系' && shop.id === 'musashiya')
       );
       
       if (!isInOwnSection) {
         if (shop.id === 'oudouya') {
           jumpLink = `<span class="lineage-jump" data-target="王道家系" style="font-size:10px;margin-left:4px;color:#000000;cursor:pointer;user-select:none;">[→王道家系]</span>`;
+        } else if (shop.id === 'tonomaru') {
+          jumpLink = `<span class="lineage-jump" data-target="王道家系（との丸家）" style="font-size:10px;margin-left:4px;color:#000000;cursor:pointer;user-select:none;">[→との丸家系]</span>`;
         } else if (shop.id === 'honmokuya') {
           jumpLink = `<span class="lineage-jump" data-target="本牧家系" style="font-size:10px;margin-left:4px;color:#000000;cursor:pointer;user-select:none;">[→本牧家系]</span>`;
         } else if (shop.id === 'rokkakuya') {
@@ -5499,11 +6170,22 @@
         }
       }
       
+      // 表示名の決定
+      let displayName = shop.name;
+      // 王道家系セクション内のとの丸家は「との丸家」とだけ表示
+      if (sectionId === '王道家系' && shop.id === 'tonomaru') {
+        displayName = 'との丸家';
+      }
+      
       // 色分け
       let nodeColorClass = colorClass;
       
-      // 王道家系セクション内: 王道乃印は薄い黄色
-      if (colorClass === 'oud' && shop.category === '王道乃印') {
+      // 閉店店舗は常にグレー
+      if (isClosed) {
+        nodeColorClass = 'closed';
+      }
+      // 王道家系セクション内: 王道家（王道乃印）は薄い黄色
+      else if (colorClass === 'oud' && shop.category === '王道家（王道乃印）') {
         nodeColorClass = 'oud-light';
       }
       // 吉村家系セクション内: 非直系（直系以外でparentがyoshimuraya）は薄い赤
@@ -5512,10 +6194,10 @@
       }
       
       const node = document.createElement('div');
-      node.className = `lineage-node g-${nodeColorClass}${isClosed ? ' closed' : ''}`;
+      node.className = `lineage-node g-${nodeColorClass}`;
       node.dataset.id = shop.id;
       node.innerHTML = `
-        <div class="lineage-node-name">${escapeHtml(shop.name)}${jumpLink}</div>
+        <div class="lineage-node-name">${escapeHtml(displayName)}${jumpLink}</div>
         <div class="lineage-node-meta">${escapeHtml(shop.area || '')}</div>
       `;
       
@@ -5737,28 +6419,52 @@
         });
       }
       
-      // 全体表示トグル
-      const compactToggle = document.getElementById('lineage-compact-toggle');
+      // ズーム機能
+      const zoomOutBtn = document.getElementById('lineage-zoom-out');
+      const zoomInBtn = document.getElementById('lineage-zoom-in');
       const sectionsEl = document.getElementById('lineage-sections');
-      let isCompact = false;
+      let currentScale = 0.7; // デフォルト70%
       
-      if (compactToggle && sectionsEl) {
-        compactToggle.addEventListener('click', () => {
-          isCompact = !isCompact;
-          if (isCompact) {
-            const originalHeight = sectionsEl.scrollHeight;
-            sectionsEl.style.transform = 'scale(0.7)';
-            sectionsEl.style.transformOrigin = 'top left';
-            sectionsEl.style.width = '143%';
-            sectionsEl.style.height = (originalHeight * 0.7) + 'px';
-            compactToggle.classList.add('active');
-          } else {
-            sectionsEl.style.transform = 'scale(1)';
-            sectionsEl.style.width = '100%';
-            sectionsEl.style.height = 'auto';
-            compactToggle.classList.remove('active');
+      if (zoomOutBtn && zoomInBtn && sectionsEl) {
+        // 初期表示で70%を適用（DOM構築後に実行）
+        setTimeout(() => {
+          applyZoom();
+        }, 100);
+        
+        // 縮小ボタン
+        zoomOutBtn.addEventListener('click', () => {
+          if (currentScale > 0.5) {
+            currentScale -= 0.1;
+            currentScale = Math.round(currentScale * 10) / 10; // 丸め誤差対策
+            applyZoom();
           }
         });
+        
+        // 拡大ボタン
+        zoomInBtn.addEventListener('click', () => {
+          if (currentScale < 1.0) {
+            currentScale += 0.1;
+            currentScale = Math.round(currentScale * 10) / 10; // 丸め誤差対策
+            applyZoom();
+          }
+        });
+        
+        function applyZoom() {
+          // 一時的にtransformをリセットして実際の高さを取得
+          sectionsEl.style.transform = 'scale(1)';
+          sectionsEl.style.width = '100%';
+          const actualHeight = sectionsEl.scrollHeight;
+          
+          // スケールを適用
+          sectionsEl.style.transform = `scale(${currentScale})`;
+          sectionsEl.style.transformOrigin = 'top left';
+          sectionsEl.style.width = `${100 / currentScale}%`;
+          sectionsEl.style.height = `${actualHeight * currentScale}px`;
+          
+          // ボタンの状態更新
+          zoomOutBtn.disabled = currentScale <= 0.5;
+          zoomInBtn.disabled = currentScale >= 1.0;
+        }
       }
     }
     
@@ -6035,7 +6741,7 @@
     function getShareText() {
       if (!currentShop) return '';
       
-      return `🍜 ${currentShop.name}\n📍 ${currentShop.area}\n\n#家系ラーメン #ラーメン`;
+      return `🍜 ${currentShop.name}\n📍 ${currentShop.area}\n\n#家系ラーメン #家系ラーメンmap`;
     }
     
     function getShareUrl() {
@@ -6861,7 +7567,7 @@
 
       // 画面を更新
       updateMarkers();
-      renderShopList(document.getElementById('filter-category').value);
+      renderShopList();
       renderListTab();
       renderLineageTab();
       showShopDetail(currentShop.id);
@@ -6888,7 +7594,7 @@
 
       // 画面を更新
       updateMarkers();
-      renderShopList(document.getElementById('filter-category').value);
+      renderShopList();
       renderListTab();
       renderLineageTab();
       showShopDetail(currentShop.id);
@@ -7215,7 +7921,7 @@
       // 画面を更新
       setTimeout(() => {
         updateMarkers();
-        renderShopList(document.getElementById('filter-category').value);
+        renderShopList();
         renderListTab();
         renderLineageTab();
         
@@ -7310,7 +8016,7 @@
       }
       
       tweetText += `今日の一杯を記録 🍜\n`;
-      tweetText += `#${currentShop.name.replace(/\s/g, '')} #家系ラーメンマップ\n`;
+      tweetText += `#${currentShop.name.replace(/\s/g, '')} #家系ラーメンmap\n`;
       tweetText += `https://iekei-map.pages.dev/`;
       
       // X（Twitter）で投稿（x.comを使用）
@@ -7327,7 +8033,7 @@
       // 画面を更新
       setTimeout(() => {
         updateMarkers();
-        renderShopList(document.getElementById('filter-category').value);
+        renderShopList();
         renderListTab();
         renderLineageTab();
         
@@ -7864,6 +8570,139 @@
     </div>
   </div>
 
+  <!-- Advanced Filter Modal -->
+  <div id="advanced-filter-modal" class="modal" onclick="closeAdvancedFilterModal()">
+    <div class="modal-content" onclick="event.stopPropagation()" style="max-width:500px;border-radius:16px;max-height:85vh;overflow-y:auto;">
+      <div class="modal-header" style="display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid #e5e7eb;">
+        <h2 style="font-size:18px;font-weight:700;">🔍 詳細検索</h2>
+        <button onclick="closeAdvancedFilterModal()" style="width:32px;height:32px;border-radius:50%;border:none;background:#f3f4f6;cursor:pointer;font-size:18px;">×</button>
+      </div>
+      
+      <div style="padding:16px;">
+        <!-- 家系 -->
+        <div style="margin-bottom:20px;">
+          <label style="display:flex;align-items:center;margin-bottom:10px;cursor:pointer;">
+            <input type="checkbox" id="category-parent-iekei" style="margin-right:8px;">
+            <h3 style="font-size:14px;font-weight:600;color:#374151;margin:0;">家系（複数選択可）</h3>
+          </label>
+          <div id="category-checkboxes-iekei" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-left:24px;">
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" value="直系" class="category-iekei" style="margin-right:8px;">
+              <span style="font-size:14px;">直系</span>
+            </label>
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" value="吉村家（直系以外）" class="category-iekei" style="margin-right:8px;">
+              <span style="font-size:14px;">吉村家（直系以外）</span>
+            </label>
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" value="王道家" class="category-iekei" style="margin-right:8px;">
+              <span style="font-size:14px;">王道家</span>
+            </label>
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" value="王道家（王道乃印）" class="category-iekei" style="margin-right:8px;">
+              <span style="font-size:14px;">王道家（王道乃印）</span>
+            </label>
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" value="王道家（との丸家）" class="category-iekei" style="margin-right:8px;">
+              <span style="font-size:14px;">王道家（との丸家）</span>
+            </label>
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" value="王道家（系列外）" class="category-iekei" style="margin-right:8px;">
+              <span style="font-size:14px;">王道家（系列外）</span>
+            </label>
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" value="本牧家" class="category-iekei" style="margin-right:8px;">
+              <span style="font-size:14px;">本牧家</span>
+            </label>
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" value="六角家" class="category-iekei" style="margin-right:8px;">
+              <span style="font-size:14px;">六角家</span>
+            </label>
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" value="武蔵家" class="category-iekei" style="margin-right:8px;">
+              <span style="font-size:14px;">武蔵家</span>
+            </label>
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" value="野中家" class="category-iekei" style="margin-right:8px;">
+              <span style="font-size:14px;">野中家</span>
+            </label>
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" value="大輝家" class="category-iekei" style="margin-right:8px;">
+              <span style="font-size:14px;">大輝家</span>
+            </label>
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" value="オリジナル" class="category-iekei" style="margin-right:8px;">
+              <span style="font-size:14px;">オリジナル</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 壱系 -->
+        <div style="margin-bottom:20px;">
+          <label style="display:flex;align-items:center;margin-bottom:10px;cursor:pointer;">
+            <input type="checkbox" id="category-parent-isse" style="margin-right:8px;">
+            <h3 style="font-size:14px;font-weight:600;color:#374151;margin:0;">壱系（複数選択可）</h3>
+          </label>
+          <div id="category-checkboxes-isse" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-left:24px;">
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" value="壱系" class="category-isse" style="margin-right:8px;">
+              <span style="font-size:14px;">壱系</span>
+            </label>
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" value="壱系（資本系）" class="category-isse" style="margin-right:8px;">
+              <span style="font-size:14px;">壱系（資本系）</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 訪問状況 -->
+        <div style="margin-bottom:20px;">
+          <h3 style="font-size:14px;font-weight:600;margin-bottom:10px;color:#374151;">訪問状況</h3>
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" id="filter-want" style="margin-right:8px;">
+              <span style="font-size:14px;">☆ 行きたい</span>
+            </label>
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" id="filter-favorite" style="margin-right:8px;">
+              <span style="font-size:14px;">♡ お気に入り</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 営業時間検索 -->
+        <div style="margin-bottom:20px;">
+          <h3 style="font-size:14px;font-weight:600;margin-bottom:10px;color:#374151;">営業時間で検索</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div>
+              <label style="font-size:12px;color:#6b7280;display:block;margin-bottom:4px;">曜日</label>
+              <select id="filter-day" class="form-input" style="-webkit-appearance:none;appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%228%22 viewBox=%220 0 12 8%22><path fill=%22%23666%22 d=%22M1 1l5 5 5-5%22 stroke=%22%23666%22 stroke-width=%221.5%22 fill=%22none%22/></svg>');background-repeat:no-repeat;background-position:right 10px center;padding-right:30px;height:38px;">
+                <option value="">指定なし</option>
+                <option value="0">日曜日</option>
+                <option value="1">月曜日</option>
+                <option value="2">火曜日</option>
+                <option value="3">水曜日</option>
+                <option value="4">木曜日</option>
+                <option value="5">金曜日</option>
+                <option value="6">土曜日</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:12px;color:#6b7280;display:block;margin-bottom:4px;">時刻</label>
+              <input type="time" id="filter-time" class="form-input" placeholder="指定なし" style="-webkit-appearance:none;appearance:none;height:38px;">
+            </div>
+          </div>
+        </div>
+
+        <!-- ボタン -->
+        <div style="display:flex;gap:8px;">
+          <button onclick="resetAdvancedFilter()" style="flex:1;padding:12px;border:1px solid #e5e7eb;border-radius:8px;background:white;cursor:pointer;font-weight:600;">リセット</button>
+          <button onclick="applyAdvancedFilter()" style="flex:2;padding:12px;border:none;border-radius:8px;background:#3b82f6;color:white;cursor:pointer;font-weight:600;">検索する</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   
 
   <!-- Settings Modal -->
@@ -7934,11 +8773,31 @@
           <div style="background: white; padding: 20px;">
             <div class="stats-title">📝 変更履歴</div>
             <div class="version-info">
-              <div class="version-current">現在のバージョン: <strong>v1.20.0</strong></div>
-              <div class="version-date">最終更新: 2026/01/25</div>
+              <div class="version-current">現在のバージョン: <strong>v1.21.0</strong></div>
+              <div class="version-date">最終更新: 2026/04/04</div>
             </div>
             
             <div class="changelog">
+              <!-- v1.21.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.21.0</span>
+                  <span class="version-date-small">2026/04/04</span>
+                </div>
+                <ul class="version-list">
+                  <li>🆕 詳細検索の実装（カテゴリー複数選択、訪問状態フィルター、検索条件サマリー表示）</li>
+                  <li>📅 営業時間検索機能を追加（曜日と時刻を指定して営業中の店舗を検索可能）</li>
+                  <li>🔍 家系図ズーム機能を追加（50%〜100%の範囲で表示サイズを調整可能）</li>
+                  <li>🗺️ 大輝家系セクションを追加</li>
+                  <li>🗺️ 野中家系セクションを追加</li>
+                  <li>🏷️ カテゴリー体系を13種類に統合・再編成</li>
+                  <li>📈 統計タブのデフォルト期間を「全期間」に変更</li>
+                  <li>🎯 マップタブのリスト項目クリック時、ズームレベルを維持</li>
+                  <li>🔢 リスト・マップタブに表示件数を追加</li>
+                  <li>🐛 営業時間検索のデータ構造不一致を修正</li>
+                </ul>
+              </div>
+              
               <!-- v1.20.0 -->
               <div class="version-section">
                 <div class="version-header">
