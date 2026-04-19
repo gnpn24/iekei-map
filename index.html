@@ -1867,6 +1867,16 @@
       box-shadow: 0 2px 8px rgba(0,0,0,.08);
     }
 
+    .leaflet-bar a {
+      background: rgba(255,255,255,0.78) !important;
+      backdrop-filter: blur(10px) !important;
+      -webkit-backdrop-filter: blur(10px) !important;
+    }
+    .leaflet-bar {
+      border: 1px solid rgba(15,23,42,0.08) !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,.08) !important;
+    }
+
     /* リストのドロワー：角丸＋影 */
     .shop-list-drawer{
       border-top-left-radius: 22px;
@@ -2238,6 +2248,14 @@
       filter: grayscale(.2);
       background: #666 !important;
       border-style: dashed;
+    }
+
+    .lineage-node.dummy {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      pointer-events: none;
+      cursor: default;
     }
     
     .lineage-node.selected {
@@ -2632,6 +2650,29 @@
     .twitter-browser .stats-header {
       padding-top: 20px !important;
     }
+
+    @media (orientation: landscape) and (max-height: 500px) {
+      .header { display: none !important; }
+      .bottom-nav { display: none !important; }
+      #lineage-search-wrap { display: none !important; }
+      #lineage-info { display: none !important; }
+      #lineage-legend-area { display: none !important; }
+      #lineage-toolbar-fixed > div:first-child { display: none !important; } /* 🚧バナー */
+      #lineage-zoom-btns {
+        position: fixed !important;
+        top: 10px !important;
+        right: calc(10px + env(safe-area-inset-right)) !important;
+        z-index: 500 !important;
+      }
+      #lineage-poster {
+        padding-left: env(safe-area-inset-left) !important;
+        padding-right: env(safe-area-inset-right) !important;
+      }
+      #lineage-sections {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+      }
+    }
     
     </style></style>
 </head>
@@ -2690,6 +2731,7 @@
         <div class="map-view">
           <div class="map-container">
             <div id="map"></div>
+            <button id="btn-location-search" onclick="openLocationSearchModal()" style="position:absolute;bottom:24px;right:10px;z-index:1000;background:rgba(255,255,255,0.78);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(15,23,42,0.08);border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.08);padding:8px 10px;cursor:pointer;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:#374151;"><svg width="16" height="16" viewBox="0 0 24 24" fill="#ef4444"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>地点を指定</button>
             <div class="map-overlay map-legend">
               <div class="legend-item">
                 <div class="legend-dot" style="background:#ef4444;"></div>
@@ -2726,9 +2768,9 @@
                 </button>
                 <button class="filter-toggle-btn" id="btn-open-toggle">営業中</button>
                 <button class="filter-toggle-btn" id="btn-nearby">
-                  <svg style="width:14px;height:14px;vertical-align:middle;margin-right:2px;" fill="currentColor" viewBox="0 0 24 24">
+                  <svg id="btn-nearby-icon" style="width:14px;height:14px;vertical-align:middle;margin-right:2px;" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                  </svg>現在地
+                  </svg><span id="btn-nearby-label">現在地</span>
                 </button>
               </div>
               <div id="map-result-count" style="font-size:12px;color:#6b7280;margin-top:8px;text-align:right;padding:0 12px;"></div>
@@ -2781,7 +2823,7 @@
                 <input id="lineage-search" type="text" placeholder="店名で検索 → 選ぶとジャンプ" autocomplete="off" />
                 <div id="lineage-suggestions"></div>
               </div>
-              <div style="display:flex;gap:4px;">
+              <div id="lineage-zoom-btns" style="display:flex;gap:4px;">
                 <button id="lineage-zoom-out" style="width:36px;height:36px;padding:0;font-size:20px;line-height:1;" title="縮小">－</button>
                 <button id="lineage-zoom-in" style="width:36px;height:36px;padding:0;font-size:20px;line-height:1;" title="拡大">＋</button>
               </div>
@@ -2806,7 +2848,7 @@
               <div id="lineage-info-title">店をタップすると情報が出ます</div>
               <div id="lineage-info-sub">検索からもジャンプできます</div>
             </div>
-            <button id="lineage-detail-btn" style="display:none;margin-right:8px;border:2px solid rgba(0,0,0,.18);background:rgba(59,130,246,.9);color:white;padding:8px 12px;border-radius:10px;font-weight:900;cursor:pointer;white-space:nowrap;">詳細画面</button>
+            <button id="lineage-detail-btn" style="display:none;margin-left:auto;margin-right:8px;border:2px solid rgba(0,0,0,.18);background:rgba(59,130,246,.9);color:white;padding:8px 12px;border-radius:10px;font-weight:900;cursor:pointer;white-space:nowrap;">詳細画面</button>
             <button id="lineage-reset-btn">選択解除</button>
           </div>
         </div>
@@ -3004,7 +3046,7 @@
           <p class="description" id="detail-description"></p>
         </div>
         
-        <div class="section">
+        <div class="section" id="hours-section">
           <div class="section-title" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;" onclick="toggleHours()">
             <span>営業時間</span>
             <span id="hours-toggle" style="font-size: 14px; color: #6b7280;">▼</span>
@@ -3017,7 +3059,7 @@
         </div>
         
         
-        <div class="section">
+        <div class="section" id="nav-section">
           <div class="section-title">ナビゲーション</div>
           <div class="nav-buttons">
             <a class="btn-nav" id="nav-apple" href="#" target="_blank" rel="noopener noreferrer">
@@ -3107,6 +3149,26 @@
     </div>
   </div>
   
+  <!-- Location Search Modal -->
+  <div id="location-search-modal" onclick="closeLocationSearchModal()" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.4);align-items:flex-end;justify-content:center;">
+    <div onclick="event.stopPropagation()" style="background:white;border-radius:20px 20px 0 0;padding:20px 20px 32px;width:100%;max-width:480px;box-shadow:0 -4px 24px rgba(0,0,0,0.15);">
+      <div style="width:36px;height:4px;background:#d1d5db;border-radius:2px;margin:0 auto 18px;"></div>
+      <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:14px;">📍 地点を指定</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div style="flex:1;display:flex;align-items:center;background:#f3f4f6;border-radius:10px;padding:0 12px;">
+          <svg width="16" height="16" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input type="text" id="location-search-input" placeholder="駅名・地名を入力" autocomplete="off" autofocus
+            style="flex:1;border:none;background:transparent;padding:11px 8px;font-size:15px;outline:none;color:#111827;"
+            onkeydown="if(event.key==='Enter')executeLocationSearch()">
+        </div>
+        <button onclick="executeLocationSearch()" id="location-search-btn"
+          style="padding:11px 16px;border:none;border-radius:10px;background:#ef4444;color:white;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;">検索</button>
+      </div>
+      <div id="location-search-error" style="color:#ef4444;font-size:12px;margin-top:8px;display:none;padding:0 4px;"></div>
+      <div id="location-search-candidates" style="margin-top:8px;display:none;border-radius:10px;overflow-y:auto;max-height:280px;border:1px solid #e5e7eb;"></div>
+    </div>
+  </div>
+
   <!-- Visit Record Modal -->
   <div id="record-modal" class="modal record-modal">
     <div class="modal-content" onclick="event.stopPropagation()">
@@ -3635,6 +3697,7 @@
     let userMarker = null; // ユーザー位置マーカー
     let nearbyMode = false; // 今からモード
     let isRequestingLocation = false; // 位置情報取得中フラグ
+    let locationMode = false; // 地点指定モード
     
     // 検索クエリ（タブ統一、v1.9.0で分離予定）
     let searchQuery = '';
@@ -4188,7 +4251,11 @@
       
       // マップタブの現在地ボタン（トグル式）
       document.getElementById('btn-nearby').addEventListener('click', () => {
-        handleNearbyModeToggle();
+        if (locationMode) {
+          clearLocationMode();
+        } else {
+          handleNearbyModeToggle();
+        }
       });
       
       // マップタブの詳細検索ボタン
@@ -4559,8 +4626,8 @@
         }
       }
       
-      // 座標がない店舗を除外（家系図専用データ）
-      filteredShops = filteredShops.filter(shop => shop.lat && shop.lng);
+      // 座標がない店舗・ダミーノードを除外（家系図専用データ）
+      filteredShops = filteredShops.filter(shop => shop.lat && shop.lng && shop.name !== 'ダミー');
       
       // 検索フィルター
       if (searchQuery) {
@@ -4587,13 +4654,16 @@
         
         // 営業ステータスを取得
         const openStatus = getOpenStatus(shop.openingHours);
+        const hasTimeFilter = advancedFilterSettings.day !== '' || advancedFilterSettings.time !== '';
         let statusBadge = '';
-        if (openStatus.state === 'open') {
-          statusBadge = '<span style="display:inline-flex;align-items:center;justify-content:center;background:#10b981;color:white;padding:2px 8px;border-radius:12px;font-size:10px;">営業中</span>';
-        } else if (openStatus.state === 'soon') {
-          statusBadge = '<span style="display:inline-flex;align-items:center;justify-content:center;background:#f59e0b;color:white;padding:2px 8px;border-radius:12px;font-size:10px;">閉店間近</span>';
-        } else {
-          statusBadge = '<span style="display:inline-flex;align-items:center;justify-content:center;background:#9ca3af;color:white;padding:2px 8px;border-radius:12px;font-size:10px;">時間外</span>';
+        if (!hasTimeFilter) {
+          if (openStatus.state === 'open') {
+            statusBadge = '<span style="display:inline-flex;align-items:center;justify-content:center;background:#10b981;color:white;padding:2px 8px;border-radius:12px;font-size:10px;">営業中</span>';
+          } else if (openStatus.state === 'soon') {
+            statusBadge = '<span style="display:inline-flex;align-items:center;justify-content:center;background:#f59e0b;color:white;padding:2px 8px;border-radius:12px;font-size:10px;">閉店間近</span>';
+          } else {
+            statusBadge = '<span style="display:inline-flex;align-items:center;justify-content:center;background:#9ca3af;color:white;padding:2px 8px;border-radius:12px;font-size:10px;">時間外</span>';
+          }
         }
         
         const divIcon = L.divIcon({
@@ -4984,8 +5054,8 @@
         );
       }
       
-      // 座標がない店舗を除外
-      filteredShops = filteredShops.filter(shop => shop.lat && shop.lng);
+      // 座標がない店舗・ダミーノードを除外
+      filteredShops = filteredShops.filter(shop => shop.lat && shop.lng && shop.name !== 'ダミー');
       
       // 検索フィルター（既存の検索ボックス）
       const searchQuery = document.getElementById('list-search-input')?.value.trim() || '';
@@ -5095,8 +5165,8 @@
       }
       
       
-      // 座標がない店舗を除外（家系図専用データ）
-      filteredShops = filteredShops.filter(shop => shop.lat && shop.lng);
+      // 座標がない店舗・ダミーノードを除外（家系図専用データ）
+      filteredShops = filteredShops.filter(shop => shop.lat && shop.lng && shop.name !== 'ダミー');
       
       // 検索フィルター
       if (searchQuery) {
@@ -5208,7 +5278,206 @@
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
       return R * c;
     }
-    
+    // 地点検索モーダル
+    function openLocationSearchModal() {
+      const modal = document.getElementById("location-search-modal");
+      const input = document.getElementById("location-search-input");
+      const err = document.getElementById("location-search-error");
+      modal.style.display = "flex";
+      err.style.display = "none";
+      input.focus();
+      setTimeout(() => input.focus(), 50);
+    }
+
+    function closeLocationSearchModal() {
+      document.getElementById("location-search-modal").style.display = "none";
+    }
+
+    function applyLocationPoint(lat, lng, label) {
+      userLocation = { lat, lng };
+      nearbyMode = true;
+      locationMode = true;
+
+      if (userMarker) userMarker.remove();
+      const icon = L.divIcon({
+        className: "",
+        html: `<div style="width:16px;height:16px;border-radius:50%;background:#ef4444;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);"></div>`,
+        iconSize: [16, 16], iconAnchor: [8, 8]
+      });
+      userMarker = L.marker([lat, lng], { icon }).addTo(map);
+      map.setView([lat, lng], 13, { animate: true });
+
+      // ボタンを「指定中」表示に
+      const btn = document.getElementById("btn-nearby");
+      const label_el = document.getElementById("btn-nearby-label");
+      if (btn) { btn.style.background = "#3b82f6"; btn.style.color = "white"; }
+      if (label_el) label_el.textContent = "指定中";
+
+      document.getElementById("list-btn-nearby")?.classList.remove("active");
+
+      closeLocationSearchModal();
+      renderShopList();
+      updateMarkers();
+    }
+
+    function clearLocationMode() {
+      locationMode = false;
+      nearbyMode = false;
+      userLocation = null;
+      if (userMarker) { userMarker.remove(); userMarker = null; }
+
+      // ボタンを「現在地」に戻す
+      const btn = document.getElementById("btn-nearby");
+      const label_el = document.getElementById("btn-nearby-label");
+      if (btn) { btn.classList.remove("active"); btn.style.background = ""; btn.style.color = ""; }
+      if (label_el) label_el.textContent = "現在地";
+
+      renderShopList();
+      updateMarkers();
+    }
+
+    async function executeLocationSearch() {
+      const input = document.getElementById("location-search-input");
+      const err = document.getElementById("location-search-error");
+      const btn = document.getElementById("location-search-btn");
+      const candidates = document.getElementById("location-search-candidates");
+      const query = input.value.trim();
+      if (!query) return;
+
+      btn.textContent = "検索中...";
+      btn.disabled = true;
+      err.style.display = "none";
+      candidates.style.display = "none";
+      candidates.innerHTML = "";
+
+      try {
+        // 国土地理院（地名・住所）とHeartRails（駅名）を並列で叩く
+        const [gsiRes, stationRes] = await Promise.allSettled([
+          fetch(`https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(query)}`),
+          fetch(`https://express.heartrails.com/api/json?method=getStations&name=${encodeURIComponent(query.replace(/駅$/, ''))}`)
+        ]);
+
+        btn.textContent = "検索";
+        btn.disabled = false;
+
+        // HeartRailsの結果をパース（駅名重複除去）
+        const stationItems = [];
+        if (stationRes.status === "fulfilled") {
+          const data = await stationRes.value.json().catch(() => ({}));
+          const stations = data?.response?.station || [];
+          const seen = new Set();
+          stations.forEach(s => {
+            const key = `${s.name}_${s.prefecture}`;
+            if (!seen.has(key)) {
+              seen.add(key);
+              stationItems.push({
+                name: `${s.name}駅（${s.prefecture}・${s.line}）`,
+                lat: parseFloat(s.y),
+                lng: parseFloat(s.x),
+                type: "station"
+              });
+            }
+          });
+          stationItems.splice(4);
+        }
+
+        // 国土地理院の結果をパース（dataSource:1のみ表示）
+        const gsiItems = [];
+        const gsiTransport = []; // 駅・IC・JCT（駅・インターセクション用）
+        const gsiAddress = [];   // 地名・住所セクション用
+        if (gsiRes.status === "fulfilled") {
+          const data = await gsiRes.value.json().catch(() => []);
+          // HeartRailsの駅名セット（重複排除用）
+          const stationNames = new Set(stationItems.map(s => s.name.replace(/駅（.*）$/, '') + '駅'));
+          // 都道府県コード変換表（addressCodeの先頭1-2桁）
+          const prefMap = {
+            "1":"北海道","2":"青森県","3":"岩手県","4":"宮城県","5":"秋田県","6":"山形県","7":"福島県",
+            "8":"茨城県","9":"栃木県","10":"群馬県","11":"埼玉県","12":"千葉県","13":"東京都","14":"神奈川県",
+            "15":"新潟県","16":"富山県","17":"石川県","18":"福井県","19":"山梨県","20":"長野県",
+            "21":"岐阜県","22":"静岡県","23":"愛知県","24":"三重県","25":"滋賀県","26":"京都府",
+            "27":"大阪府","28":"兵庫県","29":"奈良県","30":"和歌山県","31":"鳥取県","32":"島根県",
+            "33":"岡山県","34":"広島県","35":"山口県","36":"徳島県","37":"香川県","38":"愛媛県","39":"高知県",
+            "40":"福岡県","41":"佐賀県","42":"長崎県","43":"熊本県","44":"大分県","45":"宮崎県",
+            "46":"鹿児島県","47":"沖縄県"
+          };
+          const getPref = (code) => {
+            if (!code) return "";
+            const s = String(code).replace(/^0+/, '') || "0";
+            // 4桁以下は先頭1桁、5桁以上は先頭2桁で判定
+            const key = s.length <= 4 ? s.slice(0, 1) : s.slice(0, 2);
+            return prefMap[key] || "";
+          };
+          const gsiSeenStations = new Set();
+
+          (data || []).forEach(item => {
+            const title = item.properties.title;
+            const ds = item.properties.dataSource ?? "";
+
+            if (ds === "1") {
+              // 駅・IC・JCTのみ、都道府県名を付加
+              const isStation = title.endsWith('駅');
+              const isIC = title.endsWith('ＩＣ') || title.endsWith('IC');
+              const isJCT = title.endsWith('ＪＣＴ') || title.endsWith('JCT');
+              if (!isStation && !isIC && !isJCT) return;
+              const pref = getPref(item.properties.addressCode);
+              const displayName = pref ? `${title}（${pref}）` : title;
+              if (isStation && stationNames.has(title)) return;
+              if (isStation) {
+                if (gsiSeenStations.has(title)) return;
+                gsiSeenStations.add(title);
+              }
+              gsiTransport.push({ name: displayName, lat: item.geometry.coordinates[1], lng: item.geometry.coordinates[0], type: "address", isStation });
+            } else if (ds === "" || ds === "3") {
+              // 地名・住所セクション
+              console.log('[GSI address]', ds, title);
+              gsiAddress.push({ name: title, lat: item.geometry.coordinates[1], lng: item.geometry.coordinates[0], type: "address" });
+            }
+            // dataSource:"5" は非表示
+          });
+          // transportは駅を先に、IC/JCTを後に
+          gsiTransport.sort((a, b) => (b.isStation ? 1 : 0) - (a.isStation ? 1 : 0));
+          gsiItems.push(...gsiTransport, ...gsiAddress);
+        }
+
+        if (!stationItems.length && !gsiItems.length) {
+          err.textContent = "地点が見つかりませんでした。別の名前で試してください。";
+          err.style.display = "block";
+          return;
+        }
+
+        const stationIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="#3b82f6" style="flex-shrink:0;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>`;
+        const addressIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="#9ca3af" style="flex-shrink:0;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>`;
+
+        const renderItem = (item, isLast) => `<div onclick="applyLocationPoint(${item.lat}, ${item.lng}, '${item.name.replace(/'/g, "&#39;")}')"
+            style="padding:12px 14px;cursor:pointer;${isLast ? '' : 'border-bottom:1px solid #f3f4f6;'}display:flex;align-items:center;gap:10px;background:white;"
+            onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">
+            ${item.type === "station" ? stationIcon : addressIcon}
+            <div style="font-size:14px;font-weight:500;color:#111827;">${item.name}</div>
+          </div>`;
+
+        candidates.style.display = "block";
+
+        let html = "";
+        // 駅・インターセクション（HeartRails + GSI dataSource:1）
+        const transportItems = [...stationItems, ...gsiTransport];
+        if (transportItems.length) {
+          html += `<div style="padding:6px 14px;font-size:11px;color:#9ca3af;background:#f9fafb;border-bottom:1px solid #f3f4f6;">駅・インター</div>`;
+          html += transportItems.map((item, i) => renderItem(item, false)).join("");
+        }
+        // 地名・住所セクション（GSI dataSource:"" + "3"）
+        if (gsiAddress.length) {
+          html += `<div style="padding:6px 14px;font-size:11px;color:#9ca3af;background:#f9fafb;border-bottom:1px solid #f3f4f6;${transportItems.length ? 'border-top:1px solid #e5e7eb;' : ''}">地名・住所</div>`;
+          html += gsiAddress.map((item, i) => renderItem(item, i === gsiAddress.length - 1)).join("");
+        }
+        candidates.innerHTML = html;
+      } catch(e) {
+        err.textContent = "通信エラーが発生しました。";
+        err.style.display = "block";
+        btn.textContent = "検索";
+        btn.disabled = false;
+      }
+    }
+
     // 下部バーの「今から」ボタン用（常にオン）
     async function handleNearbyMode() {
       // 常にオンにする（トグルではなく）
@@ -5361,6 +5630,9 @@
           (shop.nameHiragana && shop.nameHiragana.includes(searchQuery))
         );
       }
+
+      // ダミーノードを除外
+      filteredShops = filteredShops.filter(shop => shop.name !== 'ダミー');
       
       // 営業中フィルタ（リストタブ用）
       if (showOpenOnly) {
@@ -6191,6 +6463,15 @@
     }
     
     function createLineageNode(shop, colorClass, sectionId) {
+      // ダミーノード（name === "ダミー"）は透明スペーサーとして描画
+      if (shop.name === 'ダミー') {
+        const node = document.createElement('div');
+        node.className = 'lineage-node dummy';
+        node.dataset.id = shop.id;
+        node.dataset.dummy = '1';
+        return node;
+      }
+
       // 閉店している店舗: 営業時間がnullまたは全日休み、または店名に【閉店】が含まれる
       const isClosed = !shop.openingHours ||
                        (shop.openingHours &&
@@ -6239,8 +6520,8 @@
       else if (colorClass === 'oud' && shop.category === '王道家（王道乃印）') {
         nodeColorClass = 'oud-light';
       }
-      // 吉村家系セクション内: 非直系（直系以外でparentがyoshimuraya）は薄い赤
-      else if (colorClass === 'yosh' && shop.parent === 'yoshimuraya' && shop.category !== '直系') {
+      // 吉村家系セクション内: 吉村家（直系以外）は薄い赤
+      else if (colorClass === 'yosh' && shop.category === '吉村家（直系以外）') {
         nodeColorClass = 'yosh-light';
       }
       
@@ -6276,7 +6557,13 @@
         }
       }
       
-      node.addEventListener('click', () => selectLineageNode(shop.id));
+      const noCoords = !shop.lat || !shop.lng;
+      const isClosedShop = shop.name.includes('【閉店】');
+      if (noCoords && !isClosedShop) {
+        node.style.cursor = 'default';
+      } else {
+        node.addEventListener('click', () => selectLineageNode(shop.id));
+      }
       return node;
     }
     
@@ -6542,22 +6829,19 @@
       }
       
       if (infoSub) {
-        const parent = shop.parent ? shops.find(s => s.id === shop.parent) : null;
-        const parentText = parent ? `修行元: ${parent.name}` : '修行元: なし（ルート）';
-        
         // 状態表示
         let statusText;
         if (isRealClosed) {
-          statusText = '状態: 閉店';
+          statusText = '閉店';
         } else if (openStatus.state === 'open') {
-          statusText = '状態: 営業中';
+          statusText = '営業中';
         } else if (openStatus.state === 'soon') {
-          statusText = '状態: 閉店間近';
+          statusText = '閉店間近';
         } else {
-          statusText = '状態: 営業時間外';
+          statusText = '営業時間外';
         }
         
-        infoSub.textContent = `${parentText} / ${statusText}`;
+        infoSub.textContent = statusText;
       }
       
       // 詳細画面ボタンを表示
@@ -6598,13 +6882,19 @@
       document.getElementById('detail-description').textContent = currentShop.description;
       
       const statusBadge = document.getElementById('detail-status-badge');
-      if (isSoon) {
+      const hasTimeFilter = advancedFilterSettings.day !== '' || advancedFilterSettings.time !== '';
+      if (hasTimeFilter) {
+        statusBadge.style.display = 'none';
+      } else if (isSoon) {
+        statusBadge.style.display = '';
         statusBadge.className = 'badge badge-soon';
         statusBadge.textContent = '閉店間近';
       } else if (isOpen) {
+        statusBadge.style.display = '';
         statusBadge.className = 'badge badge-status';
         statusBadge.textContent = '営業中';
       } else {
+        statusBadge.style.display = '';
         statusBadge.className = 'badge badge-closed';
         statusBadge.textContent = '時間外';
       }
@@ -6696,10 +6986,19 @@
         linkSection.style.display = 'none';
       }
       
-      document.getElementById('nav-apple').href =
-        `https://maps.apple.com/?daddr=${currentShop.lat},${currentShop.lng}`;
-      document.getElementById('nav-google').href =
-        `https://www.google.com/maps/dir/?api=1&destination=${currentShop.lat},${currentShop.lng}`;
+      const navSection = document.getElementById('nav-section');
+      const hoursSection = document.getElementById('hours-section');
+      if (currentShop.lat && currentShop.lng) {
+        navSection.style.display = 'block';
+        hoursSection.style.display = 'block';
+        document.getElementById('nav-apple').href =
+          `https://maps.apple.com/?daddr=${currentShop.lat},${currentShop.lng}`;
+        document.getElementById('nav-google').href =
+          `https://www.google.com/maps/dir/?api=1&destination=${currentShop.lat},${currentShop.lng}`;
+      } else {
+        navSection.style.display = 'none';
+        hoursSection.style.display = 'none';
+      }
       
       // モーダルを表示
       const modal = document.getElementById('shop-detail-modal');
@@ -8369,6 +8668,14 @@
     function closeSettingsModal() {
       document.getElementById('settings-modal').classList.remove('active');
     }
+
+    function openCreditsPanel() {
+      document.getElementById('credits-modal').style.display = 'flex';
+    }
+
+    function closeCreditsPanel() {
+      document.getElementById('credits-modal').style.display = 'none';
+    }
     
     function openTutorial() {
       closeSettingsModal();
@@ -8817,7 +9124,7 @@
 
   <!-- Settings Modal -->
   <div id="settings-modal" class="modal">
-    <div class="modal-content" style="max-width: 400px; border-radius: 16px;">
+    <div class="modal-content" style="max-width: 560px; border-radius: 16px;">
       <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
         <h2 style="font-size: 18px; font-weight: 700;">設定</h2>
         <button onclick="closeSettingsModal()" style="
@@ -8879,15 +9186,48 @@
             <div style="color: #9ca3af; font-size: 18px;">›</div>
           </div>
           
+          <!-- クレジット -->
+          <div onclick="openCreditsPanel()" style="
+            background: white;
+            padding: 16px 20px;
+            margin-bottom: 1px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          ">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="font-size: 24px;">©️</div>
+              <div>
+                <div style="font-weight: 600; font-size: 15px; color: #111827;">クレジット</div>
+                <div style="font-size: 13px; color: #6b7280;">使用しているサービス</div>
+              </div>
+            </div>
+            <div style="color: #9ca3af; font-size: 18px;">›</div>
+          </div>
+
           <!-- 変更履歴 -->
           <div style="background: white; padding: 20px;">
             <div class="stats-title">📝 変更履歴</div>
             <div class="version-info">
-              <div class="version-current">現在のバージョン: <strong>v1.21.0</strong></div>
-              <div class="version-date">最終更新: 2026/03/30</div>
+              <div class="version-current">現在のバージョン: <strong>v1.22.0</strong></div>
+              <div class="version-date">最終更新: 2026/04/18</div>
             </div>
             
             <div class="changelog">
+              <!-- v1.22.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.22.0</span>
+                  <span class="version-date-small">2026/04/18</span>
+                </div>
+                <ul class="version-list">
+                  <li>📍 地図に「地点を指定」ボタンを追加（駅名・地名・IC検索対応）</li>
+                  <li>📱 横画面対応（ヘッダー・ボトムナビ非表示、家系図を最大化表示）</li>
+                  <li>🌳 家系図タブの凡例クリックで対応セクションにジャンプ</li>
+                </ul>
+              </div>
+              
               <!-- v1.21.0 -->
               <div class="version-section">
                 <div class="version-header">
@@ -9863,6 +10203,34 @@
             <div style="color: #9ca3af; font-size: 18px;">›</div>
           </div>
           
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- クレジットパネル -->
+  <div id="credits-modal" class="modal" onclick="closeCreditsPanel()" style="display:none;align-items:center;justify-content:center;">
+    <div onclick="event.stopPropagation()" style="background:white;border-radius:16px;padding:24px;width:90%;max-width:560px;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+        <button onclick="closeCreditsPanel()" style="background:#f3f4f6;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;color:#374151;font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">‹</button>
+        <div style="font-size:16px;font-weight:700;color:#111827;">クレジット</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:1px;border-radius:12px;overflow:hidden;border:1px solid #f3f4f6;">
+        <div style="background:white;padding:16px;">
+          <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">地図</div>
+          <a href="https://www.openstreetmap.org" target="_blank" style="font-size:15px;font-weight:600;color:#111827;text-decoration:none;">OpenStreetMap</a>
+          <div style="font-size:12px;color:#6b7280;margin-top:2px;">© OpenStreetMap contributors</div>
+        </div>
+        <div style="background:white;padding:16px;border-top:1px solid #f3f4f6;">
+          <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">駅情報</div>
+          <a href="https://express.heartrails.com" target="_blank" style="font-size:15px;font-weight:600;color:#111827;text-decoration:none;">HeartRails Express</a>
+          <div style="font-size:12px;color:#6b7280;margin-top:2px;">路線・駅名データサービス</div>
+        </div>
+        <div style="background:white;padding:16px;border-top:1px solid #f3f4f6;">
+          <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">住所・地名検索</div>
+          <a href="https://maps.gsi.go.jp" target="_blank" style="font-size:15px;font-weight:600;color:#111827;text-decoration:none;">国土地理院</a>
+          <div style="font-size:12px;color:#6b7280;margin-top:2px;">地理院地図 / GSI Maps</div>
         </div>
       </div>
     </div>
