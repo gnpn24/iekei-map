@@ -86,6 +86,7 @@
     html {
       height: 100vh;
       height: 100dvh;
+      height: var(--app-height, 100dvh);
     }
     
     body {
@@ -94,6 +95,7 @@
       overflow: hidden;
       height: 100vh;
       height: 100dvh;
+      height: var(--app-height, 100dvh);
       background: white;
     }
     
@@ -103,6 +105,7 @@
       flex-direction: column;
       height: 100vh; /* fallback for older browsers */
       height: 100dvh; /* dynamic viewport height - URLバー考慮 */
+      height: var(--app-height, 100dvh); /* JSで実測した高さを最優先（Android PWA対策） */
     }
     
     /* headerレイアウトもついでに安定化（floatを卒業） */
@@ -2857,11 +2860,6 @@
     <div class="content">
       <!-- Map Tab -->
       <div id="tab-map" class="tab-content active">
-        <!-- SEO用説明文（非表示だがGoogleには読まれる） -->
-        <div style="display:none;">
-          <h1>家系ラーメンMAP - 全国の家系ラーメン店を地図で探して記録</h1>
-          <p>家系ラーメンMAPは、全国の家系ラーメン店を地図で探し、来店を記録できる無料アプリです。営業時間・訪問履歴・待ち時間も管理できます。</p>
-        </div>
         <div class="map-view">
           <div class="map-container">
             <div id="map"></div>
@@ -3451,6 +3449,25 @@
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
   <script>
+    // ===== Android PWA高さ対策：実際の表示領域をCSS変数にセット =====
+    // standaloneモードでdvhがずれて下部ナビが隠れる問題を防ぐため、
+    // window.innerHeightを実測して --app-height に反映する。
+    (function setupAppHeight() {
+      function applyAppHeight() {
+        document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
+      }
+      applyAppHeight();
+      window.addEventListener('resize', applyAppHeight);
+      window.addEventListener('orientationchange', () => setTimeout(applyAppHeight, 150));
+      window.addEventListener('pageshow', applyAppHeight);
+      // visualViewport があればより正確（ソフトキーボードやバー出現に追従）
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', applyAppHeight);
+      }
+      // 起動直後・リロード直後にバーの高さが確定するまで数回測り直す
+      [60, 200, 500, 1000].forEach(t => setTimeout(applyAppHeight, t));
+    })();
+
     // App Version (手動で更新)
     const APP_VERSION = "1.22.0";
     
