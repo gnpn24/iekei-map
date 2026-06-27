@@ -1,4 +1,4 @@
-const CACHE_NAME = 'iekei-ramen-map-v1.18.1';
+const CACHE_NAME = 'iekei-ramen-map-v2.0.0';
 const urlsToCache = [
   '/index.html',
   '/manifest.json',
