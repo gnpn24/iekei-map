@@ -3017,8 +3017,8 @@
           </div>
           <div id="stats-account-logged-in" style="display:none;">
             <div style="display:flex;align-items:center;gap:12px;">
-              <img id="stats-account-avatar-img" src="" style="width:44px;height:44px;border-radius:50%;display:none;object-fit:cover;flex-shrink:0;" />
-              <div id="stats-account-avatar-emoji" style="width:44px;height:44px;border-radius:50%;background:#f3f4f6;display:none;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;"></div>
+              <img id="stats-account-avatar-img" src="" style="width:56px;height:56px;border-radius:50%;display:none;object-fit:cover;flex-shrink:0;" />
+              <div id="stats-account-avatar-emoji" style="width:56px;height:56px;border-radius:50%;background:#f3f4f6;display:none;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;"></div>
               <div style="flex:1;min-width:0;">
                 <div id="stats-account-display-name" style="font-weight:700;font-size:15px;color:#111827;overflow:hidden;text-overflow:ellipsis;"></div>
                 <div id="stats-account-display-email" style="font-size:12px;color:#6b7280;overflow:hidden;text-overflow:ellipsis;"></div>
@@ -3764,7 +3764,7 @@
           card.style.marginBottom = '8px';
           card.innerHTML = `
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-              ${avatarHtml(avatarUrl, 24)}
+              ${avatarHtml(avatarUrl, 40)}
               <div style="font-size:12px;font-weight:600;color:#374151;">${escapeHtml(name)}</div>
               <div style="font-size:11px;color:#9ca3af;margin-left:auto;">${dateStr}</div>
             </div>
@@ -3868,7 +3868,7 @@
           card.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)';
           card.innerHTML = `
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-              ${avatarHtml(avatarUrl, 26)}
+              ${avatarHtml(avatarUrl, 40)}
               <div style="font-size:13px;font-weight:600;color:#374151;">${escapeHtml(name)}</div>
             </div>
             <div style="font-weight:700;font-size:15px;color:#111827;margin-bottom:2px;">${escapeHtml(shopName)}</div>
@@ -4039,7 +4039,7 @@
       // 画像アップロード用ボタン（選択中なら今の画像を表示、未選択なら＋アイコン）
       const uploadLabel = document.createElement('label');
       uploadLabel.style.cssText = `
-        width:42px;height:42px;border-radius:50%;cursor:pointer;overflow:hidden;
+        width:48px;height:48px;border-radius:50%;cursor:pointer;overflow:hidden;
         display:flex;align-items:center;justify-content:center;flex-shrink:0;
         border:2px solid ${isImageSelected ? '#111827' : '#e5e7eb'};
         background:${isImageSelected ? '#f3f4f6' : '#fafafa'};
@@ -4062,7 +4062,7 @@
         btn.textContent = emoji;
         const isSelected = !isImageSelected && emoji === selectedEmoji;
         btn.style.cssText = `
-          width:42px;height:42px;border-radius:50%;font-size:20px;cursor:pointer;flex-shrink:0;
+          width:48px;height:48px;border-radius:50%;font-size:24px;cursor:pointer;flex-shrink:0;
           display:flex;align-items:center;justify-content:center;
           border:2px solid ${isSelected ? '#111827' : '#e5e7eb'};
           background:${isSelected ? '#f3f4f6' : 'white'};
@@ -10721,8 +10721,8 @@
         <!-- ログイン後 -->
         <div id="account-logged-in" style="display:none;">
           <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
-            <img id="account-avatar-img" src="" style="width:48px;height:48px;border-radius:50%;display:none;object-fit:cover;" />
-            <div id="account-avatar-emoji" style="width:48px;height:48px;border-radius:50%;background:#f3f4f6;display:none;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;"></div>
+            <img id="account-avatar-img" src="" style="width:60px;height:60px;border-radius:50%;display:none;object-fit:cover;" />
+            <div id="account-avatar-emoji" style="width:60px;height:60px;border-radius:50%;background:#f3f4f6;display:none;align-items:center;justify-content:center;font-size:30px;flex-shrink:0;"></div>
             <div>
               <div id="account-display-name" style="font-weight: 700; font-size: 16px; color: #111827;"></div>
               <div id="account-display-email" style="font-size: 13px; color: #6b7280;"></div>
