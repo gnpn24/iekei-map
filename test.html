@@ -3953,12 +3953,24 @@
               memo: log.memo ?? null,
               is_public: !!log.isPublic
             };
-            const { error } = await supabaseClient.from('visits').insert(row);
-            if (!error) {
-              log._cloudSynced = true;
-              changed = true;
+            if (log._cloudId) {
+              // 既にクラウドにある記録 → 新規作成せず更新する（編集時の重複防止）
+              const { error } = await supabaseClient.from('visits').update(row).eq('id', log._cloudId);
+              if (!error) {
+                log._cloudSynced = true;
+                changed = true;
+              } else {
+                console.error('クラウド同期エラー（訪問記録の更新）:', error);
+              }
             } else {
-              console.error('クラウド同期エラー（訪問記録）:', error);
+              const { data, error } = await supabaseClient.from('visits').insert(row).select('id').single();
+              if (!error && data) {
+                log._cloudId = data.id;
+                log._cloudSynced = true;
+                changed = true;
+              } else {
+                console.error('クラウド同期エラー（訪問記録の新規作成）:', error);
+              }
             }
           }
         }
@@ -9435,6 +9447,11 @@
       if (log.photos && log.photos.length > 0) {
         log.photos.forEach(photo => deletePhotoFile(photo));
       }
+      // クラウドに同期済みの記録なら、クラウド側も削除する
+      if (log._cloudId && supabaseClient) {
+        supabaseClient.from('visits').delete().eq('id', log._cloudId)
+          .then(({ error }) => { if (error) console.error('クラウド同期エラー（訪問記録の削除）:', error); });
+      }
 
       visits[currentShop.id].logs.splice(logIndex, 1);
       saveVisits();
@@ -9458,6 +9475,11 @@
       const log = visits[currentShop.id].logs[logIndex];
       if (log.photos && log.photos.length > 0) {
         log.photos.forEach(photo => deletePhotoFile(photo));
+      }
+      // クラウドに同期済みの記録なら、クラウド側も削除する
+      if (log._cloudId && supabaseClient) {
+        supabaseClient.from('visits').delete().eq('id', log._cloudId)
+          .then(({ error }) => { if (error) console.error('クラウド同期エラー（訪問記録の削除）:', error); });
       }
 
       visits[currentShop.id].logs.splice(logIndex, 1);
@@ -9783,7 +9805,10 @@
       }
       
       if (editingLogIndex !== null) {
-        // 編集モード: 既存の記録を更新
+        // 編集モード: 既存の記録を更新（クラウド側のIDは引き継いで、再送信時はinsertでなくupdateにする）
+        const oldLog = visits[currentShop.id].logs[editingLogIndex];
+        visitRecord._cloudId = oldLog?._cloudId || null;
+        visitRecord._cloudSynced = false; // 編集したので再同期が必要
         visits[currentShop.id].logs[editingLogIndex] = visitRecord;
       } else {
         // 新規追加モード
@@ -9853,6 +9878,9 @@
       }
       
       if (editingLogIndex !== null) {
+        const oldLog = visits[currentShop.id].logs[editingLogIndex];
+        visitRecord._cloudId = oldLog?._cloudId || null;
+        visitRecord._cloudSynced = false; // 編集したので再同期が必要
         visits[currentShop.id].logs[editingLogIndex] = visitRecord;
       } else {
         visits[currentShop.id].logs.push(visitRecord);
