@@ -3706,6 +3706,14 @@
       return `<div style="width:${sizePx}px;height:${sizePx}px;border-radius:50%;background:#e5e7eb;flex-shrink:0;"></div>`;
     }
 
+    // 訪問記録の正方形サムネイル（写真があれば表示、無ければグレーのプレースホルダー）
+    function postPhotoHtml(photoUrl, extraStyle) {
+      if (photoUrl) {
+        return `<img src="${photoUrl}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;display:block;${extraStyle || ''}">`;
+      }
+      return `<div style="width:100%;aspect-ratio:1;background:#e5e7eb;border-radius:8px;${extraStyle || ''}"></div>`;
+    }
+
     // コミュニティ記録1件分の「注文内容・カスタマイズ・評価・メモ」部分のHTML（来店履歴と同じ表示形式）
     function visitDetailLinesHtml(v) {
       const starsStr = v.rating > 0 ? '★'.repeat(v.rating) + '☆'.repeat(5 - v.rating) : '';
@@ -3753,8 +3761,7 @@
 
       const body = document.getElementById('community-visit-detail-body');
       body.innerHTML = `
-        <!-- 写真は現時点でクラウド未対応のため、常にプレースホルダー -->
-        <div style="width:100%;aspect-ratio:1;background:#e5e7eb;border-radius:12px;margin-bottom:16px;"></div>
+        ${postPhotoHtml(v.photo_url, 'border-radius:12px;margin-bottom:16px;')}
         ${infoHTML}
         <button onclick="closeCommunityVisitDetailModal(); showShopDetail('${v.shop_id}')" class="btn btn-primary" style="width:100%;margin-top:16px;">
           店舗詳細を見る
@@ -3814,6 +3821,9 @@
           .order('created_at', { ascending: false })
           .limit(50);
 
+        const photoMap = await fetchPhotoMapForVisits((visitRows || []).map(v => v.id));
+        (visitRows || []).forEach(v => { v.photo_url = photoMap.get(v.id) || null; });
+
         renderUserProfile({ profile, followerCount: followerCount || 0, followingCount: followingCount || 0, isFollowing, visitRows: visitRows || [], userId });
       } catch (e) {
         console.error('プロフィール取得エラー:', e);
@@ -3867,11 +3877,8 @@
         const shopName = shop?.name || v.shop_id;
         communityVisitCache[v.id] = { ...v, shopName };
         const cell = document.createElement('div');
-        // 写真はまだクラウド同期未対応のため、現時点では常にグレーのプレースホルダー
-        cell.style.aspectRatio = '1';
-        cell.style.background = '#e5e7eb';
-        cell.style.borderRadius = '4px';
         cell.style.cursor = 'pointer';
+        cell.innerHTML = postPhotoHtml(v.photo_url, 'border-radius:4px;');
         cell.onclick = () => showCommunityVisitDetail(v.id);
         listEl.appendChild(cell);
       });
@@ -3955,6 +3962,8 @@
           if (currentUser && l.user_id === currentUser.id) myLikedSet.add(l.visit_id);
         });
 
+        const photoMap = await fetchPhotoMapForVisits(visitIds);
+
         listEl.innerHTML = '';
         visitRows.forEach(v => {
           const profile = profileMap.get(v.user_id);
@@ -3970,18 +3979,24 @@
           card.style.padding = '10px 12px';
           card.style.marginBottom = '6px';
           card.style.cursor = 'pointer';
+          v.photo_url = photoMap.get(v.id) || null;
           communityVisitCache[v.id] = v;
           card.onclick = () => showCommunityVisitDetail(v.id);
           card.innerHTML = `
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-              ${avatarHtml(avatarUrl, 28)}
-              <div onclick="event.stopPropagation(); openUserProfile('${v.user_id}')" style="font-size:12px;font-weight:600;color:#374151;cursor:pointer;">${escapeHtml(name)}</div>
-              <div style="font-size:11px;color:#9ca3af;margin-left:auto;">${dateStr}</div>
+            <div style="display:flex;gap:10px;">
+              <div style="flex:1;min-width:0;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                  ${avatarHtml(avatarUrl, 28)}
+                  <div onclick="event.stopPropagation(); openUserProfile('${v.user_id}')" style="font-size:12px;font-weight:600;color:#374151;cursor:pointer;">${escapeHtml(name)}</div>
+                  <div style="font-size:11px;color:#9ca3af;margin-left:auto;">${dateStr}</div>
+                </div>
+                ${visitDetailLinesHtml(v)}
+                <button onclick="event.stopPropagation(); toggleLike('${v.id}', this)" data-liked="${liked ? '1' : '0'}" style="border:none;background:none;cursor:pointer;font-size:12px;color:${liked ? '#dc2626' : '#9ca3af'};padding:0;display:flex;align-items:center;gap:4px;">
+                  <span class="like-icon">${liked ? '❤️' : '🤍'}</span><span class="like-count">${likeCount}</span>
+                </button>
+              </div>
+              ${v.photo_url ? `<div style="width:56px;flex-shrink:0;">${postPhotoHtml(v.photo_url)}</div>` : ''}
             </div>
-            ${visitDetailLinesHtml(v)}
-            <button onclick="event.stopPropagation(); toggleLike('${v.id}', this)" data-liked="${liked ? '1' : '0'}" style="border:none;background:none;cursor:pointer;font-size:12px;color:${liked ? '#dc2626' : '#9ca3af'};padding:0;display:flex;align-items:center;gap:4px;">
-              <span class="like-icon">${liked ? '❤️' : '🤍'}</span><span class="like-count">${likeCount}</span>
-            </button>
           `;
           listEl.appendChild(card);
         });
@@ -4020,6 +4035,21 @@
     }
 
     // コミュニティフィード（公開されている訪問記録の一覧）
+    // 訪問記録ID一覧から、それぞれの代表写真(1枚目)のURLを取得するMapを返す
+    async function fetchPhotoMapForVisits(visitIds) {
+      const map = new Map();
+      if (!visitIds || visitIds.length === 0) return map;
+      const { data: photoRows } = await supabaseClient
+        .from('visit_photos')
+        .select('visit_id, photo_url, created_at')
+        .in('visit_id', visitIds)
+        .order('created_at', { ascending: true });
+      (photoRows || []).forEach(p => {
+        if (!map.has(p.visit_id)) map.set(p.visit_id, p.photo_url); // 最初の1枚だけ採用
+      });
+      return map;
+    }
+
     async function loadCommunityFeed() {
       const listEl = document.getElementById('community-feed-list');
       if (!listEl || !supabaseClient) return;
@@ -4057,6 +4087,8 @@
           if (currentUser && l.user_id === currentUser.id) myLikedSet.add(l.visit_id);
         });
 
+        const photoMap = await fetchPhotoMapForVisits(visitIds);
+
         listEl.innerHTML = '';
         visitRows.forEach(v => {
           const profile = profileMap.get(v.user_id);
@@ -4067,6 +4099,7 @@
           const likeCount = likeCountMap.get(v.id) || 0;
           const liked = myLikedSet.has(v.id);
           const dateStr = v.visited_at ? formatDateDetail(v.visited_at) : '';
+          v.photo_url = photoMap.get(v.id) || null;
 
           const card = document.createElement('div');
           card.style.background = 'white';
@@ -4078,16 +4111,21 @@
           communityVisitCache[v.id] = { ...v, shopName };
           card.onclick = () => showCommunityVisitDetail(v.id);
           card.innerHTML = `
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-              ${avatarHtml(avatarUrl, 28)}
-              <div onclick="event.stopPropagation(); openUserProfile('${v.user_id}')" style="font-size:13px;font-weight:600;color:#374151;cursor:pointer;">${escapeHtml(name)}</div>
+            <div style="display:flex;gap:10px;">
+              <div style="flex:1;min-width:0;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                  ${avatarHtml(avatarUrl, 28)}
+                  <div onclick="event.stopPropagation(); openUserProfile('${v.user_id}')" style="font-size:13px;font-weight:600;color:#374151;cursor:pointer;">${escapeHtml(name)}</div>
+                </div>
+                <div onclick="event.stopPropagation(); closeCommunityVisitDetailModal(); showShopDetail('${v.shop_id}')" style="font-weight:700;font-size:15px;color:#111827;margin-bottom:1px;cursor:pointer;">${escapeHtml(shopName)}</div>
+                <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">${dateStr}</div>
+                ${visitDetailLinesHtml(v)}
+                <button onclick="event.stopPropagation(); toggleLike('${v.id}', this)" data-liked="${liked ? '1' : '0'}" style="border:none;background:none;cursor:pointer;font-size:13px;color:${liked ? '#dc2626' : '#9ca3af'};padding:0;display:flex;align-items:center;gap:4px;">
+                  <span class="like-icon">${liked ? '❤️' : '🤍'}</span><span class="like-count">${likeCount}</span>
+                </button>
+              </div>
+              ${v.photo_url ? `<div style="width:64px;flex-shrink:0;">${postPhotoHtml(v.photo_url)}</div>` : ''}
             </div>
-            <div onclick="event.stopPropagation(); closeCommunityVisitDetailModal(); showShopDetail('${v.shop_id}')" style="font-weight:700;font-size:15px;color:#111827;margin-bottom:1px;cursor:pointer;">${escapeHtml(shopName)}</div>
-            <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">${dateStr}</div>
-            ${visitDetailLinesHtml(v)}
-            <button onclick="event.stopPropagation(); toggleLike('${v.id}', this)" data-liked="${liked ? '1' : '0'}" style="border:none;background:none;cursor:pointer;font-size:13px;color:${liked ? '#dc2626' : '#9ca3af'};padding:0;display:flex;align-items:center;gap:4px;">
-              <span class="like-icon">${liked ? '❤️' : '🤍'}</span><span class="like-count">${likeCount}</span>
-            </button>
           `;
           listEl.appendChild(card);
         });
@@ -4125,11 +4163,79 @@
       }
     }
 
-    async function syncVisitsToCloud() {
+    // 1件の訪問記録の写真をクラウド(Storage)にアップロードし、visit_photosテーブルに登録する。
+    // 最大4枚まで（容量・通信量の節約のため）。成功したらtrueを返す。
+    async function syncLogPhotosToCloud(log) {
+      const photosToUpload = log.photos.slice(0, 4);
+      try {
+        // 同じ記録の写真を一旦消してから登録し直す（再同期時の重複防止）
+        await supabaseClient.from('visit_photos').delete().eq('visit_id', log._cloudId);
+
+        for (let i = 0; i < photosToUpload.length; i++) {
+          const fileName = photosToUpload[i];
+          const dataUrl = await loadPhotoFromFile(fileName);
+          if (!dataUrl) continue;
+          const blob = await (await fetch(dataUrl)).blob();
+          const path = `${currentUser.id}/${log._cloudId}/${i}.jpg`;
+          const { error: uploadError } = await supabaseClient.storage
+            .from('visit-photos')
+            .upload(path, blob, { upsert: true, contentType: 'image/jpeg' });
+          if (uploadError) {
+            console.error('写真アップロードエラー:', uploadError);
+            continue;
+          }
+          const { data: urlData } = supabaseClient.storage.from('visit-photos').getPublicUrl(path);
+          await supabaseClient.from('visit_photos').insert({
+            visit_id: log._cloudId,
+            user_id: currentUser.id,
+            photo_url: urlData.publicUrl
+          });
+        }
+        return true;
+      } catch (e) {
+        console.error('写真同期エラー:', e);
+        return false;
+      }
+    }
+
+    // 「今すぐ同期する」ボタン：過去の未同期データ（半年分など）も含めて、進捗を表示しながら同期する
+    async function manualSyncNow() {
+      if (!supabaseClient || !currentUser) return;
+      const btn = document.getElementById('manual-sync-btn');
+      const statusEl = document.getElementById('manual-sync-status');
+      if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+
+      await syncVisitsToCloud((done, total) => {
+        if (!statusEl) return;
+        if (total === 0) {
+          statusEl.textContent = '同期する記録はありません（すべて同期済みです）';
+        } else {
+          statusEl.textContent = `同期中... ${done} / ${total} 件`;
+        }
+      });
+
+      if (statusEl) {
+        statusEl.textContent = statusEl.textContent.startsWith('同期する記録はありません')
+          ? statusEl.textContent
+          : '✅ 同期が完了しました';
+      }
+      if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+    }
+
+    async function syncVisitsToCloud(onProgress) {
       if (!supabaseClient || !currentUser || isSyncingToCloud) return;
       isSyncingToCloud = true;
       let changed = false;
       try {
+        // 進捗表示用に、未同期の件数を先に数える
+        let totalUnsynced = 0;
+        for (const shopId of Object.keys(visits)) {
+          const logs = visits[shopId]?.logs;
+          if (Array.isArray(logs)) totalUnsynced += logs.filter(l => !l._cloudSynced).length;
+        }
+        let doneCount = 0;
+        if (onProgress) onProgress(0, totalUnsynced);
+
         for (const shopId of Object.keys(visits)) {
           const entry = visits[shopId];
           if (!entry) continue;
@@ -4183,6 +4289,18 @@
                 console.error('クラウド同期エラー（訪問記録の新規作成）:', error);
               }
             }
+
+            // 写真の同期（記録自体の同期が成功した場合のみ）
+            if (log._cloudId && !log._photosSynced && log.photos && log.photos.length > 0) {
+              const photoUploadOk = await syncLogPhotosToCloud(log);
+              if (photoUploadOk) {
+                log._photosSynced = true;
+                changed = true;
+              }
+            }
+
+            doneCount++;
+            if (onProgress) onProgress(doneCount, totalUnsynced);
           }
         }
       } catch (e) {
@@ -11016,8 +11134,14 @@
             </div>
           </div>
           <p style="font-size: 13px; color: #6b7280; line-height: 1.5; margin-bottom: 16px;">
-            訪問記録（テキスト情報）はクラウドに自動で同期されます。写真の同期は今後対応予定です。
+            訪問記録（テキスト・写真）はクラウドに自動で同期されます。
           </p>
+          <button id="manual-sync-btn" onclick="manualSyncNow()" style="
+            width: 100%; padding: 12px 16px; margin-bottom: 6px;
+            border: 1.5px solid #e5e7eb; border-radius: 10px; background: white;
+            font-size: 15px; font-weight: 600; color: #111827; cursor: pointer;
+          ">今すぐ同期する（過去の記録も含む）</button>
+          <div id="manual-sync-status" style="font-size:12px;color:#6b7280;text-align:center;margin-bottom:16px;min-height:16px;"></div>
           <button onclick="openProfileEditModal()" style="
             width: 100%; padding: 12px 16px; margin-bottom: 10px;
             border: 1.5px solid #e5e7eb; border-radius: 10px; background: white;
