@@ -8,10 +8,72 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="description" content="家系ラーメンMAPは、全国の家系ラーメン店を地図で探し、来店を記録できる無料アプリです。営業時間・訪問履歴・待ち時間も管理できます。">
+  <meta name="description" content="家系ラーメンの家系図（家系家系図）で店舗の繋がりを可視化。全国800店舗の家系ラーメン店を地図で探し、訪問記録・統計分析。吉村家、武蔵家、王道家（王道乃印）、本牧家、六角家など家系の繋がりがわかる。">
   <meta name="theme-color" content="#C41E3A">
   
-  <title>家系ラーメンMAP｜全国の家系ラーメンを探して記録できる地図アプリ</title>
+  <!-- Favicon / アイコン -->
+  <link rel="icon" type="image/png" sizes="180x180" href="/icons/icon-180.png">
+  <link rel="icon" type="image/png" sizes="76x76" href="/icons/icon-76.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180.png?v=2">
+  <link rel="manifest" href="/manifest.json">
+  
+  <!-- OGP (Facebook, LINE等) -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="家系ラーメンMAP｜家系家系図で繋がりがわかる">
+  <meta property="og:description" content="家系ラーメンの家系図（家系家系図）で店舗の繋がりを可視化。全国800店舗を地図で探せる。吉村家、武蔵家、王道家（王道乃印）、本牧家、六角家など。訪問記録・統計分析で家系ラーメンを極める。">
+  <meta property="og:url" content="https://iekei-map.pages.dev/">
+  <meta property="og:site_name" content="家系ラーメンMAP">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:image" content="https://iekei-map.pages.dev/icons/icon-1024.png">
+  <meta property="og:image:width" content="1024">
+  <meta property="og:image:height" content="1024">
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="家系ラーメンMAP｜家系家系図で繋がりがわかる">
+  <meta name="twitter:description" content="家系ラーメンの家系図（家系家系図）で店舗の繋がりを可視化。全国800店舗を地図で探せる。吉村家、武蔵家、王道家、本牧家、六角家など。">
+  <meta name="twitter:image" content="https://iekei-map.pages.dev/icons/icon-1024.png">
+  
+  <!-- Keywords -->
+  <meta name="keywords" content="家系ラーメン,家系,家系図,家系家系図,ラーメン家系図,吉村家系,吉村家,武蔵家系,武蔵家,王道家,王道乃印,本牧家,六角家,ラーメンマップ,ラーメン記録,横浜,グルメ,訪問記録,食べ歩き,家系ラーメン地図">
+  
+  <title>家系ラーメンMAP｜家系家系図で繋がりがわかる地図アプリ</title>
+  
+  <!-- JSON-LD構造化データ（Google検索最適化） -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "家系ラーメンMAP",
+    "alternateName": ["家系家系図", "家系ラーメンマップ"],
+    "description": "家系ラーメンの家系図（家系家系図）で店舗の繋がりを可視化。全国800店舗の家系ラーメン店を地図で探し、訪問記録・統計分析。吉村家、武蔵家、王道家（王道乃印）、本牧家、六角家など。",
+    "url": "https://iekei-map.pages.dev/",
+    "applicationCategory": "LifestyleApplication",
+    "operatingSystem": "iOS, Web",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "JPY"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5",
+      "ratingCount": "1"
+    }
+  }
+  </script>
+
+  <!-- JSON-LD構造化データ（Google検索結果のサイト名表示用） -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "家系ラーメンMAP",
+    "alternateName": ["家系家系図", "家系ラーメンマップ", "家系ラーメンmap"],
+    "url": "https://iekei-map.pages.dev/"
+  }
+  </script>
+  
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
   <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
   <style>
@@ -24,6 +86,7 @@
     html {
       height: 100vh;
       height: 100dvh;
+      height: var(--app-height, 100dvh);
     }
     
     body {
@@ -32,6 +95,7 @@
       overflow: hidden;
       height: 100vh;
       height: 100dvh;
+      height: var(--app-height, 100dvh);
       background: white;
     }
     
@@ -41,6 +105,7 @@
       flex-direction: column;
       height: 100vh; /* fallback for older browsers */
       height: 100dvh; /* dynamic viewport height - URLバー考慮 */
+      height: var(--app-height, 100dvh); /* JSで実測した高さを最優先（Android PWA対策） */
     }
     
     /* headerレイアウトもついでに安定化（floatを卒業） */
@@ -50,7 +115,7 @@
       justify-content: space-between;
       
       position: relative;
-      background: #FF0000;
+      background: #B22222;
       color: #000000;
       padding: 12px 16px 12px;
       padding-top: max(12px, env(safe-area-inset-top));
@@ -63,6 +128,7 @@
       margin: 0;
       color: #000000;
       line-height: 32px;
+      text-shadow: 0.5px 0.5px 0 #fff, -0.5px -0.5px 0 #fff, 0.5px -0.5px 0 #fff, -0.5px 0.5px 0 #fff;
     }
     
     .header-buttons {
@@ -245,7 +311,7 @@
       position: relative;
       height: 60%; /* 初期値: 60% */
       min-height: 30%;
-      max-height: 85%;
+      max-height: 100%;
     }
     
     .resize-handle {
@@ -322,7 +388,7 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-      min-height: 120px;
+      min-height: 78px;
       overflow: hidden;
     }
     
@@ -606,10 +672,12 @@
       max-height: 82vh;
       margin: 0 auto;
       border-radius: 24px 24px 0 0;
-      overflow-y: auto;
+      overflow-y: hidden;
       overflow-x: hidden;
       animation: slideUp 0.3s ease-out;
       box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
     }
     
     @keyframes slideUp {
@@ -618,6 +686,17 @@
       }
       to {
         transform: translateY(0);
+      }
+    }
+    
+    @keyframes slideUpCenter {
+      from {
+        transform: translate(-50%, 20%);
+        opacity: 0;
+      }
+      to {
+        transform: translate(-50%, -50%);
+        opacity: 1;
       }
     }
     
@@ -804,6 +883,9 @@
     .modal-body {
       padding: 0 16px 24px;
       overflow-y: auto;
+      overflow-x: hidden;
+      flex: 1;
+      min-height: 0;
       -webkit-overflow-scrolling: touch; /* iPhoneで慣性スクロール */
     }
     
@@ -1091,6 +1173,20 @@
     /* Visit Record Modal */
     .record-modal .modal-content {
       max-height: 78vh;
+      overflow-y: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .record-modal .modal-body {
+      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
+    }
+    .record-modal-footer {
+      padding: 12px 16px;
+      background: white;
+      border-top: 1px solid #f3f4f6;
+      flex-shrink: 0;
     }
     
     .form-group {
@@ -1797,6 +1893,16 @@
       box-shadow: 0 2px 8px rgba(0,0,0,.08);
     }
 
+    .leaflet-bar a {
+      background: rgba(255,255,255,0.78) !important;
+      backdrop-filter: blur(10px) !important;
+      -webkit-backdrop-filter: blur(10px) !important;
+    }
+    .leaflet-bar {
+      border: 1px solid rgba(15,23,42,0.08) !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,.08) !important;
+    }
+
     /* リストのドロワー：角丸＋影 */
     .shop-list-drawer{
       border-top-left-radius: 22px;
@@ -2055,6 +2161,19 @@
       border: 1px solid rgba(0,0,0,.16);
       background: rgba(255,255,255,.55);
       white-space: nowrap;
+      cursor: pointer;
+      transition: background 0.15s, box-shadow 0.15s;
+    }
+    .lineage-chip:hover {
+      background: rgba(255,255,255,.85);
+      box-shadow: 0 2px 6px rgba(0,0,0,.15);
+    }
+    .lineage-chip.no-jump {
+      cursor: default;
+    }
+    .lineage-chip.no-jump:hover {
+      background: rgba(255,255,255,.55);
+      box-shadow: none;
     }
     
     .lineage-dot {
@@ -2069,7 +2188,10 @@
     .lineage-dot.oud { background: #f9a825; }
     .lineage-dot.rokkaku { background: #43a047; }
     .lineage-dot.musa { background: #f57c00; }
+    .lineage-dot.nonaka { background: #f57c00; }
+    .lineage-dot.taiki { background: #00acc1; }
     .lineage-dot.isse { background: #8e24aa; }
+    .lineage-dot.isse-light { background: #ce93d8; }
     .lineage-dot.oth { background: #455a64; }
     .lineage-dot.closed { background: #c7c7c7; }
     
@@ -2154,6 +2276,14 @@
       background: #666 !important;
       border-style: dashed;
     }
+
+    .lineage-node.dummy {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      pointer-events: none;
+      cursor: default;
+    }
     
     .lineage-node.selected {
       outline: 4px solid rgba(196,30,58,.35);
@@ -2168,8 +2298,121 @@
     .lineage-node.g-oud-light { background: #fff59d; color: #000; }
     .lineage-node.g-rokkaku { background: #43a047; }
     .lineage-node.g-musa { background: #f57c00; }
+    .lineage-node.g-nonaka { background: #f57c00; }
+    .lineage-node.g-taiki { background: #00acc1; }
     .lineage-node.g-isse { background: #8e24aa; }
+    .lineage-node.g-isse-light { background: #ce93d8; color: #000; }
     .lineage-node.g-oth { background: #455a64; }
+    .lineage-node.g-closed { background: #c7c7c7; border-style: dashed; }
+
+    /* グループノード */
+    .lineage-node-group {
+      width: 128px;
+      min-width: 128px;
+      height: 54px;
+      position: relative;
+      cursor: pointer;
+      user-select: none;
+    }
+    .lineage-node-group .g-layer {
+      width: 128px;
+      height: 54px;
+      border-radius: 4px;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 3px;
+      border: 2px solid rgba(0,0,0,.20);
+      box-shadow: 0 2px 0 rgba(0,0,0,.10);
+      text-align: center;
+      position: absolute;
+    }
+    .lineage-node-group .g-layer:nth-child(1) { top: -5px; left: 5px; opacity: 0.45; transform: rotate(2deg); }
+    .lineage-node-group .g-layer:nth-child(2) { top: -2.5px; left: 2.5px; opacity: 0.7; transform: rotate(1deg); }
+    .lineage-node-group .g-layer:nth-child(3) { top: 0; left: 0; z-index: 3; }
+    .lineage-node-group .g-badge {
+      position: absolute;
+      top: -8px; right: -8px;
+      background: #e53935;
+      color: white;
+      font-size: 10px;
+      font-weight: 800;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid white;
+      z-index: 10;
+    }
+    .lineage-node-group.selected .g-layer:nth-child(3) {
+      outline: 4px solid rgba(196,30,58,.35);
+      outline-offset: 2px;
+    }
+    .lineage-node-group .g-layer.g-yosh { background: #c62828; }
+    .lineage-node-group .g-layer.g-yosh-light { background: #ef5350; }
+    .lineage-node-group .g-layer.g-honmoku { background: #1976d2; }
+    .lineage-node-group .g-layer.g-oud { background: #f9a825; }
+    .lineage-node-group .g-layer.g-oud-light { background: #fff59d; color: #000; }
+    .lineage-node-group .g-layer.g-rokkaku { background: #43a047; }
+    .lineage-node-group .g-layer.g-musa { background: #f57c00; }
+    .lineage-node-group .g-layer.g-nonaka { background: #f57c00; }
+    .lineage-node-group .g-layer.g-taiki { background: #00acc1; }
+    .lineage-node-group .g-layer.g-isse { background: #8e24aa; }
+    .lineage-node-group .g-layer.g-isse-light { background: #ce93d8; }
+    .lineage-node-group .g-layer.g-oth { background: #455a64; }
+
+    /* グループポップアップ */
+    :root { --sat: env(safe-area-inset-top, 0px); }
+    .lineage-group-popup {
+      position: fixed;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      border: 1px solid rgba(0,0,0,0.08);
+      padding: 10px;
+      z-index: 9999;
+      display: none;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+    .lineage-group-popup.visible { display: block; }
+    .lineage-group-popup-title {
+      font-size: 11px;
+      color: #9ca3af;
+      font-weight: 600;
+      margin-bottom: 6px;
+      padding: 0 4px;
+    }
+    .lineage-group-popup-columns {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .lineage-group-popup-column {
+      display: flex;
+      flex-direction: column;
+      width: 160px;
+    }
+    @media (max-width: 600px) {
+      .lineage-group-popup { max-width: 92vw; }
+      .lineage-group-popup-column { width: 100%; min-width: 0; }
+      .lineage-group-popup-columns.two-col .lineage-group-popup-column { width: calc(50% - 2px); }
+    }
+    .lineage-group-popup-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .lineage-group-popup-item:hover { background: #f3f4f6; }
+    .lineage-group-popup-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+    .lineage-group-popup-name { font-size: 13px; font-weight: 600; color: #111827; }
+    .lineage-group-popup-area { font-size: 11px; color: #9ca3af; }
+    .lineage-group-popup-arrow { margin-left: auto; color: #d1d5db; font-size: 14px; }
     
     .lineage-wires {
       position: absolute;
@@ -2544,6 +2787,29 @@
     .twitter-browser .stats-header {
       padding-top: 20px !important;
     }
+
+    @media (orientation: landscape) and (max-height: 500px) {
+      .header { display: none !important; }
+      .bottom-nav { display: none !important; }
+      #lineage-search-wrap { display: none !important; }
+      #lineage-info { display: none !important; }
+      #lineage-legend-area { display: none !important; }
+      #lineage-toolbar-fixed > div:first-child { display: none !important; } /* 🚧バナー */
+      #lineage-zoom-btns {
+        position: fixed !important;
+        top: 10px !important;
+        right: calc(10px + env(safe-area-inset-right)) !important;
+        z-index: 500 !important;
+      }
+      #lineage-poster {
+        padding-left: env(safe-area-inset-left) !important;
+        padding-right: env(safe-area-inset-right) !important;
+      }
+      #lineage-sections {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+      }
+    }
     
     </style></style>
 </head>
@@ -2594,14 +2860,10 @@
     <div class="content">
       <!-- Map Tab -->
       <div id="tab-map" class="tab-content active">
-        <!-- SEO用説明文（非表示だがGoogleには読まれる） -->
-        <div style="display:none;">
-          <h1>家系ラーメンMAP - 全国の家系ラーメン店を地図で探して記録</h1>
-          <p>家系ラーメンMAPは、全国の家系ラーメン店を地図で探し、来店を記録できる無料アプリです。営業時間・訪問履歴・待ち時間も管理できます。</p>
-        </div>
         <div class="map-view">
           <div class="map-container">
             <div id="map"></div>
+            <button id="btn-location-search" onclick="openLocationSearchModal()" style="position:absolute;bottom:24px;right:10px;z-index:1000;background:rgba(255,255,255,0.78);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(15,23,42,0.08);border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.08);padding:8px 10px;cursor:pointer;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:#374151;"><svg width="16" height="16" viewBox="0 0 24 24" fill="#ef4444"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>地点を指定</button>
             <div class="map-overlay map-legend">
               <div class="legend-item">
                 <div class="legend-dot" style="background:#ef4444;"></div>
@@ -2625,21 +2887,12 @@
               </div>
               <div id="search-results" class="search-results" style="display:none;"></div>
               <div class="drawer-filter">
-                <select id="filter-category">
-                  <option value="all">すべて表示</option>
-                  <option value="総本山">総本山</option>
-                  <option value="直系">直系</option>
-                  <option value="本牧家">本牧家</option>
-                  <option value="王道家">王道家</option>
-                  <option value="王道乃印">王道乃印</option>
-                  <option value="武蔵家">武蔵家</option>
-                  <option value="壱系">壱系</option>
-                  <option value="オリジナル">オリジナル</option>
-                  <option value="資本系">資本系</option>
-                  <option value="不明">不明</option>
-                  <option value="want">☆ 行きたい</option>
-                  <option value="favorite">♡ お気に入り</option>
-                </select>
+                <button id="map-filter-advanced-btn" style="flex:1;padding:8px 12px;border:1px solid #e5e7eb;border-radius:12px;font-size:14px;background:white;cursor:pointer;display:flex;align-items:center;justify-content:space-between;min-width:120px;">
+                  <span id="map-filter-summary">すべて表示</span>
+                  <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </button>
                 <button class="filter-toggle-btn" id="btn-search-toggle">
                   <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -2647,10 +2900,14 @@
                 </button>
                 <button class="filter-toggle-btn" id="btn-open-toggle">営業中</button>
                 <button class="filter-toggle-btn" id="btn-nearby">
-                  <svg style="width:14px;height:14px;vertical-align:middle;margin-right:2px;" fill="currentColor" viewBox="0 0 24 24">
+                  <svg id="btn-nearby-icon" style="width:14px;height:14px;vertical-align:middle;margin-right:2px;" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                  </svg>現在地
+                  </svg><span id="btn-nearby-label">現在地</span>
                 </button>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding:0 12px;">
+                <div id="map-updated-at" style="font-size:12px;color:#000000;"></div>
+                <div id="map-result-count" style="font-size:12px;color:#6b7280;"></div>
               </div>
             </div>
             <div class="drawer-content" id="shop-list"></div>
@@ -2670,27 +2927,22 @@
           </div>
           <div id="list-search-results" class="search-results" style="display:none;"></div>
           <div style="display:flex;gap:6px;align-items:center;">
-            <select id="list-filter-category" style="flex:1;padding:8px 12px;border:1px solid #e5e7eb;border-radius:12px;font-size:14px;">
-              <option value="all">すべて表示</option>
-              <option value="総本山">総本山</option>
-              <option value="直系">直系</option>
-              <option value="本牧家">本牧家</option>
-              <option value="王道家">王道家</option>
-              <option value="王道乃印">王道乃印</option>
-              <option value="武蔵家">武蔵家</option>
-              <option value="壱系">壱系</option>
-              <option value="オリジナル">オリジナル</option>
-              <option value="資本系">資本系</option>
-              <option value="不明">不明</option>
-              <option value="want">☆ 行きたい</option>
-              <option value="favorite">♡ お気に入り</option>
-            </select>
+            <button id="list-filter-advanced-btn" style="flex:1;padding:8px 12px;border:1px solid #e5e7eb;border-radius:12px;font-size:14px;background:white;cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
+              <span id="list-filter-summary">すべて表示</span>
+              <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
             <button class="filter-toggle-btn" id="list-btn-open-toggle">営業中</button>
             <button class="filter-toggle-btn" id="list-btn-nearby">
               <svg style="width:14px;height:14px;vertical-align:middle;margin-right:2px;" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
               </svg>現在地
             </button>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+            <div id="list-updated-at" style="font-size:12px;color:#000000;"></div>
+            <div id="list-result-count" style="font-size:12px;color:#6b7280;"></div>
           </div>
         </div>
         <div class="list-container" id="list-container"></div>
@@ -2709,19 +2961,23 @@
                 <input id="lineage-search" type="text" placeholder="店名で検索 → 選ぶとジャンプ" autocomplete="off" />
                 <div id="lineage-suggestions"></div>
               </div>
-              <button id="lineage-compact-toggle">全体表示</button>
+              <div id="lineage-zoom-btns" style="display:flex;gap:4px;">
+                <button id="lineage-zoom-out" style="width:36px;height:36px;padding:0;font-size:20px;line-height:1;" title="縮小">－</button>
+                <button id="lineage-zoom-in" style="width:36px;height:36px;padding:0;font-size:20px;line-height:1;" title="拡大">＋</button>
+              </div>
             </div>
           </div>
           <div id="lineage-legend-area">
             <div id="lineage-legend">
-              <span class="lineage-chip"><span class="lineage-dot yosh"></span>吉村家系</span>
-              <span class="lineage-chip"><span class="lineage-dot honmoku"></span>本牧家系</span>
-              <span class="lineage-chip"><span class="lineage-dot oud"></span>王道家系</span>
-              <span class="lineage-chip"><span class="lineage-dot rokkaku"></span>六角家系</span>
-              <span class="lineage-chip"><span class="lineage-dot musa"></span>新中野武蔵家系</span>
-              <span class="lineage-chip"><span class="lineage-dot isse"></span>壱系</span>
-              <span class="lineage-chip"><span class="lineage-dot oth"></span>オリジナル</span>
-              <span class="lineage-chip"><span class="lineage-dot closed"></span>閉店</span>
+              <span class="lineage-chip" data-section="yosh" onclick="jumpToLineageSection(this)"><span class="lineage-dot yosh"></span>吉村家系</span>
+              <span class="lineage-chip" data-section="本牧家系" onclick="jumpToLineageSection(this)"><span class="lineage-dot honmoku"></span>本牧家系</span>
+              <span class="lineage-chip" data-section="王道家系" onclick="jumpToLineageSection(this)"><span class="lineage-dot oud"></span>王道家系</span>
+              <span class="lineage-chip" data-section="六角家系" onclick="jumpToLineageSection(this)"><span class="lineage-dot rokkaku"></span>六角家系</span>
+              <span class="lineage-chip" data-section="武蔵家系" onclick="jumpToLineageSection(this)"><span class="lineage-dot musa"></span>新中野武蔵家系</span>
+              <span class="lineage-chip" data-section="大輝家系" onclick="jumpToLineageSection(this)"><span class="lineage-dot taiki"></span>大輝家系</span>
+              <span class="lineage-chip" data-section="oth" onclick="jumpToLineageSection(this)"><span class="lineage-dot oth"></span>オリジナル</span>
+              <span class="lineage-chip" data-section="壱系" onclick="jumpToLineageSection(this)"><span class="lineage-dot isse"></span>壱系（資本系含む）</span>
+              <span class="lineage-chip no-jump"><span class="lineage-dot closed"></span>閉店</span>
             </div>
           </div>
           <div id="lineage-sections"></div>
@@ -2730,7 +2986,7 @@
               <div id="lineage-info-title">店をタップすると情報が出ます</div>
               <div id="lineage-info-sub">検索からもジャンプできます</div>
             </div>
-            <button id="lineage-detail-btn" style="display:none;margin-right:8px;border:2px solid rgba(0,0,0,.18);background:rgba(59,130,246,.9);color:white;padding:8px 12px;border-radius:10px;font-weight:900;cursor:pointer;white-space:nowrap;">詳細画面</button>
+            <button id="lineage-detail-btn" style="display:none;margin-left:auto;margin-right:8px;border:2px solid rgba(0,0,0,.18);background:rgba(59,130,246,.9);color:white;padding:8px 12px;border-radius:10px;font-weight:900;cursor:pointer;white-space:nowrap;">詳細画面</button>
             <button id="lineage-reset-btn">選択解除</button>
           </div>
         </div>
@@ -2741,9 +2997,53 @@
         <div class="stats-header">
           <div class="stats-brand">
             <h1>家系ラーメンmap</h1>
-            <div class="stats-sub">統計・分析</div>
+            <div class="stats-sub">コミュニティ</div>
           </div>
         </div>
+
+        <!-- アカウント・コミュニティ関連（隠しフラグで表示制御） -->
+        <div id="auth-beta-area">
+
+        <!-- アカウント（ログイン状態） -->
+        <div style="background:white;border-radius:14px;margin:12px 16px 0;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+          <div id="stats-account-logged-out">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+              <div>
+                <div style="font-weight:700;font-size:15px;color:#111827;">ログインしていません</div>
+                <div style="font-size:13px;color:#6b7280;margin-top:2px;">ログインすると記録がクラウドに保存されます</div>
+              </div>
+              <button onclick="openAccountModal()" style="flex-shrink:0;padding:9px 16px;border-radius:9px;border:none;background:#111827;color:white;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">ログイン</button>
+            </div>
+          </div>
+          <div id="stats-account-logged-in" style="display:none;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <img id="stats-account-avatar-img" src="" style="width:44px;height:44px;border-radius:50%;display:none;object-fit:cover;flex-shrink:0;" />
+              <div style="flex:1;min-width:0;">
+                <div id="stats-account-display-name" style="font-weight:700;font-size:15px;color:#111827;overflow:hidden;text-overflow:ellipsis;"></div>
+                <div id="stats-account-display-email" style="font-size:12px;color:#6b7280;overflow:hidden;text-overflow:ellipsis;"></div>
+              </div>
+              <button onclick="openAccountModal()" style="flex-shrink:0;padding:8px 14px;border-radius:9px;border:1.5px solid #e5e7eb;background:white;color:#374151;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">設定</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- サブタブ切り替え -->
+        <div style="display:flex;gap:8px;margin:12px 16px 0;">
+          <button id="stats-subtab-btn-mystats" onclick="switchStatsSubtab('mystats')" style="flex:1;padding:10px 0;border-radius:10px;border:none;background:#111827;color:white;font-size:14px;font-weight:700;cursor:pointer;">統計</button>
+          <button id="stats-subtab-btn-community" onclick="switchStatsSubtab('community')" style="flex:1;padding:10px 0;border-radius:10px;border:1.5px solid #e5e7eb;background:white;color:#374151;font-size:14px;font-weight:700;cursor:pointer;">みんなの記録</button>
+        </div>
+
+        <!-- みんなの記録（コミュニティフィード） -->
+        <div id="stats-subtab-community" style="display:none;margin:12px 16px 0;">
+          <div id="community-feed-list">
+            <div style="text-align:center;color:#9ca3af;font-size:13px;padding:24px 0;">読み込み中...</div>
+          </div>
+        </div>
+
+        </div>
+        <!-- /auth-beta-area -->
+
+        <div id="stats-subtab-mystats">
         
         <div class="stats-new-container">
           
@@ -2758,10 +3058,10 @@
                 <div style="flex:1 1 240px;min-width:220px;">
                   <select id="stats-period-select" class="stats-new-select">
                     <option value="7">直近7日</option>
-                    <option value="30" selected>直近30日</option>
+                    <option value="30">直近30日</option>
                     <option value="90">直近90日</option>
                     <option value="365">直近1年</option>
-                    <option value="all">全期間</option>
+                    <option value="all" selected>全期間</option>
                   </select>
                 </div>
                 <div class="stats-new-pill">
@@ -2841,6 +3141,7 @@
           </div>
           
         </div>
+        </div>
       </div>
     </div>
     
@@ -2888,7 +3189,7 @@
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
         </svg>
-        <span>統計</span>
+        <span>コミュニティ</span>
       </button>
     </div>
   </div>
@@ -2904,6 +3205,7 @@
             <div id="detail-name-hiragana" style="color:#9ca3af;font-size:13px;margin-top:0px;margin-bottom:8px;display:none;"></div>
             <div class="modal-badges">
               <span class="badge badge-category" id="detail-category"></span>
+              <span id="detail-origin" class="badge" style="display:none;align-items:center;justify-content:center;background:#ffffff;color:#1e40af;text-decoration:underline;cursor:pointer;border:1px solid #e5e7eb;"></span>
               <span id="detail-status-badge"></span>
             </div>
             <div style="display:flex;align-items:center;gap:4px;color:#6b7280;font-size:13px;margin-top:4px;">
@@ -2928,7 +3230,7 @@
           <p class="description" id="detail-description"></p>
         </div>
         
-        <div class="section">
+        <div class="section" id="hours-section">
           <div class="section-title" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;" onclick="toggleHours()">
             <span>営業時間</span>
             <span id="hours-toggle" style="font-size: 14px; color: #6b7280;">▼</span>
@@ -2941,7 +3243,7 @@
         </div>
         
         
-        <div class="section">
+        <div class="section" id="nav-section">
           <div class="section-title">ナビゲーション</div>
           <div class="nav-buttons">
             <a class="btn-nav" id="nav-apple" href="#" target="_blank" rel="noopener noreferrer">
@@ -3027,10 +3329,37 @@
           <div class="section-title">来店履歴</div>
           <div class="visit-history" id="detail-visits"></div>
         </div>
+
+        <div class="section" id="shop-community-section">
+          <div class="section-title">みんなの記録</div>
+          <div id="shop-community-list">
+            <div style="text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;">読み込み中...</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
   
+  <!-- Location Search Modal -->
+  <div id="location-search-modal" onclick="closeLocationSearchModal()" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.4);align-items:flex-end;justify-content:center;">
+    <div onclick="event.stopPropagation()" style="background:white;border-radius:20px 20px 0 0;padding:20px 20px 32px;width:100%;max-width:480px;box-shadow:0 -4px 24px rgba(0,0,0,0.15);">
+      <div style="width:36px;height:4px;background:#d1d5db;border-radius:2px;margin:0 auto 18px;"></div>
+      <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:14px;">📍 地点を指定</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div style="flex:1;display:flex;align-items:center;background:#f3f4f6;border-radius:10px;padding:0 12px;">
+          <svg width="16" height="16" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input type="text" id="location-search-input" placeholder="駅名・地名を入力" autocomplete="off" autofocus
+            style="flex:1;border:none;background:transparent;padding:11px 8px;font-size:15px;outline:none;color:#111827;"
+            onkeydown="if(event.key==='Enter')executeLocationSearch()">
+        </div>
+        <button onclick="executeLocationSearch()" id="location-search-btn"
+          style="padding:11px 16px;border:none;border-radius:10px;background:#ef4444;color:white;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;">検索</button>
+      </div>
+      <div id="location-search-error" style="color:#ef4444;font-size:12px;margin-top:8px;display:none;padding:0 4px;"></div>
+      <div id="location-search-candidates" style="margin-top:8px;display:none;border-radius:10px;overflow-y:auto;max-height:280px;border:1px solid #e5e7eb;"></div>
+    </div>
+  </div>
+
   <!-- Visit Record Modal -->
   <div id="record-modal" class="modal record-modal">
     <div class="modal-content" onclick="event.stopPropagation()">
@@ -3130,6 +3459,13 @@
             <label class="form-label">メモ</label>
             <textarea class="form-input" id="input-memo" placeholder="味の感想など..."></textarea>
           </div>
+
+          <div class="form-group" id="input-public-wrap" style="margin-top:8px;display:none;">
+            <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#374151;cursor:pointer;">
+              <input type="checkbox" id="input-is-public" style="width:18px;height:18px;">
+              この記録を公開する（ログイン中のみ・他のユーザーに表示されます）
+            </label>
+          </div>
           
           <div class="form-group">
             <label class="form-label">写真（最大4枚）</label>
@@ -3144,37 +3480,500 @@
             </div>
           </div>
           
-          <div style="display:flex;gap:8px;margin-top:16px;">
-            <button type="button" id="save-visit-btn" class="btn btn-primary" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;">
-              <svg style="width:18px;height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-                <polyline points="17 21 17 13 7 13 7 21"/>
-                <polyline points="7 3 7 8 15 8"/>
-              </svg>
-              保存
-            </button>
-            <button type="button" id="save-and-tweet-btn" class="btn" style="flex:1;background:#000000;color:white;border:none;display:flex;align-items:center;justify-content:center;gap:6px;">
-              <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-              </svg>
-              保存してシェア
-            </button>
-          </div>
-          <div style="display:flex;gap:8px;margin-top:4px;">
-            <div style="flex:1;"></div>
-            <div style="flex:1;text-align:center;font-size:12px;color:#6b7280;">
-              Xの投稿画面で写真を追加してください。
-            </div>
-          </div>
         </form>
+      </div>
+      <div class="record-modal-footer">
+        <div style="display:flex;gap:8px;">
+          <button type="button" id="save-visit-btn" class="btn btn-primary" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <svg style="width:18px;height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+              <polyline points="17 21 17 13 7 13 7 21"/>
+              <polyline points="7 3 7 8 15 8"/>
+            </svg>
+            保存
+          </button>
+          <button type="button" id="save-and-tweet-btn" class="btn" style="flex:1;background:#000000;color:white;border:none;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+            保存してシェア
+          </button>
+        </div>
+        <div style="text-align:center;font-size:12px;color:#6b7280;margin-top:4px;">
+          Xの投稿画面で写真を追加してください。
+        </div>
       </div>
     </div>
   </div>
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script>
+    // ===== Android PWA高さ対策：実際の表示領域をCSS変数にセット =====
+    // standaloneモードでdvhがずれて下部ナビが隠れる問題を防ぐため、
+    // window.innerHeightを実測して --app-height に反映する。
+    (function setupAppHeight() {
+      function applyAppHeight() {
+        document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
+      }
+      applyAppHeight();
+      window.addEventListener('resize', applyAppHeight);
+      window.addEventListener('orientationchange', () => setTimeout(applyAppHeight, 150));
+      window.addEventListener('pageshow', applyAppHeight);
+      // visualViewport があればより正確（ソフトキーボードやバー出現に追従）
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', applyAppHeight);
+      }
+      // 起動直後・リロード直後にバーの高さが確定するまで数回測り直す
+      [60, 200, 500, 1000].forEach(t => setTimeout(applyAppHeight, t));
+    })();
+
     // App Version (手動で更新)
-    const APP_VERSION = "1.20.0";
+    const APP_VERSION = "1.22.0";
+
+    // ===== Supabase（ログイン・クラウド同期） =====
+    const SUPABASE_URL = 'https://ggmfsnyhkrdoytbpvtxd.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_FqdImZ_XB_PWzK3euU7O8g_gz8sLePg';
+    let supabaseClient = null;
+    let currentUser = null;
+    let isSyncingToCloud = false;
+
+    // ===== ログイン機能の隠しフラグ（一般公開前のテスト用） =====
+    // URLに ?authbeta=1 を付けてアクセスすると、その端末でログイン関連UIが表示されるようになる。
+    // ?authbeta=0 でオフに戻せる。
+    const AUTH_BETA_KEY = 'iekei-auth-beta-enabled';
+    (function setupAuthBetaFlag() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('authbeta')) {
+        const val = params.get('authbeta');
+        if (val === '1') localStorage.setItem(AUTH_BETA_KEY, '1');
+        else if (val === '0') localStorage.removeItem(AUTH_BETA_KEY);
+        // URLからパラメータを消してリロードなしで綺麗にする
+        params.delete('authbeta');
+        const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+        history.replaceState({}, '', newUrl);
+      }
+    })();
+    function isAuthBetaEnabled() {
+      return localStorage.getItem(AUTH_BETA_KEY) === '1';
+    }
+    function applyAuthBetaVisibility() {
+      const enabled = isAuthBetaEnabled();
+      const display = enabled ? '' : 'none';
+      const menuItem = document.getElementById('settings-account-menu-item');
+      const betaArea = document.getElementById('auth-beta-area');
+      const shopCommunity = document.getElementById('shop-community-section');
+      if (menuItem) menuItem.style.display = display;
+      if (betaArea) betaArea.style.display = display;
+      if (shopCommunity) shopCommunity.style.display = display;
+    }
+    applyAuthBetaVisibility();
+
+    try {
+      supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } catch (e) {
+      console.error('Supabase初期化エラー:', e);
+    }
+
+    function openAccountModal() {
+      const modal = document.getElementById('account-modal');
+      if (modal) {
+        modal.classList.add('active');
+        updateAccountModalUI();
+      }
+    }
+    function closeAccountModal() {
+      const modal = document.getElementById('account-modal');
+      if (modal) modal.classList.remove('active');
+    }
+
+    async function signInWithGoogle() {
+      if (!supabaseClient) return;
+      const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin + window.location.pathname }
+      });
+      if (error) {
+        console.error('Googleログインエラー:', error);
+        await showCustomAlert('ログインに失敗しました。時間をおいて再度お試しください。');
+      }
+    }
+
+    async function signInWithApple() {
+      if (!supabaseClient) return;
+      const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: 'apple',
+        options: { redirectTo: window.location.origin + window.location.pathname }
+      });
+      if (error) {
+        console.error('Appleログインエラー:', error);
+        await showCustomAlert('ログインに失敗しました。時間をおいて再度お試しください。');
+      }
+    }
+
+    async function signOutAccount() {
+      if (!supabaseClient) return;
+      await supabaseClient.auth.signOut();
+      currentUser = null;
+      updateAccountMenuSubtitle();
+      updateAccountModalUI();
+    }
+
+    function updateAccountMenuSubtitle() {
+      const el = document.getElementById('account-menu-subtitle');
+      if (el) {
+        if (currentUser) {
+          const name = currentUser.user_metadata?.name || currentUser.user_metadata?.full_name || currentUser.email || 'ログイン中';
+          el.textContent = `${name} としてログイン中`;
+        } else {
+          el.textContent = 'ログインしてクラウド同期';
+        }
+      }
+
+      // 統計タブのアカウント表示も同期して更新
+      const statsOut = document.getElementById('stats-account-logged-out');
+      const statsIn = document.getElementById('stats-account-logged-in');
+      if (statsOut && statsIn) {
+        if (currentUser) {
+          statsOut.style.display = 'none';
+          statsIn.style.display = 'block';
+          const name = currentUser.user_metadata?.name || currentUser.user_metadata?.full_name || 'ユーザー';
+          const email = currentUser.email || '';
+          const avatarUrl = currentUser.user_metadata?.avatar_url || '';
+          const nameEl = document.getElementById('stats-account-display-name');
+          const emailEl = document.getElementById('stats-account-display-email');
+          const avatarEl = document.getElementById('stats-account-avatar-img');
+          if (nameEl) nameEl.textContent = name;
+          if (emailEl) emailEl.textContent = email;
+          if (avatarEl) {
+            if (avatarUrl) { avatarEl.src = avatarUrl; avatarEl.style.display = 'block'; }
+            else { avatarEl.style.display = 'none'; }
+          }
+        } else {
+          statsOut.style.display = 'block';
+          statsIn.style.display = 'none';
+        }
+      }
+    }
+
+    function updateAccountModalUI() {
+      const loggedOutView = document.getElementById('account-logged-out');
+      const loggedInView = document.getElementById('account-logged-in');
+      if (!loggedOutView || !loggedInView) return;
+      if (currentUser) {
+        loggedOutView.style.display = 'none';
+        loggedInView.style.display = 'block';
+        const name = currentUser.user_metadata?.name || currentUser.user_metadata?.full_name || 'ユーザー';
+        const email = currentUser.email || '';
+        const avatarUrl = currentUser.user_metadata?.avatar_url || '';
+        const nameEl = document.getElementById('account-display-name');
+        const emailEl = document.getElementById('account-display-email');
+        const avatarEl = document.getElementById('account-avatar-img');
+        if (nameEl) nameEl.textContent = name;
+        if (emailEl) emailEl.textContent = email;
+        if (avatarEl) {
+          if (avatarUrl) {
+            avatarEl.src = avatarUrl;
+            avatarEl.style.display = 'block';
+          } else {
+            avatarEl.style.display = 'none';
+          }
+        }
+      } else {
+        loggedOutView.style.display = 'block';
+        loggedInView.style.display = 'none';
+      }
+    }
+
+    // クラウド同期：訪問記録（テキスト情報）と行きたい/お気に入りをSupabaseに反映
+    // ※ 写真のクラウド同期は今後対応予定。今はテキスト情報のみ同期します。
+    // 店舗詳細：その店の「みんなの記録」（公開されている他ユーザーの訪問記録）
+    async function loadShopCommunityVisits(shopId) {
+      const listEl = document.getElementById('shop-community-list');
+      if (!listEl || !supabaseClient) return;
+      listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;">読み込み中...</div>';
+      try {
+        const { data: visitRows, error } = await supabaseClient
+          .from('visits')
+          .select('id, visited_at, rating, memo, user_id, created_at')
+          .eq('shop_id', shopId)
+          .eq('is_public', true)
+          .order('created_at', { ascending: false })
+          .limit(30);
+        if (error) throw error;
+
+        if (!visitRows || visitRows.length === 0) {
+          listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;">まだ公開されている記録がありません</div>';
+          return;
+        }
+
+        const userIds = [...new Set(visitRows.map(v => v.user_id))];
+        const { data: profileRows } = await supabaseClient
+          .from('profiles')
+          .select('id, display_name, avatar_url')
+          .in('id', userIds);
+        const profileMap = new Map((profileRows || []).map(p => [p.id, p]));
+
+        const visitIds = visitRows.map(v => v.id);
+        const { data: likeRows } = await supabaseClient
+          .from('likes')
+          .select('user_id, visit_id')
+          .in('visit_id', visitIds);
+        const likeCountMap = new Map();
+        const myLikedSet = new Set();
+        (likeRows || []).forEach(l => {
+          likeCountMap.set(l.visit_id, (likeCountMap.get(l.visit_id) || 0) + 1);
+          if (currentUser && l.user_id === currentUser.id) myLikedSet.add(l.visit_id);
+        });
+
+        listEl.innerHTML = '';
+        visitRows.forEach(v => {
+          const profile = profileMap.get(v.user_id);
+          const name = profile?.display_name || '匿名ユーザー';
+          const avatarUrl = profile?.avatar_url || '';
+          const likeCount = likeCountMap.get(v.id) || 0;
+          const liked = myLikedSet.has(v.id);
+          const dateStr = v.visited_at ? formatDateDetail(v.visited_at) : '';
+          const starsStr = v.rating ? '★'.repeat(v.rating) + '☆'.repeat(5 - v.rating) : '';
+
+          const card = document.createElement('div');
+          card.style.background = '#f9fafb';
+          card.style.borderRadius = '12px';
+          card.style.padding = '12px';
+          card.style.marginBottom = '8px';
+          card.innerHTML = `
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              ${avatarUrl ? `<img src="${avatarUrl}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;">` : `<div style="width:24px;height:24px;border-radius:50%;background:#e5e7eb;"></div>`}
+              <div style="font-size:12px;font-weight:600;color:#374151;">${escapeHtml(name)}</div>
+              <div style="font-size:11px;color:#9ca3af;margin-left:auto;">${dateStr}</div>
+            </div>
+            ${starsStr ? `<div style="font-size:13px;color:#f59e0b;margin-bottom:4px;">${starsStr}</div>` : ''}
+            ${v.memo ? `<div style="font-size:13px;color:#4b5563;line-height:1.5;margin-bottom:6px;">${escapeHtml(v.memo)}</div>` : ''}
+            <button onclick="toggleLike('${v.id}', this)" data-liked="${liked ? '1' : '0'}" style="border:none;background:none;cursor:pointer;font-size:12px;color:${liked ? '#dc2626' : '#9ca3af'};padding:0;display:flex;align-items:center;gap:4px;">
+              <span class="like-icon">${liked ? '❤️' : '🤍'}</span><span class="like-count">${likeCount}</span>
+            </button>
+          `;
+          listEl.appendChild(card);
+        });
+      } catch (e) {
+        console.error('店舗コミュニティ記録の読み込みエラー:', e);
+        listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;">読み込みに失敗しました</div>';
+      }
+    }
+
+    function switchStatsSubtab(which) {
+      const mystats = document.getElementById('stats-subtab-mystats');
+      const community = document.getElementById('stats-subtab-community');
+      const btnMy = document.getElementById('stats-subtab-btn-mystats');
+      const btnCommunity = document.getElementById('stats-subtab-btn-community');
+      if (!mystats || !community || !btnMy || !btnCommunity) return;
+      if (which === 'community') {
+        mystats.style.display = 'none';
+        community.style.display = 'block';
+        btnCommunity.style.background = '#111827';
+        btnCommunity.style.color = 'white';
+        btnCommunity.style.border = 'none';
+        btnMy.style.background = 'white';
+        btnMy.style.color = '#374151';
+        btnMy.style.border = '1.5px solid #e5e7eb';
+        loadCommunityFeed();
+      } else {
+        mystats.style.display = '';
+        community.style.display = 'none';
+        btnMy.style.background = '#111827';
+        btnMy.style.color = 'white';
+        btnMy.style.border = 'none';
+        btnCommunity.style.background = 'white';
+        btnCommunity.style.color = '#374151';
+        btnCommunity.style.border = '1.5px solid #e5e7eb';
+      }
+    }
+
+    // コミュニティフィード（公開されている訪問記録の一覧）
+    async function loadCommunityFeed() {
+      const listEl = document.getElementById('community-feed-list');
+      if (!listEl || !supabaseClient) return;
+      listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:24px 0;">読み込み中...</div>';
+      try {
+        const { data: visitRows, error } = await supabaseClient
+          .from('visits')
+          .select('id, shop_id, visited_at, rating, memo, user_id, created_at')
+          .eq('is_public', true)
+          .order('created_at', { ascending: false })
+          .limit(50);
+        if (error) throw error;
+
+        if (!visitRows || visitRows.length === 0) {
+          listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:24px 0;">まだ公開されている記録がありません</div>';
+          return;
+        }
+
+        const userIds = [...new Set(visitRows.map(v => v.user_id))];
+        const { data: profileRows } = await supabaseClient
+          .from('profiles')
+          .select('id, display_name, avatar_url')
+          .in('id', userIds);
+        const profileMap = new Map((profileRows || []).map(p => [p.id, p]));
+
+        const visitIds = visitRows.map(v => v.id);
+        const { data: likeRows } = await supabaseClient
+          .from('likes')
+          .select('user_id, visit_id')
+          .in('visit_id', visitIds);
+        const likeCountMap = new Map();
+        const myLikedSet = new Set();
+        (likeRows || []).forEach(l => {
+          likeCountMap.set(l.visit_id, (likeCountMap.get(l.visit_id) || 0) + 1);
+          if (currentUser && l.user_id === currentUser.id) myLikedSet.add(l.visit_id);
+        });
+
+        listEl.innerHTML = '';
+        visitRows.forEach(v => {
+          const profile = profileMap.get(v.user_id);
+          const name = profile?.display_name || '匿名ユーザー';
+          const avatarUrl = profile?.avatar_url || '';
+          const shop = (typeof shops !== 'undefined' ? shops : []).find(s => s.id === v.shop_id);
+          const shopName = shop?.name || v.shop_id;
+          const likeCount = likeCountMap.get(v.id) || 0;
+          const liked = myLikedSet.has(v.id);
+          const dateStr = v.visited_at ? formatDateDetail(v.visited_at) : '';
+          const starsStr = v.rating ? '★'.repeat(v.rating) + '☆'.repeat(5 - v.rating) : '';
+
+          const card = document.createElement('div');
+          card.style.background = 'white';
+          card.style.borderRadius = '14px';
+          card.style.padding = '14px';
+          card.style.marginBottom = '10px';
+          card.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)';
+          card.innerHTML = `
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              ${avatarUrl ? `<img src="${avatarUrl}" style="width:26px;height:26px;border-radius:50%;object-fit:cover;">` : `<div style="width:26px;height:26px;border-radius:50%;background:#e5e7eb;"></div>`}
+              <div style="font-size:13px;font-weight:600;color:#374151;">${escapeHtml(name)}</div>
+            </div>
+            <div style="font-weight:700;font-size:15px;color:#111827;margin-bottom:2px;">${escapeHtml(shopName)}</div>
+            <div style="font-size:12px;color:#9ca3af;margin-bottom:6px;">${dateStr}${starsStr ? ' ・ ' + starsStr : ''}</div>
+            ${v.memo ? `<div style="font-size:13px;color:#4b5563;line-height:1.5;margin-bottom:8px;">${escapeHtml(v.memo)}</div>` : ''}
+            <button onclick="toggleLike('${v.id}', this)" data-liked="${liked ? '1' : '0'}" style="border:none;background:none;cursor:pointer;font-size:13px;color:${liked ? '#dc2626' : '#9ca3af'};padding:0;display:flex;align-items:center;gap:4px;">
+              <span class="like-icon">${liked ? '❤️' : '🤍'}</span><span class="like-count">${likeCount}</span>
+            </button>
+          `;
+          listEl.appendChild(card);
+        });
+      } catch (e) {
+        console.error('フィード読み込みエラー:', e);
+        listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:24px 0;">読み込みに失敗しました</div>';
+      }
+    }
+
+    async function toggleLike(visitId, btnEl) {
+      if (!supabaseClient || !currentUser) {
+        await showCustomAlert('いいねするにはログインが必要です');
+        return;
+      }
+      const liked = btnEl.dataset.liked === '1';
+      const countEl = btnEl.querySelector('.like-count');
+      const iconEl = btnEl.querySelector('.like-icon');
+      const count = parseInt(countEl.textContent) || 0;
+      try {
+        if (liked) {
+          await supabaseClient.from('likes').delete().eq('user_id', currentUser.id).eq('visit_id', visitId);
+          btnEl.dataset.liked = '0';
+          btnEl.style.color = '#9ca3af';
+          iconEl.textContent = '🤍';
+          countEl.textContent = Math.max(0, count - 1);
+        } else {
+          await supabaseClient.from('likes').insert({ user_id: currentUser.id, visit_id: visitId });
+          btnEl.dataset.liked = '1';
+          btnEl.style.color = '#dc2626';
+          iconEl.textContent = '❤️';
+          countEl.textContent = count + 1;
+        }
+      } catch (e) {
+        console.error('いいねエラー:', e);
+      }
+    }
+
+    async function syncVisitsToCloud() {
+      if (!supabaseClient || !currentUser || isSyncingToCloud) return;
+      isSyncingToCloud = true;
+      let changed = false;
+      try {
+        for (const shopId of Object.keys(visits)) {
+          const entry = visits[shopId];
+          if (!entry) continue;
+
+          if (entry.wantToGo || entry.favorite) {
+            await supabaseClient.from('shop_status').upsert({
+              user_id: currentUser.id,
+              shop_id: shopId,
+              want_to_go: !!entry.wantToGo,
+              favorite: !!entry.favorite,
+              updated_at: new Date().toISOString()
+            });
+          }
+
+          const logs = entry.logs;
+          if (!Array.isArray(logs)) continue;
+          for (const log of logs) {
+            if (log._cloudSynced) continue;
+            const row = {
+              user_id: currentUser.id,
+              shop_id: shopId,
+              visited_at: log.visitedAt || null,
+              rating: log.rating ?? null,
+              wait_minutes: log.waitMinutes ?? null,
+              temperature: log.temperature ?? null,
+              weather: log.weather ?? null,
+              order_text: log.order ?? null,
+              options: log.options ?? null,
+              noodle_firmness: log.noodleFirmness ?? null,
+              flavor_intensity: log.flavorIntensity ?? null,
+              oil_amount: log.oilAmount ?? null,
+              memo: log.memo ?? null,
+              is_public: !!log.isPublic
+            };
+            const { error } = await supabaseClient.from('visits').insert(row);
+            if (!error) {
+              log._cloudSynced = true;
+              changed = true;
+            } else {
+              console.error('クラウド同期エラー（訪問記録）:', error);
+            }
+          }
+        }
+      } catch (e) {
+        console.error('クラウド同期エラー:', e);
+      } finally {
+        isSyncingToCloud = false;
+      }
+      if (changed) {
+        saveVisits(); // _cloudSyncedフラグを保存（再度syncVisitsToCloudが呼ばれても変更が無いので安全）
+      }
+    }
+
+    // 認証状態の初期化・監視
+    async function initAuth() {
+      if (!supabaseClient) return;
+      try {
+        const { data } = await supabaseClient.auth.getSession();
+        currentUser = data?.session?.user || null;
+        updateAccountMenuSubtitle();
+        updateAccountModalUI();
+        if (currentUser) syncVisitsToCloud();
+      } catch (e) {
+        console.error('認証状態の取得に失敗:', e);
+      }
+
+      supabaseClient.auth.onAuthStateChange((event, session) => {
+        currentUser = session?.user || null;
+        updateAccountMenuSubtitle();
+        updateAccountModalUI();
+        if (event === 'SIGNED_IN' && currentUser) {
+          syncVisitsToCloud();
+        }
+      });
+    }
+    initAuth();
     
     // 更新チェック機能（HTMLのみ）
     async function checkUpdate() {
@@ -3252,7 +4051,7 @@
     
     // Shop Data
     // Google Apps Scriptからデータを読み込み
-        const SHOPS_API_URL = 'https://script.google.com/macros/s/AKfycby2amv92inwaG_6dQlm9WEGkRCPcuYY0RnWvDlyh_v3i9RGS2FtGnOqCJbrlxx2WLBK/exec';
+        const SHOPS_API_URL = 'https://script.google.com/macros/s/AKfycbwiMZ27NTR7TR2i3yXM4KXyKatQ-6om2CpkKOjd8TPrUV9W3rd4n52-rmnzBvu5tifq/exec';
     let shops = []; // APIから読み込む
     let shopsLoaded = false;
     
@@ -3306,6 +4105,16 @@
       }
     ];
     
+    function updateDataTimestampDisplay() {
+      if (!window.dataUpdatedAt) return;
+      const d = new Date(window.dataUpdatedAt);
+      const text = `更新日：${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+      const mapEl = document.getElementById('map-updated-at');
+      const listEl = document.getElementById('list-updated-at');
+      if (mapEl) mapEl.textContent = text;
+      if (listEl) listEl.textContent = text;
+    }
+    
     // APIからデータを読み込む
     async function loadShopsData() {
       const CACHE_KEY = 'iekei-shops-cache';
@@ -3318,6 +4127,9 @@
       if (cachedData) {
         try {
           shops = JSON.parse(cachedData);
+          injectGroupDummyData();
+          window.dataUpdatedAt = cachedTimestamp;
+          updateDataTimestampDisplay();
           console.log(`📦 キャッシュから${shops.length}店舗を読み込みました`);
           console.log(`🕐 キャッシュ日時: ${new Date(cachedTimestamp).toLocaleString('ja-JP')}`);
           initializeApp();
@@ -3335,7 +4147,7 @@
         
         // タイムアウト処理
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒でタイムアウト
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒でタイムアウト
         
         const response = await fetch(SHOPS_API_URL, {
           signal: controller.signal,
@@ -3350,9 +4162,18 @@
         const data = await response.json();
         
         if (data.shops && data.shops.length > 0) {
+          window.dataUpdatedAt = data.updatedAt;
+          updateDataTimestampDisplay();
+          // デバッグログ追加
+          console.log('🔍 タイムスタンプ比較:');
+          console.log('  data.updatedAt:', data.updatedAt);
+          console.log('  cachedTimestamp:', cachedTimestamp);
+          console.log('  一致?', data.updatedAt === cachedTimestamp);
+          
           // 3. updatedAtが違っていたら更新
           if (data.updatedAt !== cachedTimestamp) {
             shops = data.shops;
+            injectGroupDummyData();
             localStorage.setItem(CACHE_KEY, JSON.stringify(shops));
             localStorage.setItem(CACHE_TIMESTAMP_KEY, data.updatedAt);
             
@@ -3373,7 +4194,9 @@
           }
         }
       } catch (error) {
-        console.error('❌ データ読み込みエラー:', error);
+        // エラーメッセージを安全に取得（AbortSignalなどのクローン不可オブジェクトを除外）
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error('❌ データ読み込みエラー:', errorMessage);
         
         // タイムアウトかネットワークエラーか判定
         if (error.name === 'AbortError') {
@@ -3423,6 +4246,7 @@
     // フォールバックデータを使用
     function useFallbackData() {
       shops = FALLBACK_SHOPS;
+      injectGroupDummyData();
       console.log('📦 フォールバックデータを使用（吉村家のみ）');
       initializeApp();
     }
@@ -3432,16 +4256,16 @@
       const toast = document.createElement('div');
       toast.style.cssText = `
         position: fixed;
-        bottom: 80px;
+        top: 50%;
         left: 50%;
-        transform: translateX(-50%);
+        transform: translate(-50%, -50%);
         background: #111827;
         color: white;
         padding: 12px 20px;
         border-radius: 8px;
         font-size: 14px;
         z-index: 10000;
-        animation: slideUp 0.3s ease;
+        animation: slideUpCenter 0.3s ease;
       `;
       toast.textContent = message;
       document.body.appendChild(toast);
@@ -3454,7 +4278,14 @@
     }
     
     // アプリ初期化（データ読み込み後に実行）
+    // グループ機能テスト用ダミーデータ注入
+    function injectGroupDummyData() {
+      // ダミーデータなし（スプレッドシートのgroupカラムで管理）
+      console.log('🏷️ グループデータはスプレッドシートから取得');
+    }
+
     function initializeApp() {
+      updateDataTimestampDisplay();
       console.log('🚀 アプリを初期化中...');
       
       // ローディング画面を非表示
@@ -3531,7 +4362,7 @@
           renderVisitHistory();
         }
       } catch (error) {
-        console.error('❌ データ復元エラー:', error);
+        console.error('❌ データ復元エラー:', error.message || String(error));
       }
     };
     
@@ -3552,6 +4383,16 @@
     let userMarker = null; // ユーザー位置マーカー
     let nearbyMode = false; // 今からモード
     let isRequestingLocation = false; // 位置情報取得中フラグ
+    let locationMode = false; // 地点指定モード
+
+    // グループID → 日本語名マップ
+    const GROUP_LABELS = {
+      'samurai': '侍',
+      'ryu': '龍',
+    };
+
+    // グループポップアップ管理
+    let activeGroupPopup = null;
     
     // 検索クエリ（タブ統一、v1.9.0で分離予定）
     let searchQuery = '';
@@ -3560,7 +4401,22 @@
     
     // Data Validation（起動時チェック）
     function validateShopsData() {
-      const validCategories = ['総本山', '直系', '本牧家', '六角家', '王道家', '王道乃印', '武蔵家', '壱系', 'オリジナル', '資本系', '不明'];
+      const validCategories = [
+        '総本山', 
+        '直系', 
+        '吉村家（直系以外）',
+        '本牧家', 
+        '六角家', 
+        '王道家', 
+        '王道家（王道乃印）',
+        '王道家（との丸家）',
+        '武蔵家',
+        '大輝家',
+        '壱系', 
+        '壱系（資本系）',
+        'オリジナル', 
+        '不明'
+      ];
       const ids = new Set();
       const warnings = [];
       
@@ -3571,8 +4427,9 @@
         }
         ids.add(shop.id);
         
-        // 2. 位置情報欠損チェック（厳密版）
-        if (!Number.isFinite(shop.lat) || !Number.isFinite(shop.lng)) {
+        // 2. 位置情報欠損チェック（【閉店】を除外）
+        const isClosed = shop.name.includes('【閉店】');
+        if (!isClosed && (!Number.isFinite(shop.lat) || !Number.isFinite(shop.lng))) {
           warnings.push(`⚠️ 位置情報欠損: ${shop.name} (lat: ${shop.lat}, lng: ${shop.lng})`);
         }
         
@@ -3964,11 +4821,6 @@
           console.log('❌ 誘導カード表示条件を満たさない');
         }
       }, 2000);
-      // カテゴリーフィルタ
-      document.getElementById('filter-category').addEventListener('change', () => {
-        renderShopList();
-        updateMarkers();
-      });
       
       // 検索トグルボタン（Mapタブ）
       const mapSearchBox = document.getElementById('map-search-box');
@@ -4062,34 +4914,95 @@
         renderLineageTab();
       });
       
-      // 営業中フィルタ
+      // 営業中フィルタ（または現在時刻ボタン）
       document.getElementById('btn-open-toggle').addEventListener('click', () => {
-        showOpenOnly = !showOpenOnly;
-        document.getElementById('btn-open-toggle').classList.toggle('active');
-        document.getElementById('list-btn-open-toggle')?.classList.toggle('active');
-        renderShopList();
-        updateMarkers();
-        renderListTab();
+        // 営業時間検索中の場合は、営業時間検索のみリセット + 営業中フィルタON
+        if (advancedFilterSettings.day !== '' || advancedFilterSettings.time !== '') {
+          advancedFilterSettings.day = '';
+          advancedFilterSettings.time = '';
+          // 営業中フィルタをON
+          showOpenOnly = true;
+          // ボタンテキストを更新
+          updateOpenButtonText();
+          // 詳細検索サマリーを更新
+          updateFilterSummary();
+          // activeクラスを付ける
+          document.getElementById('btn-open-toggle').classList.add('active');
+          document.getElementById('list-btn-open-toggle')?.classList.add('active');
+          // フィルタを再適用
+          renderShopList();
+          updateMarkers();
+          renderListTab();
+        } else {
+          // 通常の営業中フィルタトグル
+          showOpenOnly = !showOpenOnly;
+          document.getElementById('btn-open-toggle').classList.toggle('active');
+          document.getElementById('list-btn-open-toggle')?.classList.toggle('active');
+          renderShopList();
+          updateMarkers();
+          renderListTab();
+        }
       });
       
       // マップタブの現在地ボタン（トグル式）
       document.getElementById('btn-nearby').addEventListener('click', () => {
-        handleNearbyModeToggle();
+        if (locationMode) {
+          clearLocationMode();
+        } else {
+          handleNearbyModeToggle();
+        }
       });
       
-      // リストタブのカテゴリーフィルタ
-      document.getElementById('list-filter-category')?.addEventListener('change', () => {
-        renderListTab();
+      // マップタブの詳細検索ボタン
+      document.getElementById('map-filter-advanced-btn')?.addEventListener('click', () => {
+        openAdvancedFilterModal();
       });
       
-      // リストタブの営業中フィルタ
+      // 詳細検索ボタン
+      document.getElementById('list-filter-advanced-btn')?.addEventListener('click', () => {
+        openAdvancedFilterModal();
+      });
+      
+      // 親チェックボックス: 家系
+      document.getElementById('category-parent-iekei')?.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        document.querySelectorAll('.category-iekei').forEach(cb => cb.checked = isChecked);
+      });
+      
+      // 親チェックボックス: 壱系
+      document.getElementById('category-parent-isse')?.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        document.querySelectorAll('.category-isse').forEach(cb => cb.checked = isChecked);
+      });
+      
+      // リストタブの営業中フィルタ（または現在時刻ボタン）
       document.getElementById('list-btn-open-toggle')?.addEventListener('click', () => {
-        showOpenOnly = !showOpenOnly;
-        document.getElementById('btn-open-toggle').classList.toggle('active');
-        document.getElementById('list-btn-open-toggle').classList.toggle('active');
-        renderShopList();
-        updateMarkers();
-        renderListTab();
+        // 営業時間検索中の場合は、営業時間検索のみリセット + 営業中フィルタON
+        if (advancedFilterSettings.day !== '' || advancedFilterSettings.time !== '') {
+          advancedFilterSettings.day = '';
+          advancedFilterSettings.time = '';
+          // 営業中フィルタをON
+          showOpenOnly = true;
+          // ボタンテキストを更新
+          updateOpenButtonText();
+          // 詳細検索サマリーを更新
+          updateFilterSummary();
+          // activeクラスを付ける
+          document.getElementById('btn-open-toggle').classList.add('active');
+          document.getElementById('list-btn-open-toggle')?.classList.add('active');
+          // フィルタを再適用
+          renderShopList();
+          updateMarkers();
+          renderListTab();
+        } else {
+          // 通常の営業中フィルタトグル
+          showOpenOnly = !showOpenOnly;
+          document.getElementById('btn-open-toggle').classList.toggle('active');
+          document.getElementById('list-btn-open-toggle').classList.toggle('active');
+          renderShopList();
+          updateMarkers();
+          renderListTab();
+        }
       });
       
       // リストタブの今からボタン（トグル式）
@@ -4099,6 +5012,14 @@
       
       // モーダルのスワイプで閉じる
       initModalSwipe();
+      
+      // 時刻入力: focus時に空なら12:00を設定
+      const filterTimeInput = document.getElementById('filter-time');
+      filterTimeInput?.addEventListener('focus', () => {
+        if (!filterTimeInput.value) {
+          filterTimeInput.value = '12:00';
+        }
+      });
       
       // URLパラメータから店舗を自動表示
       checkUrlParams();
@@ -4338,8 +5259,8 @@
         const viewHeight = mapView.offsetHeight;
         const percentage = (newHeight / viewHeight) * 100;
         
-        // 30%〜85%の範囲に制限
-        if (percentage >= 30 && percentage <= 85) {
+        // 30%〜100%の範囲に制限
+        if (percentage >= 30 && percentage <= 100) {
           mapContainer.style.height = percentage + '%';
           
           // 地図のサイズを更新
@@ -4361,28 +5282,47 @@
       }
     }
     
+    // 詳細検索フィルター用のマーカー更新関数
+    
     function updateMarkers() {
       Object.values(markers).forEach(m => m.remove());
       markers = {};
       
+      let filteredShops = [...shops];
       
-      const categoryFilter = document.getElementById('filter-category').value;
-      let filteredShops;
-      
-      if (categoryFilter === 'want') {
-        // 行きたい店のみ
-        filteredShops = shops.filter(s => visits[s.id]?.wantToGo);
-      } else if (categoryFilter === 'favorite') {
-        // お気に入り店のみ
-        filteredShops = shops.filter(s => visits[s.id]?.favorite);
-      } else if (categoryFilter === 'all') {
-        filteredShops = [...shops];
-      } else {
-        filteredShops = shops.filter(s => s.category === categoryFilter);
+      // 詳細検索フィルターが設定されている場合
+      if (advancedFilterSettings.categories.length > 0 || 
+          advancedFilterSettings.wantToGo || 
+          advancedFilterSettings.favorite || 
+          (advancedFilterSettings.day !== '' && advancedFilterSettings.time !== '')) {
+        
+        // カテゴリフィルター（複数選択）
+        if (advancedFilterSettings.categories.length > 0) {
+          filteredShops = filteredShops.filter(s => 
+            advancedFilterSettings.categories.includes(s.category)
+          );
+        }
+        
+        // 行きたい
+        if (advancedFilterSettings.wantToGo) {
+          filteredShops = filteredShops.filter(s => visits[s.id]?.wantToGo);
+        }
+        
+        // お気に入り
+        if (advancedFilterSettings.favorite) {
+          filteredShops = filteredShops.filter(s => visits[s.id]?.favorite);
+        }
+        
+        // 営業時間フィルター
+        if (advancedFilterSettings.day !== '' && advancedFilterSettings.time !== '') {
+          filteredShops = filteredShops.filter(s => 
+            isOpenAtDayTime(s.openingHours, advancedFilterSettings.day, advancedFilterSettings.time)
+          );
+        }
       }
       
-      // 座標がない店舗を除外（家系図専用データ）
-      filteredShops = filteredShops.filter(shop => shop.lat && shop.lng);
+      // 座標がない店舗・ダミーノードを除外（家系図専用データ）
+      filteredShops = filteredShops.filter(shop => shop.lat && shop.lng && shop.name !== 'ダミー');
       
       // 検索フィルター
       if (searchQuery) {
@@ -4393,8 +5333,8 @@
         );
       }
       
-      // 営業中または今からモードの場合
-      if (showOpenOnly || nearbyMode) {
+      // 営業中フィルター
+      if (showOpenOnly) {
         filteredShops = filteredShops.filter(shop => isOpenNow(shop.openingHours));
       }
       
@@ -4409,13 +5349,16 @@
         
         // 営業ステータスを取得
         const openStatus = getOpenStatus(shop.openingHours);
+        const hasTimeFilter = advancedFilterSettings.day !== '' || advancedFilterSettings.time !== '';
         let statusBadge = '';
-        if (openStatus.state === 'open') {
-          statusBadge = '<span style="display:inline-flex;align-items:center;justify-content:center;background:#10b981;color:white;padding:2px 8px;border-radius:12px;font-size:10px;">営業中</span>';
-        } else if (openStatus.state === 'soon') {
-          statusBadge = '<span style="display:inline-flex;align-items:center;justify-content:center;background:#f59e0b;color:white;padding:2px 8px;border-radius:12px;font-size:10px;">閉店間近</span>';
-        } else {
-          statusBadge = '<span style="display:inline-flex;align-items:center;justify-content:center;background:#9ca3af;color:white;padding:2px 8px;border-radius:12px;font-size:10px;">時間外</span>';
+        if (!hasTimeFilter) {
+          if (openStatus.state === 'open') {
+            statusBadge = '<span style="display:inline-flex;align-items:center;justify-content:center;background:#10b981;color:white;padding:2px 8px;border-radius:12px;font-size:10px;">営業中</span>';
+          } else if (openStatus.state === 'soon') {
+            statusBadge = '<span style="display:inline-flex;align-items:center;justify-content:center;background:#f59e0b;color:white;padding:2px 8px;border-radius:12px;font-size:10px;">閉店間近</span>';
+          } else {
+            statusBadge = '<span style="display:inline-flex;align-items:center;justify-content:center;background:#9ca3af;color:white;padding:2px 8px;border-radius:12px;font-size:10px;">時間外</span>';
+          }
         }
         
         const divIcon = L.divIcon({
@@ -4434,16 +5377,22 @@
           </a>` : '';
         
         // 王道家・王道乃印の場合は看板風デザイン（黄色背景+赤い上下縁）
-        const isOudouya = shop.category === '王道家' || shop.category === '王道乃印';
-        const nameStyle = isOudouya
-          ? 'font-weight:bold;font-size:16px;margin-bottom:8px;padding:8px 12px;padding-right:40px;background:#FDCD00;color:#000000;border:4px solid #dc2626;border-radius:0;'
+        const isOudouya = shop.category === '王道家' || shop.category === '王道家（王道乃印）' || shop.category === '王道家（との丸家）';
+        const isTakasago = shop.category === '六角家' && (shop.name.includes('たかさご家') || shop.name.includes('町田家') || shop.name.includes('侍'));
+        const isChokusei = shop.category === '直系';
+        const nameStyle = isTakasago
+          ? 'font-weight:bold;font-size:16px;margin-bottom:8px;padding:8px 12px;padding-right:40px;background:#3CB371;color:#dc2626;border-radius:0;text-shadow:0.7px 0.7px 0 #fff,-0.7px -0.7px 0 #fff,0.7px -0.7px 0 #fff,-0.7px 0.7px 0 #fff;'
+          : isOudouya
+          ? 'font-weight:bold;font-size:16px;margin-bottom:8px;padding:8px 12px;padding-right:40px;background:#FDCD00;color:#000000;border:4px solid #dc2626;border-radius:0;text-shadow:0.7px 0.7px 0 #fff,-0.7px -0.7px 0 #fff,0.7px -0.7px 0 #fff,-0.7px 0.7px 0 #fff;'
+          : isChokusei
+          ? 'font-weight:bold;font-size:16px;margin-bottom:8px;padding:8px 12px;padding-right:40px;background:#dc2626;color:#000000;border-radius:0;text-shadow:0.7px 0.7px 0 #fff,-0.7px -0.7px 0 #fff,0.7px -0.7px 0 #fff,-0.7px 0.7px 0 #fff;'
           : 'font-weight:bold;font-size:16px;margin-bottom:8px;padding-right:28px;';
         
         const popup = `<div style="padding:8px;min-width:180px;max-width:240px;position:relative;">
           <button onclick="markers['${shop.id}'].closePopup(); event.stopPropagation();" style="position:absolute;top:4px;right:4px;width:20px;height:20px;border:none;background:#f3f4f6;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:#6b7280;padding:0;">×</button>
           <div style="${nameStyle}">${shop.name}</div>
           <div style="font-size:11px;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
-            <span style="background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:8px;font-size:10px">${shop.category}</span>
+            <span style="background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:8px;font-size:10px">${getShortCategoryName(shop.category)}</span>
             ${statusBadge}
           </div>
           <div style="font-size:11px;color:#6b7280;margin-bottom:8px">
@@ -4470,26 +5419,461 @@
       });
     }
     
-    function renderShopList() {
-      const container = document.getElementById('shop-list');
-      const categoryFilter = document.getElementById('filter-category').value;
+    // 詳細検索モーダル関数
+    let advancedFilterSettings = {
+      categories: [],
+      wantToGo: false,
+      favorite: false,
+      day: '',
+      time: ''
+    };
+    
+    function openAdvancedFilterModal() {
+      document.getElementById('advanced-filter-modal').classList.add('active');
+    }
+    
+    function closeAdvancedFilterModal() {
+      document.getElementById('advanced-filter-modal').classList.remove('active');
+    }
+    
+    function resetAdvancedFilter() {
+      // チェックボックスをすべて解除
+      document.querySelectorAll('.category-iekei').forEach(cb => cb.checked = false);
+      document.querySelectorAll('.category-isse').forEach(cb => cb.checked = false);
+      document.getElementById('category-parent-iekei').checked = false;
+      document.getElementById('category-parent-isse').checked = false;
+      document.getElementById('filter-want').checked = false;
+      document.getElementById('filter-favorite').checked = false;
+      document.getElementById('filter-day').value = '';
+      document.getElementById('filter-time').value = '';
       
-      let filteredShops;
+      // 設定をリセット
+      advancedFilterSettings = {
+        categories: [],
+        wantToGo: false,
+        favorite: false,
+        day: '',
+        time: ''
+      };
       
-      if (categoryFilter === 'want') {
-        // 行きたい店のみ
-        filteredShops = shops.filter(s => visits[s.id]?.wantToGo);
-      } else if (categoryFilter === 'favorite') {
-        // お気に入り店のみ
-        filteredShops = shops.filter(s => visits[s.id]?.favorite);
-      } else if (categoryFilter === 'all') {
-        filteredShops = [...shops];
-      } else {
-        filteredShops = shops.filter(s => s.category === categoryFilter);
+      // 表示を更新
+      document.getElementById('list-filter-summary').textContent = 'すべて表示';
+      document.getElementById('map-filter-summary').textContent = 'すべて表示';
+      
+      // モーダルを閉じる
+      closeAdvancedFilterModal();
+      
+      // リストとマップを再描画
+      renderListTab();  // リストタブのリスト
+      renderShopList(); // マップタブの下部リスト
+      updateMarkers();  // マップのマーカー
+    }
+    
+    function applyAdvancedFilter() {
+      // カテゴリ（家系 + 壱系）
+      const iekeiCategories = Array.from(
+        document.querySelectorAll('.category-iekei:checked')
+      ).map(cb => cb.value);
+      
+      const isseCategories = Array.from(
+        document.querySelectorAll('.category-isse:checked')
+      ).map(cb => cb.value);
+      
+      const selectedCategories = [...iekeiCategories, ...isseCategories];
+      
+      // 訪問状況
+      const wantToGo = document.getElementById('filter-want').checked;
+      const favorite = document.getElementById('filter-favorite').checked;
+      
+      // 営業時間
+      const day = document.getElementById('filter-day').value;
+      const time = document.getElementById('filter-time').value;
+      
+      // 設定を保存
+      advancedFilterSettings = {
+        categories: selectedCategories,
+        wantToGo,
+        favorite,
+        day,
+        time
+      };
+      
+      // サマリーを更新（新ルール）
+      let summary = '';
+      
+      // 営業時間が選択されている場合は最優先で先頭に表示
+      let timePart = '';
+      if (day !== '' && time !== '') {
+        const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+        timePart = `${dayNames[day]}曜 ${time}`;
       }
       
-      // 座標がない店舗を除外（家系図専用データ）
-      filteredShops = filteredShops.filter(shop => shop.lat && shop.lng);
+      // カテゴリ部分の生成
+      let categoryPart = '';
+      if (selectedCategories.length > 0) {
+        // 家系グループの全カテゴリ（12項目）
+        const iekeiAll = ['直系', '吉村家（直系以外）', '王道家', '王道家（王道乃印）', '王道家（との丸家）', '本牧家', '六角家', '武蔵家', '野中家', '大輝家', 'オリジナル'];
+        // 壱系グループの全カテゴリ（2項目）
+        const isseAll = ['壱系', '壱系（資本系）'];
+        
+        const hasAllIekei = iekeiAll.every(cat => selectedCategories.includes(cat));
+        const hasAllIsse = isseAll.every(cat => selectedCategories.includes(cat));
+        
+        if (hasAllIekei && hasAllIsse) {
+          // 家系 + 壱系 全選択
+          categoryPart = '家系、壱系';
+        } else if (hasAllIekei) {
+          // 家系のみ全選択
+          const remainingIsse = selectedCategories.filter(cat => isseAll.includes(cat));
+          if (remainingIsse.length > 0) {
+            categoryPart = '家系、' + remainingIsse.join('、');
+          } else {
+            categoryPart = '家系';
+          }
+        } else if (hasAllIsse) {
+          // 壱系のみ全選択
+          const remainingIekei = selectedCategories.filter(cat => iekeiAll.includes(cat));
+          if (remainingIekei.length > 0) {
+            categoryPart = remainingIekei.join('、') + '、壱系';
+          } else {
+            categoryPart = '壱系';
+          }
+        } else {
+          // 個別選択：全件表示し、長い場合は「...」で省略
+          categoryPart = selectedCategories.join('、');
+        }
+      }
+      
+      // 最終的なサマリーを組み立て
+      if (timePart && categoryPart) {
+        // 営業時間 + カテゴリ：カテゴリ部分を5文字に制限、半角スペースで区切る
+        if (categoryPart.length > 5) {
+          categoryPart = categoryPart.substring(0, 5) + '...';
+        }
+        summary = `${timePart} ${categoryPart}`;
+      } else if (timePart) {
+        summary = timePart;
+      } else if (categoryPart) {
+        // カテゴリのみ：全体で10文字制限
+        if (categoryPart.length > 10) {
+          categoryPart = categoryPart.substring(0, 10) + '...';
+        }
+        summary = categoryPart;
+      } else if (wantToGo) {
+        summary = '☆ 行きたい';
+      } else if (favorite) {
+        summary = '♡ お気に入り';
+      } else {
+        summary = 'すべて表示';
+      }
+      
+      document.getElementById('list-filter-summary').textContent = summary;
+      document.getElementById('map-filter-summary').textContent = summary;
+      
+      // 営業中ボタンのテキストを更新
+      updateOpenButtonText();
+      
+      // モーダルを閉じる
+      closeAdvancedFilterModal();
+      
+      // リストとマップを再描画
+      renderListTab();  // リストタブのリスト
+      renderShopList(); // マップタブの下部リスト
+      updateMarkers();  // マップのマーカー
+    }
+    
+    // 営業中ボタンのテキストを更新
+    function updateOpenButtonText() {
+      const hasTimeFilter = advancedFilterSettings.day !== '' || advancedFilterSettings.time !== '';
+      const buttonText = hasTimeFilter ? '現在時刻' : '営業中';
+      
+      document.getElementById('btn-open-toggle').textContent = buttonText;
+      document.getElementById('list-btn-open-toggle').textContent = buttonText;
+      
+      // 営業時間検索中はactiveクラスを解除
+      if (hasTimeFilter) {
+        showOpenOnly = false;
+        document.getElementById('btn-open-toggle').classList.remove('active');
+        document.getElementById('list-btn-open-toggle')?.classList.remove('active');
+      }
+    }
+    
+    // 詳細検索サマリーを更新
+    function updateFilterSummary() {
+      const { categories, wantToGo, favorite, day, time } = advancedFilterSettings;
+      
+      let summary = '';
+      
+      // 営業時間部分
+      let timePart = '';
+      if (day !== '' && time !== '') {
+        const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+        timePart = `${dayNames[day]}曜 ${time}`;
+      }
+      
+      // カテゴリ部分
+      let categoryPart = '';
+      if (categories.length > 0) {
+        const iekeiAll = ['直系', '吉村家（直系以外）', '王道家', '王道家（王道乃印）', '王道家（との丸家）', '本牧家', '六角家', '武蔵家', '野中家', '大輝家', 'オリジナル'];
+        const isseAll = ['壱系', '壱系（資本系）'];
+        
+        const hasAllIekei = iekeiAll.every(cat => categories.includes(cat));
+        const hasAllIsse = isseAll.every(cat => categories.includes(cat));
+        
+        if (hasAllIekei && hasAllIsse) {
+          categoryPart = '家系、壱系';
+        } else if (hasAllIekei) {
+          const remainingIsse = categories.filter(cat => isseAll.includes(cat));
+          if (remainingIsse.length > 0) {
+            categoryPart = '家系、' + remainingIsse.join('、');
+          } else {
+            categoryPart = '家系';
+          }
+        } else if (hasAllIsse) {
+          const remainingIekei = categories.filter(cat => iekeiAll.includes(cat));
+          if (remainingIekei.length > 0) {
+            categoryPart = remainingIekei.join('、') + '、壱系';
+          } else {
+            categoryPart = '壱系';
+          }
+        } else {
+          categoryPart = categories.join('、');
+        }
+      }
+      
+      // サマリー組み立て
+      if (timePart && categoryPart) {
+        if (categoryPart.length > 5) {
+          categoryPart = categoryPart.substring(0, 5) + '...';
+        }
+        summary = `${timePart} ${categoryPart}`;
+      } else if (timePart) {
+        summary = timePart;
+      } else if (categoryPart) {
+        if (categoryPart.length > 10) {
+          categoryPart = categoryPart.substring(0, 10) + '...';
+        }
+        summary = categoryPart;
+      } else if (wantToGo) {
+        summary = '☆ 行きたい';
+      } else if (favorite) {
+        summary = '♡ お気に入り';
+      } else {
+        summary = 'すべて表示';
+      }
+      
+      document.getElementById('list-filter-summary').textContent = summary;
+      document.getElementById('map-filter-summary').textContent = summary;
+    }
+    
+    // 営業時間チェック関数（指定曜日・時刻）
+    function isOpenAtDayTime(openingHours, dayOfWeek, timeStr) {
+      if (!openingHours || dayOfWeek === '' || !timeStr) return true;
+      
+      console.log('🕐 isOpenAtDayTime check:', { dayOfWeek, timeStr, openingHours });
+      
+      const dayNames = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+      const dayKey = dayNames[parseInt(dayOfWeek)];
+      const dayData = openingHours[dayKey];
+      
+      console.log('  dayKey:', dayKey, 'dayData:', dayData);
+      
+      if (!dayData || !dayData.times || dayData.times.length === 0) {
+        console.log('  ❌ 定休日または営業時間データなし');
+        return false; // 定休日または営業時間データなし
+      }
+      
+      // 時刻を分に変換
+      const [hour, minute] = timeStr.split(':').map(Number);
+      const targetMinutes = hour * 60 + minute;
+      
+      console.log('  targetMinutes:', targetMinutes);
+      
+      // 営業時間の範囲をチェック
+      for (const timeRange of dayData.times) {
+        const [startHour, startMinute] = timeRange.start.split(':').map(Number);
+        const [endHour, endMinute] = timeRange.end.split(':').map(Number);
+        
+        const startMinutes = startHour * 60 + startMinute;
+        let endMinutes = endHour * 60 + endMinute;
+        
+        // 24時を超える場合の処理（例: 23:00-01:00）
+        if (endMinutes <= startMinutes) {
+          endMinutes += 24 * 60;
+        }
+        
+        console.log('  range:', timeRange.start, '-', timeRange.end, 'startMinutes:', startMinutes, 'endMinutes:', endMinutes);
+        
+        if (targetMinutes >= startMinutes && targetMinutes <= endMinutes) {
+          console.log('  ✅ MATCH!');
+          return true;
+        }
+      }
+      
+      console.log('  ❌ NO MATCH');
+      return false;
+    }
+    
+    // カテゴリ表示名を短縮する関数（リスト・カード表示用）
+    function getShortCategoryName(category) {
+      const shortNames = {
+        '王道家（王道乃印）': '王道乃印',
+        '王道家（との丸家）': 'との丸家',
+        '王道家（系列外）': '王道系列外',
+        '吉村家（直系以外）': '吉村家系',
+        '壱系（資本系）': '資本系',
+        '王道家': '王道家系',
+        '本牧家': '本牧家系',
+        '六角家': '六角家系',
+        '武蔵家': '武蔵家系',
+        '野中家': '野中家系',
+        '大輝家': '大輝家系'
+      };
+      return shortNames[category] || category;
+    }
+    
+    function renderShopListWithAdvancedFilter() {
+      const container = document.getElementById('list-container');
+      
+      let filteredShops = [...shops];
+      
+      // カテゴリフィルター（複数選択）
+      if (advancedFilterSettings.categories.length > 0) {
+        filteredShops = filteredShops.filter(s => 
+          advancedFilterSettings.categories.includes(s.category)
+        );
+      }
+      
+      // 行きたい
+      if (advancedFilterSettings.wantToGo) {
+        filteredShops = filteredShops.filter(s => visits[s.id]?.wantToGo);
+      }
+      
+      // お気に入り
+      if (advancedFilterSettings.favorite) {
+        filteredShops = filteredShops.filter(s => visits[s.id]?.favorite);
+      }
+      
+      // 営業時間フィルター
+      if (advancedFilterSettings.day !== '' && advancedFilterSettings.time !== '') {
+        filteredShops = filteredShops.filter(s => 
+          isOpenAtDayTime(s.openingHours, advancedFilterSettings.day, advancedFilterSettings.time)
+        );
+      }
+      
+      // 座標がない店舗・ダミーノードを除外
+      filteredShops = filteredShops.filter(shop => shop.lat && shop.lng && shop.name !== 'ダミー');
+      
+      // 検索フィルター（既存の検索ボックス）
+      const searchQuery = document.getElementById('list-search-input')?.value.trim() || '';
+      if (searchQuery) {
+        filteredShops = filteredShops.filter(shop =>
+          shop.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          shop.area.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (shop.nameHiragana && shop.nameHiragana.includes(searchQuery))
+        );
+      }
+      
+      // HTMLを生成
+      if (!filteredShops.length) {
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:#9ca3af;">該当する店舗がありません</div>';
+        return;
+      }
+      
+      container.innerHTML = filteredShops.map(shop => {
+        const visitData = visits[shop.id];
+        const isVisited = visitData?.logs?.length > 0;
+        const visitCount = visitData?.logs?.length || 0;
+        const wantToGo = visitData?.wantToGo || false;
+        const favorite = visitData?.favorite || false;
+        
+        const todayHours = getTodayHours(shop.openingHours);
+        const openStatus = getOpenStatus(shop.openingHours);
+        const isOpen = openStatus.state === 'open';
+        const isSoon = openStatus.state === 'soon';
+        
+        // 営業時間の表示文言
+        let hoursText = '';
+        if (isOpen) {
+          hoursText = `本日: ${todayHours}`;
+        } else {
+          hoursText = todayHours === '定休日' ? '定休日' : '営業終了';
+        }
+        
+        // 営業時間検索中は営業ステータスバッジを非表示
+        const hasTimeFilter = advancedFilterSettings.day !== '' || advancedFilterSettings.time !== '';
+        const statusBadge = hasTimeFilter ? '' : (isSoon ? '<span class="badge-soon">閉店間近</span>' : (isOpen ? '<span class="badge-open">営業中</span>' : '<span class="badge-closed">時間外</span>'));
+        
+        return `
+          <div class="shop-list-item" onclick="showShopDetail('${shop.id}')">
+            <div class="shop-icon ${isVisited ? 'visited' : 'unvisited'}">
+              ${isVisited ? '✓' : '🍜'}
+            </div>
+            <div class="shop-info">
+              <div class="shop-name">
+                <span class="shop-name-text">${shop.name}</span>
+                <div class="shop-name-badges">
+                  ${wantToGo ? '<svg style="width:16px;height:16px;color:#eab308;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' : ''}
+                  ${favorite ? '<svg style="width:16px;height:16px;color:#ec4899;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>' : ''}
+                </div>
+              </div>
+              <div class="shop-meta">
+                <span class="badge badge-category">${getShortCategoryName(shop.category)}</span>
+                <svg style="width:14px;height:14px;color:#6b7280;margin-left:4px;margin-right:-2px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                </svg>
+                <span style="color:#6b7280;font-size:13px;">${shop.area}</span>
+                ${statusBadge}
+              </div>
+              <div style="color:#6b7280;font-size:12px;margin-top:4px;">${hoursText}</div>
+            </div>
+            <svg style="width:20px;height:20px;color:#9ca3af;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    function renderShopList() {
+      const container = document.getElementById('shop-list');
+      
+      let filteredShops = [...shops];
+      
+      // 詳細検索フィルターが設定されている場合
+      if (advancedFilterSettings.categories.length > 0 || 
+          advancedFilterSettings.wantToGo || 
+          advancedFilterSettings.favorite || 
+          (advancedFilterSettings.day !== '' && advancedFilterSettings.time !== '')) {
+        
+        // カテゴリフィルター（複数選択）
+        if (advancedFilterSettings.categories.length > 0) {
+          filteredShops = filteredShops.filter(s => 
+            advancedFilterSettings.categories.includes(s.category)
+          );
+        }
+        
+        // 行きたい
+        if (advancedFilterSettings.wantToGo) {
+          filteredShops = filteredShops.filter(s => visits[s.id]?.wantToGo);
+        }
+        
+        // お気に入り
+        if (advancedFilterSettings.favorite) {
+          filteredShops = filteredShops.filter(s => visits[s.id]?.favorite);
+        }
+        
+        // 営業時間フィルター
+        if (advancedFilterSettings.day !== '' && advancedFilterSettings.time !== '') {
+          filteredShops = filteredShops.filter(s => 
+            isOpenAtDayTime(s.openingHours, advancedFilterSettings.day, advancedFilterSettings.time)
+          );
+        }
+      }
+      
+      
+      // 座標がない店舗・ダミーノードを除外（家系図専用データ）
+      filteredShops = filteredShops.filter(shop => shop.lat && shop.lng && shop.name !== 'ダミー');
       
       // 検索フィルター
       if (searchQuery) {
@@ -4513,13 +5897,20 @@
         })).sort((a, b) => a.distance - b.distance);
       }
       
-      // 検索結果件数を表示
+      // 検索結果件数を表示（表示件数と重複するため非表示）
       const resultsEl = document.getElementById('search-results');
-      if (searchQuery) {
-        resultsEl.textContent = `${filteredShops.length}件見つかりました`;
-        resultsEl.style.display = 'block';
-      } else {
-        resultsEl.style.display = 'none';
+      resultsEl.style.display = 'none';
+      
+      // マップタブの件数表示を更新
+      const mapCountEl = document.getElementById('map-result-count');
+      if (mapCountEl) {
+        mapCountEl.textContent = `表示件数：${filteredShops.length}件`;
+      }
+      
+      // リストタブの件数表示を更新
+      const countEl = document.getElementById('list-result-count');
+      if (countEl) {
+        countEl.textContent = `表示件数：${filteredShops.length}件`;
       }
       
       container.innerHTML = filteredShops.map(shop => {
@@ -4530,6 +5921,10 @@
         const isSoon = openStatus.state === 'soon';
         const wantToGo = visitData?.wantToGo || false;
         const favorite = visitData?.favorite || false;
+        
+        // 営業時間検索中は営業ステータスバッジを非表示
+        const hasTimeFilter = advancedFilterSettings.day !== '' || advancedFilterSettings.time !== '';
+        const statusBadge = hasTimeFilter ? '' : (isSoon ? '<span class="badge-soon">閉店間近</span>' : (isOpen ? '<span class="badge-open">営業中</span>' : '<span class="badge-closed">時間外</span>'));
         
         return `
           <div class="shop-list-item" onclick="focusShop('${shop.id}')">
@@ -4546,14 +5941,14 @@
                 </div>
               </div>
               <div class="shop-meta">
-                <span class="badge badge-category">${shop.category}</span>
+                <span class="badge badge-category">${getShortCategoryName(shop.category)}</span>
                 <span style="display:inline-flex;align-items:center;justify-content:center;gap:2px;color:#6b7280;border:1px solid #d1d5db;padding:2px 8px;border-radius:12px;font-size:11px;">
                   <svg style="width:12px;height:12px;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                   </svg>
                   ${shop.area}
                 </span>
-                ${isSoon ? '<span class="badge-soon">閉店間近</span>' : (isOpen ? '<span class="badge-open">営業中</span>' : '<span class="badge-closed">時間外</span>')}
+                ${statusBadge}
               </div>
             </div>
             <svg style="width:20px;height:20px;color:#9ca3af;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -4569,7 +5964,8 @@
       if (shop && markers[shopId]) {
         // ポップアップの高さ分（約80px）を考慮して少し下にオフセット
         const latOffset = 0.002; // 緯度で約220m、画面で約80-100px相当
-        map.setView([shop.lat - latOffset, shop.lng], 15, { animate: true });
+        // 現在のズームレベルを維持したまま地図を移動
+        map.setView([shop.lat - latOffset, shop.lng], map.getZoom(), { animate: true });
         
         // 少し遅延させてポップアップを開く（アニメーション後）
         setTimeout(() => {
@@ -4589,7 +5985,206 @@
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
       return R * c;
     }
-    
+    // 地点検索モーダル
+    function openLocationSearchModal() {
+      const modal = document.getElementById("location-search-modal");
+      const input = document.getElementById("location-search-input");
+      const err = document.getElementById("location-search-error");
+      modal.style.display = "flex";
+      err.style.display = "none";
+      input.focus();
+      setTimeout(() => input.focus(), 50);
+    }
+
+    function closeLocationSearchModal() {
+      document.getElementById("location-search-modal").style.display = "none";
+    }
+
+    function applyLocationPoint(lat, lng, label) {
+      userLocation = { lat, lng };
+      nearbyMode = true;
+      locationMode = true;
+
+      if (userMarker) userMarker.remove();
+      const icon = L.divIcon({
+        className: "",
+        html: `<div style="width:16px;height:16px;border-radius:50%;background:#facc15;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);"></div>`,
+        iconSize: [16, 16], iconAnchor: [8, 8]
+      });
+      userMarker = L.marker([lat, lng], { icon, zIndexOffset: 1000 }).addTo(map);
+      map.setView([lat, lng], Math.max(map.getZoom(), 13), { animate: true });
+
+      // ボタンを「指定中」表示に
+      const btn = document.getElementById("btn-nearby");
+      const label_el = document.getElementById("btn-nearby-label");
+      if (btn) { btn.style.background = "#3b82f6"; btn.style.color = "white"; }
+      if (label_el) label_el.textContent = "指定中";
+
+      document.getElementById("list-btn-nearby")?.classList.remove("active");
+
+      closeLocationSearchModal();
+      renderShopList();
+      updateMarkers();
+    }
+
+    function clearLocationMode() {
+      locationMode = false;
+      nearbyMode = false;
+      userLocation = null;
+      if (userMarker) { userMarker.remove(); userMarker = null; }
+
+      // ボタンを「現在地」に戻す
+      const btn = document.getElementById("btn-nearby");
+      const label_el = document.getElementById("btn-nearby-label");
+      if (btn) { btn.classList.remove("active"); btn.style.background = ""; btn.style.color = ""; }
+      if (label_el) label_el.textContent = "現在地";
+
+      renderShopList();
+      updateMarkers();
+    }
+
+    async function executeLocationSearch() {
+      const input = document.getElementById("location-search-input");
+      const err = document.getElementById("location-search-error");
+      const btn = document.getElementById("location-search-btn");
+      const candidates = document.getElementById("location-search-candidates");
+      const query = input.value.trim();
+      if (!query) return;
+
+      btn.textContent = "検索中...";
+      btn.disabled = true;
+      err.style.display = "none";
+      candidates.style.display = "none";
+      candidates.innerHTML = "";
+
+      try {
+        // 国土地理院（地名・住所）とHeartRails（駅名）を並列で叩く
+        const [gsiRes, stationRes] = await Promise.allSettled([
+          fetch(`https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(query)}`),
+          fetch(`https://express.heartrails.com/api/json?method=getStations&name=${encodeURIComponent(query.replace(/駅$/, ''))}`)
+        ]);
+
+        btn.textContent = "検索";
+        btn.disabled = false;
+
+        // HeartRailsの結果をパース（駅名重複除去）
+        const stationItems = [];
+        if (stationRes.status === "fulfilled") {
+          const data = await stationRes.value.json().catch(() => ({}));
+          const stations = data?.response?.station || [];
+          const seen = new Set();
+          stations.forEach(s => {
+            const key = `${s.name}_${s.prefecture}`;
+            if (!seen.has(key)) {
+              seen.add(key);
+              stationItems.push({
+                name: `${s.name}駅（${s.prefecture}・${s.line}）`,
+                lat: parseFloat(s.y),
+                lng: parseFloat(s.x),
+                type: "station"
+              });
+            }
+          });
+          stationItems.splice(4);
+        }
+
+        // 国土地理院の結果をパース（dataSource:1のみ表示）
+        const gsiItems = [];
+        const gsiTransport = []; // 駅・IC・JCT（駅・インターセクション用）
+        const gsiAddress = [];   // 地名・住所セクション用
+        if (gsiRes.status === "fulfilled") {
+          const data = await gsiRes.value.json().catch(() => []);
+          // HeartRailsの駅名セット（重複排除用）
+          const stationNames = new Set(stationItems.map(s => s.name.replace(/駅（.*）$/, '') + '駅'));
+          // 都道府県コード変換表（addressCodeの先頭1-2桁）
+          const prefMap = {
+            "1":"北海道","2":"青森県","3":"岩手県","4":"宮城県","5":"秋田県","6":"山形県","7":"福島県",
+            "8":"茨城県","9":"栃木県","10":"群馬県","11":"埼玉県","12":"千葉県","13":"東京都","14":"神奈川県",
+            "15":"新潟県","16":"富山県","17":"石川県","18":"福井県","19":"山梨県","20":"長野県",
+            "21":"岐阜県","22":"静岡県","23":"愛知県","24":"三重県","25":"滋賀県","26":"京都府",
+            "27":"大阪府","28":"兵庫県","29":"奈良県","30":"和歌山県","31":"鳥取県","32":"島根県",
+            "33":"岡山県","34":"広島県","35":"山口県","36":"徳島県","37":"香川県","38":"愛媛県","39":"高知県",
+            "40":"福岡県","41":"佐賀県","42":"長崎県","43":"熊本県","44":"大分県","45":"宮崎県",
+            "46":"鹿児島県","47":"沖縄県"
+          };
+          const getPref = (code) => {
+            if (!code) return "";
+            const s = String(code).replace(/^0+/, '') || "0";
+            // 4桁以下は先頭1桁、5桁以上は先頭2桁で判定
+            const key = s.length <= 4 ? s.slice(0, 1) : s.slice(0, 2);
+            return prefMap[key] || "";
+          };
+          const gsiSeenStations = new Set();
+
+          (data || []).forEach(item => {
+            const title = item.properties.title;
+            const ds = item.properties.dataSource ?? "";
+
+            if (ds === "1") {
+              // 駅・IC・JCTのみ、都道府県名を付加
+              const isStation = title.endsWith('駅');
+              const isIC = title.endsWith('ＩＣ') || title.endsWith('IC');
+              const isJCT = title.endsWith('ＪＣＴ') || title.endsWith('JCT');
+              if (!isStation && !isIC && !isJCT) return;
+              const pref = getPref(item.properties.addressCode);
+              const displayName = pref ? `${title}（${pref}）` : title;
+              if (isStation && stationNames.has(title)) return;
+              if (isStation) {
+                if (gsiSeenStations.has(title)) return;
+                gsiSeenStations.add(title);
+              }
+              gsiTransport.push({ name: displayName, lat: item.geometry.coordinates[1], lng: item.geometry.coordinates[0], type: "address", isStation });
+            } else if (ds === "" || ds === "3") {
+              // 地名・住所セクション
+              console.log('[GSI address]', ds, title);
+              gsiAddress.push({ name: title, lat: item.geometry.coordinates[1], lng: item.geometry.coordinates[0], type: "address" });
+            }
+            // dataSource:"5" は非表示
+          });
+          // transportは駅を先に、IC/JCTを後に
+          gsiTransport.sort((a, b) => (b.isStation ? 1 : 0) - (a.isStation ? 1 : 0));
+          gsiItems.push(...gsiTransport, ...gsiAddress);
+        }
+
+        if (!stationItems.length && !gsiItems.length) {
+          err.textContent = "地点が見つかりませんでした。別の名前で試してください。";
+          err.style.display = "block";
+          return;
+        }
+
+        const stationIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="#3b82f6" style="flex-shrink:0;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>`;
+        const addressIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="#9ca3af" style="flex-shrink:0;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>`;
+
+        const renderItem = (item, isLast) => `<div onclick="applyLocationPoint(${item.lat}, ${item.lng}, '${item.name.replace(/'/g, "&#39;")}')"
+            style="padding:12px 14px;cursor:pointer;${isLast ? '' : 'border-bottom:1px solid #f3f4f6;'}display:flex;align-items:center;gap:10px;background:white;"
+            onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">
+            ${item.type === "station" ? stationIcon : addressIcon}
+            <div style="font-size:14px;font-weight:500;color:#111827;">${item.name}</div>
+          </div>`;
+
+        candidates.style.display = "block";
+
+        let html = "";
+        // 駅・インターセクション（HeartRails + GSI dataSource:1）
+        const transportItems = [...stationItems, ...gsiTransport];
+        if (transportItems.length) {
+          html += `<div style="padding:6px 14px;font-size:11px;color:#9ca3af;background:#f9fafb;border-bottom:1px solid #f3f4f6;">駅・インター</div>`;
+          html += transportItems.map((item, i) => renderItem(item, false)).join("");
+        }
+        // 地名・住所セクション（GSI dataSource:"" + "3"）
+        if (gsiAddress.length) {
+          html += `<div style="padding:6px 14px;font-size:11px;color:#9ca3af;background:#f9fafb;border-bottom:1px solid #f3f4f6;${transportItems.length ? 'border-top:1px solid #e5e7eb;' : ''}">地名・住所</div>`;
+          html += gsiAddress.map((item, i) => renderItem(item, i === gsiAddress.length - 1)).join("");
+        }
+        candidates.innerHTML = html;
+      } catch(e) {
+        err.textContent = "通信エラーが発生しました。";
+        err.style.display = "block";
+        btn.textContent = "検索";
+        btn.disabled = false;
+      }
+    }
+
     // 下部バーの「今から」ボタン用（常にオン）
     async function handleNearbyMode() {
       // 常にオンにする（トグルではなく）
@@ -4639,10 +6234,10 @@
             iconAnchor: [8, 8]
           });
           
-          userMarker = L.marker([userLocation.lat, userLocation.lng], { icon: userIcon }).addTo(map);
+          userMarker = L.marker([userLocation.lat, userLocation.lng], { icon: userIcon, zIndexOffset: 1000 }).addTo(map);
           
           // 地図を現在地中心に
-          map.setView([userLocation.lat, userLocation.lng], 13, { animate: true });
+          map.setView([userLocation.lat, userLocation.lng], Math.max(map.getZoom(), 13), { animate: true });
           
           renderShopList();
           updateMarkers();
@@ -4673,7 +6268,7 @@
           }
           
           await showCustomAlert(errorMessage);
-          console.error('Geolocation error:', error);
+          console.error('Geolocation error:', error.message || String(error));
         }
       );
     }
@@ -4708,8 +6303,17 @@
     
     // List Tab
     function renderListTab() {
+      // 詳細検索フィルターが設定されている場合はそちらを使用
+      if (advancedFilterSettings.categories.length > 0 || 
+          advancedFilterSettings.wantToGo || 
+          advancedFilterSettings.favorite || 
+          (advancedFilterSettings.day !== '' && advancedFilterSettings.time !== '')) {
+        renderShopListWithAdvancedFilter();
+        return;
+      }
+      
       const container = document.getElementById('list-container');
-      const categoryFilter = document.getElementById('list-filter-category')?.value || 'all';
+      const categoryFilter = 'all'; // 詳細検索を使わない場合はすべて表示
       
       let filteredShops;
       
@@ -4733,6 +6337,9 @@
           (shop.nameHiragana && shop.nameHiragana.includes(searchQuery))
         );
       }
+
+      // ダミーノードを除外
+      filteredShops = filteredShops.filter(shop => shop.name !== 'ダミー');
       
       // 営業中フィルタ（リストタブ用）
       if (showOpenOnly) {
@@ -4747,15 +6354,16 @@
         })).sort((a, b) => a.distance - b.distance);
       }
       
-      // 検索結果件数を表示
+      // 検索結果件数を表示（表示件数と重複するため非表示）
       const resultsEl = document.getElementById('list-search-results');
       if (resultsEl) {
-        if (searchQuery) {
-          resultsEl.textContent = `${filteredShops.length}件見つかりました`;
-          resultsEl.style.display = 'block';
-        } else {
-          resultsEl.style.display = 'none';
-        }
+        resultsEl.style.display = 'none';
+      }
+      
+      // リストタブの件数表示を更新
+      const countEl = document.getElementById('list-result-count');
+      if (countEl) {
+        countEl.textContent = `表示件数：${filteredShops.length}件`;
       }
       
       container.innerHTML = filteredShops.map(shop => {
@@ -4776,6 +6384,10 @@
           hoursText = todayHours === '定休日' ? '定休日' : '営業終了';
         }
         
+        // 営業時間検索中は営業ステータスバッジを非表示
+        const hasTimeFilter = advancedFilterSettings.day !== '' || advancedFilterSettings.time !== '';
+        const statusBadge = hasTimeFilter ? '' : (isSoon ? '<span class="badge-soon">閉店間近</span>' : (isOpen ? '<span class="badge-open">営業中</span>' : '<span class="badge-closed">時間外</span>'));
+        
         return `
           <div class="shop-list-item" onclick="showShopDetail('${shop.id}')">
             <div class="shop-icon ${isVisited ? 'visited' : 'unvisited'}">
@@ -4791,12 +6403,12 @@
                 </div>
               </div>
               <div class="shop-meta">
-                <span class="badge badge-category">${shop.category}</span>
+                <span class="badge badge-category">${getShortCategoryName(shop.category)}</span>
                 <svg style="width:14px;height:14px;color:#6b7280;margin-left:4px;margin-right:-2px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                 </svg>
                 <span style="color:#6b7280;font-size:13px;">${shop.area}</span>
-                ${isSoon ? '<span class="badge-soon">閉店間近</span>' : (isOpen ? '<span class="badge-open">営業中</span>' : '<span class="badge-closed">時間外</span>')}
+                ${statusBadge}
               </div>
               <div style="color:#6b7280;font-size:12px;margin-top:4px;">${hoursText}</div>
             </div>
@@ -4817,7 +6429,7 @@
     // Stats Tab
     function renderStatsTab() {
       console.log('🎯 renderStatsTab() 開始');
-      const period = document.getElementById('stats-period-select')?.value || '30';
+      const period = document.getElementById('stats-period-select')?.value || 'all';
       const stats = computeStats(visits, period);
       console.log('📊 stats:', stats);
 
@@ -5160,6 +6772,21 @@
         .replace(/'/g, "&#039;");
     }
     
+    function jumpToLineageSection(chip) {
+      const sectionId = chip.dataset.section;
+      const targetSection = document.getElementById(`lineage-section-${sectionId}`);
+      if (!targetSection) return;
+      const searchWrap = document.getElementById('lineage-search-wrap');
+      const headerHeight = searchWrap ? searchWrap.getBoundingClientRect().height + 32 : 120;
+      const rect = targetSection.getBoundingClientRect();
+      const scrollParent = targetSection.closest('.tab-content') || window;
+      if (scrollParent === window) {
+        window.scrollBy({ top: rect.top - headerHeight, behavior: 'smooth' });
+      } else {
+        scrollParent.scrollBy({ top: rect.top - scrollParent.getBoundingClientRect().top - headerHeight, behavior: 'smooth' });
+      }
+    }
+
     function renderLineageTab() {
       try {
         const sectionsEl = document.getElementById('lineage-sections');
@@ -5172,22 +6799,31 @@
         
         // カテゴリーベースで独立セクションを検出
         const separateSections = {};
-        const oudouCategories = ['王道家', '王道乃印']; // 王道家系カテゴリー
-        const honmokuCategories = ['本牧家']; // 本牧家系カテゴリー（本牧家のみ）
+        const oudouCategories = ['王道家', '王道家（との丸家）', '王道家（系列外）']; // 王道家系カテゴリー
+        
+        const honmokuCategories = ['本牧家']; // 本牧家系カテゴリー
         const rokkakuCategories = ['六角家']; // 六角家系カテゴリー
         const musashiCategories = ['武蔵家']; // 武蔵家系カテゴリー
-        const isseCategories = ['壱系']; // 壱系カテゴリー
+        const nonakaCategories = ['野中家']; // 野中家系カテゴリー
+        const taikiCategories = ['大輝家']; // 大輝家系カテゴリー
+        const isseCategories = ['壱系', '壱系（資本系）']; // 壱系カテゴリー
         
         // カテゴリーが存在するかチェック
         shops.forEach(shop => {
           if (oudouCategories.includes(shop.category)) {
             separateSections['王道家系'] = true;
+          } else if (shop.category === '王道家（王道乃印）') {
+            separateSections['王道家系（王道乃印）'] = true;
           } else if (honmokuCategories.includes(shop.category)) {
             separateSections['本牧家系'] = true;
           } else if (rokkakuCategories.includes(shop.category)) {
             separateSections['六角家系'] = true;
           } else if (musashiCategories.includes(shop.category)) {
             separateSections['武蔵家系'] = true;
+          } else if (nonakaCategories.includes(shop.category)) {
+            separateSections['野中家系'] = true;
+          } else if (taikiCategories.includes(shop.category)) {
+            separateSections['大輝家系'] = true;
           } else if (isseCategories.includes(shop.category)) {
             separateSections['壱系'] = true;
           }
@@ -5201,33 +6837,48 @@
         // 1. 吉村家系
         groups.set('yosh', { title: '吉村家系', shops: [], color: 'yosh' });
         
-        // 2. 本牧家系（独立セクション）
-        if (separateSections['本牧家系']) {
-          groups.set('本牧家系', { title: '本牧家系', shops: [], color: 'honmoku', isSeparate: true });
-        }
-        
-        // 3. 王道家系（独立セクション）
+        // 2. 王道家系（独立セクション）
         if (separateSections['王道家系']) {
           groups.set('王道家系', { title: '王道家系', shops: [], color: 'oud', isSeparate: true });
         }
         
-        // 4. 六角家系（独立セクション）
+        // 3. 王道家系（との丸家）（独立セクション）
+        if (separateSections['王道家系（王道乃印）']) {
+          groups.set('王道家系（王道乃印）', { title: '王道家系（王道乃印）', shops: [], color: 'oud-light', isSeparate: true });
+        }
+        
+        // 4. 本牧家系（独立セクション）
+        if (separateSections['本牧家系']) {
+          groups.set('本牧家系', { title: '本牧家系', shops: [], color: 'honmoku', isSeparate: true });
+        }
+        
+        // 5. 六角家系（独立セクション）
         if (separateSections['六角家系']) {
           groups.set('六角家系', { title: '六角家系', shops: [], color: 'rokkaku', isSeparate: true });
         }
         
-        // 5. 武蔵家系（独立セクション）
+        // 6. 武蔵家系（独立セクション）
         if (separateSections['武蔵家系']) {
           groups.set('武蔵家系', { title: '新中野武蔵家系', shops: [], color: 'musa', isSeparate: true });
         }
         
-        // 6. 壱系（独立セクション）
-        if (separateSections['壱系']) {
-          groups.set('壱系', { title: '壱系', shops: [], color: 'isse', isSeparate: true });
+        // 7. 野中家系（独立セクション）
+        if (separateSections['野中家系']) {
+          groups.set('野中家系', { title: '野中家系', shops: [], color: 'nonaka', isSeparate: true });
         }
         
-        // 7. オリジナル・その他
+        // 8. 大輝家系（独立セクション）
+        if (separateSections['大輝家系']) {
+          groups.set('大輝家系', { title: '大輝家系', shops: [], color: 'taiki', isSeparate: true });
+        }
+        
+        // 9. オリジナル・その他
         groups.set('oth', { title: 'オリジナル', shops: [], color: 'oth' });
+        
+        // 9. 壱系（独立セクション）
+        if (separateSections['壱系']) {
+          groups.set('壱系', { title: '壱系（資本系含む）', shops: [], color: 'isse', isSeparate: true });
+        }
         
         // 店舗をグループに振り分け
         shops.forEach(shop => {
@@ -5269,13 +6920,39 @@
               groups.get('yosh').shops.push(shop);
             }
           }
-          // 4. 王道家系
+          // 4. 王道家系（王道乃印以外）
           else if (oudouCategories.includes(shop.category)) {
             if (groups.has('王道家系')) {
               groups.get('王道家系').shops.push(shop);
             }
             // 王道家（ルート）は吉村家系にも表示
             if (shop.id === 'oudouya') {
+              groups.get('yosh').shops.push(shop);
+            }
+          }
+          // 4-2. 王道家系（王道乃印）
+          else if (shop.category === '王道家（王道乃印）') {
+            if (groups.has('王道家系（王道乃印）')) {
+              groups.get('王道家系（王道乃印）').shops.push(shop);
+            }
+          }
+          // 4-3. 野中家系
+          else if (nonakaCategories.includes(shop.category)) {
+            if (groups.has('野中家系')) {
+              groups.get('野中家系').shops.push(shop);
+            }
+            // 野中家のルートは吉村家系にも表示（該当する場合）
+            if (shop.parent === 'yoshimuraya' || hasAncestor(shop.id, 'yoshimuraya')) {
+              groups.get('yosh').shops.push(shop);
+            }
+          }
+          // 4-4. 大輝家系
+          else if (taikiCategories.includes(shop.category)) {
+            if (groups.has('大輝家系')) {
+              groups.get('大輝家系').shops.push(shop);
+            }
+            // 大輝家のルートは吉村家系にも表示（該当する場合）
+            if (shop.parent === 'yoshimuraya' || hasAncestor(shop.id, 'yoshimuraya')) {
               groups.get('yosh').shops.push(shop);
             }
           }
@@ -5293,7 +6970,7 @@
           else if (rootId === 'yoshimuraya') {
             groups.get('yosh').shops.push(shop);
           }
-          // 7. オリジナル・その他
+          // 7. オリジナル・その他（「不明」もここに含む）
           else {
             groups.get('oth').shops.push(shop);
           }
@@ -5316,8 +6993,8 @@
         
         console.log('renderLineageTab: complete');
       } catch (error) {
-        console.error('renderLineageTab error:', error);
-        console.error('Error stack:', error.stack);
+        console.error('renderLineageTab error:', error.message || String(error));
+        console.error('Error stack:', error.stack || '');
       }
     }
     
@@ -5350,12 +7027,19 @@
       const separateSectionRoots = {
         '本牧家系': 'honmokuya',
         '王道家系': 'oudouya',
+        '王道家系（王道乃印）': 'oudouya',
         '六角家系': 'rokkakuya',
-        '武蔵家系': 'musashiya'
+        '武蔵家系': 'musashiya',
+        '野中家系': 'nonakaya',
+        '大輝家系': 'daikiya',
+        '壱系': 'ichirokuya'
       };
       
       let roots;
-      if (separateSectionRoots[sectionId]) {
+      if (sectionId === '王道家系（王道乃印）') {
+        // 王道乃印セクション: oudouyaをスキップし、parentがoudouyaの店舗をルートとする
+        roots = items.filter(s => s.parent === 'oudouya');
+      } else if (separateSectionRoots[sectionId]) {
         // 独立セクション: 特定IDの店舗をルートとする
         const rootId = separateSectionRoots[sectionId];
         roots = items.filter(s => s.id === rootId);
@@ -5365,14 +7049,136 @@
       }
       
       if (roots.length === 0) return;
+
+      // position列に応じてダミーノードを自動挿入
+      const itemsWithDummies = [...items];
+      console.log('[POSITION] items with position:', items.filter(s => s.position).map(s => `${s.id}:${s.position}`));
+      console.log('[POSITION] tatuya in items:', items.find(s => s.id === 'tatuya'));
+      console.log('[POSITION] items count:', items.length);
+      items.forEach(shop => {
+        if (!shop.position) return;
+
+        // 横+N: 対象店舗の前にN個ダミーを挿入（同じ親）
+        const yokoMatch = shop.position.match(/横\+(\d+)/);
+        if (yokoMatch) {
+          const count = parseInt(yokoMatch[1]);
+          const idx = itemsWithDummies.findIndex(s => s.id === shop.id);
+          console.log(`[POSITION] 横+${count}: ${shop.id} idx=${idx}`);
+          if (idx === -1) return;
+          for (let i = 0; i < count; i++) {
+            itemsWithDummies.splice(idx, 0, {
+              id: `__dummy_yoko_${shop.id}_${i}`,
+              name: 'ダミー',
+              nameHiragana: '',
+              category: shop.category,
+              area: '',
+              lat: null, lng: null,
+              parent: shop.parent,
+              group: null,
+              openingHours: null,
+              description: '', googleMapUrl: '', websiteUrl: '', xURL: '', note: ''
+            });
+          }
+        }
+
+        // 縦+N: 対象店舗の親との間にN個ダミーを挿入（親子関係を変更）
+        const tateMatch = shop.position.match(/^縦\+(\d+)$/);
+        if (tateMatch) {
+          const count = parseInt(tateMatch[1]);
+          let currentParent = shop.parent;
+          const targetIdx = itemsWithDummies.findIndex(s => s.id === shop.id);
+          for (let i = 0; i < count; i++) {
+            const dummyId = `__dummy_tate_${shop.id}_${i}`;
+            itemsWithDummies.splice(targetIdx + i, 0, {
+              id: dummyId,
+              name: 'ダミー',
+              nameHiragana: '',
+              category: shop.category,
+              area: '',
+              lat: null, lng: null,
+              parent: currentParent,
+              group: null,
+              openingHours: null,
+              description: '', googleMapUrl: '', websiteUrl: '', xURL: '', note: ''
+            });
+            currentParent = dummyId;
+          }
+          // 対象店舗の親を最後のダミーに変更
+          const target = itemsWithDummies.find(s => s.id === shop.id);
+          if (target) target.parent = currentParent;
+        }
+
+        // 縦下+N: ダミーをレベル調整に使うが線は引かない（親→子を直接つなぎダミー位置で折り曲げ）
+        const tateSilentMatch = shop.position.match(/^縦下\+(\d+)$/);
+        if (tateSilentMatch) {
+          const count = parseInt(tateSilentMatch[1]);
+          let currentParent = shop.parent;
+          const targetIdx = itemsWithDummies.findIndex(s => s.id === shop.id);
+          for (let i = 0; i < count; i++) {
+            const dummyId = `__dummy_tate_silent_${shop.id}_${i}`;
+            itemsWithDummies.splice(targetIdx + i, 0, {
+              id: dummyId,
+              name: 'ダミー',
+              nameHiragana: '',
+              category: shop.category,
+              area: '',
+              lat: null, lng: null,
+              parent: currentParent,
+              group: null,
+              openingHours: null,
+              description: '', googleMapUrl: '', websiteUrl: '', xURL: '', note: ''
+            });
+            currentParent = dummyId;
+          }
+          // 対象店舗の親を最後のダミーに変更
+          const target = itemsWithDummies.find(s => s.id === shop.id);
+          if (target) target.parent = currentParent;
+        }
+      });
+
+      const levels = computeLineageLevels(itemsWithDummies, roots);
+
+      // position: 系列 のノードは親と同じレベルに配置し、子孫も再計算
+      itemsWithDummies.forEach(shop => {
+        if (shop.position === '系列' && shop.parent) {
+          const parentLevel = levels.get(shop.parent);
+          if (parentLevel !== undefined) {
+            const oldLevel = levels.get(shop.id);
+            const diff = parentLevel - oldLevel;
+            if (diff !== 0) {
+              // このノードと全子孫のレベルをdiff分ずらす
+              const adjustDescendants = (id) => {
+                levels.set(id, levels.get(id) + diff);
+                itemsWithDummies.forEach(s => {
+                  if (s.parent === id) adjustDescendants(s.id);
+                });
+              };
+              adjustDescendants(shop.id);
+            }
+          }
+        }
+      });
+
+      const order = buildLineageOrder(itemsWithDummies, roots);
       
-      const levels = computeLineageLevels(items, roots);
-      const order = buildLineageOrder(items, roots);
+      // グループ処理: 同じgroupを持つ店舗のうち、orderに含まれる最初の1件を代表とし、残りを除外
+      const groupSeen = new Set();
+      const groupRepresentatives = new Map(); // groupId → 代表shopId
+      const filteredOrder = order.filter(id => {
+        const shop = itemsWithDummies.find(s => s.id === id) || shops.find(s => s.id === id);
+        if (!shop || !shop.group) return true; // groupなしはそのまま
+        if (groupSeen.has(shop.group)) return false; // 2件目以降は除外
+        groupSeen.add(shop.group);
+        groupRepresentatives.set(shop.group, id);
+        console.log(`[GROUP] 代表: ${id} (group: ${shop.group})`);
+        return true;
+      });
+      console.log(`[GROUP] groupRepresentatives:`, Array.from(groupRepresentatives.entries()));
       
       const maxLevel = Math.max(...Array.from(levels.values()));
       const lanes = [];
       for (let lv = 0; lv <= maxLevel; lv++) {
-        lanes.push(order.filter(id => levels.get(id) === lv));
+        lanes.push(filteredOrder.filter(id => levels.get(id) === lv));
       }
       
       const section = document.createElement('div');
@@ -5397,15 +7203,65 @@
         lane.dataset.level = lv;
         
         laneIds.forEach(id => {
-          const shop = shops.find(s => s.id === id);
+          const shop = itemsWithDummies.find(s => s.id === id) || shops.find(s => s.id === id);
           if (shop) {
-            // 王道家系の場合、カテゴリーで色を分ける
+            // カテゴリーで色を分ける
             let nodeColor = colorClass;
-            if (shop.category === '王道乃印') {
-              nodeColor = 'oud-light'; // 薄い黄色
+            if (sectionId === '六角家系' && (shop.id === 'rokkakuya' || shop.id === 'musashiya')) {
+              nodeColor = 'rokkaku';
+            } else if (sectionId === 'yosh') {
+              // 吉村家系セクションでは直系以外は全て薄い赤
+              if (shop.category !== '直系') {
+                nodeColor = 'yosh-light';
+              }
+            } else if (shop.category === '王道家（王道乃印）') {
+              nodeColor = 'oud-light';
+            } else if (shop.category === '吉村家（直系以外）') {
+              nodeColor = 'yosh-light';
+            } else if (['王道家', '王道家（との丸家）', '王道家（系列外）'].includes(shop.category)) {
+              nodeColor = 'oud';
+            } else if (shop.category === '本牧家') {
+              nodeColor = 'honmoku';
+            } else if (shop.category === '六角家') {
+              nodeColor = 'rokkaku';
+            } else if (shop.category === '武蔵家') {
+              nodeColor = 'musa';
+            } else if (shop.category === '野中家') {
+              nodeColor = 'nonaka';
+            } else if (shop.category === '大輝家') {
+              nodeColor = 'taiki';
             }
-            
-            const node = createLineageNode(shop, nodeColor);
+
+            const ownSectionMap = {
+              'oudouya': '王道家系',
+              'honmokuya': '本牧家系',
+              'rokkakuya': '六角家系',
+              'musashiya': '武蔵家系',
+            };
+            let node;
+            const isSpecialShop = ownSectionMap.hasOwnProperty(shop.id);
+            if (shop.group && groupRepresentatives.get(shop.group) === shop.id && (!isSpecialShop || ownSectionMap[shop.id] === sectionId)) {
+              const groupShopsCount = shops.filter(s => s.group === shop.group).length;
+              // グループノードの色はカテゴリーから決定
+              const groupColorMap = {
+                '直系': 'yosh', '吉村家（直系以外）': 'yosh-light',
+                '本牧家': 'honmoku', '六角家': 'rokkaku', '武蔵家': 'musa',
+                '王道家': 'oud', '王道家（王道乃印）': 'oud-light', '王道家（との丸家）': 'oud',
+                '壱系': 'isse', '壱系（資本系）': 'isse-light',
+                '大輝家': 'taiki', '野中家': 'nonaka', 'オリジナル': 'oth',
+              };
+              const groupColor = sectionId === 'yosh' && shop.category !== '直系'
+                ? 'yosh-light'
+                : (groupColorMap[shop.category] || colorClass);
+              if (groupShopsCount === 1) {
+                // 1店舗グループは通常ノードとして描画（改行対応・エリア表示）
+                node = createLineageNode(shop, nodeColor, sectionId, true);
+              } else {
+                node = createLineageGroupNode(shop, groupColor, sectionId);
+              }
+            } else {
+              node = createLineageNode(shop, nodeColor, sectionId);
+            }
             node.dataset.level = lv;
             node.dataset.parent = shop.parent || '';
             lane.appendChild(node);
@@ -5420,16 +7276,17 @@
       // DOMに追加された後に位置を調整してワイヤーを描画
       setTimeout(() => {
         const minLevel = (colorClass === 'oth') ? 1 : 2;
-        adjustChildNodesPosition(section, levels, minLevel);
-        drawLineageWires(section, items, levels, order);
+        adjustChildNodesPosition(section, levels, minLevel, itemsWithDummies);
+        // グループの子はfilteredOrderで除外済みなのでそのまま渡す
+        drawLineageWires(section, items, itemsWithDummies, levels, filteredOrder);
       }, 0);
     }
     
     // 子ノードを親の横位置に合わせる
-    function adjustChildNodesPosition(section, levels, minLevel) {
+    function adjustChildNodesPosition(section, levels, minLevel, itemsWithDummies) {
       const box = section.querySelector('.lineage-section-box');
       const boxRect = box.getBoundingClientRect();
-      const nodes = section.querySelectorAll('.lineage-node');
+      const nodes = section.querySelectorAll('.lineage-node, .lineage-node-group');
       
       // 各ノードの位置を記録
       const positions = new Map();
@@ -5441,9 +7298,24 @@
           width: rect.width
         });
       });
+
+      // 系列ノードのIDセット
+      const seriesIds = new Set();
+      if (itemsWithDummies) {
+        itemsWithDummies.forEach(s => {
+          if (s.position === '系列') seriesIds.add(s.id);
+        });
+      }
       
-      // 指定レベル以降のノードを調整
-      const level2Plus = Array.from(nodes).filter(n => parseInt(n.dataset.level) >= minLevel);
+      // 指定レベル以降 + 系列ノードの子も対象
+      const level2Plus = Array.from(nodes).filter(n => {
+        const lv = parseInt(n.dataset.level);
+        if (lv >= minLevel) return true;
+        // 系列ノードの子は例外的に対象にする
+        const parentId = n.dataset.parent;
+        if (parentId && seriesIds.has(parentId)) return true;
+        return false;
+      });
       
       // 親ごとにグループ化
       const byParent = new Map();
@@ -5483,19 +7355,198 @@
       });
     }
     
-    function createLineageNode(shop, colorClass) {
-      // 本当に閉店している店舗のみ閉店扱い（営業時間がnullまたは全日休み）
+    // グループポップアップを閉じる
+    document.addEventListener('click', (e) => {
+      if (activeGroupPopup && !e.target.closest('.lineage-node-group') && !e.target.closest('.lineage-group-popup')) {
+        activeGroupPopup.classList.remove('visible');
+        activeGroupPopup = null;
+      }
+    });
+    // スクロール時にポップアップを閉じる
+    document.addEventListener('scroll', (e) => {
+      if (activeGroupPopup && !activeGroupPopup.contains(e.target)) {
+        activeGroupPopup.classList.remove('visible');
+        activeGroupPopup = null;
+      }
+    }, true);
+
+    function createLineageGroupNode(shop, colorClass, sectionId) {
+      const groupId = shop.group;
+      const groupLabel = (GROUP_LABELS[groupId] || groupId).replace(/\\n/g, '\n');
+      const groupLabelHtml = escapeHtml(groupLabel).replace(/\n/g, '<br>');
+      const groupShops = shops.filter(s => s.group === groupId);
+      const count = groupShops.length;
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'lineage-node-group';
+      wrapper.dataset.id = shop.id;
+      wrapper.dataset.group = groupId;
+
+      // 3枚重なりレイヤー
+      for (let i = 0; i < 3; i++) {
+        const layer = document.createElement('div');
+        layer.className = `g-layer g-${colorClass}`;
+        if (i === 2) {
+          // ジャンプリンクの生成
+          let groupJumpLink = '';
+          const isInOwnSection2 = (
+            (sectionId === '王道家系' && shop.id === 'oudouya') ||
+            (sectionId === '本牧家系' && shop.id === 'honmokuya') ||
+            (sectionId === '六角家系' && shop.id === 'rokkakuya') ||
+            (sectionId === '武蔵家系' && shop.id === 'musashiya')
+          );
+          if (!isInOwnSection2) {
+            if (shop.id === 'oudouya') groupJumpLink = `<span class="lineage-jump" data-target="王道家系" style="font-size:10px;margin-left:4px;color:#000000;cursor:pointer;user-select:none;">[→王道家系]</span>`;
+            else if (shop.id === 'honmokuya') groupJumpLink = `<span class="lineage-jump" data-target="本牧家系" style="font-size:10px;margin-left:4px;color:#000000;cursor:pointer;user-select:none;">[→本牧家系]</span>`;
+            else if (shop.id === 'rokkakuya') groupJumpLink = `<span class="lineage-jump" data-target="六角家系" style="font-size:10px;margin-left:4px;color:#000000;cursor:pointer;user-select:none;">[→六角家系]</span>`;
+            else if (shop.id === 'musashiya') groupJumpLink = `<span class="lineage-jump" data-target="武蔵家系" style="font-size:10px;margin-left:4px;color:#000000;cursor:pointer;user-select:none;">[→武蔵家系]</span>`;
+          }
+          layer.innerHTML = `
+            <div class="lineage-node-name">${groupLabelHtml}${groupJumpLink}</div>
+            <div class="lineage-node-meta">${count}店舗</div>
+          `;
+          if (groupJumpLink) {
+            const linkEl = layer.querySelector('.lineage-jump');
+            if (linkEl) {
+              linkEl.addEventListener('click', e => {
+                e.stopPropagation();
+                jumpToLineageSection({ dataset: { target: linkEl.dataset.target } });
+              });
+            }
+          }
+        }
+        wrapper.appendChild(layer);
+      }
+
+      // バッジ
+      const badge = document.createElement('div');
+      badge.className = 'g-badge';
+      badge.textContent = count;
+      wrapper.appendChild(badge);
+
+      // ポップアップをbodyに動的生成
+      const colorMap = { 
+        'yosh': '#c62828', 'yosh-light': '#ef5350',
+        'honmoku': '#1976d2', 'rokkaku': '#43a047',
+        'oud': '#f9a825', 'oud-light': '#fbc02d',
+        'musa': '#f57c00', 'nonaka': '#f57c00',
+        'taiki': '#00acc1', 'isse': '#8e24aa', 'oth': '#455a64'
+      };
+      const dotColor = colorMap[colorClass] || '#666';
+      const popup = document.createElement('div');
+      popup.className = 'lineage-group-popup';
+      popup.innerHTML = `
+        <div class="lineage-group-popup-title">${groupLabelHtml}（${count}店舗）</div>
+        <div class="lineage-group-popup-columns${(window.innerWidth < 600 && groupShops.length > 6) ? ' two-col' : ''}">
+          ${(() => {
+            const isMobile = window.innerWidth < 600;
+            const ROWS_PER_COL = isMobile
+              ? (groupShops.length <= 6 ? groupShops.length : Math.ceil(groupShops.length / 2))
+              : 4;
+            const cols = [];
+            for (let i = 0; i < groupShops.length; i += ROWS_PER_COL) {
+              const col = groupShops.slice(i, i + ROWS_PER_COL);
+              cols.push(`<div class="lineage-group-popup-column">${col.map(s => `
+                <div class="lineage-group-popup-item" data-shopid="${s.id}">
+                  <div class="lineage-group-popup-dot" style="background:${dotColor}"></div>
+                  <div>
+                    <div class="lineage-group-popup-name">${escapeHtml(s.name)}</div>
+                    <div class="lineage-group-popup-area">${escapeHtml(s.area || '')}</div>
+                  </div>
+                  <div class="lineage-group-popup-arrow">›</div>
+                </div>
+              `).join('')}</div>`);
+            }
+            return cols.join('');
+          })()}
+        </div>
+      `;
+      document.body.appendChild(popup);
+
+      // クリックでポップアップ表示
+      wrapper.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (activeGroupPopup && activeGroupPopup !== popup) {
+          activeGroupPopup.classList.remove('visible');
+        }
+        popup.classList.toggle('visible');
+        activeGroupPopup = popup.classList.contains('visible') ? popup : null;
+
+        // ポップアップ位置調整（表示後に実際のサイズを取得）
+        if (popup.classList.contains('visible')) {
+          const safeTop = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sat') || '0') + 60;
+          const margin = 8;
+          const cx = e.clientX;
+          const cy = e.clientY;
+          const popupW = popup.offsetWidth;
+          const popupH = popup.offsetHeight;
+
+          // 左右：右に収まれば右、収まらなければ左
+          let left = cx + margin;
+          if (left + popupW > window.innerWidth - margin) {
+            left = cx - popupW - margin;
+          }
+          // さらに画面左にはみ出す場合は左端に寄せる
+          left = Math.max(margin, left);
+
+          // 上下：利用可能な高さを計算してmax-heightを設定
+          let top = cy + margin;
+          const safeBottom = 120; // 下部バー分の余白
+          const availableBottom = window.innerHeight - safeBottom - top;
+          const availableTop = cy - margin;
+          
+          if (availableBottom >= availableTop) {
+            // 下に表示
+            popup.style.maxHeight = `${availableBottom}px`;
+          } else {
+            // 上に表示：ノードの真上、はみ出す場合は上端に寄せる
+            popup.style.maxHeight = `${availableTop}px`;
+            top = Math.max(margin, cy - popup.offsetHeight - margin);
+          }
+          top = Math.max(safeTop, top);
+
+          popup.style.left = `${left}px`;
+          popup.style.top = `${top}px`;
+        }
+      });
+
+      // ポップアップアイテムクリック
+      popup.querySelectorAll('.lineage-group-popup-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.stopPropagation();
+          showShopDetail(item.dataset.shopid);
+          popup.classList.remove('visible');
+          activeGroupPopup = null;
+        });
+      });
+
+      return wrapper;
+    }
+
+    function createLineageNode(shop, colorClass, sectionId, useGroupName = false) {
+      // ダミーノード（name === "ダミー"）は透明スペーサーとして描画
+      if (shop.name === 'ダミー') {
+        const node = document.createElement('div');
+        node.className = 'lineage-node dummy';
+        node.dataset.id = shop.id;
+        node.dataset.dummy = '1';
+        return node;
+      }
+
+      // 閉店している店舗: 営業時間がnullまたは全日休み、または店名に【閉店】が含まれる
       const isClosed = !shop.openingHours ||
                        (shop.openingHours &&
-                        Object.keys(shop.openingHours).length === 0);
+                        Object.keys(shop.openingHours).length === 0) ||
+                       shop.name.includes('【閉店】');
       
       // 独立セクションへのジャンプリンク生成
       let jumpLink = '';
       const isInOwnSection = (
-        (colorClass === 'oud' && shop.id === 'oudouya') ||
-        (colorClass === 'honmoku' && shop.id === 'honmokuya') ||
-        (colorClass === 'rokkaku' && shop.id === 'rokkakuya') ||
-        (colorClass === 'musa' && shop.id === 'musashiya')
+        (sectionId === '王道家系' && shop.id === 'oudouya') ||
+        (sectionId === '王道家系（王道乃印）' && shop.id === 'oudouya') ||
+        (sectionId === '本牧家系' && shop.id === 'honmokuya') ||
+        (sectionId === '六角家系' && shop.id === 'rokkakuya') ||
+        (sectionId === '武蔵家系' && shop.id === 'musashiya')
       );
       
       if (!isInOwnSection) {
@@ -5510,23 +7561,35 @@
         }
       }
       
+      // 表示名の決定
+      let displayName = shop.name;
+      let displayNameHtml = escapeHtml(displayName);
+      if (useGroupName && shop.group) {
+        const rawGroupName = (GROUP_LABELS[shop.group] || shop.group).replace(/\\n/g, '\n');
+        displayNameHtml = escapeHtml(rawGroupName).replace(/\n/g, '<br>');
+      }
+      
       // 色分け
       let nodeColorClass = colorClass;
       
-      // 王道家系セクション内: 王道乃印は薄い黄色
-      if (colorClass === 'oud' && shop.category === '王道乃印') {
+      // 閉店店舗は常にグレー
+      if (isClosed) {
+        nodeColorClass = 'closed';
+      }
+      // 王道家系セクション内: 王道家（王道乃印）は薄い黄色
+      else if (colorClass === 'oud' && shop.category === '王道家（王道乃印）') {
         nodeColorClass = 'oud-light';
       }
-      // 吉村家系セクション内: 非直系（直系以外でparentがyoshimuraya）は薄い赤
-      else if (colorClass === 'yosh' && shop.parent === 'yoshimuraya' && shop.category !== '直系') {
+      // 吉村家系セクション内: 吉村家（直系以外）は薄い赤
+      else if (colorClass === 'yosh' && shop.category === '吉村家（直系以外）') {
         nodeColorClass = 'yosh-light';
       }
       
       const node = document.createElement('div');
-      node.className = `lineage-node g-${nodeColorClass}${isClosed ? ' closed' : ''}`;
+      node.className = `lineage-node g-${nodeColorClass}`;
       node.dataset.id = shop.id;
       node.innerHTML = `
-        <div class="lineage-node-name">${escapeHtml(shop.name)}${jumpLink}</div>
+        <div class="lineage-node-name">${displayNameHtml}${jumpLink}</div>
         <div class="lineage-node-meta">${escapeHtml(shop.area || '')}</div>
       `;
       
@@ -5541,7 +7604,7 @@
             if (targetSection) {
               // 検索バーの高さを考慮してオフセット
               const searchWrap = document.getElementById('lineage-search-wrap');
-              const headerHeight = searchWrap ? searchWrap.getBoundingClientRect().height + 40 : 80;
+              const headerHeight = searchWrap ? searchWrap.getBoundingClientRect().height + 32 : 120;
               const rect = targetSection.getBoundingClientRect();
               const scrollParent = targetSection.closest('.tab-content') || window;
               if (scrollParent === window) {
@@ -5554,16 +7617,20 @@
         }
       }
       
-      node.addEventListener('click', () => selectLineageNode(shop.id));
+      const noCoords = !shop.lat || !shop.lng;
+      const isClosedShop = shop.name.includes('【閉店】');
+      if (noCoords && !isClosedShop) {
+        node.style.cursor = 'default';
+      } else {
+        node.addEventListener('click', () => selectLineageNode(shop.id));
+      }
       return node;
     }
     
-    function drawLineageWires(section, items, levels, order) {
+    function drawLineageWires(section, items, dummyItems, levels, order) {
       const svg = section.querySelector('.lineage-wires');
       const box = section.querySelector('.lineage-section-box');
-      const nodes = section.querySelectorAll('.lineage-node');
-      
-      if (!svg || !box || nodes.length === 0) return;
+      const nodes = section.querySelectorAll('.lineage-node, .lineage-node-group');
       
       // SVGのサイズを設定
       const boxRect = box.getBoundingClientRect();
@@ -5582,14 +7649,38 @@
       });
       
       const paths = [];
-      items.forEach(shop => {
+      dummyItems.forEach(shop => {
         if (!shop.parent) return;
+        // 横ダミーへの線は引かない
+        if (shop.id && shop.id.startsWith('__dummy_yoko_')) return;
+        // 縦下ダミー自身への線も引かない
+        if (shop.id && shop.id.startsWith('__dummy_tate_silent_')) return;
+
         const childPos = positions.get(shop.id);
-        const parentPos = positions.get(shop.parent);
+
+        // 縦下ダミーを親に持つ場合：ダミーを飛ばして実祖先を親にし、折り曲げY座標はダミーの位置を使う
+        let parentId = shop.parent;
+        let bendY = null;
+        while (parentId && parentId.startsWith('__dummy_tate_silent_')) {
+          const dummyPos = positions.get(parentId);
+          if (dummyPos && bendY === null) bendY = dummyPos.y;
+          const dummyShop = dummyItems.find(s => s.id === parentId);
+          parentId = dummyShop ? dummyShop.parent : null;
+        }
+
+        const parentPos = positions.get(parentId);
         if (!childPos || !parentPos) return;
-        
-        const midY = (parentPos.y + childPos.y) / 2;
-        paths.push(`M ${parentPos.x} ${parentPos.y} L ${parentPos.x} ${midY} L ${childPos.x} ${midY} L ${childPos.x} ${childPos.y}`);
+
+        if (shop.position === '系列') {
+          // 横線でつなぐ（同じ段）
+          paths.push(`M ${parentPos.x} ${parentPos.y} L ${childPos.x} ${childPos.y}`);
+        } else if (bendY !== null) {
+          // 縦下ダミーの高さで折り曲げ（線は引くがダミーノードへの線はなし）
+          paths.push(`M ${parentPos.x} ${parentPos.y} L ${parentPos.x} ${bendY} L ${childPos.x} ${bendY} L ${childPos.x} ${childPos.y}`);
+        } else {
+          const midY = (parentPos.y + childPos.y) / 2;
+          paths.push(`M ${parentPos.x} ${parentPos.y} L ${parentPos.x} ${midY} L ${childPos.x} ${midY} L ${childPos.x} ${childPos.y}`);
+        }
       });
       
       svg.innerHTML = paths.map(d => `<path class="lineage-wire" d="${d}"/>`).join('');
@@ -5722,10 +7813,30 @@
         sug.style.display = 'none';
         selectLineageNode(id);
         
-        // ノードまでスクロール
-        const node = document.querySelector(`.lineage-node[data-id="${id}"]`);
+        // ノードまでスクロール（グループノード対応）
+        let node = document.querySelector(`.lineage-node[data-id="${id}"]`);
+        let isGroupNode = false;
+        if (!node) {
+          const targetShop = shops.find(s => s.id === id);
+          if (targetShop && targetShop.group) {
+            const groupShops = shops.filter(s => s.group === targetShop.group);
+            for (const gs of groupShops) {
+              node = document.querySelector(`.lineage-node-group[data-id="${gs.id}"]`);
+              if (node) { isGroupNode = true; break; }
+            }
+          }
+        }
         if (node) {
           node.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+          if (isGroupNode) {
+            // スクロール完了後にポップアップを開く
+            setTimeout(() => {
+              const rect = node.getBoundingClientRect();
+              const cx = rect.left + rect.width / 2;
+              const cy = rect.top + rect.height / 2;
+              node.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: cx, clientY: cy }));
+            }, 500);
+          }
         }
       });
       
@@ -5748,28 +7859,87 @@
         });
       }
       
-      // 全体表示トグル
-      const compactToggle = document.getElementById('lineage-compact-toggle');
+      // ズーム機能
+      const zoomOutBtn = document.getElementById('lineage-zoom-out');
+      const zoomInBtn = document.getElementById('lineage-zoom-in');
       const sectionsEl = document.getElementById('lineage-sections');
-      let isCompact = false;
+      let currentScale = 0.7; // デフォルト70%
       
-      if (compactToggle && sectionsEl) {
-        compactToggle.addEventListener('click', () => {
-          isCompact = !isCompact;
-          if (isCompact) {
-            const originalHeight = sectionsEl.scrollHeight;
-            sectionsEl.style.transform = 'scale(0.7)';
-            sectionsEl.style.transformOrigin = 'top left';
-            sectionsEl.style.width = '143%';
-            sectionsEl.style.height = (originalHeight * 0.7) + 'px';
-            compactToggle.classList.add('active');
-          } else {
-            sectionsEl.style.transform = 'scale(1)';
-            sectionsEl.style.width = '100%';
-            sectionsEl.style.height = 'auto';
-            compactToggle.classList.remove('active');
+      if (zoomOutBtn && zoomInBtn && sectionsEl) {
+        // 初期表示で70%を適用（DOM構築後に実行）
+        setTimeout(() => {
+          applyZoom();
+        }, 100);
+        
+        // 縮小ボタン
+        zoomOutBtn.addEventListener('click', () => {
+          if (currentScale > 0.5) {
+            currentScale -= 0.1;
+            currentScale = Math.round(currentScale * 10) / 10; // 丸め誤差対策
+            applyZoom();
           }
         });
+        
+        // 拡大ボタン
+        zoomInBtn.addEventListener('click', () => {
+          if (currentScale < 1.0) {
+            currentScale += 0.1;
+            currentScale = Math.round(currentScale * 10) / 10; // 丸め誤差対策
+            applyZoom();
+          }
+        });
+        
+        function applyZoom() {
+          // 一時的にtransformをリセットして実際の高さを取得
+          sectionsEl.style.transform = 'scale(1)';
+          sectionsEl.style.width = '100%';
+          const actualHeight = sectionsEl.scrollHeight;
+          
+          // スケールを適用
+          sectionsEl.style.transform = `scale(${currentScale})`;
+          sectionsEl.style.transformOrigin = 'top left';
+          sectionsEl.style.width = `${100 / currentScale}%`;
+          sectionsEl.style.height = `${actualHeight * currentScale}px`;
+          
+          // ボタンの状態更新
+          zoomOutBtn.disabled = currentScale <= 0.5;
+          zoomInBtn.disabled = currentScale >= 1.0;
+        }
+      }
+    }
+    
+    function jumpToLineageTabAndSelect(shopId) {
+      const shop = shops.find(s => s.id === shopId);
+      if (!shop) return;
+      
+      // モーダルを閉じる
+      closeShopDetail();
+      
+      // 家系図タブに切り替え
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      const lineageNavBtn = document.querySelector('.nav-item[data-tab="lineage"]');
+      if (lineageNavBtn) lineageNavBtn.classList.add('active');
+      document.getElementById('tab-lineage').classList.add('active');
+      document.title = '家系家系図 - 家系ラーメンMAP';
+      
+      const doSelect = () => {
+        selectLineageNode(shopId);
+        // ノードまでスクロール
+        const node = document.querySelector(`.lineage-node[data-id="${shopId}"], .lineage-node-group[data-id="${shopId}"]`);
+        if (node) {
+          node.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+        }
+      };
+      
+      if (!window.lineageRendered) {
+        setTimeout(() => {
+          renderLineageTab();
+          window.lineageRendered = true;
+          setTimeout(doSelect, 150);
+        }, 100);
+      } else {
+        setTimeout(doSelect, 100);
       }
     }
     
@@ -5777,12 +7947,20 @@
       const shop = shops.find(s => s.id === shopId);
       if (!shop) return;
       
-      document.querySelectorAll('.lineage-node.selected').forEach(n => {
-        n.classList.remove('selected');
-      });
+      document.querySelectorAll('.lineage-node.selected').forEach(n => n.classList.remove('selected'));
+      document.querySelectorAll('.lineage-node-group.selected').forEach(n => n.classList.remove('selected'));
       
       const node = document.querySelector(`.lineage-node[data-id="${shopId}"]`);
-      if (node) node.classList.add('selected');
+      if (node) {
+        node.classList.add('selected');
+      } else if (shop.group) {
+        // グループノードを探してselected
+        const groupShops = shops.filter(s => s.group === shop.group);
+        for (const gs of groupShops) {
+          const gNode = document.querySelector(`.lineage-node-group[data-id="${gs.id}"]`);
+          if (gNode) { gNode.classList.add('selected'); break; }
+        }
+      }
       
       const openStatus = getOpenStatus(shop.openingHours);
       const isRealClosed = !shop.openingHours || Object.keys(shop.openingHours).length === 0;
@@ -5796,22 +7974,19 @@
       }
       
       if (infoSub) {
-        const parent = shop.parent ? shops.find(s => s.id === shop.parent) : null;
-        const parentText = parent ? `修行元: ${parent.name}` : '修行元: なし（ルート）';
-        
         // 状態表示
         let statusText;
         if (isRealClosed) {
-          statusText = '状態: 閉店';
+          statusText = '閉店';
         } else if (openStatus.state === 'open') {
-          statusText = '状態: 営業中';
+          statusText = '営業中';
         } else if (openStatus.state === 'soon') {
-          statusText = '状態: 閉店間近';
+          statusText = '閉店間近';
         } else {
-          statusText = '状態: 営業時間外';
+          statusText = '営業時間外';
         }
         
-        infoSub.textContent = `${parentText} / ${statusText}`;
+        infoSub.textContent = statusText;
       }
       
       // 詳細画面ボタンを表示
@@ -5827,6 +8002,7 @@
       currentShop = shops.find(s => s.id === shopId);
       if (!currentShop) return;
       
+      if (isAuthBetaEnabled()) loadShopCommunityVisits(shopId);
       
       const visitData = visits[shopId] || { logs: [], wantToGo: false };
       const openStatus = getOpenStatus(currentShop.openingHours);
@@ -5838,6 +8014,21 @@
       
       document.getElementById('detail-name').textContent = currentShop.name;
       
+      // 看板スタイルの適用
+      const detailNameEl = document.getElementById('detail-name');
+      const isOudouya = currentShop.category === '王道家' || currentShop.category === '王道家（王道乃印）' || currentShop.category === '王道家（との丸家）';
+      const isTakasago = currentShop.category === '六角家' && (currentShop.name.includes('たかさご家') || currentShop.name.includes('町田家') || currentShop.name.includes('侍'));
+      const isChokusei = currentShop.category === '直系';
+      if (isTakasago) {
+        detailNameEl.style.cssText = 'background:#3CB371;color:#dc2626;padding:8px 12px;border-radius:0;text-shadow:0.7px 0.7px 0 #fff,-0.7px -0.7px 0 #fff,0.7px -0.7px 0 #fff,-0.7px 0.7px 0 #fff;display:inline-block;';
+      } else if (isOudouya) {
+        detailNameEl.style.cssText = 'background:#FDCD00;color:#000000;padding:8px 12px;border:4px solid #dc2626;border-radius:0;text-shadow:0.7px 0.7px 0 #fff,-0.7px -0.7px 0 #fff,0.7px -0.7px 0 #fff,-0.7px 0.7px 0 #fff;display:inline-block;';
+      } else if (isChokusei) {
+        detailNameEl.style.cssText = 'background:#dc2626;color:#000000;padding:8px 12px;border-radius:0;text-shadow:0.7px 0.7px 0 #fff,-0.7px -0.7px 0 #fff,0.7px -0.7px 0 #fff,-0.7px 0.7px 0 #fff;display:inline-block;';
+      } else {
+        detailNameEl.style.cssText = '';
+      }
+      
       // ひらがな表示
       const hiraganaEl = document.getElementById('detail-name-hiragana');
       if (currentShop.nameHiragana) {
@@ -5847,18 +8038,39 @@
         hiraganaEl.style.display = 'none';
       }
       
-      document.getElementById('detail-category').textContent = currentShop.category;
+      document.getElementById('detail-category').textContent = getShortCategoryName(currentShop.category);
+      
+      // 出身（修行元）表示
+      const originEl = document.getElementById('detail-origin');
+      if (currentShop.parent) {
+        const parentShop = shops.find(s => s.id === currentShop.parent);
+        if (parentShop && parentShop.name !== 'ダミー') {
+          originEl.textContent = `出身: ${parentShop.name}`;
+          originEl.onclick = () => jumpToLineageTabAndSelect(parentShop.id);
+          originEl.style.display = 'inline-flex';
+        } else {
+          originEl.style.display = 'none';
+        }
+      } else {
+        originEl.style.display = 'none';
+      }
       document.getElementById('detail-area').textContent = currentShop.area;
       document.getElementById('detail-description').textContent = currentShop.description;
       
       const statusBadge = document.getElementById('detail-status-badge');
-      if (isSoon) {
+      const hasTimeFilter = advancedFilterSettings.day !== '' || advancedFilterSettings.time !== '';
+      if (hasTimeFilter) {
+        statusBadge.style.display = 'none';
+      } else if (isSoon) {
+        statusBadge.style.display = '';
         statusBadge.className = 'badge badge-soon';
         statusBadge.textContent = '閉店間近';
       } else if (isOpen) {
+        statusBadge.style.display = '';
         statusBadge.className = 'badge badge-status';
         statusBadge.textContent = '営業中';
       } else {
+        statusBadge.style.display = '';
         statusBadge.className = 'badge badge-closed';
         statusBadge.textContent = '時間外';
       }
@@ -5950,10 +8162,19 @@
         linkSection.style.display = 'none';
       }
       
-      document.getElementById('nav-apple').href =
-        `https://maps.apple.com/?daddr=${currentShop.lat},${currentShop.lng}`;
-      document.getElementById('nav-google').href =
-        `https://www.google.com/maps/dir/?api=1&destination=${currentShop.lat},${currentShop.lng}`;
+      const navSection = document.getElementById('nav-section');
+      const hoursSection = document.getElementById('hours-section');
+      if (currentShop.lat && currentShop.lng) {
+        navSection.style.display = 'block';
+        hoursSection.style.display = 'block';
+        document.getElementById('nav-apple').href =
+          `https://maps.apple.com/?daddr=${currentShop.lat},${currentShop.lng}`;
+        document.getElementById('nav-google').href =
+          `https://www.google.com/maps/dir/?api=1&destination=${currentShop.lat},${currentShop.lng}`;
+      } else {
+        navSection.style.display = 'none';
+        hoursSection.style.display = 'none';
+      }
       
       // モーダルを表示
       const modal = document.getElementById('shop-detail-modal');
@@ -6046,7 +8267,7 @@
     function getShareText() {
       if (!currentShop) return '';
       
-      return `🍜 ${currentShop.name}\n📍 ${currentShop.area}\n\n#家系ラーメン #ラーメン`;
+      return `🍜 ${currentShop.name}\n📍 ${currentShop.area}\n\n#家系ラーメン #家系ラーメンmap`;
     }
     
     function getShareUrl() {
@@ -6478,14 +8699,6 @@
             </div>
           ` : ''}
           
-          <div style="display:flex;gap:8px;margin-top:8px;">
-            <button onclick="deleteVisitFromDetail(${logIndex})" class="btn" style="flex:1;background:#ef4444;color:white;border:none;">
-              削除
-            </button>
-            <button onclick="editVisitRecord(${logIndex})" class="btn btn-primary" style="flex:1;">
-              編集する
-            </button>
-          </div>
         </div>
       `;
       
@@ -6500,6 +8713,19 @@
       }
       
       modalBody.insertAdjacentHTML('afterbegin', detailHTML);
+
+      // フッターに削除・編集ボタンをセット
+      const footer = document.querySelector('#record-modal .record-modal-footer');
+      footer.innerHTML = `
+        <div style="display:flex;gap:8px;">
+          <button onclick="deleteVisitFromDetail(${logIndex})" class="btn" style="flex:1;background:#ef4444;color:white;border:none;">
+            削除
+          </button>
+          <button onclick="editVisitRecord(${logIndex})" class="btn btn-primary" style="flex:1;">
+            編集する
+          </button>
+        </div>
+      `;
       document.getElementById('record-modal').classList.add('active');
 
       // 写真を非同期で読み込む
@@ -6516,9 +8742,9 @@
       // スクロール位置をリセット
       setTimeout(() => {
         const modal = document.getElementById('record-modal');
-        const modalContent = modal?.querySelector('.modal-content');
-        if (modalContent) {
-          modalContent.scrollTop = 0;
+        const modalBody = modal?.querySelector('.modal-body');
+        if (modalBody) {
+          modalBody.scrollTop = 0;
         }
       }, 50);
     }
@@ -6599,6 +8825,80 @@
     }
     
     // Record Modal
+    function restoreRecordModalFooter() {
+      const footer = document.querySelector('#record-modal .record-modal-footer');
+      if (!footer) return;
+      footer.innerHTML = `
+        <div style="display:flex;gap:8px;">
+          <button type="button" id="save-visit-btn" class="btn btn-primary" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <svg style="width:18px;height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+              <polyline points="17 21 17 13 7 13 7 21"/>
+              <polyline points="7 3 7 8 15 8"/>
+            </svg>
+            保存
+          </button>
+          <button type="button" id="save-and-tweet-btn" class="btn" style="flex:1;background:#000000;color:white;border:none;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+            保存してシェア
+          </button>
+        </div>
+        <div style="text-align:center;font-size:12px;color:#6b7280;margin-top:4px;">
+          Xの投稿画面で写真を追加してください。
+        </div>
+      `;
+      // イベントリスナーを再設定
+      document.getElementById('save-visit-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        saveVisitRecord(e);
+      });
+      document.getElementById('save-and-tweet-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        saveAndTweet(e);
+      });
+    }
+
+    function restoreRecordModalFooter() {
+      const footer = document.querySelector('#record-modal .record-modal-footer');
+      if (!footer) return;
+      footer.innerHTML = `
+        <div style="display:flex;gap:8px;">
+          <button type="button" id="save-visit-btn" class="btn btn-primary" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <svg style="width:18px;height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+              <polyline points="17 21 17 13 7 13 7 21"/>
+              <polyline points="7 3 7 8 15 8"/>
+            </svg>
+            保存
+          </button>
+          <button type="button" id="save-and-tweet-btn" class="btn" style="flex:1;background:#000000;color:white;border:none;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+            保存してシェア
+          </button>
+        </div>
+        <div style="text-align:center;font-size:12px;color:#6b7280;margin-top:4px;">
+          Xの投稿画面で写真を追加してください。
+        </div>
+      `;
+      // イベントリスナーを再設定
+      document.getElementById('save-visit-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        saveVisitRecord(e);
+      });
+      document.getElementById('save-and-tweet-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        saveAndTweet(e);
+      });
+    }
+
     function openRecordModal() {
       
       if (!currentShop) return;
@@ -6616,6 +8916,12 @@
       currentPhotos = [];
       renderRatingInput();
       renderPhotoPreview();
+
+      // 公開チェックボックス：ログイン中のみ表示、デフォルトは非公開
+      const publicWrap = document.getElementById('input-public-wrap');
+      const publicCheckbox = document.getElementById('input-is-public');
+      if (publicWrap) publicWrap.style.display = currentUser ? 'block' : 'none';
+      if (publicCheckbox) publicCheckbox.checked = false;
       
       // モーダルのタイトルをリセット
       document.querySelector('#record-modal .modal-header h2').textContent = '訪問記録';
@@ -6633,15 +8939,16 @@
         existingDetail.remove();
       }
       
+      // フッターを保存ボタンに戻す
+      restoreRecordModalFooter();
+
       document.getElementById('record-modal').classList.add('active');
-      
+
       // モーダルを開く時にスクロール位置を最上部にリセット
       setTimeout(() => {
         const modal = document.getElementById('record-modal');
-        const modalContent = modal?.querySelector('.modal-content');
-        if (modalContent) {
-          modalContent.scrollTop = 0;
-        }
+        const mb = modal?.querySelector('.modal-body');
+        if (mb) mb.scrollTop = 0;
       }, 50);
     }
     
@@ -6794,6 +9101,12 @@
       document.getElementById('input-order').value = log.order || '';
       document.getElementById('input-options').value = log.options || '';
       document.getElementById('input-memo').value = log.memo || '';
+
+      // 公開チェックボックス：ログイン中のみ表示、既存値を復元
+      const publicWrap = document.getElementById('input-public-wrap');
+      const publicCheckbox = document.getElementById('input-is-public');
+      if (publicWrap) publicWrap.style.display = currentUser ? 'block' : 'none';
+      if (publicCheckbox) publicCheckbox.checked = !!log.isPublic;
       
       currentRating = log.rating || 0;
       renderRatingInput();
@@ -6818,39 +9131,15 @@
       // モーダルのタイトルを変更
       document.querySelector('#record-modal .modal-header h2').textContent = '訪問記録を編集';
       
-      // ボタンのイベントリスナーを再設定
-      setTimeout(() => {
-        // 保存ボタン
-        const saveBtn = document.getElementById('save-visit-btn');
-        if (saveBtn) {
-          const newBtn = saveBtn.cloneNode(true);
-          saveBtn.parentNode.replaceChild(newBtn, saveBtn);
-          newBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            saveVisitRecord(e);
-          });
-        }
-        
-        // 保存してシェアボタン
-        const saveAndTweetBtn = document.getElementById('save-and-tweet-btn');
-        if (saveAndTweetBtn) {
-          const newSaveAndTweetBtn = saveAndTweetBtn.cloneNode(true);
-          saveAndTweetBtn.parentNode.replaceChild(newSaveAndTweetBtn, saveAndTweetBtn);
-          newSaveAndTweetBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            saveAndTweet(e);
-          });
-        }
-      }, 100);
+      // フッターを保存ボタンに戻す
+      restoreRecordModalFooter();
       
       // モーダルを開く時にスクロール位置を最上部にリセット
       setTimeout(() => {
         const modal = document.getElementById('record-modal');
-        const modalContent = modal?.querySelector('.modal-content');
-        if (modalContent) {
-          modalContent.scrollTop = 0;
+        const modalBody = modal?.querySelector('.modal-body');
+        if (modalBody) {
+          modalBody.scrollTop = 0;
         }
       }, 50);
     }
@@ -6872,7 +9161,7 @@
 
       // 画面を更新
       updateMarkers();
-      renderShopList(document.getElementById('filter-category').value);
+      renderShopList();
       renderListTab();
       renderLineageTab();
       showShopDetail(currentShop.id);
@@ -6899,7 +9188,7 @@
 
       // 画面を更新
       updateMarkers();
-      renderShopList(document.getElementById('filter-category').value);
+      renderShopList();
       renderListTab();
       renderLineageTab();
       showShopDetail(currentShop.id);
@@ -7205,7 +9494,8 @@
         flavorIntensity: document.querySelector('[onclick*="flavor-intensity"].active')?.dataset.value || '普通',
         oilAmount: document.querySelector('[onclick*="oil-amount"].active')?.dataset.value || '普通',
         memo: document.getElementById('input-memo').value || '',
-        photos: photoFileNames
+        photos: photoFileNames,
+        isPublic: document.getElementById('input-is-public') ? document.getElementById('input-is-public').checked : false
       };
       
       if (!visits[currentShop.id]) {
@@ -7226,7 +9516,7 @@
       // 画面を更新
       setTimeout(() => {
         updateMarkers();
-        renderShopList(document.getElementById('filter-category').value);
+        renderShopList();
         renderListTab();
         renderLineageTab();
         
@@ -7274,7 +9564,8 @@
         flavorIntensity: document.querySelector('[onclick*="flavor-intensity"].active')?.dataset.value || '普通',
         oilAmount: document.querySelector('[onclick*="oil-amount"].active')?.dataset.value || '普通',
         memo: document.getElementById('input-memo').value || '',
-        photos: photoFileNames
+        photos: photoFileNames,
+        isPublic: document.getElementById('input-is-public') ? document.getElementById('input-is-public').checked : false
       };
       
       if (!visits[currentShop.id]) {
@@ -7321,7 +9612,7 @@
       }
       
       tweetText += `今日の一杯を記録 🍜\n`;
-      tweetText += `#${currentShop.name.replace(/\s/g, '')} #家系ラーメンマップ\n`;
+      tweetText += `#${currentShop.name.replace(/\s/g, '')} #家系ラーメンmap\n`;
       tweetText += `https://iekei-map.pages.dev/`;
       
       // X（Twitter）で投稿（x.comを使用）
@@ -7338,7 +9629,7 @@
       // 画面を更新
       setTimeout(() => {
         updateMarkers();
-        renderShopList(document.getElementById('filter-category').value);
+        renderShopList();
         renderListTab();
         renderLineageTab();
         
@@ -7566,6 +9857,14 @@
     
     function closeSettingsModal() {
       document.getElementById('settings-modal').classList.remove('active');
+    }
+
+    function openCreditsPanel() {
+      document.getElementById('credits-modal').style.display = 'flex';
+    }
+
+    function closeCreditsPanel() {
+      document.getElementById('credits-modal').style.display = 'none';
     }
     
     function openTutorial() {
@@ -7875,11 +10174,203 @@
     </div>
   </div>
 
+  <!-- Advanced Filter Modal -->
+  <div id="advanced-filter-modal" class="modal" onclick="closeAdvancedFilterModal()">
+    <div class="modal-content" onclick="event.stopPropagation()" style="max-width:500px;border-radius:16px;max-height:85vh;overflow-y:hidden;display:flex;flex-direction:column;">
+      <div class="modal-header" style="display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid #e5e7eb;flex-shrink:0;">
+        <h2 style="font-size:18px;font-weight:700;">🔍 詳細検索</h2>
+        <button onclick="closeAdvancedFilterModal()" style="width:32px;height:32px;border-radius:50%;border:none;background:#f3f4f6;cursor:pointer;font-size:18px;">×</button>
+      </div>
+      
+      <div style="padding:16px;overflow-y:auto;flex:1;min-height:0;">
+        <!-- 家系 -->
+        <div style="margin-bottom:20px;">
+          <label style="display:flex;align-items:center;margin-bottom:10px;cursor:pointer;">
+            <input type="checkbox" id="category-parent-iekei" style="margin-right:8px;">
+            <h3 style="font-size:14px;font-weight:600;color:#374151;margin:0;">家系（複数選択可）</h3>
+          </label>
+          <div id="category-checkboxes-iekei" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-left:24px;">
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" value="直系" class="category-iekei" style="margin-right:8px;">
+              <span style="font-size:14px;">直系</span>
+            </label>
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" value="吉村家（直系以外）" class="category-iekei" style="margin-right:8px;">
+              <span style="font-size:14px;">吉村家（直系以外）</span>
+            </label>
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" value="王道家" class="category-iekei" style="margin-right:8px;">
+              <span style="font-size:14px;">王道家系</span>
+            </label>
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" value="王道家（王道乃印）" class="category-iekei" style="margin-right:8px;">
+              <span style="font-size:14px;">王道家（王道乃印）</span>
+            </label>
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" value="王道家（との丸家）" class="category-iekei" style="margin-right:8px;">
+              <span style="font-size:14px;">王道家（との丸家）</span>
+            </label>
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" value="本牧家" class="category-iekei" style="margin-right:8px;">
+              <span style="font-size:14px;">本牧家系</span>
+            </label>
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" value="六角家" class="category-iekei" style="margin-right:8px;">
+              <span style="font-size:14px;">六角家系</span>
+            </label>
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" value="武蔵家" class="category-iekei" style="margin-right:8px;">
+              <span style="font-size:14px;">武蔵家系</span>
+            </label>
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" value="野中家" class="category-iekei" style="margin-right:8px;">
+              <span style="font-size:14px;">野中家系</span>
+            </label>
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" value="大輝家" class="category-iekei" style="margin-right:8px;">
+              <span style="font-size:14px;">大輝家系</span>
+            </label>
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" value="オリジナル" class="category-iekei" style="margin-right:8px;">
+              <span style="font-size:14px;">オリジナル</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 壱系 -->
+        <div style="margin-bottom:20px;">
+          <label style="display:flex;align-items:center;margin-bottom:10px;cursor:pointer;">
+            <input type="checkbox" id="category-parent-isse" style="margin-right:8px;">
+            <h3 style="font-size:14px;font-weight:600;color:#374151;margin:0;">壱系（複数選択可）</h3>
+          </label>
+          <div id="category-checkboxes-isse" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-left:24px;">
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" value="壱系" class="category-isse" style="margin-right:8px;">
+              <span style="font-size:14px;">壱系</span>
+            </label>
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" value="壱系（資本系）" class="category-isse" style="margin-right:8px;">
+              <span style="font-size:14px;">壱系（資本系）</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 訪問状況 -->
+        <div style="margin-bottom:20px;">
+          <h3 style="font-size:14px;font-weight:600;margin-bottom:10px;color:#374151;">訪問状況</h3>
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" id="filter-want" style="margin-right:8px;">
+              <span style="font-size:14px;">☆ 行きたい</span>
+            </label>
+            <label style="display:flex;align-items:center;padding:8px;background:#f9fafb;border-radius:8px;cursor:pointer;">
+              <input type="checkbox" id="filter-favorite" style="margin-right:8px;">
+              <span style="font-size:14px;">♡ お気に入り</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 営業時間検索 -->
+        <div style="margin-bottom:20px;">
+          <h3 style="font-size:14px;font-weight:600;margin-bottom:10px;color:#374151;">営業時間で検索</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div>
+              <label style="font-size:12px;color:#6b7280;display:block;margin-bottom:4px;">曜日</label>
+              <select id="filter-day" class="form-input" style="-webkit-appearance:none;appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%228%22 viewBox=%220 0 12 8%22><path fill=%22%23666%22 d=%22M1 1l5 5 5-5%22 stroke=%22%23666%22 stroke-width=%221.5%22 fill=%22none%22/></svg>');background-repeat:no-repeat;background-position:right 10px center;padding-right:30px;height:38px;">
+                <option value="">指定なし</option>
+                <option value="0">日曜日</option>
+                <option value="1">月曜日</option>
+                <option value="2">火曜日</option>
+                <option value="3">水曜日</option>
+                <option value="4">木曜日</option>
+                <option value="5">金曜日</option>
+                <option value="6">土曜日</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:12px;color:#6b7280;display:block;margin-bottom:4px;">時刻</label>
+              <input type="time" id="filter-time" class="form-input" placeholder="指定なし" style="-webkit-appearance:none;appearance:none;height:38px;">
+            </div>
+          </div>
+        </div>
+
+        <!-- ボタン -->
+        <div style="height:8px;"></div>
+      </div>
+      <div style="padding:12px 16px;border-top:1px solid #f3f4f6;background:white;flex-shrink:0;">
+        <div style="display:flex;gap:8px;">
+          <button onclick="resetAdvancedFilter()" style="flex:1;padding:12px;border:1px solid #e5e7eb;border-radius:8px;background:white;cursor:pointer;font-weight:600;">リセット</button>
+          <button onclick="applyAdvancedFilter()" style="flex:2;padding:12px;border:none;border-radius:8px;background:#3b82f6;color:white;cursor:pointer;font-weight:600;">検索する</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   
 
   <!-- Settings Modal -->
+  <div id="account-modal" class="modal" style="align-items:center;justify-content:center;">
+    <div class="modal-content" style="max-width: 420px; border-radius: 16px;">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="font-size: 18px; font-weight: 700;">アカウント</h2>
+        <button onclick="closeAccountModal()" style="
+          width: 32px; height: 32px; border-radius: 50%; border: none;
+          background: #f3f4f6; color: #6b7280; font-size: 20px; cursor: pointer;
+          display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        ">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+
+        <!-- ログイン前 -->
+        <div id="account-logged-out">
+          <p style="font-size: 14px; color: #4b5563; line-height: 1.6; margin-bottom: 20px;">
+            ログインすると、訪問記録をクラウドに保存できます。機種変更してもデータが残り、今後は他のユーザーの記録も見られるようになります。
+          </p>
+          <button onclick="signInWithGoogle()" style="
+            width: 100%; padding: 12px 16px; margin-bottom: 10px;
+            border: 1.5px solid #e5e7eb; border-radius: 10px; background: white;
+            font-size: 15px; font-weight: 600; color: #111827; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+          ">
+            <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84c-.21 1.13-.85 2.09-1.81 2.73v2.27h2.92c1.7-1.57 2.69-3.88 2.69-6.64z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.27c-.81.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.71H.96v2.33C2.44 15.98 5.48 18 9 18z"/><path fill="#FBBC05" d="M3.97 10.7c-.18-.54-.28-1.11-.28-1.7s.1-1.16.28-1.7V4.97H.96A8.997 8.997 0 0 0 0 9c0 1.45.35 2.82.96 4.03l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.48 0 2.44 2.02.96 4.97l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
+            Googleでログイン
+          </button>
+          <button onclick="signInWithApple()" style="
+            width: 100%; padding: 12px 16px;
+            border: none; border-radius: 10px; background: #000;
+            font-size: 15px; font-weight: 600; color: white; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+          ">
+            <svg width="16" height="18" viewBox="0 0 16 18" fill="white"><path d="M11.18 0c.1.86-.25 1.7-.78 2.32-.56.65-1.45 1.15-2.33 1.08-.12-.85.27-1.74.78-2.32C9.42.39 10.36-.07 11.18 0zM13.2 6.45c-1.27.74-2.04 2.07-2.02 3.54.03 1.78.99 3.32 2.48 4.16-.27.85-.66 1.66-1.16 2.39-.7 1.03-1.45 2.04-2.63 2.06-1.16.02-1.54-.69-2.87-.69-1.33 0-1.76.67-2.86.71-1.13.04-2-1.07-2.7-2.09C.13 14.65-.84 11.32.71 9.06c.76-1.12 2.12-1.83 3.6-1.85 1.13-.02 1.84.74 2.79.74.92 0 1.5-.74 2.86-.74.94.01 1.94.27 2.66.94-.13.08-1.39.78-1.42 2.3z"/></svg>
+            Appleでログイン
+          </button>
+        </div>
+
+        <!-- ログイン後 -->
+        <div id="account-logged-in" style="display:none;">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+            <img id="account-avatar-img" src="" style="width:48px;height:48px;border-radius:50%;display:none;object-fit:cover;" />
+            <div>
+              <div id="account-display-name" style="font-weight: 700; font-size: 16px; color: #111827;"></div>
+              <div id="account-display-email" style="font-size: 13px; color: #6b7280;"></div>
+            </div>
+          </div>
+          <p style="font-size: 13px; color: #6b7280; line-height: 1.5; margin-bottom: 16px;">
+            訪問記録（テキスト情報）はクラウドに自動で同期されます。写真の同期は今後対応予定です。
+          </p>
+          <button onclick="signOutAccount()" style="
+            width: 100%; padding: 12px 16px;
+            border: 1.5px solid #fecaca; border-radius: 10px; background: #fef2f2;
+            font-size: 15px; font-weight: 600; color: #dc2626; cursor: pointer;
+          ">ログアウト</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <div id="settings-modal" class="modal">
-    <div class="modal-content" style="max-width: 400px; border-radius: 16px;">
+    <div class="modal-content" style="max-width: 560px; border-radius: 16px;">
       <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
         <h2 style="font-size: 18px; font-weight: 700;">設定</h2>
         <button onclick="closeSettingsModal()" style="
@@ -7900,6 +10391,26 @@
       <div class="modal-body" style="padding: 0;">
         <!-- メニューリスト -->
         <div style="background: #f9fafb; padding: 12px 0;">
+          
+          <!-- アカウント -->
+          <div id="settings-account-menu-item" onclick="openAccountModal()" style="
+            background: white;
+            padding: 16px 20px;
+            margin-bottom: 1px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          ">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="font-size: 24px;">👤</div>
+              <div>
+                <div style="font-weight: 600; font-size: 15px; color: #111827;">アカウント</div>
+                <div id="account-menu-subtitle" style="font-size: 13px; color: #6b7280;">ログインしてクラウド同期</div>
+              </div>
+            </div>
+            <div style="color: #9ca3af; font-size: 18px;">›</div>
+          </div>
           
           <!-- チュートリアル -->
           <div onclick="openTutorial()" style="
@@ -7941,15 +10452,96 @@
             <div style="color: #9ca3af; font-size: 18px;">›</div>
           </div>
           
+          <!-- クレジット -->
+          <div onclick="openCreditsPanel()" style="
+            background: white;
+            padding: 16px 20px;
+            margin-bottom: 1px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          ">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="font-size: 24px;">©️</div>
+              <div>
+                <div style="font-weight: 600; font-size: 15px; color: #111827;">クレジット</div>
+                <div style="font-size: 13px; color: #6b7280;">使用しているサービス</div>
+              </div>
+            </div>
+            <div style="color: #9ca3af; font-size: 18px;">›</div>
+          </div>
+
           <!-- 変更履歴 -->
           <div style="background: white; padding: 20px;">
             <div class="stats-title">📝 変更履歴</div>
             <div class="version-info">
-              <div class="version-current">現在のバージョン: <strong>v1.20.0</strong></div>
-              <div class="version-date">最終更新: 2026/01/25</div>
+              <div class="version-current">現在のバージョン: <strong>v2.1.0</strong></div>
+              <div class="version-date">最終更新: 2026/06/27</div>
             </div>
             
             <div class="changelog">
+              <!-- v2.1.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v2.1.0</span>
+                  <span class="version-date-small">2026/06/27</span>
+                </div>
+                <ul class="version-list">
+                  <li>🍜 詳細モーダルに、出身（修行元）表示を追加（店舗詳細から出身店をタップすると家系図にジャンプ）</li>
+                  <li>🗺️ マップ表示を全画面化可能に（地図を最大まで広げて表示できるように改善）</li>
+                  <li>📍 現在地・指定地点のマーカーを最前面に表示（ラーメン店のピンに隠れないよう改善）</li>
+                  <li>🕐 データの最終更新日を表示（マップ・リストの表示件数の横に表示）</li>
+                  <li>🎨 ヘッダーデザインを微調整</li>
+                </ul>
+              </div>
+
+              <!-- v2.0.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v2.0.0</span>
+                  <span class="version-date-small">2026/05/04</span>
+                </div>
+                <ul class="version-list">
+                  <li>🏮 のれん分け対応（武蔵家・壱六家など同一屋号の店舗をグループ表示。タップで全店舗一覧を確認可能）</li>
+                  <li>🗺️ 壱系セクションを追加（壱六家・町田商店・魂心家・壱角家など壱系店舗を収録）</li>
+                  <li>🏷️ 看板スタイルを導入（直系は赤、王道家は黄色、たかさご家は緑と各系列の個性を色で表現）</li>
+                </ul>
+              </div>
+
+              <!-- v1.22.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.22.0</span>
+                  <span class="version-date-small">2026/04/18</span>
+                </div>
+                <ul class="version-list">
+                  <li>📍 地図に「地点を指定」ボタンを追加（駅名・地名・IC検索対応）</li>
+                  <li>📱 横画面対応（ヘッダー・ボトムナビ非表示、家系図を最大化表示）</li>
+                  <li>🌳 家系図タブの凡例クリックで対応セクションにジャンプ</li>
+                </ul>
+              </div>
+              
+              <!-- v1.21.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v1.21.0</span>
+                  <span class="version-date-small">2026/04/04</span>
+                </div>
+                <ul class="version-list">
+                  <li>🆕 詳細検索の実装（カテゴリー複数選択、訪問状態フィルター、検索条件サマリー表示）</li>
+                  <li>📅 営業時間検索機能を追加（曜日と時刻を指定して営業中の店舗を検索可能）</li>
+                  <li>🔍 家系図ズーム機能を追加（50%〜100%の範囲で表示サイズを調整可能）</li>
+                  <li>🗺️ 大輝家系セクションを追加</li>
+                  <li>🗺️ 野中家系セクションを追加</li>
+                  <li>🏷️ カテゴリー体系を13種類に統合・再編成</li>
+                  <li>📈 統計タブのデフォルト期間を「全期間」に変更</li>
+                  <li>🎯 マップタブのリスト項目クリック時、ズームレベルを維持</li>
+                  <li>🔢 リスト・マップタブに表示件数を追加</li>
+                  <li>🐛 営業時間検索のデータ構造不一致を修正</li>
+                </ul>
+              </div>
+              
               <!-- v1.20.0 -->
               <div class="version-section">
                 <div class="version-header">
@@ -8905,6 +11497,34 @@
             <div style="color: #9ca3af; font-size: 18px;">›</div>
           </div>
           
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- クレジットパネル -->
+  <div id="credits-modal" class="modal" onclick="closeCreditsPanel()" style="display:none;align-items:center;justify-content:center;">
+    <div onclick="event.stopPropagation()" style="background:white;border-radius:16px;padding:24px;width:90%;max-width:560px;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+        <button onclick="closeCreditsPanel()" style="background:#f3f4f6;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;color:#374151;font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">‹</button>
+        <div style="font-size:16px;font-weight:700;color:#111827;">クレジット</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:1px;border-radius:12px;overflow:hidden;border:1px solid #f3f4f6;">
+        <div style="background:white;padding:16px;">
+          <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">地図</div>
+          <a href="https://www.openstreetmap.org" target="_blank" style="font-size:15px;font-weight:600;color:#111827;text-decoration:none;">OpenStreetMap</a>
+          <div style="font-size:12px;color:#6b7280;margin-top:2px;">© OpenStreetMap contributors</div>
+        </div>
+        <div style="background:white;padding:16px;border-top:1px solid #f3f4f6;">
+          <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">駅情報</div>
+          <a href="https://express.heartrails.com" target="_blank" style="font-size:15px;font-weight:600;color:#111827;text-decoration:none;">HeartRails Express</a>
+          <div style="font-size:12px;color:#6b7280;margin-top:2px;">路線・駅名データサービス</div>
+        </div>
+        <div style="background:white;padding:16px;border-top:1px solid #f3f4f6;">
+          <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">住所・地名検索</div>
+          <a href="https://maps.gsi.go.jp" target="_blank" style="font-size:15px;font-weight:600;color:#111827;text-decoration:none;">国土地理院</a>
+          <div style="font-size:12px;color:#6b7280;margin-top:2px;">地理院地図 / GSI Maps</div>
         </div>
       </div>
     </div>
