@@ -3718,6 +3718,155 @@
       `;
     }
 
+    // ===== ユーザープロフィール画面（Twitterのプロフィールのようなもの） =====
+    function closeUserProfileModal() {
+      const modal = document.getElementById('user-profile-modal');
+      if (modal) modal.classList.remove('active');
+    }
+
+    async function openUserProfile(userId) {
+      const modal = document.getElementById('user-profile-modal');
+      if (!modal || !supabaseClient) return;
+      modal.classList.add('active');
+      document.getElementById('user-profile-loading').style.display = 'block';
+      document.getElementById('user-profile-content').style.display = 'none';
+
+      try {
+        // プロフィール情報
+        const { data: profile, error: profileError } = await supabaseClient
+          .from('profiles')
+          .select('id, display_name, avatar_url, bio')
+          .eq('id', userId)
+          .single();
+        if (profileError) throw profileError;
+
+        // フォロワー数・フォロー中の数
+        const { count: followerCount } = await supabaseClient
+          .from('follows').select('*', { count: 'exact', head: true }).eq('following_id', userId);
+        const { count: followingCount } = await supabaseClient
+          .from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', userId);
+
+        // 自分がこの人をフォロー中か
+        let isFollowing = false;
+        if (currentUser && currentUser.id !== userId) {
+          const { data: followRow } = await supabaseClient
+            .from('follows').select('follower_id')
+            .eq('follower_id', currentUser.id).eq('following_id', userId)
+            .maybeSingle();
+          isFollowing = !!followRow;
+        }
+
+        // この人の公開訪問記録
+        const { data: visitRows } = await supabaseClient
+          .from('visits')
+          .select('id, shop_id, visited_at, rating, memo, order_text, options, noodle_firmness, flavor_intensity, oil_amount, created_at')
+          .eq('user_id', userId)
+          .eq('is_public', true)
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        renderUserProfile({ profile, followerCount: followerCount || 0, followingCount: followingCount || 0, isFollowing, visitRows: visitRows || [], userId });
+      } catch (e) {
+        console.error('プロフィール取得エラー:', e);
+        document.getElementById('user-profile-loading').textContent = '読み込みに失敗しました';
+      }
+    }
+
+    function renderUserProfile({ profile, followerCount, followingCount, isFollowing, visitRows, userId }) {
+      document.getElementById('user-profile-loading').style.display = 'none';
+      document.getElementById('user-profile-content').style.display = 'block';
+
+      const name = profile?.display_name || 'ユーザー';
+      const bio = profile?.bio || '';
+      document.getElementById('user-profile-name').textContent = name;
+      document.getElementById('user-profile-bio').textContent = bio;
+      document.getElementById('user-profile-follow-counts').textContent = `フォロー中 ${followingCount} ・ フォロワー ${followerCount}`;
+      applyAvatarDisplay(
+        document.getElementById('user-profile-avatar-img'),
+        document.getElementById('user-profile-avatar-emoji'),
+        profile?.avatar_url
+      );
+
+      // フォローボタン（自分自身の場合は表示しない）
+      const followBtnWrap = document.getElementById('user-profile-follow-btn-wrap');
+      if (currentUser && currentUser.id !== userId) {
+        followBtnWrap.innerHTML = `
+          <button id="user-profile-follow-btn" data-following="${isFollowing ? '1' : '0'}" data-user-id="${userId}"
+            onclick="toggleFollow(this)" style="
+            padding:9px 20px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;
+            border:${isFollowing ? '1.5px solid #e5e7eb' : 'none'};
+            background:${isFollowing ? 'white' : '#111827'};
+            color:${isFollowing ? '#374151' : 'white'};
+          ">${isFollowing ? 'フォロー中' : 'フォローする'}</button>
+        `;
+      } else {
+        followBtnWrap.innerHTML = '';
+      }
+
+      // 訪れたお店一覧
+      const listEl = document.getElementById('user-profile-visits-list');
+      if (!visitRows || visitRows.length === 0) {
+        listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;">公開されている記録がありません</div>';
+        return;
+      }
+      listEl.innerHTML = '';
+      visitRows.forEach(v => {
+        const shop = (typeof shops !== 'undefined' ? shops : []).find(s => s.id === v.shop_id);
+        const shopName = shop?.name || v.shop_id;
+        const dateStr = v.visited_at ? formatDateDetail(v.visited_at) : '';
+        const card = document.createElement('div');
+        card.style.background = '#f9fafb';
+        card.style.borderRadius = '12px';
+        card.style.padding = '12px';
+        card.style.marginBottom = '8px';
+        card.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
+            <div style="font-weight:700;font-size:14px;color:#111827;">${escapeHtml(shopName)}</div>
+            <div style="font-size:11px;color:#9ca3af;flex-shrink:0;margin-left:8px;">${dateStr}</div>
+          </div>
+          ${visitDetailLinesHtml(v)}
+        `;
+        listEl.appendChild(card);
+      });
+    }
+
+    async function toggleFollow(btnEl) {
+      if (!supabaseClient || !currentUser) {
+        await showCustomAlert('フォローするにはログインが必要です');
+        return;
+      }
+      const targetUserId = btnEl.dataset.userId;
+      const isFollowing = btnEl.dataset.following === '1';
+      try {
+        if (isFollowing) {
+          await supabaseClient.from('follows').delete()
+            .eq('follower_id', currentUser.id).eq('following_id', targetUserId);
+          btnEl.dataset.following = '0';
+          btnEl.textContent = 'フォローする';
+          btnEl.style.background = '#111827';
+          btnEl.style.color = 'white';
+          btnEl.style.border = 'none';
+        } else {
+          await supabaseClient.from('follows').insert({ follower_id: currentUser.id, following_id: targetUserId });
+          btnEl.dataset.following = '1';
+          btnEl.textContent = 'フォロー中';
+          btnEl.style.background = 'white';
+          btnEl.style.color = '#374151';
+          btnEl.style.border = '1.5px solid #e5e7eb';
+        }
+        // フォロワー数の表示も更新
+        const { count: followerCount } = await supabaseClient
+          .from('follows').select('*', { count: 'exact', head: true }).eq('following_id', targetUserId);
+        const { count: followingCount } = await supabaseClient
+          .from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', targetUserId);
+        const countsEl = document.getElementById('user-profile-follow-counts');
+        if (countsEl) countsEl.textContent = `フォロー中 ${followingCount || 0} ・ フォロワー ${followerCount || 0}`;
+      } catch (e) {
+        console.error('フォロー処理エラー:', e);
+        await showCustomAlert('処理に失敗しました。もう一度お試しください。');
+      }
+    }
+
     // クラウド同期：訪問記録（テキスト情報）と行きたい/お気に入りをSupabaseに反映
     // ※ 写真のクラウド同期は今後対応予定。今はテキスト情報のみ同期します。
     // 店舗詳細：その店の「みんなの記録」（公開されている他ユーザーの訪問記録）
@@ -3776,7 +3925,7 @@
           card.innerHTML = `
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
               ${avatarHtml(avatarUrl, 40)}
-              <div style="font-size:12px;font-weight:600;color:#374151;">${escapeHtml(name)}</div>
+              <div onclick="openUserProfile('${v.user_id}')" style="font-size:12px;font-weight:600;color:#374151;cursor:pointer;">${escapeHtml(name)}</div>
               <div style="font-size:11px;color:#9ca3af;margin-left:auto;">${dateStr}</div>
             </div>
             ${visitDetailLinesHtml(v)}
@@ -3878,7 +4027,7 @@
           card.innerHTML = `
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
               ${avatarHtml(avatarUrl, 40)}
-              <div style="font-size:13px;font-weight:600;color:#374151;">${escapeHtml(name)}</div>
+              <div onclick="openUserProfile('${v.user_id}')" style="font-size:13px;font-weight:600;color:#374151;cursor:pointer;">${escapeHtml(name)}</div>
             </div>
             <div style="font-weight:700;font-size:15px;color:#111827;margin-bottom:2px;">${escapeHtml(shopName)}</div>
             <div style="font-size:12px;color:#9ca3af;margin-bottom:6px;">${dateStr}</div>
@@ -10677,6 +10826,40 @@
           border: 1.5px solid #e5e7eb; border-radius: 10px; background: white;
           font-size: 14px; font-weight: 600; color: #6b7280; cursor: pointer;
         ">ログアウトして別の方法で試す</button>
+
+      </div>
+    </div>
+  </div>
+
+  <div id="user-profile-modal" class="modal" style="align-items:center;justify-content:center;">
+    <div class="modal-content" style="max-width: 480px; border-radius: 16px; max-height: 85vh; display: flex; flex-direction: column;" onclick="event.stopPropagation()">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+        <h2 style="font-size: 18px; font-weight: 700;">プロフィール</h2>
+        <button onclick="closeUserProfileModal()" style="
+          width: 32px; height: 32px; border-radius: 50%; border: none;
+          background: #f3f4f6; color: #6b7280; font-size: 20px; cursor: pointer;
+          display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        ">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 20px; overflow-y: auto; flex: 1;">
+
+        <div id="user-profile-loading" style="text-align:center;color:#9ca3af;font-size:13px;padding:24px 0;">読み込み中...</div>
+
+        <div id="user-profile-content" style="display:none;">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;">
+            <img id="user-profile-avatar-img" src="" style="width:64px;height:64px;border-radius:50%;display:none;object-fit:cover;flex-shrink:0;" />
+            <div id="user-profile-avatar-emoji" style="width:64px;height:64px;border-radius:50%;background:#f3f4f6;display:none;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;"></div>
+            <div style="flex:1;min-width:0;">
+              <div id="user-profile-name" style="font-weight:700;font-size:18px;color:#111827;"></div>
+              <div id="user-profile-follow-counts" style="font-size:13px;color:#6b7280;margin-top:2px;"></div>
+            </div>
+          </div>
+          <div id="user-profile-bio" style="font-size:14px;color:#4b5563;line-height:1.5;margin-bottom:14px;"></div>
+          <div id="user-profile-follow-btn-wrap" style="margin-bottom:20px;"></div>
+
+          <div style="font-weight:700;font-size:14px;color:#111827;margin-bottom:10px;border-top:1px solid #f3f4f6;padding-top:14px;">訪れたお店（公開記録）</div>
+          <div id="user-profile-visits-list"></div>
+        </div>
 
       </div>
     </div>
