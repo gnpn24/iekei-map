@@ -4199,6 +4199,97 @@
     }
 
     // 「今すぐ同期する」ボタン：過去の未同期データ（半年分など）も含めて、進捗を表示しながら同期する
+    // クラウドに保存されている自分の記録を、この端末のローカルに復元する（機種変更・別端末対策）。
+    // 既に「_cloudId」が一致するものはローカルに既にあると判断してスキップ（重複防止）。
+    async function restoreFromCloud() {
+      if (!supabaseClient || !currentUser) return;
+      const btn = document.getElementById('restore-cloud-btn');
+      const statusEl = document.getElementById('restore-cloud-status');
+      if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+      if (statusEl) statusEl.textContent = '復元中...';
+
+      try {
+        // 自分の訪問記録を全部取得（公開/非公開どちらも）
+        const { data: visitRows, error: visitsError } = await supabaseClient
+          .from('visits')
+          .select('*')
+          .eq('user_id', currentUser.id);
+        if (visitsError) throw visitsError;
+
+        // 写真も取得
+        const visitIds = (visitRows || []).map(v => v.id);
+        const photoMap = new Map(); // visit_id -> [url, url, ...]
+        if (visitIds.length > 0) {
+          const { data: photoRows } = await supabaseClient
+            .from('visit_photos')
+            .select('visit_id, photo_url, created_at')
+            .in('visit_id', visitIds)
+            .order('created_at', { ascending: true });
+          (photoRows || []).forEach(p => {
+            if (!photoMap.has(p.visit_id)) photoMap.set(p.visit_id, []);
+            photoMap.get(p.visit_id).push(p.photo_url);
+          });
+        }
+
+        // 行きたい/お気に入りも取得
+        const { data: statusRows } = await supabaseClient
+          .from('shop_status')
+          .select('*')
+          .eq('user_id', currentUser.id);
+
+        let addedCount = 0;
+
+        (statusRows || []).forEach(s => {
+          if (!visits[s.shop_id]) visits[s.shop_id] = { logs: [], wantToGo: false, favorite: false };
+          visits[s.shop_id].wantToGo = visits[s.shop_id].wantToGo || !!s.want_to_go;
+          visits[s.shop_id].favorite = visits[s.shop_id].favorite || !!s.favorite;
+        });
+
+        (visitRows || []).forEach(row => {
+          if (!visits[row.shop_id]) visits[row.shop_id] = { logs: [], wantToGo: false, favorite: false };
+          const logs = visits[row.shop_id].logs;
+          const alreadyExists = logs.some(l => l._cloudId === row.id);
+          if (alreadyExists) return; // この端末に既にある記録はスキップ（重複防止）
+
+          logs.push({
+            visitedAt: row.visited_at,
+            rating: row.rating,
+            waitMinutes: row.wait_minutes,
+            temperature: row.temperature,
+            weather: row.weather,
+            order: row.order_text,
+            options: row.options,
+            noodleFirmness: row.noodle_firmness,
+            flavorIntensity: row.flavor_intensity,
+            oilAmount: row.oil_amount,
+            memo: row.memo,
+            isPublic: !!row.is_public,
+            photos: photoMap.get(row.id) || [],
+            _cloudId: row.id,
+            _cloudSynced: true,
+            _photosSynced: true
+          });
+          addedCount++;
+        });
+
+        saveVisits();
+
+        // 画面を更新
+        updateMarkers();
+        renderShopList();
+        renderListTab();
+        renderLineageTab();
+        renderStatsTab();
+
+        if (statusEl) statusEl.textContent = `✅ ${addedCount}件の記録を復元しました`;
+      } catch (e) {
+        console.error('クラウドからの復元エラー:', e);
+        if (statusEl) statusEl.textContent = '復元に失敗しました。もう一度お試しください。';
+      } finally {
+        if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+      }
+    }
+
     async function manualSyncNow() {
       if (!supabaseClient || !currentUser) return;
       const btn = document.getElementById('manual-sync-btn');
@@ -10024,6 +10115,11 @@
           resolve(fileName);
           return;
         }
+        // クラウドから復元した写真（実URL）の場合もそのまま返す
+        if (fileName && (fileName.startsWith('http://') || fileName.startsWith('https://'))) {
+          resolve(fileName);
+          return;
+        }
 
         // ユニークなコールバック名を生成
         const callbackId = `onPhotoLoaded_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -11142,6 +11238,12 @@
             font-size: 15px; font-weight: 600; color: #111827; cursor: pointer;
           ">今すぐ同期する（過去の記録も含む）</button>
           <div id="manual-sync-status" style="font-size:12px;color:#6b7280;text-align:center;margin-bottom:16px;min-height:16px;"></div>
+          <button id="restore-cloud-btn" onclick="restoreFromCloud()" style="
+            width: 100%; padding: 12px 16px; margin-bottom: 6px;
+            border: 1.5px solid #e5e7eb; border-radius: 10px; background: white;
+            font-size: 15px; font-weight: 600; color: #111827; cursor: pointer;
+          ">クラウドから復元する（機種変更時など）</button>
+          <div id="restore-cloud-status" style="font-size:12px;color:#6b7280;text-align:center;margin-bottom:16px;min-height:16px;"></div>
           <button onclick="openProfileEditModal()" style="
             width: 100%; padding: 12px 16px; margin-bottom: 10px;
             border: 1.5px solid #e5e7eb; border-radius: 10px; background: white;
