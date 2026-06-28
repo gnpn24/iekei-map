@@ -3711,11 +3711,60 @@
       const starsStr = v.rating > 0 ? '★'.repeat(v.rating) + '☆'.repeat(5 - v.rating) : '';
       const customize = [v.noodle_firmness, v.flavor_intensity, v.oil_amount].filter(Boolean).join('/');
       return `
-        ${starsStr ? `<div style="font-size:13px;color:#f59e0b;margin-bottom:4px;">${starsStr}</div>` : ''}
-        ${v.order_text ? `<div style="font-size:13px;color:#1f2937;margin-bottom:4px;">${escapeHtml(v.order_text)}${v.options ? ' + ' + escapeHtml(v.options) : ''}</div>` : ''}
-        ${customize ? `<div style="font-size:12px;color:#6b7280;margin-bottom:4px;">${escapeHtml(customize)}</div>` : ''}
-        ${v.memo ? `<div style="font-size:13px;color:#4b5563;line-height:1.5;margin-bottom:6px;">${escapeHtml(v.memo)}</div>` : ''}
+        ${starsStr ? `<div style="font-size:13px;color:#f59e0b;margin-bottom:2px;">${starsStr}</div>` : ''}
+        ${v.order_text ? `<div style="font-size:13px;color:#1f2937;margin-bottom:2px;">${escapeHtml(v.order_text)}${v.options ? ' + ' + escapeHtml(v.options) : ''}</div>` : ''}
+        ${customize ? `<div style="font-size:12px;color:#6b7280;margin-bottom:2px;">${escapeHtml(customize)}</div>` : ''}
+        ${v.memo ? `<div style="font-size:13px;color:#4b5563;line-height:1.4;margin-bottom:4px;">${escapeHtml(v.memo)}</div>` : ''}
       `;
+    }
+
+    // コミュニティの投稿（クラウド上の訪問記録）の詳細表示。
+    // タップした行のデータをキャッシュしておき、IDで引き出して表示する（読み取り専用・編集削除なし）。
+    let communityVisitCache = {};
+
+    function showCommunityVisitDetail(visitId) {
+      const v = communityVisitCache[visitId];
+      if (!v) return;
+      const shop = (typeof shops !== 'undefined' ? shops : []).find(s => s.id === v.shop_id);
+      const shopName = v.shopName || shop?.name || v.shop_id;
+
+      let infoHTML = `
+        <div style="font-size:20px;font-weight:700;margin-bottom:8px;">${escapeHtml(shopName)}</div>
+        <div style="font-size:14px;color:#6b7280;margin-bottom:12px;">📅 ${formatDateTime(v.visited_at)}</div>
+      `;
+      if (v.rating > 0) {
+        infoHTML += `<div style="margin-bottom:12px;">⭐ ${'★'.repeat(v.rating)}${'☆'.repeat(5 - v.rating)}</div>`;
+      }
+      if (v.order_text) {
+        infoHTML += `<div style="font-size:14px;margin-bottom:8px;">🍜 ${escapeHtml(v.order_text)}</div>`;
+      }
+      if (v.options) {
+        infoHTML += `<div style="font-size:14px;margin-bottom:8px;">🥚 ${escapeHtml(v.options)}</div>`;
+      }
+      const noodle = v.noodle_firmness || '普通';
+      const flavor = v.flavor_intensity || '普通';
+      const oil = v.oil_amount || '普通';
+      if (noodle !== '普通' || flavor !== '普通' || oil !== '普通') {
+        infoHTML += `<div style="font-size:13px;color:#6b7280;margin-top:8px;">📊 麺: ${noodle} / 味: ${flavor} / 油: ${oil}</div>`;
+      }
+      if (v.memo) {
+        infoHTML += `<div style="font-size:14px;line-height:1.6;margin-top:12px;color:#374151;">${escapeHtml(v.memo)}</div>`;
+      }
+
+      const body = document.getElementById('community-visit-detail-body');
+      body.innerHTML = `
+        <!-- 写真は現時点でクラウド未対応のため、常にプレースホルダー -->
+        <div style="width:100%;aspect-ratio:1;background:#e5e7eb;border-radius:12px;margin-bottom:16px;"></div>
+        ${infoHTML}
+        <button onclick="closeCommunityVisitDetailModal(); showShopDetail('${v.shop_id}')" class="btn btn-primary" style="width:100%;margin-top:16px;">
+          店舗詳細を見る
+        </button>
+      `;
+      document.getElementById('community-visit-detail-modal').classList.add('active');
+    }
+
+    function closeCommunityVisitDetailModal() {
+      document.getElementById('community-visit-detail-modal').classList.remove('active');
     }
 
     // ===== ユーザープロフィール画面（Twitterのプロフィールのようなもの） =====
@@ -3803,30 +3852,28 @@
         followBtnWrap.innerHTML = '';
       }
 
-      // 訪れたお店一覧
+      // 訪れたお店一覧（Instagram風のグリッド表示）
       const listEl = document.getElementById('user-profile-visits-list');
       if (!visitRows || visitRows.length === 0) {
         listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;">公開されている記録がありません</div>';
         return;
       }
+      listEl.style.display = 'grid';
+      listEl.style.gridTemplateColumns = 'repeat(3, 1fr)';
+      listEl.style.gap = '4px';
       listEl.innerHTML = '';
       visitRows.forEach(v => {
         const shop = (typeof shops !== 'undefined' ? shops : []).find(s => s.id === v.shop_id);
         const shopName = shop?.name || v.shop_id;
-        const dateStr = v.visited_at ? formatDateDetail(v.visited_at) : '';
-        const card = document.createElement('div');
-        card.style.background = '#f9fafb';
-        card.style.borderRadius = '12px';
-        card.style.padding = '12px';
-        card.style.marginBottom = '8px';
-        card.innerHTML = `
-          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
-            <div style="font-weight:700;font-size:14px;color:#111827;">${escapeHtml(shopName)}</div>
-            <div style="font-size:11px;color:#9ca3af;flex-shrink:0;margin-left:8px;">${dateStr}</div>
-          </div>
-          ${visitDetailLinesHtml(v)}
-        `;
-        listEl.appendChild(card);
+        communityVisitCache[v.id] = { ...v, shopName };
+        const cell = document.createElement('div');
+        // 写真はまだクラウド同期未対応のため、現時点では常にグレーのプレースホルダー
+        cell.style.aspectRatio = '1';
+        cell.style.background = '#e5e7eb';
+        cell.style.borderRadius = '4px';
+        cell.style.cursor = 'pointer';
+        cell.onclick = () => showCommunityVisitDetail(v.id);
+        listEl.appendChild(cell);
       });
     }
 
@@ -3920,16 +3967,19 @@
           const card = document.createElement('div');
           card.style.background = '#f9fafb';
           card.style.borderRadius = '12px';
-          card.style.padding = '12px';
-          card.style.marginBottom = '8px';
+          card.style.padding = '10px 12px';
+          card.style.marginBottom = '6px';
+          card.style.cursor = 'pointer';
+          communityVisitCache[v.id] = v;
+          card.onclick = () => showCommunityVisitDetail(v.id);
           card.innerHTML = `
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-              ${avatarHtml(avatarUrl, 40)}
-              <div onclick="openUserProfile('${v.user_id}')" style="font-size:12px;font-weight:600;color:#374151;cursor:pointer;">${escapeHtml(name)}</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+              ${avatarHtml(avatarUrl, 28)}
+              <div onclick="event.stopPropagation(); openUserProfile('${v.user_id}')" style="font-size:12px;font-weight:600;color:#374151;cursor:pointer;">${escapeHtml(name)}</div>
               <div style="font-size:11px;color:#9ca3af;margin-left:auto;">${dateStr}</div>
             </div>
             ${visitDetailLinesHtml(v)}
-            <button onclick="toggleLike('${v.id}', this)" data-liked="${liked ? '1' : '0'}" style="border:none;background:none;cursor:pointer;font-size:12px;color:${liked ? '#dc2626' : '#9ca3af'};padding:0;display:flex;align-items:center;gap:4px;">
+            <button onclick="event.stopPropagation(); toggleLike('${v.id}', this)" data-liked="${liked ? '1' : '0'}" style="border:none;background:none;cursor:pointer;font-size:12px;color:${liked ? '#dc2626' : '#9ca3af'};padding:0;display:flex;align-items:center;gap:4px;">
               <span class="like-icon">${liked ? '❤️' : '🤍'}</span><span class="like-count">${likeCount}</span>
             </button>
           `;
@@ -4021,18 +4071,21 @@
           const card = document.createElement('div');
           card.style.background = 'white';
           card.style.borderRadius = '14px';
-          card.style.padding = '14px';
-          card.style.marginBottom = '10px';
+          card.style.padding = '10px 14px';
+          card.style.marginBottom = '8px';
           card.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)';
+          card.style.cursor = 'pointer';
+          communityVisitCache[v.id] = { ...v, shopName };
+          card.onclick = () => showCommunityVisitDetail(v.id);
           card.innerHTML = `
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-              ${avatarHtml(avatarUrl, 40)}
-              <div onclick="openUserProfile('${v.user_id}')" style="font-size:13px;font-weight:600;color:#374151;cursor:pointer;">${escapeHtml(name)}</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+              ${avatarHtml(avatarUrl, 28)}
+              <div onclick="event.stopPropagation(); openUserProfile('${v.user_id}')" style="font-size:13px;font-weight:600;color:#374151;cursor:pointer;">${escapeHtml(name)}</div>
             </div>
-            <div style="font-weight:700;font-size:15px;color:#111827;margin-bottom:2px;">${escapeHtml(shopName)}</div>
-            <div style="font-size:12px;color:#9ca3af;margin-bottom:6px;">${dateStr}</div>
+            <div onclick="event.stopPropagation(); closeCommunityVisitDetailModal(); showShopDetail('${v.shop_id}')" style="font-weight:700;font-size:15px;color:#111827;margin-bottom:1px;cursor:pointer;">${escapeHtml(shopName)}</div>
+            <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">${dateStr}</div>
             ${visitDetailLinesHtml(v)}
-            <button onclick="toggleLike('${v.id}', this)" data-liked="${liked ? '1' : '0'}" style="border:none;background:none;cursor:pointer;font-size:13px;color:${liked ? '#dc2626' : '#9ca3af'};padding:0;display:flex;align-items:center;gap:4px;">
+            <button onclick="event.stopPropagation(); toggleLike('${v.id}', this)" data-liked="${liked ? '1' : '0'}" style="border:none;background:none;cursor:pointer;font-size:13px;color:${liked ? '#dc2626' : '#9ca3af'};padding:0;display:flex;align-items:center;gap:4px;">
               <span class="like-icon">${liked ? '❤️' : '🤍'}</span><span class="like-count">${likeCount}</span>
             </button>
           `;
@@ -10828,6 +10881,20 @@
         ">ログアウトして別の方法で試す</button>
 
       </div>
+    </div>
+  </div>
+
+  <div id="community-visit-detail-modal" class="modal" style="align-items:center;justify-content:center;">
+    <div class="modal-content" style="max-width: 480px; border-radius: 16px; max-height: 85vh; display: flex; flex-direction: column;" onclick="event.stopPropagation()">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+        <h2 style="font-size: 18px; font-weight: 700;">訪問記録</h2>
+        <button onclick="closeCommunityVisitDetailModal()" style="
+          width: 32px; height: 32px; border-radius: 50%; border: none;
+          background: #f3f4f6; color: #6b7280; font-size: 20px; cursor: pointer;
+          display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        ">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 20px; overflow-y: auto; flex: 1;" id="community-visit-detail-body"></div>
     </div>
   </div>
 
