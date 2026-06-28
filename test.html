@@ -2997,7 +2997,7 @@
         <div class="stats-header">
           <div class="stats-brand">
             <h1>家系ラーメンmap</h1>
-            <div class="stats-sub">コミュニティ</div>
+            <div class="stats-sub" id="stats-tab-sub-label">統計・分析</div>
           </div>
         </div>
 
@@ -3189,7 +3189,7 @@
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
         </svg>
-        <span>コミュニティ</span>
+        <span id="stats-tab-nav-label">統計</span>
       </button>
     </div>
   </div>
@@ -3536,13 +3536,19 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_FqdImZ_XB_PWzK3euU7O8g_gz8sLePg';
     let supabaseClient = null;
     let currentUser = null;
+    let currentProfile = null; // profilesテーブルの自分の行（display_name, avatar_url, bio等）
     let isSyncingToCloud = false;
 
     // ===== ログイン機能の隠しフラグ（一般公開前のテスト用） =====
-    // URLに ?authbeta=1 を付けてアクセスすると、その端末でログイン関連UIが表示されるようになる。
-    // ?authbeta=0 でオフに戻せる。
+    // URLに ?authbeta=1 を付けてアクセス、または /test パスでアクセスすると、
+    // その端末でログイン関連UIが表示されるようになる。?authbeta=0 でオフに戻せる。
     const AUTH_BETA_KEY = 'iekei-auth-beta-enabled';
     (function setupAuthBetaFlag() {
+      // /test パスでのアクセスも同様にフラグON扱いにする
+      if (window.location.pathname.replace(/\/+$/, '') === '/test') {
+        localStorage.setItem(AUTH_BETA_KEY, '1');
+      }
+
       const params = new URLSearchParams(window.location.search);
       if (params.has('authbeta')) {
         const val = params.get('authbeta');
@@ -3566,8 +3572,18 @@
       if (menuItem) menuItem.style.display = display;
       if (betaArea) betaArea.style.display = display;
       if (shopCommunity) shopCommunity.style.display = display;
+
+      // タブ名：フラグありなら「コミュニティ」、なしなら「統計」
+      const navLabel = document.getElementById('stats-tab-nav-label');
+      const subLabel = document.getElementById('stats-tab-sub-label');
+      if (navLabel) navLabel.textContent = enabled ? 'コミュニティ' : '統計';
+      if (subLabel) subLabel.textContent = enabled ? 'コミュニティ' : '統計・分析';
     }
-    applyAuthBetaVisibility();
+    document.addEventListener('DOMContentLoaded', applyAuthBetaVisibility);
+    // 既にDOM読み込み済みの場合（scriptが後方にある等）にも対応
+    if (document.readyState === 'interactive' || document.readyState === 'complete') {
+      applyAuthBetaVisibility();
+    }
 
     try {
       supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -3615,6 +3631,7 @@
       if (!supabaseClient) return;
       await supabaseClient.auth.signOut();
       currentUser = null;
+      currentProfile = null;
       updateAccountMenuSubtitle();
       updateAccountModalUI();
     }
@@ -3623,7 +3640,7 @@
       const el = document.getElementById('account-menu-subtitle');
       if (el) {
         if (currentUser) {
-          const name = currentUser.user_metadata?.name || currentUser.user_metadata?.full_name || currentUser.email || 'ログイン中';
+          const name = currentProfile?.display_name || 'ログイン中';
           el.textContent = `${name} としてログイン中`;
         } else {
           el.textContent = 'ログインしてクラウド同期';
@@ -3637,9 +3654,9 @@
         if (currentUser) {
           statsOut.style.display = 'none';
           statsIn.style.display = 'block';
-          const name = currentUser.user_metadata?.name || currentUser.user_metadata?.full_name || 'ユーザー';
+          const name = currentProfile?.display_name || 'ユーザー';
           const email = currentUser.email || '';
-          const avatarUrl = currentUser.user_metadata?.avatar_url || '';
+          const avatarUrl = currentProfile?.avatar_url || '';
           const nameEl = document.getElementById('stats-account-display-name');
           const emailEl = document.getElementById('stats-account-display-email');
           const avatarEl = document.getElementById('stats-account-avatar-img');
@@ -3663,9 +3680,9 @@
       if (currentUser) {
         loggedOutView.style.display = 'none';
         loggedInView.style.display = 'block';
-        const name = currentUser.user_metadata?.name || currentUser.user_metadata?.full_name || 'ユーザー';
+        const name = currentProfile?.display_name || 'ユーザー';
         const email = currentUser.email || '';
-        const avatarUrl = currentUser.user_metadata?.avatar_url || '';
+        const avatarUrl = currentProfile?.avatar_url || '';
         const nameEl = document.getElementById('account-display-name');
         const emailEl = document.getElementById('account-display-email');
         const avatarEl = document.getElementById('account-avatar-img');
@@ -3959,7 +3976,7 @@
         currentUser = data?.session?.user || null;
         updateAccountMenuSubtitle();
         updateAccountModalUI();
-        if (currentUser) syncVisitsToCloud();
+        if (currentUser) checkOnboardingThenSync();
       } catch (e) {
         console.error('認証状態の取得に失敗:', e);
       }
@@ -3969,11 +3986,92 @@
         updateAccountMenuSubtitle();
         updateAccountModalUI();
         if (event === 'SIGNED_IN' && currentUser) {
-          syncVisitsToCloud();
+          checkOnboardingThenSync();
         }
       });
     }
     initAuth();
+
+    // 初回ログイン時は「新しいアカウントを作成しますか？」の確認画面を出す。
+    // 2回目以降（onboarding_completed=true）はスキップしてそのまま同期。
+    async function checkOnboardingThenSync() {
+      if (!supabaseClient || !currentUser) return;
+      try {
+        const { data: profile, error } = await supabaseClient
+          .from('profiles')
+          .select('onboarding_completed, display_name, bio, avatar_url')
+          .eq('id', currentUser.id)
+          .single();
+        if (error) {
+          console.error('プロフィール確認エラー:', error);
+          return;
+        }
+        currentProfile = profile || null;
+        updateAccountMenuSubtitle();
+        updateAccountModalUI();
+        if (!profile || !profile.onboarding_completed) {
+          showOnboardingModal(profile);
+        } else {
+          syncVisitsToCloud();
+        }
+      } catch (e) {
+        console.error('オンボーディング確認エラー:', e);
+      }
+    }
+
+    function showOnboardingModal(profile) {
+      const modal = document.getElementById('onboarding-modal');
+      if (!modal) return;
+      const nameInput = document.getElementById('onboarding-display-name');
+      const bioInput = document.getElementById('onboarding-bio');
+      const emailPreview = document.getElementById('onboarding-email-preview');
+      const avatarPreview = document.getElementById('onboarding-avatar-preview');
+
+      // Google/Appleの本名・写真は自動入力しない。ユーザー自身に入力してもらう。
+      if (nameInput) nameInput.value = profile?.display_name || '';
+      if (bioInput) bioInput.value = profile?.bio || '';
+      if (emailPreview) emailPreview.textContent = currentUser.email || '';
+      if (avatarPreview) avatarPreview.style.display = 'none';
+      const agreeCheckbox = document.getElementById('onboarding-agree-privacy');
+      if (agreeCheckbox) agreeCheckbox.checked = false;
+      modal.classList.add('active');
+    }
+
+    function closeOnboardingModal() {
+      const modal = document.getElementById('onboarding-modal');
+      if (modal) modal.classList.remove('active');
+    }
+
+    async function completeOnboarding() {
+      if (!supabaseClient || !currentUser) return;
+      const agreeCheckbox = document.getElementById('onboarding-agree-privacy');
+      if (agreeCheckbox && !agreeCheckbox.checked) {
+        await showCustomAlert('プライバシーポリシーへの同意が必要です');
+        return;
+      }
+      const name = document.getElementById('onboarding-display-name').value.trim() || 'ユーザー';
+      const bio = document.getElementById('onboarding-bio').value.trim();
+      try {
+        const { error } = await supabaseClient
+          .from('profiles')
+          .update({ display_name: name, bio: bio, onboarding_completed: true })
+          .eq('id', currentUser.id);
+        if (error) throw error;
+        currentProfile = { ...(currentProfile || {}), display_name: name, bio: bio, onboarding_completed: true };
+        closeOnboardingModal();
+        updateAccountMenuSubtitle();
+        updateAccountModalUI();
+        syncVisitsToCloud();
+      } catch (e) {
+        console.error('アカウント設定の保存に失敗:', e);
+        await showCustomAlert('保存に失敗しました。もう一度お試しください。');
+      }
+    }
+
+    async function cancelOnboardingSignOut() {
+      closeOnboardingModal();
+      await signOutAccount();
+    }
     
     // 更新チェック機能（HTMLのみ）
     async function checkUpdate() {
@@ -10309,6 +10407,57 @@
   
 
   <!-- Settings Modal -->
+  <div id="onboarding-modal" class="modal" style="align-items:center;justify-content:center;">
+    <div class="modal-content" style="max-width: 420px; border-radius: 16px;" onclick="event.stopPropagation()">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="font-size: 18px; font-weight: 700;">新しいアカウントを作成しますか？</h2>
+        <button onclick="cancelOnboardingSignOut()" style="
+          width: 32px; height: 32px; border-radius: 50%; border: none;
+          background: #f3f4f6; color: #6b7280; font-size: 20px; cursor: pointer;
+          display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        ">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;background:#f9fafb;border-radius:10px;padding:12px;">
+          <img id="onboarding-avatar-preview" src="" style="width:40px;height:40px;border-radius:50%;display:none;object-fit:cover;flex-shrink:0;" />
+          <div style="font-size:13px;color:#6b7280;min-width:0;overflow:hidden;text-overflow:ellipsis;">
+            <span id="onboarding-email-preview"></span> でログインしようとしています。<br>
+            <strong>違うアカウントの場合は「✕」から戻ってください。</strong>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">表示名</label>
+          <input type="text" id="onboarding-display-name" class="form-input" placeholder="表示名" maxlength="30">
+        </div>
+        <div class="form-group" style="margin-bottom:20px;">
+          <label class="form-label">一言（自己紹介・任意）</label>
+          <textarea id="onboarding-bio" class="form-input" placeholder="家系ラーメン巡り中です！など" maxlength="100"></textarea>
+        </div>
+
+        <div class="form-group" style="margin-bottom:20px;">
+          <label style="display:flex;align-items:flex-start;gap:8px;font-size:13px;color:#374151;cursor:pointer;line-height:1.5;">
+            <input type="checkbox" id="onboarding-agree-privacy" style="width:18px;height:18px;flex-shrink:0;margin-top:1px;">
+            <span><a href="/Privacypolicy" target="_blank" style="color:#2563eb;text-decoration:underline;">プライバシーポリシー</a>に同意する</span>
+          </label>
+        </div>
+
+        <button onclick="completeOnboarding()" style="
+          width: 100%; padding: 12px 16px; margin-bottom: 10px;
+          border: none; border-radius: 10px; background: #111827;
+          font-size: 15px; font-weight: 700; color: white; cursor: pointer;
+        ">このアカウントで始める</button>
+        <button onclick="cancelOnboardingSignOut()" style="
+          width: 100%; padding: 12px 16px;
+          border: 1.5px solid #e5e7eb; border-radius: 10px; background: white;
+          font-size: 14px; font-weight: 600; color: #6b7280; cursor: pointer;
+        ">ログアウトして別の方法で試す</button>
+
+      </div>
+    </div>
+  </div>
+
   <div id="account-modal" class="modal" style="align-items:center;justify-content:center;">
     <div class="modal-content" style="max-width: 420px; border-radius: 16px;">
       <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
