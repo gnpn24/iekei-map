@@ -3752,63 +3752,32 @@
     // 訪問記録の詳細情報（ラベル＋値ボックス形式）。photo-modal・みんなの投稿詳細の両方で共通利用。
     // d = { visitedAt, rating, weather, temperature, waitMinutes, order, options, noodleFirmness, flavorIntensity, oilAmount, memo }
     function visitDetailInfoBoxesHtml(d) {
+      // 日時・待ち時間・天気・気温を1行に
+      const metaParts = [formatDateTime(d.visitedAt)];
+      if (d.waitMinutes) metaParts.push(`待ち${d.waitMinutes}分`);
+      if (d.weather || d.temperature) {
+        metaParts.push(`${d.weather ? escapeHtml(d.weather) : ''}${d.temperature ? d.temperature + '°C' : ''}`);
+      }
+
+      const customizeParts = [];
+      if (d.noodleFirmness) customizeParts.push(`麺:${escapeHtml(d.noodleFirmness)}`);
+      if (d.flavorIntensity) customizeParts.push(`味:${escapeHtml(d.flavorIntensity)}`);
+      if (d.oilAmount) customizeParts.push(`油:${escapeHtml(d.oilAmount)}`);
+
       return `
-        <div style="margin-bottom:16px;">
-          <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">来店日時</div>
-          <div style="font-size:15px;font-weight:600;">${formatDateTime(d.visitedAt)}</div>
-        </div>
+        <div style="font-size:14px;color:#374151;margin-bottom:4px;">${metaParts.join(' ・ ')}</div>
 
         ${d.rating > 0 ? `
-          <div style="margin-bottom:16px;">
-            <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">評価</div>
-            <div style="font-size:20px;color:#fbbf24;">
-              ${'★'.repeat(d.rating)}${'☆'.repeat(5 - d.rating)}
-            </div>
+          <div style="font-size:18px;color:#fbbf24;margin-bottom:12px;">
+            ${'★'.repeat(d.rating)}${'☆'.repeat(5 - d.rating)}
           </div>
         ` : ''}
 
-        ${d.weather || d.temperature || d.waitMinutes ? `
-          <div style="margin-bottom:16px;">
-            <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">訪問時の情報</div>
-            <div style="font-size:14px;">
-              ${d.weather ? `${escapeHtml(d.weather)}` : ''}
-              ${d.temperature ? ` ${d.temperature}°C` : ''}
-              ${d.waitMinutes ? ` • 待ち時間: ${d.waitMinutes}分` : ''}
-            </div>
-          </div>
-        ` : ''}
+        ${d.order ? `<div style="font-size:14px;margin-bottom:2px;">🍜 ${escapeHtml(d.order)}</div>` : ''}
+        ${d.options ? `<div style="font-size:14px;margin-bottom:2px;padding-left:20px;">+${escapeHtml(d.options)}</div>` : ''}
+        ${customizeParts.length > 0 ? `<div style="font-size:13px;color:#9ca3af;margin-bottom:12px;">${customizeParts.join(' ')}</div>` : ''}
 
-        ${d.order ? `
-          <div style="margin-bottom:16px;">
-            <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">注文内容</div>
-            <div style="font-size:14px;background:#f3f4f6;padding:12px;border-radius:8px;">${escapeHtml(d.order)}</div>
-          </div>
-        ` : ''}
-
-        ${d.options ? `
-          <div style="margin-bottom:16px;">
-            <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">オプション</div>
-            <div style="font-size:14px;background:#f3f4f6;padding:12px;border-radius:8px;">${escapeHtml(d.options)}</div>
-          </div>
-        ` : ''}
-
-        ${d.noodleFirmness || d.flavorIntensity || d.oilAmount ? `
-          <div style="margin-bottom:16px;">
-            <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">カスタマイズ</div>
-            <div style="font-size:14px;display:flex;gap:12px;">
-              ${d.noodleFirmness ? `<span>麺: ${escapeHtml(d.noodleFirmness)}</span>` : ''}
-              ${d.flavorIntensity ? `<span>味: ${escapeHtml(d.flavorIntensity)}</span>` : ''}
-              ${d.oilAmount ? `<span>油: ${escapeHtml(d.oilAmount)}</span>` : ''}
-            </div>
-          </div>
-        ` : ''}
-
-        ${d.memo ? `
-          <div style="margin-bottom:4px;">
-            <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">メモ</div>
-            <div style="font-size:14px;line-height:1.6;">${escapeHtml(d.memo)}</div>
-          </div>
-        ` : ''}
+        ${d.memo ? `<div style="font-size:14px;line-height:1.6;color:#374151;">${escapeHtml(d.memo)}</div>` : ''}
       `;
     }
 
@@ -7681,6 +7650,15 @@
 
     function renderLineageTab() {
       try {
+        // タブが非表示の状態で描画すると、座標計算（getBoundingClientRectなど）が
+        // 0になってしまい、線やノードの位置が崩れる。非表示の時は描画をスキップし、
+        // 次回タブを開いた時に正しい状態で描き直されるようにする。
+        const tabEl = document.getElementById('tab-lineage');
+        if (!tabEl || !tabEl.classList.contains('active')) {
+          window.lineageRendered = false;
+          return;
+        }
+
         const sectionsEl = document.getElementById('lineage-sections');
         if (!sectionsEl) {
           console.log('lineage-sections not found');
@@ -9992,7 +9970,15 @@
       document.getElementById('record-form').style.display = 'block';
       
       // フォームに既存データを入力
-      document.getElementById('input-visited-at').value = log.visitedAt;
+      // datetime-local入力欄は "YYYY-MM-DDTHH:mm" 形式以外だと無言で空欄になるため、
+      // クラウド経由の値（タイムゾーン付きなど）でも必ず正しい形式に変換してからセットする
+      if (log.visitedAt) {
+        const d = new Date(log.visitedAt);
+        if (!isNaN(d.getTime())) {
+          const localDateTime = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+          document.getElementById('input-visited-at').value = localDateTime;
+        }
+      }
       document.getElementById('input-temp').value = log.temperature || '';
       document.getElementById('input-wait').value = log.waitMinutes || '';
       document.getElementById('input-weather').value = log.weather || '';
