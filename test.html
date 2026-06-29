@@ -2837,7 +2837,7 @@
     <div class="header">
       <h1>🍜 家系ラーメンmap</h1>
       <div class="header-buttons">
-        <a href="https://x.com/iekei_map" target="_blank" class="header-btn" title="X公式アカウント" style="text-decoration:none;">
+        <a href="https://x.com/iekei_map" target="_blank" rel="noopener noreferrer" class="header-btn" title="X公式アカウント" style="text-decoration:none;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="#6b7280">
             <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
           </svg>
@@ -3464,7 +3464,7 @@
           <div class="form-group" id="input-public-wrap" style="margin-top:8px;display:none;">
             <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#374151;cursor:pointer;">
               <input type="checkbox" id="input-is-public" style="width:18px;height:18px;">
-              この記録を公開する（ログイン中のみ・他のユーザーに表示されます）
+              この記録をみんなに公開する
             </label>
           </div>
           
@@ -3714,6 +3714,104 @@
       return `<div style="width:100%;aspect-ratio:1;background:#e5e7eb;border-radius:8px;${extraStyle || ''}"></div>`;
     }
 
+    // 詳細モーダル用：写真が複数枚あればスワイプで切り替えられるストリップを作る（×ボタンも含む）
+    function photoStripHtml(photoUrls, stripId, closeFnName) {
+      if (!photoUrls || photoUrls.length === 0) {
+        return `
+          <div style="position:relative;">
+            <div style="width:100%;aspect-ratio:1;background:#e5e7eb;"></div>
+            <button onclick="${closeFnName}()" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.4);color:white;border:none;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">×</button>
+          </div>
+        `;
+      }
+      const slides = photoUrls.map(url =>
+        `<img src="${url}" style="width:100%;flex-shrink:0;scroll-snap-align:start;display:block;background:#000;">`
+      ).join('');
+      const dots = photoUrls.length > 1
+        ? `<div style="position:absolute;bottom:8px;left:0;right:0;display:flex;justify-content:center;gap:5px;">${photoUrls.map((_, i) =>
+            `<div class="photo-strip-dot" style="width:6px;height:6px;border-radius:50%;background:${i === 0 ? 'white' : 'rgba(255,255,255,0.5)'};"></div>`
+          ).join('')}</div>`
+        : '';
+      return `
+        <div style="position:relative;background:#000;">
+          <div id="${stripId}" style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;" onscroll="updatePhotoStripDots(this)">${slides}</div>
+          ${dots}
+          <button onclick="${closeFnName}()" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.6);color:white;border:none;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">×</button>
+        </div>
+      `;
+    }
+
+    function updatePhotoStripDots(stripEl) {
+      const idx = Math.round(stripEl.scrollLeft / stripEl.clientWidth);
+      const dots = stripEl.parentElement.querySelectorAll('.photo-strip-dot');
+      dots.forEach((dot, i) => {
+        dot.style.background = i === idx ? 'white' : 'rgba(255,255,255,0.5)';
+      });
+    }
+
+    // 訪問記録の詳細情報（ラベル＋値ボックス形式）。photo-modal・みんなの投稿詳細の両方で共通利用。
+    // d = { visitedAt, rating, weather, temperature, waitMinutes, order, options, noodleFirmness, flavorIntensity, oilAmount, memo }
+    function visitDetailInfoBoxesHtml(d) {
+      return `
+        <div style="margin-bottom:16px;">
+          <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">来店日時</div>
+          <div style="font-size:15px;font-weight:600;">${formatDateTime(d.visitedAt)}</div>
+        </div>
+
+        ${d.rating > 0 ? `
+          <div style="margin-bottom:16px;">
+            <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">評価</div>
+            <div style="font-size:20px;color:#fbbf24;">
+              ${'★'.repeat(d.rating)}${'☆'.repeat(5 - d.rating)}
+            </div>
+          </div>
+        ` : ''}
+
+        ${d.weather || d.temperature || d.waitMinutes ? `
+          <div style="margin-bottom:16px;">
+            <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">訪問時の情報</div>
+            <div style="font-size:14px;">
+              ${d.weather ? `${escapeHtml(d.weather)}` : ''}
+              ${d.temperature ? ` ${d.temperature}°C` : ''}
+              ${d.waitMinutes ? ` • 待ち時間: ${d.waitMinutes}分` : ''}
+            </div>
+          </div>
+        ` : ''}
+
+        ${d.order ? `
+          <div style="margin-bottom:16px;">
+            <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">注文内容</div>
+            <div style="font-size:14px;background:#f3f4f6;padding:12px;border-radius:8px;">${escapeHtml(d.order)}</div>
+          </div>
+        ` : ''}
+
+        ${d.options ? `
+          <div style="margin-bottom:16px;">
+            <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">オプション</div>
+            <div style="font-size:14px;background:#f3f4f6;padding:12px;border-radius:8px;">${escapeHtml(d.options)}</div>
+          </div>
+        ` : ''}
+
+        ${d.noodleFirmness || d.flavorIntensity || d.oilAmount ? `
+          <div style="margin-bottom:16px;">
+            <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">カスタマイズ</div>
+            <div style="font-size:14px;display:flex;gap:12px;">
+              ${d.noodleFirmness ? `<span>麺: ${escapeHtml(d.noodleFirmness)}</span>` : ''}
+              ${d.flavorIntensity ? `<span>味: ${escapeHtml(d.flavorIntensity)}</span>` : ''}
+              ${d.oilAmount ? `<span>油: ${escapeHtml(d.oilAmount)}</span>` : ''}
+            </div>
+          </div>
+        ` : ''}
+
+        ${d.memo ? `
+          <div style="margin-bottom:4px;">
+            <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">メモ</div>
+            <div style="font-size:14px;line-height:1.6;">${escapeHtml(d.memo)}</div>
+          </div>
+        ` : ''}
+      `;
+    }
+
     // コミュニティ記録1件分の「注文内容・カスタマイズ・評価・メモ」部分のHTML（来店履歴と同じ表示形式）
     function visitDetailLinesHtml(v) {
       const starsStr = v.rating > 0 ? '★'.repeat(v.rating) + '☆'.repeat(5 - v.rating) : '';
@@ -3726,48 +3824,98 @@
       `;
     }
 
+    function formatDateTimeJapanese(dateStr) {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${year}年${month}月${day}日 ${hours}:${minutes}`;
+    }
+
+    // みんなの記録カードの中身（1行目: 名前/日時、2-5行目: 店名・評価・注文・トッピング＋右に写真、6行目: 区切り線、7行目: コメント3行まで）
+    function feedCardBodyHtml(v, name, avatarUrl, shopName) {
+      const starsStr = v.rating > 0 ? '★'.repeat(v.rating) + '☆'.repeat(5 - v.rating) : '';
+      const dateTimeStr = formatDateTimeJapanese(v.visited_at);
+      return `
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;">
+          <div onclick="event.stopPropagation(); openUserProfile('${v.user_id}')" style="display:flex;align-items:center;gap:6px;cursor:pointer;min-width:0;">
+            ${avatarHtml(avatarUrl, 24)}
+            <span style="font-size:12px;font-weight:600;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(name)}</span>
+          </div>
+          <div style="font-size:11px;color:#9ca3af;flex-shrink:0;">${dateTimeStr}</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:stretch;">
+          <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;justify-content:center;">
+            ${shopName ? `<div onclick="event.stopPropagation(); closeCommunityVisitDetailModal(); showShopDetail('${v.shop_id}')" style="font-weight:700;font-size:15px;color:#111827;cursor:pointer;">${escapeHtml(shopName)}</div>` : ''}
+            ${starsStr ? `<div style="font-size:13px;color:#f59e0b;">${starsStr}</div>` : ''}
+            ${v.order_text ? `<div style="font-size:13px;color:#1f2937;">${escapeHtml(v.order_text)}</div>` : ''}
+            ${v.options ? `<div style="font-size:13px;color:#6b7280;">${escapeHtml(v.options)}</div>` : ''}
+          </div>
+          ${v.photo_url ? `<img src="${v.photo_url}" style="width:84px;align-self:stretch;object-fit:cover;border-radius:8px;flex-shrink:0;">` : ''}
+        </div>
+        <div style="border-top:1px solid #e5e7eb;margin:8px 0;"></div>
+        ${v.memo ? `<div style="font-size:13px;color:#4b5563;line-height:1.4;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(v.memo)}</div>` : ''}
+      `;
+    }
+
     // コミュニティの投稿（クラウド上の訪問記録）の詳細表示。
     // タップした行のデータをキャッシュしておき、IDで引き出して表示する（読み取り専用・編集削除なし）。
     let communityVisitCache = {};
 
-    function showCommunityVisitDetail(visitId) {
+    async function showCommunityVisitDetail(visitId) {
       const v = communityVisitCache[visitId];
       if (!v) return;
       const shop = (typeof shops !== 'undefined' ? shops : []).find(s => s.id === v.shop_id);
       const shopName = v.shopName || shop?.name || v.shop_id;
 
-      let infoHTML = `
-        <div style="font-size:20px;font-weight:700;margin-bottom:8px;">${escapeHtml(shopName)}</div>
-        <div style="font-size:14px;color:#6b7280;margin-bottom:12px;">📅 ${formatDateTime(v.visited_at)}</div>
+      const infoHTML = `
+        <div style="font-size:20px;font-weight:700;margin-bottom:12px;">${escapeHtml(shopName)}</div>
+        ${visitDetailInfoBoxesHtml({
+          visitedAt: v.visited_at,
+          rating: v.rating,
+          weather: v.weather,
+          temperature: v.temperature,
+          waitMinutes: v.wait_minutes,
+          order: v.order_text,
+          options: v.options,
+          noodleFirmness: v.noodle_firmness,
+          flavorIntensity: v.flavor_intensity,
+          oilAmount: v.oil_amount,
+          memo: v.memo
+        })}
       `;
-      if (v.rating > 0) {
-        infoHTML += `<div style="margin-bottom:12px;">⭐ ${'★'.repeat(v.rating)}${'☆'.repeat(5 - v.rating)}</div>`;
-      }
-      if (v.order_text) {
-        infoHTML += `<div style="font-size:14px;margin-bottom:8px;">🍜 ${escapeHtml(v.order_text)}</div>`;
-      }
-      if (v.options) {
-        infoHTML += `<div style="font-size:14px;margin-bottom:8px;">🥚 ${escapeHtml(v.options)}</div>`;
-      }
-      const noodle = v.noodle_firmness || '普通';
-      const flavor = v.flavor_intensity || '普通';
-      const oil = v.oil_amount || '普通';
-      if (noodle !== '普通' || flavor !== '普通' || oil !== '普通') {
-        infoHTML += `<div style="font-size:13px;color:#6b7280;margin-top:8px;">📊 麺: ${noodle} / 味: ${flavor} / 油: ${oil}</div>`;
-      }
-      if (v.memo) {
-        infoHTML += `<div style="font-size:14px;line-height:1.6;margin-top:12px;color:#374151;">${escapeHtml(v.memo)}</div>`;
-      }
 
       const body = document.getElementById('community-visit-detail-body');
+      // 写真エリアは先にプレースホルダーを出し、件数を取得できたらストリップに差し替える
       body.innerHTML = `
-        ${postPhotoHtml(v.photo_url, 'border-radius:12px;margin-bottom:16px;')}
-        ${infoHTML}
-        <button onclick="closeCommunityVisitDetailModal(); showShopDetail('${v.shop_id}')" class="btn btn-primary" style="width:100%;margin-top:16px;">
-          店舗詳細を見る
-        </button>
+        <div id="community-visit-detail-photo-area">${photoStripHtml(v.photo_url ? [v.photo_url] : [], 'community-visit-detail-img-strip', 'closeCommunityVisitDetailModal')}</div>
+        <div style="padding:20px;">
+          ${infoHTML}
+          <button onclick="closeCommunityVisitDetailModal(); showShopDetail('${v.shop_id}')" class="btn btn-primary" style="width:100%;margin-top:16px;">
+            店舗詳細を見る
+          </button>
+        </div>
       `;
       document.getElementById('community-visit-detail-modal').classList.add('active');
+
+      // この記録の写真を全部取得して、複数枚あればスワイプ表示に差し替える
+      try {
+        const { data: photoRows } = await supabaseClient
+          .from('visit_photos')
+          .select('photo_url, created_at')
+          .eq('visit_id', visitId)
+          .order('created_at', { ascending: true });
+        const urls = (photoRows || []).map(p => p.photo_url);
+        if (urls.length > 0) {
+          document.getElementById('community-visit-detail-photo-area').innerHTML =
+            photoStripHtml(urls, 'community-visit-detail-img-strip', 'closeCommunityVisitDetailModal');
+        }
+      } catch (e) {
+        console.error('写真一覧の取得エラー:', e);
+      }
     }
 
     function closeCommunityVisitDetailModal() {
@@ -3815,7 +3963,7 @@
         // この人の公開訪問記録
         const { data: visitRows } = await supabaseClient
           .from('visits')
-          .select('id, shop_id, visited_at, rating, memo, order_text, options, noodle_firmness, flavor_intensity, oil_amount, created_at')
+          .select('id, shop_id, visited_at, rating, memo, order_text, options, noodle_firmness, flavor_intensity, oil_amount, weather, temperature, wait_minutes, created_at')
           .eq('user_id', userId)
           .eq('is_public', true)
           .order('created_at', { ascending: false })
@@ -3931,7 +4079,7 @@
       try {
         const { data: visitRows, error } = await supabaseClient
           .from('visits')
-          .select('id, visited_at, rating, memo, order_text, options, noodle_firmness, flavor_intensity, oil_amount, user_id, created_at')
+          .select('id, visited_at, rating, memo, order_text, options, noodle_firmness, flavor_intensity, oil_amount, weather, temperature, wait_minutes, user_id, created_at')
           .eq('shop_id', shopId)
           .eq('is_public', true)
           .order('created_at', { ascending: false })
@@ -3983,20 +4131,10 @@
           communityVisitCache[v.id] = v;
           card.onclick = () => showCommunityVisitDetail(v.id);
           card.innerHTML = `
-            <div style="display:flex;gap:10px;">
-              <div style="flex:1;min-width:0;">
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-                  ${avatarHtml(avatarUrl, 28)}
-                  <div onclick="event.stopPropagation(); openUserProfile('${v.user_id}')" style="font-size:12px;font-weight:600;color:#374151;cursor:pointer;">${escapeHtml(name)}</div>
-                  <div style="font-size:11px;color:#9ca3af;margin-left:auto;">${dateStr}</div>
-                </div>
-                ${visitDetailLinesHtml(v)}
-                <button onclick="event.stopPropagation(); toggleLike('${v.id}', this)" data-liked="${liked ? '1' : '0'}" style="border:none;background:none;cursor:pointer;font-size:12px;color:${liked ? '#dc2626' : '#9ca3af'};padding:0;display:flex;align-items:center;gap:4px;">
-                  <span class="like-icon">${liked ? '❤️' : '🤍'}</span><span class="like-count">${likeCount}</span>
-                </button>
-              </div>
-              ${v.photo_url ? `<div style="width:56px;flex-shrink:0;">${postPhotoHtml(v.photo_url)}</div>` : ''}
-            </div>
+            ${feedCardBodyHtml(v, name, avatarUrl, null)}
+            <button onclick="event.stopPropagation(); toggleLike('${v.id}', this)" data-liked="${liked ? '1' : '0'}" style="border:none;background:none;cursor:pointer;font-size:12px;color:${liked ? '#dc2626' : '#9ca3af'};padding:0;margin-top:6px;display:flex;align-items:center;gap:4px;">
+              <span class="like-icon">${liked ? '❤️' : '🤍'}</span><span class="like-count">${likeCount}</span>
+            </button>
           `;
           listEl.appendChild(card);
         });
@@ -4057,7 +4195,7 @@
       try {
         const { data: visitRows, error } = await supabaseClient
           .from('visits')
-          .select('id, shop_id, visited_at, rating, memo, order_text, options, noodle_firmness, flavor_intensity, oil_amount, user_id, created_at')
+          .select('id, shop_id, visited_at, rating, memo, order_text, options, noodle_firmness, flavor_intensity, oil_amount, weather, temperature, wait_minutes, user_id, created_at')
           .eq('is_public', true)
           .order('created_at', { ascending: false })
           .limit(50);
@@ -4098,7 +4236,6 @@
           const shopName = shop?.name || v.shop_id;
           const likeCount = likeCountMap.get(v.id) || 0;
           const liked = myLikedSet.has(v.id);
-          const dateStr = v.visited_at ? formatDateDetail(v.visited_at) : '';
           v.photo_url = photoMap.get(v.id) || null;
 
           const card = document.createElement('div');
@@ -4111,21 +4248,10 @@
           communityVisitCache[v.id] = { ...v, shopName };
           card.onclick = () => showCommunityVisitDetail(v.id);
           card.innerHTML = `
-            <div style="display:flex;gap:10px;">
-              <div style="flex:1;min-width:0;">
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-                  ${avatarHtml(avatarUrl, 28)}
-                  <div onclick="event.stopPropagation(); openUserProfile('${v.user_id}')" style="font-size:13px;font-weight:600;color:#374151;cursor:pointer;">${escapeHtml(name)}</div>
-                </div>
-                <div onclick="event.stopPropagation(); closeCommunityVisitDetailModal(); showShopDetail('${v.shop_id}')" style="font-weight:700;font-size:15px;color:#111827;margin-bottom:1px;cursor:pointer;">${escapeHtml(shopName)}</div>
-                <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">${dateStr}</div>
-                ${visitDetailLinesHtml(v)}
-                <button onclick="event.stopPropagation(); toggleLike('${v.id}', this)" data-liked="${liked ? '1' : '0'}" style="border:none;background:none;cursor:pointer;font-size:13px;color:${liked ? '#dc2626' : '#9ca3af'};padding:0;display:flex;align-items:center;gap:4px;">
-                  <span class="like-icon">${liked ? '❤️' : '🤍'}</span><span class="like-count">${likeCount}</span>
-                </button>
-              </div>
-              ${v.photo_url ? `<div style="width:64px;flex-shrink:0;">${postPhotoHtml(v.photo_url)}</div>` : ''}
-            </div>
+            ${feedCardBodyHtml(v, name, avatarUrl, shopName)}
+            <button onclick="event.stopPropagation(); toggleLike('${v.id}', this)" data-liked="${liked ? '1' : '0'}" style="border:none;background:none;cursor:pointer;font-size:13px;color:${liked ? '#dc2626' : '#9ca3af'};padding:0;margin-top:6px;display:flex;align-items:center;gap:4px;">
+              <span class="like-icon">${liked ? '❤️' : '🤍'}</span><span class="like-count">${likeCount}</span>
+            </button>
           `;
           listEl.appendChild(card);
         });
@@ -4201,6 +4327,58 @@
     // 「今すぐ同期する」ボタン：過去の未同期データ（半年分など）も含めて、進捗を表示しながら同期する
     // クラウドに保存されている自分の記録を、この端末のローカルに復元する（機種変更・別端末対策）。
     // 既に「_cloudId」が一致するものはローカルに既にあると判断してスキップ（重複防止）。
+    // ===== アカウント削除 =====
+    // 写真ファイルを先に削除 → 自分のアカウント(auth.users)を削除（連動して全データが自動削除される）→ ログアウト
+    async function deleteAccountWithConfirm() {
+      if (!supabaseClient || !currentUser) return;
+      const confirmed1 = await showCustomConfirm(
+        'アカウントを削除します。クラウドに保存した訪問記録・写真・プロフィール・フォロー関係など、すべてのデータが完全に削除され、元に戻せません。本当に削除しますか？'
+      );
+      if (!confirmed1) return;
+      const confirmed2 = await showCustomConfirm('最終確認です。本当にアカウントを削除しますか？');
+      if (!confirmed2) return;
+
+      try {
+        await deleteAllUserStorageFiles();
+        const { error } = await supabaseClient.rpc('delete_own_account');
+        if (error) throw error;
+        await supabaseClient.auth.signOut();
+        currentUser = null;
+        currentProfile = null;
+        closeAccountModal();
+        updateAccountMenuSubtitle();
+        updateAccountModalUI();
+        await showCustomAlert('アカウントを削除しました。ご利用ありがとうございました。');
+      } catch (e) {
+        console.error('アカウント削除エラー:', e);
+        await showCustomAlert('削除に失敗しました。時間をおいて再度お試しください。');
+      }
+    }
+
+    // Storage上の自分のファイル（アイコン画像・訪問記録の写真）を削除する
+    async function deleteAllUserStorageFiles() {
+      try {
+        await supabaseClient.storage.from('avatars').remove([`${currentUser.id}/avatar.jpg`]);
+      } catch (e) {
+        console.error('アイコン画像の削除エラー:', e);
+      }
+      try {
+        const { data: visitFolders } = await supabaseClient.storage.from('visit-photos').list(currentUser.id);
+        if (visitFolders && visitFolders.length > 0) {
+          for (const folder of visitFolders) {
+            const { data: files } = await supabaseClient.storage
+              .from('visit-photos').list(`${currentUser.id}/${folder.name}`);
+            if (files && files.length > 0) {
+              const paths = files.map(f => `${currentUser.id}/${folder.name}/${f.name}`);
+              await supabaseClient.storage.from('visit-photos').remove(paths);
+            }
+          }
+        }
+      } catch (e) {
+        console.error('訪問記録の写真削除エラー:', e);
+      }
+    }
+
     async function restoreFromCloud() {
       if (!supabaseClient || !currentUser) return;
       const btn = document.getElementById('restore-cloud-btn');
@@ -4448,6 +4626,7 @@
         if (!profile || !profile.onboarding_completed) {
           showOnboardingModal(profile);
         } else {
+          await restoreFromCloud(); // ログインのたびに、クラウドの最新内容を自動で取り込む
           syncVisitsToCloud();
         }
       } catch (e) {
@@ -5090,6 +5269,7 @@
     let currentRating = 0;
     let currentPhotos = []; // 最大4枚
     let editingLogIndex = null; // 編集中のログインデックス
+    let photoModalLogIndex = null; // photo-modalで表示中のログインデックス（編集・削除ボタン用）
     let showOpenOnly = false; // 営業中フィルタ
     let userLocation = null; // ユーザー位置
     let userMarker = null; // ユーザー位置マーカー
@@ -9036,52 +9216,58 @@
       const shop = shops.find(s => s.id === shopId);
       if (!shop || !visits[shopId]) return;
       
-      const log = visits[shopId].logs.find(l => l.visitedAt === visitedAt);
+      const logIndex = visits[shopId].logs.findIndex(l => l.visitedAt === visitedAt);
+      const log = visits[shopId].logs[logIndex];
       if (!log || !log.photos || log.photos.length === 0) return;
+
+      // 編集・削除ボタンから参照できるよう、対象を記録しておく
+      currentShop = shop;
+      photoModalLogIndex = logIndex;
       
       // モーダルを表示
       document.getElementById('photo-modal').classList.add('active');
       
-      // 代表写真（最初の写真）を読み込み
-      loadPhotoFromFile(log.photos[0]).then(photoData => {
-        document.getElementById('photo-modal-img').src = photoData;
+      // 写真を全部読み込んでスワイプ可能なストリップを表示
+      Promise.all(log.photos.map(p => loadPhotoFromFile(p))).then(photoDataList => {
+        document.getElementById('photo-modal-photo-area').innerHTML =
+          photoStripHtml(photoDataList, 'photo-modal-img-strip', 'closePhotoModal');
       });
       
-      // 情報を表示
-      let infoHTML = `
-        <div style="font-size:20px;font-weight:700;margin-bottom:8px;">${escapeHtml(shop.name)}</div>
-        <div style="font-size:14px;color:#6b7280;margin-bottom:12px;">📅 ${formatDateTime(log.visitedAt)}</div>
+      // 情報を表示（店名 + ラベルボックス形式）
+      const infoHTML = `
+        <div style="font-size:20px;font-weight:700;margin-bottom:12px;">${escapeHtml(shop.name)}</div>
+        ${visitDetailInfoBoxesHtml(log)}
       `;
-      
-      // 評価
-      if (log.rating && log.rating > 0) {
-        infoHTML += `<div style="margin-bottom:12px;">⭐ ${'★'.repeat(log.rating)}${'☆'.repeat(5 - log.rating)}</div>`;
-      }
-      
-      // 注文内容
-      if (log.order) {
-        infoHTML += `<div style="font-size:14px;margin-bottom:8px;">🍜 ${escapeHtml(log.order)}</div>`;
-      }
-      
-      // オプション
-      if (log.options) {
-        infoHTML += `<div style="font-size:14px;margin-bottom:8px;">🥚 ${escapeHtml(log.options)}</div>`;
-      }
-      
-      // 麺・味・油（全部普通以外の場合のみ）
-      const noodle = log.noodleFirmness || '普通';
-      const flavor = log.flavorIntensity || '普通';
-      const oil = log.oilAmount || '普通';
-      if (noodle !== '普通' || flavor !== '普通' || oil !== '普通') {
-        infoHTML += `<div style="font-size:13px;color:#6b7280;margin-top:8px;">📊 麺: ${noodle} / 味: ${flavor} / 油: ${oil}</div>`;
-      }
-      
       document.getElementById('photo-modal-info').innerHTML = infoHTML;
       
-      // 店舗詳細ボタン
+      // 店舗詳細・編集・削除ボタン
       document.getElementById('photo-modal-detail-btn').onclick = () => {
         closePhotoModal();
         showShopDetail(shopId);
+      };
+      document.getElementById('photo-modal-edit-btn').onclick = () => {
+        closePhotoModal();
+        document.getElementById('record-modal').classList.add('active');
+        editVisitRecord(photoModalLogIndex);
+      };
+      document.getElementById('photo-modal-delete-btn').onclick = async () => {
+        const confirmed = await showCustomConfirm('この訪問記録を削除しますか?');
+        if (!confirmed) return;
+        const targetLog = visits[shopId].logs[photoModalLogIndex];
+        if (targetLog.photos && targetLog.photos.length > 0) {
+          targetLog.photos.forEach(photo => deletePhotoFile(photo));
+        }
+        if (targetLog._cloudId && supabaseClient) {
+          supabaseClient.from('visits').delete().eq('id', targetLog._cloudId)
+            .then(({ error }) => { if (error) console.error('クラウド同期エラー（訪問記録の削除）:', error); });
+        }
+        visits[shopId].logs.splice(photoModalLogIndex, 1);
+        saveVisits();
+        closePhotoModal();
+        updateMarkers();
+        renderShopList();
+        renderListTab();
+        renderStatsTab();
       };
     }
     
@@ -9629,11 +9815,11 @@
       renderRatingInput();
       renderPhotoPreview();
 
-      // 公開チェックボックス：ログイン中のみ表示、デフォルトは非公開
+      // 公開チェックボックス：ログイン中のみ表示・デフォルト公開。未ログイン時は非表示かつ必ずfalseにする
       const publicWrap = document.getElementById('input-public-wrap');
       const publicCheckbox = document.getElementById('input-is-public');
       if (publicWrap) publicWrap.style.display = currentUser ? 'block' : 'none';
-      if (publicCheckbox) publicCheckbox.checked = false;
+      if (publicCheckbox) publicCheckbox.checked = !!currentUser;
       
       // モーダルのタイトルをリセット
       document.querySelector('#record-modal .modal-header h2').textContent = '訪問記録';
@@ -10222,7 +10408,7 @@
         oilAmount: document.querySelector('[onclick*="oil-amount"].active')?.dataset.value || '普通',
         memo: document.getElementById('input-memo').value || '',
         photos: photoFileNames,
-        isPublic: document.getElementById('input-is-public') ? document.getElementById('input-is-public').checked : false
+        isPublic: (currentUser && document.getElementById('input-is-public')) ? document.getElementById('input-is-public').checked : false
       };
       
       if (!visits[currentShop.id]) {
@@ -10295,7 +10481,7 @@
         oilAmount: document.querySelector('[onclick*="oil-amount"].active')?.dataset.value || '普通',
         memo: document.getElementById('input-memo').value || '',
         photos: photoFileNames,
-        isPublic: document.getElementById('input-is-public') ? document.getElementById('input-is-public').checked : false
+        isPublic: (currentUser && document.getElementById('input-is-public')) ? document.getElementById('input-is-public').checked : false
       };
       
       if (!visits[currentShop.id]) {
@@ -10894,13 +11080,18 @@
   <!-- Photo Detail Modal -->
   <div id="photo-modal" class="modal" onclick="closePhotoModal()">
     <div class="modal-content" onclick="event.stopPropagation()" style="max-width:500px;border-radius:16px;padding:0;max-height:90vh;overflow-y:auto;">
-      <div style="position:relative;">
-        <img id="photo-modal-img" style="width:100%;display:block;background:#000;" alt="Visit photo">
-        <button onclick="closePhotoModal()" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.6);color:white;border:none;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">×</button>
-      </div>
+      <div id="photo-modal-photo-area"></div>
       <div style="padding:20px;">
         <div id="photo-modal-info"></div>
-        <button id="photo-modal-detail-btn" class="btn btn-primary" style="width:100%;margin-top:16px;">
+        <div style="display:flex;gap:10px;margin-top:16px;">
+          <button id="photo-modal-delete-btn" class="btn" style="flex:1;background:#ef4444;color:white;border:none;">
+            削除
+          </button>
+          <button id="photo-modal-edit-btn" class="btn btn-primary" style="flex:1;">
+            編集する
+          </button>
+        </div>
+        <button id="photo-modal-detail-btn" class="btn btn-primary" style="width:100%;margin-top:10px;">
           店舗詳細を見る
         </button>
       </div>
@@ -11042,8 +11233,8 @@
   
 
   <!-- Settings Modal -->
-  <div id="onboarding-modal" class="modal" style="align-items:center;justify-content:center;">
-    <div class="modal-content" style="max-width: 420px; border-radius: 16px;" onclick="event.stopPropagation()">
+  <div id="onboarding-modal" class="modal">
+    <div class="modal-content" onclick="event.stopPropagation()">
       <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
         <h2 style="font-size: 18px; font-weight: 700;">新しいアカウントを作成しますか？</h2>
         <button onclick="cancelOnboardingSignOut()" style="
@@ -11079,7 +11270,7 @@
         <div class="form-group" style="margin-bottom:20px;">
           <label style="display:flex;align-items:flex-start;gap:8px;font-size:13px;color:#374151;cursor:pointer;line-height:1.5;">
             <input type="checkbox" id="onboarding-agree-privacy" style="width:18px;height:18px;flex-shrink:0;margin-top:1px;">
-            <span><a href="/Privacypolicy" target="_blank" style="color:#2563eb;text-decoration:underline;">プライバシーポリシー</a>に同意する</span>
+            <span><a href="/Privacypolicy" target="_blank" rel="noopener noreferrer" style="color:#2563eb;text-decoration:underline;">プライバシーポリシー</a>に同意する</span>
           </label>
         </div>
 
@@ -11098,22 +11289,14 @@
     </div>
   </div>
 
-  <div id="community-visit-detail-modal" class="modal" style="align-items:center;justify-content:center;">
-    <div class="modal-content" style="max-width: 480px; border-radius: 16px; max-height: 85vh; display: flex; flex-direction: column;" onclick="event.stopPropagation()">
-      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
-        <h2 style="font-size: 18px; font-weight: 700;">訪問記録</h2>
-        <button onclick="closeCommunityVisitDetailModal()" style="
-          width: 32px; height: 32px; border-radius: 50%; border: none;
-          background: #f3f4f6; color: #6b7280; font-size: 20px; cursor: pointer;
-          display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-        ">✕</button>
-      </div>
-      <div class="modal-body" style="padding: 20px; overflow-y: auto; flex: 1;" id="community-visit-detail-body"></div>
+  <div id="community-visit-detail-modal" class="modal" onclick="closeCommunityVisitDetailModal()">
+    <div class="modal-content" onclick="event.stopPropagation()" style="max-width:500px;border-radius:16px;padding:0;max-height:90vh;overflow-y:auto;">
+      <div id="community-visit-detail-body"></div>
     </div>
   </div>
 
-  <div id="user-profile-modal" class="modal" style="align-items:center;justify-content:center;">
-    <div class="modal-content" style="max-width: 480px; border-radius: 16px; max-height: 85vh; display: flex; flex-direction: column;" onclick="event.stopPropagation()">
+  <div id="user-profile-modal" class="modal">
+    <div class="modal-content" onclick="event.stopPropagation()">
       <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
         <h2 style="font-size: 18px; font-weight: 700;">プロフィール</h2>
         <button onclick="closeUserProfileModal()" style="
@@ -11146,8 +11329,8 @@
     </div>
   </div>
 
-  <div id="profile-edit-modal" class="modal" style="align-items:center;justify-content:center;">
-    <div class="modal-content" style="max-width: 420px; border-radius: 16px;" onclick="event.stopPropagation()">
+  <div id="profile-edit-modal" class="modal">
+    <div class="modal-content" onclick="event.stopPropagation()">
       <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
         <h2 style="font-size: 18px; font-weight: 700;">プロフィールを編集</h2>
         <button onclick="closeProfileEditModal()" style="
@@ -11182,8 +11365,8 @@
     </div>
   </div>
 
-  <div id="account-modal" class="modal" style="align-items:center;justify-content:center;">
-    <div class="modal-content" style="max-width: 420px; border-radius: 16px;">
+  <div id="account-modal" class="modal">
+    <div class="modal-content">
       <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
         <h2 style="font-size: 18px; font-weight: 700;">アカウント</h2>
         <button onclick="closeAccountModal()" style="
@@ -11242,7 +11425,8 @@
             width: 100%; padding: 12px 16px; margin-bottom: 6px;
             border: 1.5px solid #e5e7eb; border-radius: 10px; background: white;
             font-size: 15px; font-weight: 600; color: #111827; cursor: pointer;
-          ">クラウドから復元する（機種変更時など）</button>
+          ">クラウドの内容を今すぐ再取得する（通常は自動で同期されます）</button>
+          <div style="font-size:11px;color:#9ca3af;text-align:center;margin-bottom:10px;margin-top:-2px;">※ ログイン時に自動で同期されるので、通常は押す必要はありません</div>
           <div id="restore-cloud-status" style="font-size:12px;color:#6b7280;text-align:center;margin-bottom:16px;min-height:16px;"></div>
           <button onclick="openProfileEditModal()" style="
             width: 100%; padding: 12px 16px; margin-bottom: 10px;
@@ -11254,6 +11438,15 @@
             border: 1.5px solid #fecaca; border-radius: 10px; background: #fef2f2;
             font-size: 15px; font-weight: 600; color: #dc2626; cursor: pointer;
           ">ログアウト</button>
+
+          <div style="margin-top:24px;padding-top:16px;border-top:1px solid #f3f4f6;">
+            <button onclick="deleteAccountWithConfirm()" style="
+              width: 100%; padding: 10px 16px;
+              border: none; background: none;
+              font-size: 13px; font-weight: 600; color: #9ca3af; cursor: pointer;
+              text-decoration: underline;
+            ">アカウントを削除する</button>
+          </div>
         </div>
 
       </div>
@@ -12404,17 +12597,17 @@
       <div style="display:flex;flex-direction:column;gap:1px;border-radius:12px;overflow:hidden;border:1px solid #f3f4f6;">
         <div style="background:white;padding:16px;">
           <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">地図</div>
-          <a href="https://www.openstreetmap.org" target="_blank" style="font-size:15px;font-weight:600;color:#111827;text-decoration:none;">OpenStreetMap</a>
+          <a href="https://www.openstreetmap.org" target="_blank" rel="noopener noreferrer" style="font-size:15px;font-weight:600;color:#111827;text-decoration:none;">OpenStreetMap</a>
           <div style="font-size:12px;color:#6b7280;margin-top:2px;">© OpenStreetMap contributors</div>
         </div>
         <div style="background:white;padding:16px;border-top:1px solid #f3f4f6;">
           <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">駅情報</div>
-          <a href="https://express.heartrails.com" target="_blank" style="font-size:15px;font-weight:600;color:#111827;text-decoration:none;">HeartRails Express</a>
+          <a href="https://express.heartrails.com" target="_blank" rel="noopener noreferrer" style="font-size:15px;font-weight:600;color:#111827;text-decoration:none;">HeartRails Express</a>
           <div style="font-size:12px;color:#6b7280;margin-top:2px;">路線・駅名データサービス</div>
         </div>
         <div style="background:white;padding:16px;border-top:1px solid #f3f4f6;">
           <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">住所・地名検索</div>
-          <a href="https://maps.gsi.go.jp" target="_blank" style="font-size:15px;font-weight:600;color:#111827;text-decoration:none;">国土地理院</a>
+          <a href="https://maps.gsi.go.jp" target="_blank" rel="noopener noreferrer" style="font-size:15px;font-weight:600;color:#111827;text-decoration:none;">国土地理院</a>
           <div style="font-size:12px;color:#6b7280;margin-top:2px;">地理院地図 / GSI Maps</div>
         </div>
       </div>
