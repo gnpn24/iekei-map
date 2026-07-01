@@ -7725,10 +7725,8 @@
         // UI初期化
         initLineageUI();
 
-        // 描画完了後に70%ズームを適用（DOM確定後なので座標がズレない）
-        if (typeof window.applyLineageZoom === 'function') {
-          window.applyLineageZoom();
-        }
+        // 描画完了後に70%ズームを適用（DOMの線描画はsetTimeout(0)で非同期なので、
+        // ここでapplyZoomを呼ぶと線描画より先に走ってしまうため、initLineageUIに任せる）
         
         console.log('renderLineageTab: complete');
       } catch (error) {
@@ -8624,21 +8622,32 @@
         });
         
         function applyZoom() {
-          // 現在のscaleを外してネイティブの高さを逆算
-          const actualHeight = sectionsEl.offsetHeight / (currentScale || 1);
+          // 一時的にtransformをリセットして実際の高さを取得（visibility:hiddenで見えないようにする）
+          sectionsEl.style.visibility = 'hidden';
+          sectionsEl.style.transform = 'scale(1)';
+          sectionsEl.style.width = '100%';
+          const actualHeight = sectionsEl.scrollHeight;
           
           // スケールを適用
           sectionsEl.style.transform = `scale(${currentScale})`;
           sectionsEl.style.transformOrigin = 'top left';
           sectionsEl.style.width = `${100 / currentScale}%`;
           sectionsEl.style.height = `${actualHeight * currentScale}px`;
+          sectionsEl.style.visibility = 'visible';
           
           // ボタンの状態更新
           zoomOutBtn.disabled = currentScale <= 0.5;
           zoomInBtn.disabled = currentScale >= 1.0;
         }
         
-        // renderLineageTab()の描画完了後に呼べるよう、グローバルに公開
+        // 線描画はsetTimeout(0)で非同期に走るため、それより後に実行する必要がある。
+        // visibility:hiddenで初期フラッシュ（scale(1)が一瞬見える）を防ぐ。
+        sectionsEl.style.visibility = 'hidden';
+        setTimeout(() => {
+          applyZoom();
+        }, 50);
+        
+        // グローバルに公開
         window.applyLineageZoom = applyZoom;
       }
     }
