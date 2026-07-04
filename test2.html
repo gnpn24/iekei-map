@@ -2843,13 +2843,14 @@
       border-radius: 24px;
       overflow: hidden;
       margin-bottom: 16px;
-      cursor: pointer;
+      cursor: default;
       box-shadow: 0 10px 24px rgba(80, 40, 24, 0.10);
-      transition: transform .12s ease, box-shadow .12s ease;
+      transition: box-shadow .12s ease;
     }
+    /* 投稿カード全体は押しても遷移しない。店名・ユーザー名・各ボタンだけ反応させる */
     .feed-post-card:active {
-      transform: scale(0.992);
-      box-shadow: 0 6px 16px rgba(80, 40, 24, 0.10);
+      transform: none;
+      box-shadow: 0 10px 24px rgba(80, 40, 24, 0.10);
     }
     .feed-post-main {
       padding: 18px 18px 0;
@@ -3152,6 +3153,25 @@
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
+    .feed-memo.expanded {
+      display: block;
+      -webkit-line-clamp: unset;
+      overflow: visible;
+    }
+    .feed-memo-more {
+      display: none;
+      border: none;
+      background: none;
+      color: #c92232;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 6px 0 0;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .feed-memo-more.visible {
+      display: inline-block;
+    }
     .feed-order-line {
       padding-top: 14px;
       font-size: 14px;
@@ -3240,7 +3260,28 @@
       transform: none;
     }
     .feed-record-fab {
-      display: none !important;
+      position: fixed;
+      right: 16px;
+      bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+      z-index: 90;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: #ef4444;
+      color: white;
+      border: none;
+      font-size: 28px;
+      font-weight: 300;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(239,68,68,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .feed-record-fab:active {
+      transform: scale(0.94);
     }
 
     /* Android Chrome: 投稿カードタップ時の青いハイライトを消す */
@@ -3275,11 +3316,11 @@
       outline: none !important;
       box-shadow: none;
     }
-    /* 念押し：投稿タブ右下の＋ボタンは非表示 */
-    #feed-record-fab,
-    .feed-record-fab {
-      display: none !important;
-      pointer-events: none !important;
+    /* 投稿タブ右下の＋ボタンは表示する。青いタップハイライトだけ消す */
+    #feed-record-fab {
+      -webkit-tap-highlight-color: transparent !important;
+      tap-highlight-color: transparent !important;
+      outline: none !important;
     }
     @media (max-width: 520px) {
       .feed-list-wrap { padding: 12px 8px calc(140px + env(safe-area-inset-bottom, 0px)) !important; }
@@ -3298,10 +3339,263 @@
       .feed-order-line { padding-top: 10px; }
       .feed-actions { padding-left: 16px; padding-right: 16px; }
       .feed-action-cell { font-size: 12px; gap: 5px; }
+      .feed-record-fab {
+        width: 56px;
+        height: 56px;
+        right: 14px;
+        bottom: calc(104px + env(safe-area-inset-bottom, 0px));
+      }
       .feed-post-top { grid-template-columns: 42px minmax(0, 1fr) auto; gap: 9px; }
       .feed-post-map-area { min-width: 82px; }
       .feed-map-btn { font-size: 12px; padding: 7px 9px; }
       .feed-rating-pill { font-size: 14px; padding: 6px 9px; }
+    }
+
+
+
+    /* ===== プロフィールシート改善 ===== */
+    #community-modal.profile-sheet {
+      align-items: flex-end;
+      background: rgba(17, 24, 39, 0.42);
+    }
+    #community-modal .community-modal-content {
+      padding: 0 !important;
+      overflow: hidden !important;
+    }
+    #community-modal.profile-sheet .community-modal-content {
+      width: 100% !important;
+      max-width: 640px !important;
+      height: 92vh !important;
+      max-height: 92vh !important;
+      border-radius: 28px 28px 0 0 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      background: #fffdfb !important;
+      box-shadow: 0 -10px 32px rgba(17,24,39,.18) !important;
+    }
+    .community-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      flex-shrink: 0;
+      border-bottom: 1px solid rgba(120,72,56,.10);
+      background: rgba(255,253,251,.94);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 3;
+    }
+    .community-modal-title-btn {
+      font-size: 15px;
+      font-weight: 900;
+      color: #111827;
+      background: none;
+      border: none;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: default;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .community-modal-close-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: none;
+      background: #f3f4f6;
+      color: #6b7280;
+      font-size: 19px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .community-modal-close-btn:active {
+      transform: scale(.94);
+      background: #e5e7eb;
+    }
+    .community-profile-view {
+      overflow-y: auto;
+      flex: 1;
+      display: none;
+      background: #fffdfb;
+      -webkit-overflow-scrolling: touch;
+    }
+    .community-profile-body {
+      padding: 18px 18px calc(28px + env(safe-area-inset-bottom, 0px));
+    }
+    .community-profile-loading {
+      text-align: center;
+      color: #9ca3af;
+      font-size: 13px;
+      padding: 36px 0;
+    }
+    .community-profile-hero {
+      display: grid;
+      grid-template-columns: 76px minmax(0, 1fr);
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .community-profile-hero img,
+    .community-profile-hero #user-profile-avatar-emoji {
+      width: 76px !important;
+      height: 76px !important;
+      border-radius: 50% !important;
+      object-fit: cover;
+      box-shadow: 0 8px 18px rgba(80,40,24,.12);
+    }
+    .community-profile-name {
+      font-weight: 900;
+      font-size: 22px;
+      color: #111827;
+      line-height: 1.25;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      letter-spacing: -.2px;
+    }
+    .community-profile-counts {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #8b6f66;
+      margin-top: 5px;
+      font-weight: 700;
+    }
+    .community-profile-bio {
+      font-size: 14px;
+      color: #4b5563;
+      line-height: 1.65;
+      margin: 6px 0 14px;
+      white-space: pre-wrap;
+    }
+    .community-profile-follow-wrap {
+      margin: 0 0 18px;
+    }
+    .community-profile-follow-wrap button {
+      width: 100%;
+      padding: 11px 16px !important;
+      border-radius: 999px !important;
+      font-size: 14px !important;
+      font-weight: 900 !important;
+      box-shadow: 0 6px 14px rgba(17,24,39,.08);
+    }
+    .community-profile-section-title {
+      font-weight: 900;
+      font-size: 14px;
+      color: #111827;
+      margin: 8px -18px 0;
+      padding: 14px 18px 10px;
+      border-top: 1px solid rgba(120,72,56,.12);
+      background: #fffdfb;
+      position: sticky;
+      top: 57px;
+      z-index: 2;
+    }
+    .user-profile-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3px;
+      margin-left: -18px;
+      margin-right: -18px;
+      background: rgba(120,72,56,.10);
+    }
+    .user-profile-grid-cell {
+      position: relative;
+      aspect-ratio: 1;
+      background: #f3f4f6;
+      cursor: pointer;
+      overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .user-profile-grid-cell:active {
+      opacity: .86;
+    }
+    .user-profile-grid-cell img,
+    .user-profile-grid-cell > div:first-child {
+      width: 100% !important;
+      height: 100% !important;
+      aspect-ratio: 1 !important;
+      object-fit: cover !important;
+      border-radius: 0 !important;
+      display: block !important;
+    }
+    .user-profile-grid-cell.empty-photo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #9ca3af;
+      font-size: 24px;
+      background: #f3f4f6;
+    }
+    .user-profile-grid-cell .profile-grid-badge {
+      position: absolute;
+      right: 6px;
+      top: 6px;
+      padding: 3px 6px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.48);
+      color: white;
+      font-size: 10px;
+      font-weight: 900;
+      line-height: 1;
+    }
+    .user-profile-empty {
+      text-align: center;
+      color: #9ca3af;
+      font-size: 13px;
+      padding: 32px 0;
+      background: #fffdfb;
+    }
+
+    /* プロフィール内投稿 → 投稿詳細は、同じプロフィールシート内のページ遷移として見せる */
+    #community-modal.profile-sheet.visit-sheet .community-modal-content {
+      width: 100% !important;
+      max-width: 640px !important;
+      height: 92vh !important;
+      max-height: 92vh !important;
+      border-radius: 28px 28px 0 0 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      background: #fffdfb !important;
+    }
+    #community-modal.profile-sheet.visit-sheet #community-visit-view {
+      background: #fffdfb;
+      -webkit-overflow-scrolling: touch;
+    }
+    #community-modal.profile-sheet.visit-sheet #community-visit-detail-photo-area {
+      background: #000;
+    }
+    .community-modal-title-btn.back-enabled {
+      cursor: pointer;
+      padding: 6px 10px;
+      margin-left: -10px;
+      border-radius: 999px;
+    }
+    .community-modal-title-btn.back-enabled:active {
+      background: #f3f4f6;
+      transform: scale(.98);
+    }
+    @media (max-width: 520px) {
+      #community-modal.profile-sheet .community-modal-content {
+        max-width: none !important;
+        height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top, 0px)) !important;
+        max-height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top, 0px)) !important;
+        border-radius: 24px 24px 0 0 !important;
+      }
+      .community-profile-body { padding: 16px 16px calc(28px + env(safe-area-inset-bottom, 0px)); }
+      .community-profile-hero { grid-template-columns: 72px minmax(0, 1fr); gap: 14px; }
+      .community-profile-hero img,
+      .community-profile-hero #user-profile-avatar-emoji { width: 72px !important; height: 72px !important; }
+      .community-profile-name { font-size: 21px; }
+      .community-profile-section-title { margin-left: -16px; margin-right: -16px; padding-left: 16px; padding-right: 16px; }
+      .user-profile-grid { margin-left: -16px; margin-right: -16px; }
     }
 
     </style></style>
@@ -3450,8 +3744,8 @@
         </div>
 
         <!-- 記録するフローティングボタン -->
-        <button id="feed-record-fab" class="feed-record-fab" onclick="openShopSelectModal()" style="display:none !important;
-          position:fixed; right:16px; bottom:76px; z-index:90;
+        <button id="feed-record-fab" class="feed-record-fab" onclick="openShopSelectModal()" style="
+          position:fixed; right:16px; bottom:calc(104px + env(safe-area-inset-bottom, 0px)); z-index:90;
           width:56px; height:56px; border-radius:50%;
           background:#ef4444; color:white; border:none;
           font-size:28px; font-weight:300; cursor:pointer;
@@ -4326,9 +4620,9 @@
       if (limited.length === 0) return '';
 
       const gridHtml = limited.length === 1
-        ? `<img src="${limited[0]}" class="feed-photo">`
-        : `<div class="feed-photo-grid count-${limited.length}">${limited.map(url => `<img src="${url}">`).join('')}</div>`;
-      const swipeHtml = `<div class="feed-photo-swipe-view" onscroll="updateFeedPhotoSwipeLabel(this)">${limited.map(url => `<img src="${url}">`).join('')}</div>`;
+        ? `<img src="${limited[0]}" loading="lazy" class="feed-photo">`
+        : `<div class="feed-photo-grid count-${limited.length}">${limited.map(url => `<img src="${url}" loading="lazy">`).join('')}</div>`;
+      const swipeHtml = `<div class="feed-photo-swipe-view" onscroll="updateFeedPhotoSwipeLabel(this)">${limited.map(url => `<img src="${url}" loading="lazy">`).join('')}</div>`;
       const dotsHtml = limited.length > 1
         ? `<div class="feed-photo-dots">${limited.map((_, i) => `<span class="feed-photo-dot ${i === 0 ? 'active' : ''}"></span>`).join('')}</div>`
         : '';
@@ -4384,6 +4678,23 @@
       updateFeedPhotoDots(wrap, index);
     }
 
+    // メモが3行で省略されている場合だけ「続きを読む」を表示する
+    function updateFeedMemoMoreButtons(rootEl) {
+      (rootEl || document).querySelectorAll('.feed-memo:not(.expanded)').forEach(memoEl => {
+        const btn = memoEl.nextElementSibling;
+        if (!btn || !btn.classList.contains('feed-memo-more')) return;
+        if (memoEl.scrollHeight > memoEl.clientHeight + 2) {
+          btn.classList.add('visible');
+        }
+      });
+    }
+
+    function expandFeedMemo(btn) {
+      const memoEl = btn.previousElementSibling;
+      if (memoEl) memoEl.classList.add('expanded');
+      btn.classList.remove('visible');
+    }
+
     function toggleFeedBookmarkUI(btnEl) {
       const saved = btnEl.dataset.saved === '1';
       const iconEl = btnEl.querySelector('.bookmark-icon');
@@ -4391,9 +4702,9 @@
       if (iconEl) iconEl.classList.toggle('filled', !saved);
     }
 
-    // 投稿カード本体。1-2行目はユーザー＋訪問情報、右に「マップで見る」。3-4行目は店名＋場所、右に評価。
+    // 投稿カード本体。1-2行目はユーザー＋訪問情報、右に「マップ」。3-4行目は店名＋場所、右に評価。
     function feedCardBodyHtml(v, name, avatarUrl, shopName, shopMeta) {
-      const ratingLabel = v.rating > 0 ? Number(v.rating).toFixed(1) : '';
+      const ratingLabel = v.rating > 0 ? String(v.rating) : '';
       const orderLine = [v.order_text, v.options].filter(Boolean).join(' / ');
       const metaLine = shopMeta || '';
       const visitMeta = formatFeedVisitMeta(v);
@@ -4409,7 +4720,7 @@
               ${visitMeta ? `<div class="feed-user-meta">${visitMeta}</div>` : ''}
             </div>
             <div class="feed-post-map-area">
-              ${shopName ? `<button class="feed-map-btn" onclick="event.stopPropagation(); openShopOnMap('${v.shop_id}')">📍 マップで見る</button>` : ''}
+              ${shopName ? `<button class="feed-map-btn" onclick="event.stopPropagation(); openShopOnMap('${v.shop_id}')">📍 マップ</button>` : ''}
             </div>
           </div>
 
@@ -4424,7 +4735,7 @@
           ${feedPhotosHtml(v)}
 
           ${orderLine ? `<div class="feed-order-line">🍜 ${escapeHtml(orderLine)}</div>` : ''}
-          ${v.memo ? `<div class="feed-memo">${escapeHtml(v.memo)}</div>` : ''}
+          ${v.memo ? `<div class="feed-memo">${escapeHtml(v.memo)}</div><button class="feed-memo-more" onclick="event.stopPropagation(); expandFeedMemo(this)">続きを読む</button>` : ''}
         </div>
       `;
     }
@@ -4439,52 +4750,76 @@
     let communityModalCurrentView = null;
     let communityModalCurrentVisitId = null;
     let communityModalCurrentUserId = null;
+    // プロフィール内の投稿を開いた時だけ、戻り先プロフィールIDを保持する
+    let communityModalProfileReturnUserId = null;
 
     function closeCommunityModal() {
-      document.getElementById('community-modal').classList.remove('active');
+      const modal = document.getElementById('community-modal');
+      if (modal) modal.classList.remove('active', 'profile-sheet', 'visit-sheet');
       communityModalCurrentView = null;
       communityModalCurrentVisitId = null;
       communityModalCurrentUserId = null;
+      communityModalProfileReturnUserId = null;
     }
 
     // 後方互換性のためのエイリアス（フィードカードのevent.stopPropagation()等で参照）
     function closeCommunityVisitDetailModal() { closeCommunityModal(); }
     function closeUserProfileModal() { closeCommunityModal(); }
 
-    // ヘッダーのユーザー名ボタン：投稿詳細⇔プロフィールを切り替える
+    // ヘッダー左側：プロフィール内の投稿詳細を開いた時だけ、プロフィールへ戻る
     function toggleCommunityModalView() {
-      if (communityModalCurrentView === 'visit') {
-        // 投稿詳細 → プロフィールへ
-        showCommunityProfileView(communityModalCurrentUserId);
-      } else if (communityModalCurrentView === 'profile' && communityModalCurrentVisitId) {
-        // プロフィール → 投稿詳細へ戻る
-        showCommunityVisitView(communityModalCurrentVisitId);
+      if (communityModalCurrentView === 'visit' && communityModalProfileReturnUserId) {
+        const returnUserId = communityModalProfileReturnUserId;
+        communityModalProfileReturnUserId = null;
+        showCommunityProfileView(returnUserId);
       }
     }
 
     function setModalHeader(name, canToggle) {
       const btn = document.getElementById('community-modal-user-btn');
       if (!btn) return;
-      if (canToggle && communityModalCurrentView === 'profile' && communityModalCurrentVisitId) {
-        btn.innerHTML = `<span style="font-size:18px;margin-right:2px;">←</span>${escapeHtml(name)}`;
-      } else if (canToggle && communityModalCurrentView === 'visit') {
-        btn.innerHTML = `${escapeHtml(name)}<span style="font-size:12px;color:#9ca3af;margin-left:4px;">▶ プロフィール</span>`;
+      btn.classList.remove('back-enabled');
+      btn.style.cursor = 'default';
+      if (communityModalCurrentView === 'visit' && communityModalProfileReturnUserId) {
+        btn.innerHTML = `<span style="font-size:18px;margin-right:2px;line-height:1;">←</span><span>プロフィール</span>`;
+        btn.classList.add('back-enabled');
+        btn.style.cursor = 'pointer';
       } else {
-        btn.textContent = name;
-        btn.style.cursor = 'default';
+        btn.textContent = communityModalCurrentView === 'profile' ? 'プロフィール' : (name || '投稿詳細');
       }
     }
 
     // 投稿詳細ビューを表示
-    async function showCommunityVisitDetail(visitId) {
+    async function showCommunityVisitDetail(visitId, options = {}) {
       communityModalCurrentVisitId = visitId;
-      document.getElementById('community-modal').classList.add('active');
+      const modal = document.getElementById('community-modal');
+      const isProfileTransition = !!options.fromProfile;
+      if (isProfileTransition && !communityModalProfileReturnUserId) {
+        communityModalProfileReturnUserId = communityModalCurrentUserId;
+      }
+      if (modal) modal.classList.add('active');
       showCommunityVisitView(visitId);
+    }
+
+    // プロフィールの投稿グリッドから開く時は、別モーダルではなく同じシート内で画面遷移させる
+    function openCommunityVisitFromProfile(visitId) {
+      if (!communityModalProfileReturnUserId) communityModalProfileReturnUserId = communityModalCurrentUserId;
+      showCommunityVisitDetail(visitId, { fromProfile: true });
     }
 
     async function showCommunityVisitView(visitId) {
       communityModalCurrentView = 'visit';
       communityModalCurrentVisitId = visitId;
+
+      const modal = document.getElementById('community-modal');
+      if (modal) {
+        if (communityModalProfileReturnUserId) {
+          modal.classList.add('profile-sheet', 'visit-sheet');
+        } else {
+          modal.classList.remove('profile-sheet');
+          modal.classList.add('visit-sheet');
+        }
+      }
 
       document.getElementById('community-visit-view').style.display = 'block';
       document.getElementById('community-profile-view').style.display = 'none';
@@ -4546,13 +4881,20 @@
     // プロフィールビューを表示
     async function openUserProfile(userId) {
       communityModalCurrentUserId = userId;
-      document.getElementById('community-modal').classList.add('active');
+      communityModalCurrentVisitId = null;
+      communityModalProfileReturnUserId = null;
+      const modal = document.getElementById('community-modal');
+      if (modal) modal.classList.add('active');
       showCommunityProfileView(userId);
     }
 
     async function showCommunityProfileView(userId) {
       communityModalCurrentView = 'profile';
       communityModalCurrentUserId = userId;
+
+      const modal = document.getElementById('community-modal');
+      if (modal) modal.classList.remove('visit-sheet');
+      if (modal) modal.classList.add('profile-sheet');
 
       document.getElementById('community-visit-view').style.display = 'none';
       document.getElementById('community-profile-view').style.display = 'block';
@@ -4611,7 +4953,9 @@
       const name = profile?.display_name || 'ユーザー';
       const bio = profile?.bio || '';
       document.getElementById('user-profile-name').textContent = name;
-      document.getElementById('user-profile-bio').textContent = bio;
+      const bioEl = document.getElementById('user-profile-bio');
+      bioEl.textContent = bio || '自己紹介はまだありません';
+      bioEl.style.color = bio ? '#4b5563' : '#9ca3af';
       document.getElementById('user-profile-follow-counts').textContent = `フォロー中 ${followingCount} ・ フォロワー ${followerCount}`;
       applyAvatarDisplay(
         document.getElementById('user-profile-avatar-img'),
@@ -4637,22 +4981,28 @@
 
       // 訪れたお店一覧（Instagram風のグリッド表示）
       const listEl = document.getElementById('user-profile-visits-list');
+      listEl.className = 'user-profile-grid';
       if (!visitRows || visitRows.length === 0) {
-        listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;">公開されている記録がありません</div>';
+        listEl.className = 'user-profile-empty';
+        listEl.innerHTML = '公開されている記録がありません';
         return;
       }
-      listEl.style.display = 'grid';
-      listEl.style.gridTemplateColumns = 'repeat(3, 1fr)';
-      listEl.style.gap = '4px';
       listEl.innerHTML = '';
       visitRows.forEach(v => {
         const shop = (typeof shops !== 'undefined' ? shops : []).find(s => s.id === v.shop_id);
         const shopName = shop?.name || v.shop_id;
         communityVisitCache[v.id] = { ...v, shopName, displayName: name || '' };
         const cell = document.createElement('div');
-        cell.style.cursor = 'pointer';
-        cell.innerHTML = postPhotoHtml(v.photo_url, 'border-radius:4px;');
-        cell.onclick = () => { closeCommunityModal(); showShopDetail(v.shop_id); };
+        cell.className = 'user-profile-grid-cell' + (v.photo_url ? '' : ' empty-photo');
+        cell.setAttribute('role', 'button');
+        cell.setAttribute('aria-label', `${shopName || '投稿'}の投稿詳細を開く`);
+        if (v.photo_url) {
+          cell.innerHTML = `<img src="${v.photo_url}" loading="lazy" alt="${escapeHtml(shopName || '投稿写真')}">${(v.photo_urls && v.photo_urls.length > 1) ? `<span class="profile-grid-badge">${v.photo_urls.length}</span>` : ''}`;
+        } else {
+          cell.textContent = '🍜';
+        }
+        // プロフィール内の投稿写真は、同じプロフィールシート内で投稿詳細へ画面遷移する
+        cell.onclick = () => openCommunityVisitFromProfile(v.id);
         listEl.appendChild(cell);
       });
     }
@@ -4747,22 +5097,33 @@
           const dateStr = v.visited_at ? formatDateDetail(v.visited_at) : '';
 
           const card = document.createElement('div');
-          card.className = 'feed-post-card';
+          card.style.cssText = 'background:#f9fafb;border-radius:12px;padding:10px 12px;margin-bottom:8px;cursor:pointer;';
           v.photo_urls = photoListMap.get(v.id) || [];
           v.photo_url = v.photo_urls[0] || null;
           const shopNameForCache = currentShop?.name || shops?.find(s => s.id === shopId)?.name || shopId;
           communityVisitCache[v.id] = { ...v, shopName: shopNameForCache, displayName: name || '' };
-          card.onclick = () => showShopDetail(v.shop_id);
+          card.onclick = () => showCommunityVisitDetail(v.id);
+          const orderLine = [v.order_text, v.options].filter(Boolean).join(' / ');
+          const starsStr = v.rating > 0 ? '★'.repeat(v.rating) + '☆'.repeat(5 - v.rating) : '';
           card.innerHTML = `
-            ${feedCardBodyHtml(v, name, avatarUrl, null)}
-            <div class="feed-actions">
-              <button onclick="event.stopPropagation(); toggleLike('${v.id}', this)" data-liked="${liked ? '1' : '0'}" class="feed-action-cell feed-like-btn">
-                <svg class="feed-action-icon like-icon ${liked ? 'filled' : ''}" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"></path></svg><span class="like-count">${likeCount}</span>
+            <div style="display:flex;gap:10px;">
+              <div style="flex:1;min-width:0;">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                  ${avatarHtml(avatarUrl, 22)}
+                  <span onclick="event.stopPropagation(); openUserProfile('${v.user_id}')" style="font-size:12px;font-weight:600;color:#374151;cursor:pointer;">${escapeHtml(name)}</span>
+                  <span style="font-size:11px;color:#9ca3af;margin-left:auto;flex-shrink:0;">${dateStr}</span>
+                </div>
+                ${starsStr ? `<div style="font-size:12px;color:#f59e0b;margin-bottom:2px;">${starsStr}</div>` : ''}
+                ${orderLine ? `<div style="font-size:12px;color:#374151;line-height:1.4;">${escapeHtml(orderLine)}</div>` : ''}
+                ${v.memo ? `<div style="font-size:13px;color:#4b5563;line-height:1.45;margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(v.memo)}</div>` : ''}
+              </div>
+              ${v.photo_url ? `<img src="${v.photo_url}" loading="lazy" style="width:64px;height:64px;object-fit:cover;border-radius:10px;flex-shrink:0;">` : ''}
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;">
+              <button onclick="event.stopPropagation(); toggleLike('${v.id}', this)" data-liked="${liked ? '1' : '0'}" class="feed-action-cell feed-like-btn" style="padding:4px 8px;font-size:12px;">
+                <svg class="feed-action-icon like-icon ${liked ? 'filled' : ''}" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"></path></svg><span class="like-count">${likeCount}</span>
               </button>
-              <button onclick="event.stopPropagation(); toggleFeedBookmarkUI(this)" data-saved="0" class="feed-action-cell feed-bookmark-btn" title="保存">
-                <svg class="feed-action-icon bookmark-icon" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg><span>保存</span>
-              </button>
-              <div class="feed-action-cell feed-relative-time">${formatFeedRelativeTime(v.created_at || v.visited_at)}</div>
+              <button onclick="event.stopPropagation(); showCommunityVisitDetail('${v.id}')" style="border:none;background:none;cursor:pointer;font-size:12px;color:#6b7280;font-weight:700;padding:4px 8px;">詳細 ›</button>
             </div>
           `;
           listEl.appendChild(card);
@@ -5079,7 +5440,8 @@
             const card = document.createElement('div');
             card.className = 'feed-post-card';
             communityVisitCache[v.id] = { ...v, shopName, displayName: name || '' };
-            card.onclick = () => showShopDetail(v.shop_id);
+            // 投稿カード全体はタップしても何もしない。店舗詳細は店名タップから開く。
+            card.onclick = null;
             const shopMeta = [shop?.area, shop?.station].filter(Boolean).join('・');
             card.innerHTML = `
               ${feedCardBodyHtml(v, name, avatarUrl, shopName, shopMeta)}
@@ -5100,6 +5462,9 @@
         }
 
         // 次ページがあれば、末尾に監視用の番兵要素を設置
+        // メモが省略されているカードに「続きを読む」を表示
+        updateFeedMemoMoreButtons(listEl);
+
         setupFeedObserver(listEl);
 
       } catch (e) {
@@ -12155,12 +12520,12 @@
   </div>
 
   <div id="community-modal" class="modal" onclick="closeCommunityModal()">
-    <div class="modal-content" onclick="event.stopPropagation()" style="max-width:500px;border-radius:16px;padding:0;max-height:90vh;display:flex;flex-direction:column;">
+    <div class="modal-content community-modal-content" onclick="event.stopPropagation()" style="max-width:500px;border-radius:16px;padding:0;max-height:90vh;display:flex;flex-direction:column;">
 
-      <!-- 共通ヘッダー：ユーザー名ボタン（ビュー切り替え）＋×ボタン -->
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;flex-shrink:0;border-bottom:1px solid #f3f4f6;">
-        <button id="community-modal-user-btn" onclick="toggleCommunityModalView()" style="font-size:15px;font-weight:700;color:#111827;background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;gap:6px;"></button>
-        <button onclick="closeCommunityModal()" style="width:30px;height:30px;border-radius:50%;border:none;background:#f3f4f6;color:#6b7280;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">×</button>
+      <!-- 共通ヘッダー：プロフィール/投稿詳細タイトル＋×ボタン。ビュー切替はしない -->
+      <div class="community-modal-header">
+        <button id="community-modal-user-btn" class="community-modal-title-btn" type="button" onclick="toggleCommunityModalView()">プロフィール</button>
+        <button class="community-modal-close-btn" type="button" onclick="closeCommunityModal()">×</button>
       </div>
 
       <!-- 投稿詳細ビュー -->
@@ -12173,22 +12538,22 @@
       </div>
 
       <!-- プロフィールビュー -->
-      <div id="community-profile-view" style="overflow-y:auto;flex:1;display:none;">
-        <div class="modal-body" style="padding:20px;">
-          <div id="user-profile-loading" style="text-align:center;color:#9ca3af;font-size:13px;padding:24px 0;">読み込み中...</div>
+      <div id="community-profile-view" class="community-profile-view">
+        <div class="community-profile-body">
+          <div id="user-profile-loading" class="community-profile-loading">読み込み中...</div>
           <div id="user-profile-content" style="display:none;">
-            <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;">
-              <img id="user-profile-avatar-img" src="" style="width:64px;height:64px;border-radius:50%;display:none;object-fit:cover;flex-shrink:0;" />
-              <div id="user-profile-avatar-emoji" style="width:64px;height:64px;border-radius:50%;background:#f3f4f6;display:none;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;"></div>
-              <div style="flex:1;min-width:0;">
-                <div id="user-profile-name" style="font-weight:700;font-size:18px;color:#111827;"></div>
-                <div id="user-profile-follow-counts" style="font-size:13px;color:#6b7280;margin-top:2px;"></div>
+            <div class="community-profile-hero">
+              <img id="user-profile-avatar-img" src="" style="display:none;" />
+              <div id="user-profile-avatar-emoji" style="background:#f3f4f6;display:none;align-items:center;justify-content:center;font-size:34px;flex-shrink:0;"></div>
+              <div style="min-width:0;">
+                <div id="user-profile-name" class="community-profile-name"></div>
+                <div id="user-profile-follow-counts" class="community-profile-counts"></div>
               </div>
             </div>
-            <div id="user-profile-bio" style="font-size:14px;color:#4b5563;line-height:1.5;margin-bottom:14px;"></div>
-            <div id="user-profile-follow-btn-wrap" style="margin-bottom:20px;"></div>
-            <div style="font-weight:700;font-size:14px;color:#111827;margin-bottom:10px;border-top:1px solid #f3f4f6;padding-top:14px;">訪れたお店（公開記録）</div>
-            <div id="user-profile-visits-list"></div>
+            <div id="user-profile-bio" class="community-profile-bio"></div>
+            <div id="user-profile-follow-btn-wrap" class="community-profile-follow-wrap"></div>
+            <div class="community-profile-section-title">公開投稿</div>
+            <div id="user-profile-visits-list" class="user-profile-grid"></div>
           </div>
         </div>
       </div>
