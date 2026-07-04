@@ -3038,23 +3038,35 @@
       background: rgba(0,0,0,0.70);
     }
     .feed-photo-dots {
-      display: flex;
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 11px;
+      z-index: 5;
+      display: none;
       justify-content: center;
       align-items: center;
       gap: 6px;
-      padding: 8px 0 2px;
-      background: #fff;
+      padding: 0;
+      pointer-events: none;
+    }
+    .feed-photo-wrap.is-swipe .feed-photo-dots {
+      display: flex;
     }
     .feed-photo-dot {
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: #d6c7c1;
-      transition: transform .15s ease, background .15s ease;
+      background: rgba(255,255,255,0.58);
+      border: 1px solid rgba(0,0,0,0.18);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.22);
+      transition: transform .15s ease, background .15s ease, width .15s ease;
     }
     .feed-photo-dot.active {
-      background: #c92232;
-      transform: scale(1.18);
+      width: 16px;
+      border-radius: 999px;
+      background: #ffffff;
+      transform: none;
     }
     .feed-photo-grid {
       display: grid;
@@ -3227,18 +3239,69 @@
       background: transparent;
       transform: none;
     }
+    .feed-record-fab {
+      display: none !important;
+    }
+
+    /* Android Chrome: 投稿カードタップ時の青いハイライトを消す */
+    #tab-feed,
+    #tab-feed *,
+    #tab-feed button,
+    #tab-feed a,
+    .feed-post-card,
+    .feed-post-card * {
+      -webkit-tap-highlight-color: rgba(0,0,0,0) !important;
+      tap-highlight-color: rgba(0,0,0,0) !important;
+    }
+    .feed-post-card,
+    .feed-map-btn,
+    .feed-photo-toggle,
+    .feed-action-cell,
+    #tab-feed button {
+      touch-action: manipulation;
+      -webkit-touch-callout: none;
+      outline: none !important;
+    }
+    .feed-post-card:focus,
+    .feed-post-card:focus-visible,
+    .feed-map-btn:focus,
+    .feed-map-btn:focus-visible,
+    .feed-photo-toggle:focus,
+    .feed-photo-toggle:focus-visible,
+    .feed-action-cell:focus,
+    .feed-action-cell:focus-visible,
+    #tab-feed button:focus,
+    #tab-feed button:focus-visible {
+      outline: none !important;
+      box-shadow: none;
+    }
+    /* 念押し：投稿タブ右下の＋ボタンは非表示 */
+    #feed-record-fab,
+    .feed-record-fab {
+      display: none !important;
+      pointer-events: none !important;
+    }
     @media (max-width: 520px) {
-      .feed-list-wrap { padding: 12px 8px 96px !important; }
+      .feed-list-wrap { padding: 12px 8px calc(140px + env(safe-area-inset-bottom, 0px)) !important; }
       .feed-post-card { border-radius: 22px; margin-bottom: 14px; }
       .feed-post-main { padding: 16px 16px 0; }
       .feed-photo-wrap { margin-left: -16px; margin-right: -16px; }
+      .feed-photo,
+      .feed-photo-swipe-view,
+      .feed-photo-grid {
+        aspect-ratio: 4 / 3;
+        max-height: 360px;
+        overflow: hidden;
+      }
       .feed-shop-name { font-size: 19px; }
       .feed-memo { font-size: 15px; line-height: 1.7; }
+      .feed-order-line { padding-top: 10px; }
       .feed-actions { padding-left: 16px; padding-right: 16px; }
       .feed-action-cell { font-size: 12px; gap: 5px; }
       .feed-post-top { grid-template-columns: 42px minmax(0, 1fr) auto; gap: 9px; }
-      .feed-post-map-area { min-width: 86px; }
-      .feed-map-btn { font-size: 11px; padding: 8px 10px; }
+      .feed-post-map-area { min-width: 82px; }
+      .feed-map-btn { font-size: 12px; padding: 7px 9px; }
+      .feed-rating-pill { font-size: 14px; padding: 6px 9px; }
     }
 
     </style></style>
@@ -3387,7 +3450,7 @@
         </div>
 
         <!-- 記録するフローティングボタン -->
-        <button onclick="openShopSelectModal()" style="
+        <button id="feed-record-fab" class="feed-record-fab" onclick="openShopSelectModal()" style="display:none !important;
           position:fixed; right:16px; bottom:76px; z-index:90;
           width:56px; height:56px; border-radius:50%;
           background:#ef4444; color:white; border:none;
@@ -4224,6 +4287,7 @@
     // みんなの記録カードの中身
     function formatFeedVisitMeta(v) {
       const parts = [];
+      const isSmallScreen = window.matchMedia && window.matchMedia('(max-width: 520px)').matches;
       if (v.visited_at) {
         const date = new Date(v.visited_at);
         const year = date.getFullYear();
@@ -4231,10 +4295,10 @@
         const day = date.getDate();
         const hours = String(date.getHours()).padStart(2, '0');
         const minutes = String(date.getMinutes()).padStart(2, '0');
-        parts.push(`${year}/${month}/${day} ${hours}:${minutes}`);
+        parts.push(isSmallScreen ? `${month}/${day} ${hours}:${minutes}` : `${year}/${month}/${day} ${hours}:${minutes}`);
       }
       if (v.wait_minutes || v.wait_minutes === 0) parts.push(`待ち${v.wait_minutes}分`);
-      const weatherTemp = `${v.weather ? escapeHtml(v.weather) : ''}${v.temperature || v.temperature === 0 ? escapeHtml(String(v.temperature)) + '°C' : ''}`;
+      const weatherTemp = `${v.weather ? escapeHtml(v.weather) : ''}${v.temperature || v.temperature === 0 ? escapeHtml(String(v.temperature)) + '℃' : ''}`;
       if (weatherTemp) parts.push(weatherTemp);
       return parts.join(' ・ ');
     }
@@ -4265,23 +4329,25 @@
         ? `<img src="${limited[0]}" class="feed-photo">`
         : `<div class="feed-photo-grid count-${limited.length}">${limited.map(url => `<img src="${url}">`).join('')}</div>`;
       const swipeHtml = `<div class="feed-photo-swipe-view" onscroll="updateFeedPhotoSwipeLabel(this)">${limited.map(url => `<img src="${url}">`).join('')}</div>`;
-      const toggleLabel = limited.length > 1 ? `📷 ${limited.length}` : '';
       const dotsHtml = limited.length > 1
         ? `<div class="feed-photo-dots">${limited.map((_, i) => `<span class="feed-photo-dot ${i === 0 ? 'active' : ''}"></span>`).join('')}</div>`
         : '';
+      const initialModeClass = limited.length > 1 ? ' is-swipe' : '';
+      const toggleLabel = limited.length > 1 ? `1 / ${limited.length}` : '';
       return `
-        <div class="feed-photo-wrap" data-photo-count="${limited.length}">
+        <div class="feed-photo-wrap${initialModeClass}" data-photo-count="${limited.length}">
           <div class="feed-photo-grid-view">${gridHtml}</div>
           ${limited.length > 1 ? swipeHtml : ''}
+          ${dotsHtml}
           ${limited.length > 1 ? `<button class="feed-photo-toggle" type="button" onclick="event.stopPropagation(); toggleFeedPhotoMode(this)">${toggleLabel}</button>` : ''}
         </div>
-        ${dotsHtml}
       `;
     }
 
     function toggleFeedPhotoMode(btn) {
       const wrap = btn.closest('.feed-photo-wrap');
       if (!wrap) return;
+      const count = parseInt(wrap.dataset.photoCount || '0', 10) || 1;
       const toSwipe = !wrap.classList.contains('is-swipe');
       wrap.classList.toggle('is-swipe', toSwipe);
       if (toSwipe) {
@@ -4289,18 +4355,20 @@
         if (scroller) {
           scroller.scrollLeft = 0;
           updateFeedPhotoSwipeLabel(scroller);
+        } else {
+          btn.textContent = `1 / ${count}`;
         }
       } else {
-        const count = wrap.dataset.photoCount || btn.textContent.replace(/[^0-9]/g, '') || '';
-        btn.textContent = count ? `📷 ${count}` : '▦';
+        // 複数枚を一覧で見せるグリッド表示。ドットはCSSで非表示。
+        btn.textContent = `▦ ${count}`;
         updateFeedPhotoDots(wrap, 1);
       }
     }
 
     function updateFeedPhotoDots(wrap, activeIndex) {
       if (!wrap) return;
-      const dotsWrap = wrap.nextElementSibling;
-      if (!dotsWrap || !dotsWrap.classList.contains('feed-photo-dots')) return;
+      const dotsWrap = wrap.querySelector('.feed-photo-dots');
+      if (!dotsWrap) return;
       dotsWrap.querySelectorAll('.feed-photo-dot').forEach((dot, i) => {
         dot.classList.toggle('active', i === activeIndex - 1);
       });
