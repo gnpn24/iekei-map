@@ -194,6 +194,11 @@
       padding-bottom: 4px;
     }
     
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
     .tab-content {
       height: 100%;
       overflow-y: auto;
@@ -2140,7 +2145,7 @@
       font-size: 11px;
       padding: 4px 8px;
       border-radius: 999px;
-      border: 1px solid rgba(0,0,0,.18);
+      border: 1px solid white;
       background: rgba(0,0,0,.04);
       white-space: nowrap;
     }
@@ -2464,7 +2469,7 @@
     }
     
     #lineage-reset-btn {
-      border: 2px solid rgba(0,0,0,.18);
+      border: 2px solid white;
       background: rgba(255,255,255,.65);
       padding: 8px 10px;
       border-radius: 10px;
@@ -2488,23 +2493,13 @@
     
     /* 新しい統計タブのスタイル（ChatGPTのデザイン） */
     #tab-mypage {
-      background: 
-        radial-gradient(1200px 800px at 20% -10%, rgba(110,231,183,.18), transparent 60%),
-        radial-gradient(1000px 700px at 110% 10%, rgba(59,130,246,.14), transparent 55%),
-        #0b0f14;
-      color: #e7edf7;
+      background: #f9fafb;
+      color: #111827;
       min-height: calc(100vh - 60px);
       padding-bottom: 60px;
     }
     
-    /* 統計タブが表示されている時だけヘッダーを非表示 */
-    #tab-mypage.active ~ .header {
-      display: none;
-    }
-    
-    body:has(#tab-mypage.active) .header {
-      display: none;
-    }
+    /* マイページではヘッダーを表示する（JS側で制御） */
     
     .stats-header {
       display: flex;
@@ -2525,12 +2520,12 @@
       margin: 0;
       font-size: 18px;
       letter-spacing: .2px;
-      color: #e7edf7;
+      color: #111827;
     }
     
     .stats-sub {
       font-size: 12px;
-      color: #9fb0c7;
+      color: #6b7280;
     }
     
     .stats-pill {
@@ -2539,15 +2534,15 @@
       gap: 8px;
       padding: 8px 10px;
       border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.08);
-      background: rgba(255,255,255,.04);
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
       font-size: 13px;
-      color: #e7edf7;
+      color: #111827;
     }
     
     .stats-pill #stats-data-status {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      color: #9fb0c7;
+      color: #6b7280;
     }
     
     .stats-new-container {
@@ -2563,8 +2558,8 @@
       }
     }
     .stats-new-card {
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      border: 1px solid rgba(255,255,255,.08);
+      background: white;
+      border: 1px solid #e5e7eb;
       border-radius: 16px;
       box-shadow: 0 10px 30px rgba(0,0,0,.35);
       overflow: hidden;
@@ -2578,27 +2573,27 @@
       align-items: center;
       justify-content: space-between;
       gap: 10px;
-      border-bottom: 1px solid rgba(255,255,255,.06);
-      background: rgba(255,255,255,.04);
+      border-bottom: 1px solid #f3f4f6;
+      background: #f9fafb;
     }
     .stats-new-title {
       font-size: 14px;
       font-weight: 700;
       margin: 0;
       letter-spacing: .2px;
-      color: #e7edf7;
+      color: #111827;
     }
     .stats-new-body {
       padding: 12px 14px 14px;
     }
     .stats-new-muted {
-      color: #9fb0c7;
+      color: #6b7280;
       font-size: 12px;
     }
     .stats-new-select {
-      background: rgba(255,255,255,.05);
-      border: 1px solid rgba(255,255,255,.08);
-      color: #e7edf7;
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      color: #111827;
       padding: 10px 12px;
       border-radius: 12px;
       font-size: 13px;
@@ -2607,8 +2602,8 @@
       font-weight: 600;
     }
     .stats-new-select option {
-      background: #1a1f2e;
-      color: #e7edf7;
+      background: #f3f4f6;
+      color: #111827;
     }
     .stats-new-pill {
       display: inline-flex;
@@ -2616,24 +2611,24 @@
       gap: 8px;
       padding: 8px 12px;
       border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.08);
-      background: rgba(255,255,255,.04);
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
       font-size: 13px;
       white-space: nowrap;
-      color: #e7edf7;
+      color: #111827;
     }
     .stats-new-pill b {
-      color: #6ee7b7;
+      color: #10b981;
       font-weight: 800;
     }
     .stats-new-summary {
       font-size: 15px;
       line-height: 1.55;
       margin: 0;
-      color: #e7edf7;
+      color: #111827;
     }
     .stats-new-summary b {
-      color: #6ee7b7;
+      color: #10b981;
       font-weight: 750;
     }
     .stats-new-kpi {
@@ -2647,13 +2642,13 @@
       gap: 10px;
     }
     .stats-new-kpi-box {
-      background: rgba(0,0,0,.22);
-      border: 1px solid rgba(255,255,255,.08);
+      background: white;
+      border: 1px solid #e5e7eb;
       border-radius: 14px;
       padding: 12px;
     }
     .stats-new-kpi-label {
-      color: #9fb0c7;
+      color: #6b7280;
       font-size: 12px;
       margin-bottom: 6px;
       font-weight: 600;
@@ -2662,11 +2657,11 @@
       font-size: 22px;
       font-weight: 800;
       letter-spacing: .2px;
-      color: #e7edf7;
+      color: #111827;
     }
     .stats-new-kpi-hint {
       margin-top: 6px;
-      color: #9fb0c7;
+      color: #6b7280;
       font-size: 11px;
       white-space: nowrap;
       overflow: hidden;
@@ -2682,14 +2677,14 @@
       justify-content: space-between;
       font-size: 13px;
       margin-bottom: 6px;
-      color: #9fb0c7;
+      color: #6b7280;
       font-weight: 600;
     }
     .stats-new-bar {
       height: 10px;
       border-radius: 999px;
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.08);
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
       overflow: hidden;
     }
     .stats-new-bar > i {
@@ -2710,21 +2705,21 @@
       gap: 10px;
       padding: 10px;
       border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.08);
-      background: rgba(0,0,0,.18);
+      border: 1px solid #e5e7eb;
+      background: white;
       cursor: pointer;
       transition: all .15s;
     }
     .stats-new-item:hover {
-      background: rgba(0,0,0,.28);
+      background: #f3f4f6;
       transform: translateY(-1px);
     }
     .stats-new-thumb {
       width: 54px;
       height: 54px;
       border-radius: 12px;
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.08);
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
       flex: 0 0 auto;
       overflow: hidden;
       object-fit: cover;
@@ -2740,11 +2735,11 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      color: #e7edf7;
+      color: #111827;
     }
     .stats-new-meta .subline {
       font-size: 12px;
-      color: #9fb0c7;
+      color: #6b7280;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -2752,7 +2747,7 @@
     .stats-new-right {
       text-align: right;
       flex: 0 0 auto;
-      color: #9fb0c7;
+      color: #6b7280;
       font-size: 12px;
       display: flex;
       flex-direction: column;
@@ -2768,14 +2763,14 @@
       border-radius: 999px;
       background: rgba(110,231,183,.12);
       border: 1px solid rgba(110,231,183,.25);
-      color: #6ee7b7;
+      color: #10b981;
       font-weight: 800;
       font-size: 12px;
       align-self: flex-end;
     }
     .stats-new-empty {
       padding: 18px 14px;
-      color: #9fb0c7;
+      color: #6b7280;
       line-height: 1.6;
       font-size: 13px;
       text-align: center;
@@ -2919,14 +2914,48 @@
       
       <!-- List Tab -->
       <div id="tab-feed" class="tab-content">
-        <div style="padding:16px 16px 8px;background:white;border-bottom:1px solid #f3f4f6;">
+        <div style="padding:12px 16px 10px;background:white;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center;">
           <div style="font-size:18px;font-weight:700;color:#111827;">みんなの投稿</div>
+          <button onclick="refreshCommunityFeed(this)" style="display:flex;align-items:center;gap:4px;padding:6px 12px;border:1.5px solid #e5e7eb;border-radius:9px;background:white;font-size:13px;font-weight:600;color:#374151;cursor:pointer;">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            更新
+          </button>
         </div>
-        <div style="padding:12px 16px;overflow-y:auto;">
+
+        <!-- サマリーカード -->
+        <div id="feed-summary-card" style="margin:12px 16px 0;background:white;border-radius:14px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);display:none;">
+          <div style="font-size:12px;color:#6b7280;margin-bottom:10px;" id="feed-summary-period"></div>
+
+          <!-- 今月の合計杯数バナー -->
+          <div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div style="font-size:13px;font-weight:700;color:#92400e;">🍜 今月みんなで食べた杯数</div>
+            <div style="font-size:26px;font-weight:800;color:#92400e;"><span id="feed-summary-cups">-</span><span style="font-size:14px;font-weight:700;">杯</span></div>
+          </div>
+
+          <!-- 杯数ランキング（ユーザー） -->
+          <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">🔥 今月の杯数ランキング</div>
+          <div id="feed-summary-user-ranking" style="display:flex;flex-direction:column;gap:2px;margin-bottom:14px;"></div>
+
+          <!-- 人気店ランキング -->
+          <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">🏆 今月よく行かれたお店</div>
+          <div id="feed-summary-ranking" style="display:flex;flex-direction:column;gap:2px;"></div>
+        </div>
+
+        <div style="padding:12px 16px;overflow-y:auto;background:white;min-height:100%;">
           <div id="community-feed-list">
             <div style="text-align:center;color:#9ca3af;font-size:13px;padding:24px 0;">読み込み中...</div>
           </div>
         </div>
+
+        <!-- 記録するフローティングボタン -->
+        <button onclick="openShopSelectModal()" style="
+          position:fixed; right:16px; bottom:76px; z-index:90;
+          width:56px; height:56px; border-radius:50%;
+          background:#ef4444; color:white; border:none;
+          font-size:28px; font-weight:300; cursor:pointer;
+          box-shadow:0 4px 12px rgba(239,68,68,0.4);
+          display:flex; align-items:center; justify-content:center;
+        ">＋</button>
       </div>
       
       <!-- Lineage Tab -->
@@ -2967,7 +2996,7 @@
               <div id="lineage-info-title">店をタップすると情報が出ます</div>
               <div id="lineage-info-sub">検索からもジャンプできます</div>
             </div>
-            <button id="lineage-detail-btn" style="display:none;margin-left:auto;margin-right:8px;border:2px solid rgba(0,0,0,.18);background:rgba(59,130,246,.9);color:white;padding:8px 12px;border-radius:10px;font-weight:900;cursor:pointer;white-space:nowrap;">詳細画面</button>
+            <button id="lineage-detail-btn" style="display:none;margin-left:auto;margin-right:8px;border:2px solid white;background:rgba(59,130,246,.9);color:white;padding:8px 12px;border-radius:10px;font-weight:900;cursor:pointer;white-space:nowrap;">詳細画面</button>
             <button id="lineage-reset-btn">選択解除</button>
           </div>
         </div>
@@ -2975,12 +3004,6 @@
       
       <!-- Stats Tab -->
       <div id="tab-mypage" class="tab-content">
-        <div class="stats-header">
-          <div class="stats-brand">
-            <h1>家系ラーメンmap</h1>
-            <div class="stats-sub">マイページ</div>
-          </div>
-        </div>
 
         <!-- アカウント（ログイン状態）：常時表示 -->
         <div style="background:white;border-radius:14px;margin:12px 16px 0;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
@@ -3763,25 +3786,21 @@
     function feedCardBodyHtml(v, name, avatarUrl, shopName) {
       const starsStr = v.rating > 0 ? '★'.repeat(v.rating) + '☆'.repeat(5 - v.rating) : '';
       const dateTimeStr = formatDateTimeJapanese(v.visited_at);
+      const orderLine = [v.order_text, v.options].filter(Boolean).join(' / ');
       return `
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;">
-          <div onclick="event.stopPropagation(); openUserProfile('${v.user_id}')" style="display:flex;align-items:center;gap:6px;cursor:pointer;min-width:0;">
-            ${avatarHtml(avatarUrl, 24)}
-            <span style="font-size:12px;font-weight:600;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(name)}</span>
+        <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">
+          <div style="flex:1;min-width:0;">
+            <div onclick="event.stopPropagation(); openUserProfile('${v.user_id}')" style="display:flex;align-items:center;gap:6px;margin-bottom:6px;cursor:pointer;">
+              ${avatarHtml(avatarUrl, 24)}
+              <span style="font-size:13px;font-weight:600;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(name)}</span>
+            </div>
+            ${shopName ? `<div onclick="event.stopPropagation(); closeCommunityVisitDetailModal(); showShopDetail('${v.shop_id}')" style="font-size:16px;font-weight:700;color:#111827;cursor:pointer;margin-bottom:3px;line-height:1.3;">${escapeHtml(shopName)}</div>` : ''}
+            ${starsStr ? `<div style="font-size:14px;color:#f59e0b;margin-bottom:3px;">${starsStr}</div>` : ''}
+            ${orderLine ? `<div style="font-size:13px;color:#374151;line-height:1.4;">${escapeHtml(orderLine)}</div>` : ''}
           </div>
-          <div style="font-size:11px;color:#9ca3af;flex-shrink:0;">${dateTimeStr}</div>
+          ${v.photo_url ? `<img src="${v.photo_url}" style="width:88px;height:88px;object-fit:cover;border-radius:12px;flex-shrink:0;">` : ''}
         </div>
-        <div style="display:flex;gap:10px;align-items:stretch;">
-          <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;justify-content:center;">
-            ${shopName ? `<div onclick="event.stopPropagation(); closeCommunityVisitDetailModal(); showShopDetail('${v.shop_id}')" style="font-weight:700;font-size:15px;color:#111827;cursor:pointer;">${escapeHtml(shopName)}</div>` : ''}
-            ${starsStr ? `<div style="font-size:13px;color:#f59e0b;">${starsStr}</div>` : ''}
-            ${v.order_text ? `<div style="font-size:13px;color:#1f2937;">${escapeHtml(v.order_text)}</div>` : ''}
-            ${v.options ? `<div style="font-size:13px;color:#6b7280;">${escapeHtml(v.options)}</div>` : ''}
-          </div>
-          ${v.photo_url ? `<img src="${v.photo_url}" style="width:84px;align-self:stretch;object-fit:cover;border-radius:8px;flex-shrink:0;">` : ''}
-        </div>
-        <div style="border-top:1px solid #e5e7eb;margin:8px 0;"></div>
-        ${v.memo ? `<div style="font-size:13px;color:#4b5563;line-height:1.4;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(v.memo)}</div>` : ''}
+        ${v.memo ? `<div style="font-size:14px;color:#4b5563;line-height:1.5;margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(v.memo)}</div>` : ''}
       `;
     }
 
@@ -4101,9 +4120,9 @@
 
           const card = document.createElement('div');
           card.style.background = '#f9fafb';
-          card.style.borderRadius = '12px';
+          card.style.borderRadius = '16px';
           card.style.padding = '10px 12px';
-          card.style.marginBottom = '6px';
+          card.style.marginBottom = '8px';
           card.style.cursor = 'pointer';
           v.photo_url = photoMap.get(v.id) || null;
           const shopNameForCache = currentShop?.name || shops?.find(s => s.id === shopId)?.name || shopId;
@@ -4111,9 +4130,12 @@
           card.onclick = () => showCommunityVisitDetail(v.id);
           card.innerHTML = `
             ${feedCardBodyHtml(v, name, avatarUrl, null)}
-            <button onclick="event.stopPropagation(); toggleLike('${v.id}', this)" data-liked="${liked ? '1' : '0'}" style="border:none;background:none;cursor:pointer;font-size:12px;color:${liked ? '#dc2626' : '#9ca3af'};padding:0;margin-top:6px;display:flex;align-items:center;gap:4px;">
-              <span class="like-icon">${liked ? '❤️' : '🤍'}</span><span class="like-count">${likeCount}</span>
-            </button>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
+              <button onclick="event.stopPropagation(); toggleLike('${v.id}', this)" data-liked="${liked ? '1' : '0'}" style="border:none;background:#e5e7eb;cursor:pointer;font-size:12px;color:${liked ? '#dc2626' : '#6b7280'};padding:4px 10px;border-radius:20px;display:inline-flex;align-items:center;gap:4px;font-weight:600;">
+                <span class="like-icon">${liked ? '❤️' : '🤍'}</span><span class="like-count">${likeCount}</span>
+              </button>
+              <span style="font-size:11px;color:#9ca3af;">${dateStr}</span>
+            </div>
           `;
           listEl.appendChild(card);
         });
@@ -4140,77 +4162,323 @@
       return map;
     }
 
+    // ===== 投稿タブの「＋記録する」→店舗選択モーダル =====
+    function openShopSelectModal() {
+      const modal = document.getElementById('shop-select-modal');
+      if (!modal) return;
+      document.getElementById('shop-select-search').value = '';
+      renderShopSelectResults();
+      modal.classList.add('active');
+      // 検索欄にフォーカス
+      setTimeout(() => document.getElementById('shop-select-search').focus(), 100);
+    }
+
+    function closeShopSelectModal() {
+      const modal = document.getElementById('shop-select-modal');
+      if (modal) modal.classList.remove('active');
+    }
+
+    function renderShopSelectResults() {
+      const query = (document.getElementById('shop-select-search').value || '').trim();
+      const resultsEl = document.getElementById('shop-select-results');
+      if (!resultsEl) return;
+
+      let candidates;
+      if (query) {
+        candidates = (shops || []).filter(s =>
+          s.name !== 'ダミー' &&
+          (s.name.includes(query) || (s.nameHiragana && s.nameHiragana.includes(query)))
+        ).slice(0, 20);
+      } else {
+        // 未入力時：訪問済みの店を優先表示（リピートが多いので）、無ければ空
+        const visitedIds = Object.keys(visits).filter(id => visits[id]?.logs?.length > 0);
+        candidates = visitedIds
+          .map(id => (shops || []).find(s => s.id === id))
+          .filter(Boolean)
+          .slice(0, 10);
+        if (candidates.length === 0) {
+          resultsEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;">店名を入力して検索してください</div>';
+          return;
+        }
+      }
+
+      if (candidates.length === 0) {
+        resultsEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;">見つかりませんでした</div>';
+        return;
+      }
+
+      resultsEl.innerHTML = (query ? '' : '<div style="font-size:11px;color:#9ca3af;margin-bottom:6px;">最近訪れたお店</div>') +
+        candidates.map(s => `
+          <div onclick="selectShopForRecord('${s.id}')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 10px;border-radius:12px;cursor:pointer;background:#f9fafb;margin-bottom:6px;">
+            <div style="min-width:0;">
+              <div style="font-size:14px;font-weight:700;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(s.name)}</div>
+              ${s.station ? `<div style="font-size:11px;color:#9ca3af;margin-top:1px;">📍 ${escapeHtml(s.station)}</div>` : ''}
+            </div>
+            <span style="color:#d1d5db;flex-shrink:0;font-size:16px;">›</span>
+          </div>
+        `).join('');
+    }
+
+    function selectShopForRecord(shopId) {
+      const shop = (shops || []).find(s => s.id === shopId);
+      if (!shop) return;
+      currentShop = shop;
+      closeShopSelectModal();
+      openRecordModal();
+    }
+
+    // 更新ボタン：アニメーションしながらフィードを再読み込み
+    function refreshCommunityFeed(btn) {
+      if (btn) {
+        btn.style.opacity = '0.5';
+        btn.style.pointerEvents = 'none';
+        const svg = btn.querySelector('svg');
+        if (svg) svg.style.animation = 'spin 0.8s linear infinite';
+      }
+      loadCommunityFeed().finally(() => {
+        if (btn) {
+          btn.style.opacity = '1';
+          btn.style.pointerEvents = '';
+          const svg = btn.querySelector('svg');
+          if (svg) svg.style.animation = '';
+        }
+      });
+    }
+
+    // 今月のサマリー（合計杯数・杯数ランキング・人気店ランキング）を取得して表示
+    async function loadFeedSummary() {
+      if (!supabaseClient) return;
+      const now = new Date();
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
+      const monthLabel = `${now.getFullYear()}年${now.getMonth() + 1}月`;
+
+      try {
+        const { data: rows } = await supabaseClient
+          .from('visits')
+          .select('shop_id, user_id, visited_at')
+          .eq('is_public', true)
+          .gte('visited_at', firstDay)
+          .lte('visited_at', lastDay);
+
+        if (!rows || rows.length === 0) return;
+
+        const totalCups = rows.length;
+
+        // ユーザー別カウント（杯数ランキング）
+        const userCount = new Map();
+        rows.forEach(r => {
+          userCount.set(r.user_id, (userCount.get(r.user_id) || 0) + 1);
+        });
+        const topUsers = [...userCount.entries()]
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 3);
+
+        // 上位ユーザーのプロフィールを取得
+        const topUserIds = topUsers.map(([uid]) => uid);
+        const { data: profileRows } = await supabaseClient
+          .from('profiles').select('id, display_name, avatar_url').in('id', topUserIds);
+        const profileMap = new Map((profileRows || []).map(p => [p.id, p]));
+
+        // 店舗別カウント
+        const shopCount = new Map();
+        rows.forEach(r => {
+          shopCount.set(r.shop_id, (shopCount.get(r.shop_id) || 0) + 1);
+        });
+        const topShops = [...shopCount.entries()]
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 3);
+
+        // 表示
+        document.getElementById('feed-summary-period').textContent = `${monthLabel}の記録`;
+        document.getElementById('feed-summary-cups').textContent = totalCups;
+
+        const medals = ['🥇', '🥈', '🥉'];
+
+        // 杯数ランキング（ユーザー）：タップでプロフィールへ
+        const userRankingEl = document.getElementById('feed-summary-user-ranking');
+        userRankingEl.innerHTML = topUsers.map(([uid, count], i) => {
+          const profile = profileMap.get(uid);
+          const name = profile?.display_name || '匿名ユーザー';
+          const avatarUrl = profile?.avatar_url || '';
+          return `
+            <div onclick="openUserProfile('${uid}')" style="display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-radius:10px;cursor:pointer;background:${i === 0 ? '#fffbeb' : 'transparent'};">
+              <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+                <span style="font-size:16px;flex-shrink:0;">${medals[i] || `${i+1}.`}</span>
+                ${avatarHtml(avatarUrl, 26)}
+                <span style="font-size:13px;color:#111827;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(name)}</span>
+              </div>
+              <span style="font-size:14px;color:#92400e;font-weight:800;flex-shrink:0;">${count}<span style="font-size:11px;font-weight:600;">杯</span></span>
+            </div>
+          `;
+        }).join('');
+
+        // 人気店ランキング
+        const rankingEl = document.getElementById('feed-summary-ranking');
+        rankingEl.innerHTML = topShops.map(([shopId, count], i) => {
+          const shop = (typeof shops !== 'undefined' ? shops : []).find(s => s.id === shopId);
+          const name = shop?.name || shopId;
+          return `
+            <div onclick="showShopDetail('${shopId}')" style="display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-radius:10px;cursor:pointer;background:${i === 0 ? '#fffbeb' : 'transparent'};">
+              <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+                <span style="font-size:16px;flex-shrink:0;">${medals[i] || `${i+1}.`}</span>
+                <span style="font-size:13px;color:#111827;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(name)}</span>
+              </div>
+              <span style="font-size:14px;color:#92400e;font-weight:800;flex-shrink:0;">${count}<span style="font-size:11px;font-weight:600;">杯</span></span>
+            </div>
+          `;
+        }).join('');
+
+        document.getElementById('feed-summary-card').style.display = 'block';
+      } catch (e) {
+        console.error('サマリー取得エラー:', e);
+      }
+    }
+
+    // フィードのページネーション状態
+    let feedPage = 0;
+    let feedIsLoading = false;
+    let feedHasMore = true;
+    const FEED_PAGE_SIZE = 20;
+    let feedObserver = null;
+
     async function loadCommunityFeed() {
+      // 初回読み込み：状態をリセット
+      feedPage = 0;
+      feedHasMore = true;
       const listEl = document.getElementById('community-feed-list');
       if (!listEl || !supabaseClient) return;
       listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:24px 0;">読み込み中...</div>';
+      loadFeedSummary();
+      await loadFeedPage(true);
+    }
+
+    async function loadFeedPage(isFirst = false) {
+      if (feedIsLoading || !feedHasMore || !supabaseClient) return;
+      feedIsLoading = true;
+
+      const listEl = document.getElementById('community-feed-list');
+      if (!listEl) return;
+
+      // ローディング表示（初回以外はスピナーを末尾に追加）
+      let loadingEl = null;
+      if (!isFirst) {
+        loadingEl = document.createElement('div');
+        loadingEl.id = 'feed-loading-more';
+        loadingEl.style.cssText = 'text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;';
+        loadingEl.textContent = '読み込み中...';
+        listEl.appendChild(loadingEl);
+      }
+
       try {
+        const from = feedPage * FEED_PAGE_SIZE;
+        const to = from + FEED_PAGE_SIZE - 1;
+
         const { data: visitRows, error } = await supabaseClient
           .from('visits')
           .select('id, shop_id, visited_at, rating, memo, order_text, options, noodle_firmness, flavor_intensity, oil_amount, weather, temperature, wait_minutes, user_id, created_at')
           .eq('is_public', true)
           .order('created_at', { ascending: false })
-          .limit(50);
+          .range(from, to);
         if (error) throw error;
 
-        if (!visitRows || visitRows.length === 0) {
-          listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:24px 0;">まだ公開されている記録がありません</div>';
-          return;
+        if (loadingEl) loadingEl.remove();
+
+        if (isFirst) {
+          listEl.innerHTML = '';
+          if (!visitRows || visitRows.length === 0) {
+            listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:24px 0;">まだ公開されている記録がありません</div>';
+            feedHasMore = false;
+            return;
+          }
         }
 
-        const userIds = [...new Set(visitRows.map(v => v.user_id))];
-        const { data: profileRows } = await supabaseClient
-          .from('profiles')
-          .select('id, display_name, avatar_url')
-          .in('id', userIds);
-        const profileMap = new Map((profileRows || []).map(p => [p.id, p]));
+        // 20件未満なら次ページなし
+        if (!visitRows || visitRows.length < FEED_PAGE_SIZE) {
+          feedHasMore = false;
+        }
 
-        const visitIds = visitRows.map(v => v.id);
-        const { data: likeRows } = await supabaseClient
-          .from('likes')
-          .select('user_id, visit_id')
-          .in('visit_id', visitIds);
-        const likeCountMap = new Map();
-        const myLikedSet = new Set();
-        (likeRows || []).forEach(l => {
-          likeCountMap.set(l.visit_id, (likeCountMap.get(l.visit_id) || 0) + 1);
-          if (currentUser && l.user_id === currentUser.id) myLikedSet.add(l.visit_id);
-        });
+        if (visitRows && visitRows.length > 0) {
+          const userIds = [...new Set(visitRows.map(v => v.user_id))];
+          const { data: profileRows } = await supabaseClient
+            .from('profiles').select('id, display_name, avatar_url').in('id', userIds);
+          const profileMap = new Map((profileRows || []).map(p => [p.id, p]));
 
-        const photoMap = await fetchPhotoMapForVisits(visitIds);
+          const visitIds = visitRows.map(v => v.id);
+          const { data: likeRows } = await supabaseClient
+            .from('likes').select('user_id, visit_id').in('visit_id', visitIds);
+          const likeCountMap = new Map();
+          const myLikedSet = new Set();
+          (likeRows || []).forEach(l => {
+            likeCountMap.set(l.visit_id, (likeCountMap.get(l.visit_id) || 0) + 1);
+            if (currentUser && l.user_id === currentUser.id) myLikedSet.add(l.visit_id);
+          });
 
-        listEl.innerHTML = '';
-        visitRows.forEach(v => {
-          const profile = profileMap.get(v.user_id);
-          const name = profile?.display_name || '匿名ユーザー';
-          const avatarUrl = profile?.avatar_url || '';
-          const shop = (typeof shops !== 'undefined' ? shops : []).find(s => s.id === v.shop_id);
-          const shopName = shop?.name || v.shop_id;
-          const likeCount = likeCountMap.get(v.id) || 0;
-          const liked = myLikedSet.has(v.id);
-          v.photo_url = photoMap.get(v.id) || null;
+          const photoMap = await fetchPhotoMapForVisits(visitIds);
 
-          const card = document.createElement('div');
-          card.style.background = 'white';
-          card.style.borderRadius = '14px';
-          card.style.padding = '10px 14px';
-          card.style.marginBottom = '8px';
-          card.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)';
-          card.style.cursor = 'pointer';
-          communityVisitCache[v.id] = { ...v, shopName, displayName: name || '' };
-          card.onclick = () => showCommunityVisitDetail(v.id);
-          card.innerHTML = `
-            ${feedCardBodyHtml(v, name, avatarUrl, shopName)}
-            <button onclick="event.stopPropagation(); toggleLike('${v.id}', this)" data-liked="${liked ? '1' : '0'}" style="border:none;background:none;cursor:pointer;font-size:13px;color:${liked ? '#dc2626' : '#9ca3af'};padding:0;margin-top:6px;display:flex;align-items:center;gap:4px;">
-              <span class="like-icon">${liked ? '❤️' : '🤍'}</span><span class="like-count">${likeCount}</span>
-            </button>
-          `;
-          listEl.appendChild(card);
-        });
+          visitRows.forEach(v => {
+            const profile = profileMap.get(v.user_id);
+            const name = profile?.display_name || '匿名ユーザー';
+            const avatarUrl = profile?.avatar_url || '';
+            const shop = (typeof shops !== 'undefined' ? shops : []).find(s => s.id === v.shop_id);
+            const shopName = shop?.name || v.shop_id;
+            const likeCount = likeCountMap.get(v.id) || 0;
+            const liked = myLikedSet.has(v.id);
+            v.photo_url = photoMap.get(v.id) || null;
+
+            const card = document.createElement('div');
+            card.style.cssText = 'background:#f9fafb;border-radius:16px;padding:10px 12px;margin-bottom:8px;cursor:pointer;';
+            communityVisitCache[v.id] = { ...v, shopName, displayName: name || '' };
+            card.onclick = () => showCommunityVisitDetail(v.id);
+            card.innerHTML = `
+              ${feedCardBodyHtml(v, name, avatarUrl, shopName)}
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
+                <button onclick="event.stopPropagation(); toggleLike('${v.id}', this)" data-liked="${liked ? '1' : '0'}" style="border:none;background:#e5e7eb;cursor:pointer;font-size:12px;color:${liked ? '#dc2626' : '#6b7280'};padding:4px 10px;border-radius:20px;display:inline-flex;align-items:center;gap:4px;font-weight:600;">
+                  <span class="like-icon">${liked ? '❤️' : '🤍'}</span><span class="like-count">${likeCount}</span>
+                </button>
+                <span style="font-size:11px;color:#9ca3af;">${formatDateTimeJapanese(v.visited_at)}</span>
+              </div>
+            `;
+            listEl.appendChild(card);
+          });
+
+          feedPage++;
+        }
+
+        // 次ページがあれば、末尾に監視用の番兵要素を設置
+        setupFeedObserver(listEl);
+
       } catch (e) {
         console.error('フィード読み込みエラー:', e);
-        listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:24px 0;">読み込みに失敗しました</div>';
+        if (loadingEl) loadingEl.remove();
+        if (isFirst) {
+          listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:24px 0;">読み込みに失敗しました</div>';
+        }
+      } finally {
+        feedIsLoading = false;
       }
+    }
+
+    function setupFeedObserver(listEl) {
+      // 既存の番兵を削除
+      const old = document.getElementById('feed-sentinel');
+      if (old) old.remove();
+      if (feedObserver) { feedObserver.disconnect(); feedObserver = null; }
+
+      if (!feedHasMore) return;
+
+      // 末尾に番兵要素を追加
+      const sentinel = document.createElement('div');
+      sentinel.id = 'feed-sentinel';
+      sentinel.style.height = '1px';
+      listEl.appendChild(sentinel);
+
+      feedObserver = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+          loadFeedPage(false);
+        }
+      }, { threshold: 0.1 });
+      feedObserver.observe(sentinel);
     }
 
     async function toggleLike(visitId, btnEl) {
@@ -4790,7 +5058,7 @@
       if (!supabaseClient || !currentUser) return;
       const agreeCheckbox = document.getElementById('onboarding-agree-privacy');
       if (agreeCheckbox && !agreeCheckbox.checked) {
-        await showCustomAlert('プライバシーポリシーへの同意が必要です');
+        await showCustomAlert('利用規約とプライバシーポリシーへの同意が必要です');
         return;
       }
       const name = document.getElementById('onboarding-display-name').value.trim() || 'ユーザー';
@@ -5939,14 +6207,10 @@
             document.title = '家系ラーメンMAP｜全国の家系ラーメンを探して記録できる地図アプリ';
           }
           
-          // ヘッダーの表示/非表示を制御
+          // ヘッダーの表示/非表示を制御（全タブで表示）
           const header = document.querySelector('.header');
           if (header) {
-            if (tab === 'mypage') {
-              header.style.display = 'none';
-            } else {
-              header.style.display = 'flex';
-            }
+            header.style.display = 'flex';
           }
           
           if (tab === 'map' && map) {
@@ -11141,7 +11405,7 @@
         <div class="form-group" style="margin-bottom:20px;">
           <label style="display:flex;align-items:flex-start;gap:8px;font-size:13px;color:#374151;cursor:pointer;line-height:1.5;">
             <input type="checkbox" id="onboarding-agree-privacy" style="width:18px;height:18px;flex-shrink:0;margin-top:1px;">
-            <span><a href="/Privacypolicy" target="_blank" rel="noopener noreferrer" style="color:#2563eb;text-decoration:underline;">プライバシーポリシー</a>に同意する</span>
+            <span><a href="/Terms" target="_blank" rel="noopener noreferrer" style="color:#2563eb;text-decoration:underline;">利用規約</a>と<a href="/Privacypolicy" target="_blank" rel="noopener noreferrer" style="color:#2563eb;text-decoration:underline;">プライバシーポリシー</a>に同意する</span>
           </label>
         </div>
 
@@ -11161,6 +11425,20 @@
   </div>
 
   <!-- 統合モーダル：投稿詳細ビュー ↔ プロフィールビュー を1つのモーダルで切り替える -->
+  <!-- 記録する店舗を選ぶモーダル -->
+  <div id="shop-select-modal" class="modal" onclick="closeShopSelectModal()">
+    <div class="modal-content" onclick="event.stopPropagation()" style="height:70vh;">
+      <div class="modal-header" style="display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+        <h2 style="font-size:18px;font-weight:700;">どのお店の記録？</h2>
+        <button onclick="closeShopSelectModal()" style="width:32px;height:32px;border-radius:50%;border:none;background:#f3f4f6;color:#6b7280;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
+      </div>
+      <div class="modal-body" style="padding:16px 20px;overflow-y:auto;flex:1;">
+        <input type="text" id="shop-select-search" class="form-input" placeholder="店名で検索（例：吉村家）" style="margin-bottom:12px;" oninput="renderShopSelectResults()">
+        <div id="shop-select-results"></div>
+      </div>
+    </div>
+  </div>
+
   <div id="community-modal" class="modal" onclick="closeCommunityModal()">
     <div class="modal-content" onclick="event.stopPropagation()" style="max-width:500px;border-radius:16px;padding:0;max-height:90vh;display:flex;flex-direction:column;">
 
