@@ -523,7 +523,7 @@
     .drawer-content {
       flex: 1;
       overflow-y: auto;
-      padding: 8px 16px 16px;
+      padding: 8px 16px calc(var(--bottom-nav-height, 72px) + 16px);
     }
     
     .shop-list-item {
@@ -2437,15 +2437,20 @@
     
     #lineage-info {
       position: sticky;
-      bottom: 0;
+      bottom: max(0px, calc(var(--bottom-nav-height, 72px) - var(--lineage-info-dock-overlap, 8px)));
       background: rgb(246,240,215);
       border-top: 1px solid rgba(0,0,0,.12);
+      border-bottom: 1px solid rgba(0,0,0,.08);
       padding: 10px 14px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 10px;
       z-index: 10;
+    }
+
+    #tab-lineage {
+      padding-bottom: 0;
     }
     
     .lineage-info-left {
@@ -4063,16 +4068,26 @@
       function applyAppHeight() {
         document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
       }
-      applyAppHeight();
-      window.addEventListener('resize', applyAppHeight);
-      window.addEventListener('orientationchange', () => setTimeout(applyAppHeight, 150));
-      window.addEventListener('pageshow', applyAppHeight);
+      function applyBottomNavHeight() {
+        const bottomNav = document.querySelector('.bottom-nav');
+        const height = bottomNav ? Math.ceil(bottomNav.getBoundingClientRect().height) : 72;
+        document.documentElement.style.setProperty('--bottom-nav-height', height + 'px');
+      }
+      function applyViewportMetrics() {
+        applyAppHeight();
+        applyBottomNavHeight();
+      }
+      applyViewportMetrics();
+      window.addEventListener('resize', applyViewportMetrics);
+      window.addEventListener('orientationchange', () => setTimeout(applyViewportMetrics, 150));
+      window.addEventListener('pageshow', applyViewportMetrics);
+      document.addEventListener('DOMContentLoaded', applyViewportMetrics);
       // visualViewport があればより正確（ソフトキーボードやバー出現に追従）
       if (window.visualViewport) {
-        window.visualViewport.addEventListener('resize', applyAppHeight);
+        window.visualViewport.addEventListener('resize', applyViewportMetrics);
       }
       // 起動直後・リロード直後にバーの高さが確定するまで数回測り直す
-      [60, 200, 500, 1000].forEach(t => setTimeout(applyAppHeight, t));
+      [60, 200, 500, 1000].forEach(t => setTimeout(applyViewportMetrics, t));
     })();
 
     // App Version (手動で更新)
@@ -4349,6 +4364,142 @@
     }
 
 
+    // ===== 過去の記録の選択公開 =====
+    // 未公開のローカル訪問記録を一覧表示し、チェックした記録だけ isPublic=true にして同期する。
+    // 既に同期済みの記録は _cloudSynced を落として更新扱いにする（_cloudId 維持で重複防止）。
+
+    // ログイン後、未公開の記録があれば公開を案内する（アプリ全体で1回きり）。
+    // どの選択をしてもフラグを立て、以降は二度と表示しない。手動導線はマイページに常設。
+    const PUBLISH_PROMPT_KEY = 'iekei-publish-prompt-shown';
+    async function maybeShowPublishPrompt() {
+      try {
+        if (localStorage.getItem(PUBLISH_PROMPT_KEY) === '1') return;
+        if (!currentUser) return;
+        let unpublished = 0;
+        for (const shopId of Object.keys(visits)) {
+          const logs = visits[shopId]?.logs;
+          if (!Array.isArray(logs)) continue;
+          unpublished += logs.filter(l => !l.isPublic).length;
+        }
+        if (unpublished === 0) return;
+        localStorage.setItem(PUBLISH_PROMPT_KEY, '1'); // 選択にかかわらず1回きり
+        const ok = await showCustomConfirm(`未公開の訪問記録が ${unpublished}件 あります。\n「みんなの投稿」に公開しますか？\n（あとからマイページの「過去の記録を公開」でも選べます）`);
+        if (ok) openPublishSelectModal();
+      } catch (e) {
+        console.error('公開案内の表示に失敗:', e);
+      }
+    }
+
+    function closePublishSelectModal() {
+      const m = document.getElementById('publish-select-modal');
+      if (m) m.classList.remove('active');
+    }
+
+    function updatePublishSelectCount() {
+      const checks = document.querySelectorAll('#publish-select-list input[type="checkbox"]');
+      const checked = [...checks].filter(c => c.checked).length;
+      const countEl = document.getElementById('publish-select-count');
+      if (countEl) countEl.textContent = `${checked}件選択中`;
+      const submitBtn = document.getElementById('publish-select-submit');
+      if (submitBtn) {
+        submitBtn.disabled = checked === 0;
+        submitBtn.style.opacity = checked === 0 ? '0.4' : '1';
+      }
+      const allBox = document.getElementById('publish-select-all');
+      if (allBox) allBox.checked = checks.length > 0 && checked === checks.length;
+    }
+
+    function togglePublishSelectAll(checked) {
+      document.querySelectorAll('#publish-select-list input[type="checkbox"]')
+        .forEach(c => { c.checked = checked; });
+      updatePublishSelectCount();
+    }
+
+    async function openPublishSelectModal() {
+      if (!(await ensureLoggedInFor('記録の公開'))) return;
+
+      // 未公開の記録を収集（shopIdと配列indexで特定する）
+      const items = [];
+      for (const shopId of Object.keys(visits)) {
+        const logs = visits[shopId]?.logs;
+        if (!Array.isArray(logs)) continue;
+        logs.forEach((log, idx) => {
+          if (!log.isPublic) items.push({ shopId, idx, log });
+        });
+      }
+
+      if (items.length === 0) {
+        await showCustomAlert('未公開の記録はありません。すべて公開済みです。');
+        return;
+      }
+
+      // 訪問日の新しい順に表示
+      items.sort((a, b) => new Date(b.log.visitedAt || 0) - new Date(a.log.visitedAt || 0));
+
+      const listEl = document.getElementById('publish-select-list');
+      listEl.innerHTML = '';
+      items.forEach(item => {
+        const shop = (typeof shops !== 'undefined' ? shops : []).find(s => s.id === item.shopId);
+        const shopName = shop?.name || item.shopId;
+        const d = item.log.visitedAt ? new Date(item.log.visitedAt) : null;
+        const dateLabel = d && !isNaN(d.getTime())
+          ? `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`
+          : '日付不明';
+        const ratingLabel = item.log.rating > 0 ? `★${item.log.rating}` : '';
+        const memoSnippet = item.log.memo ? String(item.log.memo).slice(0, 30) : '';
+
+        const row = document.createElement('label');
+        row.style.cssText = 'display:flex;align-items:center;gap:10px;background:#f9fafb;border-radius:10px;padding:10px 12px;cursor:pointer;';
+        row.innerHTML = `
+          <input type="checkbox" data-shop-id="${escapeHtml(item.shopId)}" data-log-idx="${item.idx}" style="width:18px;height:18px;flex-shrink:0;">
+          <div style="min-width:0;flex:1;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:14px;font-weight:700;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(shopName)}</span>
+              ${ratingLabel ? `<span style="font-size:12px;font-weight:700;color:#c92232;flex-shrink:0;">${ratingLabel}</span>` : ''}
+            </div>
+            <div style="font-size:12px;color:#6b7280;">${dateLabel}${memoSnippet ? '・' + escapeHtml(memoSnippet) : ''}</div>
+          </div>
+        `;
+        row.querySelector('input').addEventListener('change', updatePublishSelectCount);
+        listEl.appendChild(row);
+      });
+
+      const allBox = document.getElementById('publish-select-all');
+      if (allBox) allBox.checked = false;
+      updatePublishSelectCount();
+      document.getElementById('publish-select-modal').classList.add('active');
+    }
+
+    async function publishSelectedVisits() {
+      const checked = [...document.querySelectorAll('#publish-select-list input[type="checkbox"]:checked')];
+      if (checked.length === 0) return;
+
+      const ok = await showCustomConfirm(`選択した ${checked.length}件 の記録を「みんなの投稿」に公開します。よろしいですか？\n（フィードには実際に訪問した日付の位置で表示されます）`);
+      if (!ok) return;
+
+      let count = 0;
+      checked.forEach(box => {
+        const shopId = box.dataset.shopId;
+        const idx = parseInt(box.dataset.logIdx, 10);
+        const log = visits[shopId]?.logs?.[idx];
+        if (log && !log.isPublic) {
+          log.isPublic = true;
+          log._cloudSynced = false; // 既存クラウド行は_cloudId経由で更新される
+          count++;
+        }
+      });
+      await saveVisits();
+      closePublishSelectModal();
+
+      showToast('公開処理中...');
+      await syncVisitsToCloud();
+      showToast(`${count}件の記録を公開しました`);
+
+      // フィードタブを開いていれば再読み込み
+      const feedTabEl = document.getElementById('tab-feed');
+      if (feedTabEl && feedTabEl.classList.contains('active')) loadCommunityFeed();
+    }
+
     // ===== ログイン機能の隠しフラグ（一般公開前のテスト用） =====
     // ログイン・コミュニティ機能は全ユーザーに公開。（旧authbetaゲートは撤去済み）
 
@@ -4370,28 +4521,94 @@
       if (modal) modal.classList.remove('active');
     }
 
-    async function signInWithGoogle() {
+    // 未ログイン時に投稿・いいね・保存などを行おうとしたときの共通処理。
+    // 「ログインが必要」であることを伝え、了承したらその場でアカウント画面（ログインUI）を開く。
+    // ログイン済みなら true を返し、呼び出し元は処理を続行できる。
+    async function ensureLoggedInFor(actionLabel) {
+      if (supabaseClient && currentUser) return true;
+      const ok = await showCustomConfirm(`${actionLabel}にはログインが必要です。ログインしますか？`);
+      if (ok) openAccountModal();
+      return false;
+    }
+
+    function isNativeOAuthAvailable() {
+      return !!window.webkit?.messageHandlers?.nativeOAuth;
+    }
+
+    async function signInWithOAuthProvider(provider) {
       if (!supabaseClient) return;
+      if (isNativeOAuthAvailable()) {
+        try {
+          window.webkit.messageHandlers.nativeOAuth.postMessage(provider);
+          return;
+        } catch (e) {
+          console.error('ネイティブログイン開始エラー:', e);
+        }
+      }
+
       const { error } = await supabaseClient.auth.signInWithOAuth({
-        provider: 'google',
+        provider,
         options: { redirectTo: window.location.origin + window.location.pathname }
       });
       if (error) {
-        console.error('Googleログインエラー:', error);
+        console.error(`${provider}ログインエラー:`, error);
         await showCustomAlert('ログインに失敗しました。時間をおいて再度お試しください。');
       }
     }
 
+    async function signInWithGoogle() {
+      await signInWithOAuthProvider('google');
+    }
+
     async function signInWithApple() {
+      await signInWithOAuthProvider('apple');
+    }
+
+    async function handleNativeOAuthCallback(callbackUrl) {
       if (!supabaseClient) return;
-      const { error } = await supabaseClient.auth.signInWithOAuth({
-        provider: 'apple',
-        options: { redirectTo: window.location.origin + window.location.pathname }
-      });
-      if (error) {
-        console.error('Appleログインエラー:', error);
+      try {
+        const url = new URL(callbackUrl);
+        const hashParams = new URLSearchParams((url.hash || '').replace(/^#/, ''));
+        const queryParams = new URLSearchParams((url.search || '').replace(/^\?/, ''));
+        const params = hashParams.toString() ? hashParams : queryParams;
+
+        const accessToken = params.get('access_token');
+        const refreshToken = params.get('refresh_token');
+        const authCode = params.get('code');
+        const errorDescription = params.get('error_description') || params.get('error');
+
+        if (errorDescription) {
+          console.error('ネイティブログインエラー:', errorDescription);
+          await showCustomAlert('ログインに失敗しました。時間をおいて再度お試しください。');
+          return;
+        }
+
+        if (accessToken && refreshToken) {
+          const { error } = await supabaseClient.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
+          if (error) throw error;
+          closeAccountModal();
+          return;
+        }
+
+        if (authCode && typeof supabaseClient.auth.exchangeCodeForSession === 'function') {
+          const { error } = await supabaseClient.auth.exchangeCodeForSession(authCode);
+          if (error) throw error;
+          closeAccountModal();
+          return;
+        }
+
+        throw new Error('OAuth callbackにセッション情報が含まれていません');
+      } catch (e) {
+        console.error('ネイティブログイン完了処理エラー:', e);
         await showCustomAlert('ログインに失敗しました。時間をおいて再度お試しください。');
       }
+    }
+
+    async function handleNativeOAuthError(message) {
+      await showCustomAlert(message || 'ログインに失敗しました。時間をおいて再度お試しください。');
     }
 
     async function signOutAccount() {
@@ -4698,10 +4915,7 @@
     }
 
     async function toggleFeedBookmarkUI(btnEl, visitId) {
-      if (!supabaseClient || !currentUser) {
-        await showCustomAlert('保存するにはログインが必要です');
-        return;
-      }
+      if (!(await ensureLoggedInFor('保存'))) return;
       const saved = btnEl.dataset.saved === '1';
       const iconEl = btnEl.querySelector('.bookmark-icon');
       // 先にUIを反映（楽観的更新）
@@ -4747,7 +4961,7 @@
               ${visitMeta ? `<div class="feed-user-meta">${visitMeta}</div>` : ''}
             </div>
             <div class="feed-post-map-area">
-              ${shopName ? `<button class="feed-map-btn" onclick="event.stopPropagation(); openShopOnMap('${v.shop_id}')">📍 マップで見る</button>` : ''}
+              ${shopName ? `<button class="feed-map-btn" onclick="event.stopPropagation(); openShopOnMap('${v.shop_id}')">マップ</button>` : ''}
             </div>
           </div>
 
@@ -4933,6 +5147,8 @@
           .select('id, shop_id, visited_at, rating, memo, order_text, options, noodle_firmness, flavor_intensity, oil_amount, weather, temperature, wait_minutes, created_at')
           .eq('user_id', userId)
           .eq('is_public', true)
+          .lte('visited_on', getJstTodayStr())
+          .order('visited_on', { ascending: false, nullsFirst: false })
           .order('created_at', { ascending: false })
           .limit(50);
 
@@ -5054,6 +5270,8 @@
           .select('id, visited_at, rating, memo, order_text, options, noodle_firmness, flavor_intensity, oil_amount, weather, temperature, wait_minutes, user_id, created_at')
           .eq('shop_id', shopId)
           .eq('is_public', true)
+          .lte('visited_on', getJstTodayStr())
+          .order('visited_on', { ascending: false, nullsFirst: false })
           .order('created_at', { ascending: false })
           .limit(30);
         if (error) throw error;
@@ -5136,6 +5354,11 @@
 
 
     // コミュニティフィード（公開されている訪問記録の一覧）
+
+    // 日本時間での「今日」の日付（YYYY-MM-DD）。未来日の投稿をフィードから除外するために使う
+    function getJstTodayStr() {
+      return new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+    }
     // 訪問記録ID一覧から、それぞれの代表写真(1枚目)のURLを取得するMapを返す
     async function fetchPhotoMapForVisits(visitIds) {
       const listMap = await fetchPhotoListMapForVisits(visitIds);
@@ -5163,7 +5386,9 @@
     }
 
     // ===== 投稿タブの「＋記録する」→店舗選択モーダル =====
-    function openShopSelectModal() {
+    async function openShopSelectModal() {
+      // 未ログインなら投稿できない旨を伝え、その場でログインへ誘導する
+      if (!(await ensureLoggedInFor('投稿'))) return;
       const modal = document.getElementById('shop-select-modal');
       if (!modal) return;
       document.getElementById('shop-select-search').value = '';
@@ -5388,6 +5613,8 @@
           .from('visits')
           .select('id, shop_id, visited_at, rating, memo, order_text, options, noodle_firmness, flavor_intensity, oil_amount, weather, temperature, wait_minutes, user_id, created_at')
           .eq('is_public', true)
+          .lte('visited_on', getJstTodayStr())
+          .order('visited_on', { ascending: false, nullsFirst: false })
           .order('created_at', { ascending: false })
           .range(from, to);
         if (error) throw error;
@@ -5464,7 +5691,7 @@
                 <button onclick="event.stopPropagation(); toggleFeedBookmarkUI(this, '${v.id}')" data-saved="${bookmarkedVisitIds.has(v.id) ? '1' : '0'}" class="feed-action-cell feed-bookmark-btn" title="保存">
                   <svg class="feed-action-icon bookmark-icon ${bookmarkedVisitIds.has(v.id) ? 'filled' : ''}" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg><span>保存</span>
                 </button>
-                <div class="feed-action-cell feed-relative-time">${formatFeedRelativeTime(v.created_at || v.visited_at)}</div>
+                <div class="feed-action-cell feed-relative-time">${formatFeedRelativeTime(v.visited_at || v.created_at)}</div>
                 ${isOwnPost ? '' : `<button onclick="event.stopPropagation(); openFeedPostMenu('${v.id}', '${v.user_id}', this)" class="feed-action-cell feed-more-btn" title="その他" aria-label="その他の操作">
                   <svg class="feed-action-icon" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
                 </button>`}
@@ -5569,10 +5796,7 @@
     }
 
     async function toggleLike(visitId, btnEl) {
-      if (!supabaseClient || !currentUser) {
-        await showCustomAlert('いいねするにはログインが必要です');
-        return;
-      }
+      if (!(await ensureLoggedInFor('いいね'))) return;
       const liked = btnEl.dataset.liked === '1';
       const countEl = btnEl.querySelector('.like-count');
       const iconEl = btnEl.querySelector('.like-icon');
@@ -5938,6 +6162,7 @@
         } else {
           await restoreFromCloud(); // ログインのたびに、クラウドの最新内容を自動で取り込む
           syncVisitsToCloud();
+          maybeShowPublishPrompt(); // 未公開の記録があれば公開を案内（1回きり）
         }
       } catch (e) {
         console.error('オンボーディング確認エラー:', e);
@@ -6109,6 +6334,8 @@
     function openProfileEditModal() {
       const modal = document.getElementById('profile-edit-modal');
       if (!modal || !currentProfile) return;
+      // アカウント画面の上に重なって見えないよう、一旦閉じる（closeProfileEditModalで戻す）
+      closeAccountModal();
       const nameInput = document.getElementById('profile-edit-display-name');
       const bioInput = document.getElementById('profile-edit-bio');
       if (nameInput) nameInput.value = currentProfile.display_name || '';
@@ -6120,6 +6347,8 @@
     function closeProfileEditModal() {
       const modal = document.getElementById('profile-edit-modal');
       if (modal) modal.classList.remove('active');
+      // 編集を閉じたらアカウント画面に戻す
+      openAccountModal();
     }
 
     async function saveProfileEdit() {
@@ -6165,6 +6394,7 @@
         updateAccountMenuSubtitle();
         updateAccountModalUI();
         syncVisitsToCloud();
+        maybeShowPublishPrompt(); // 未公開の記録があれば公開を案内（1回きり）
       } catch (e) {
         console.error('アカウント設定の保存に失敗:', e);
         await showCustomAlert('保存に失敗しました。もう一度お試しください。');
@@ -6604,19 +6834,19 @@
     // Data Validation（起動時チェック）
     function validateShopsData() {
       const validCategories = [
-        '総本山', 
-        '直系', 
+        '総本山',
+        '直系',
         '吉村家（直系以外）',
-        '本牧家', 
-        '六角家', 
-        '王道家', 
+        '本牧家',
+        '六角家',
+        '王道家',
         '王道家（王道乃印）',
         '王道家（との丸家）',
         '武蔵家',
         '大輝家',
-        '壱系', 
+        '壱系',
         '壱系（資本系）',
-        'オリジナル', 
+        'オリジナル',
         '不明'
       ];
       const ids = new Set();
@@ -7490,14 +7720,14 @@
       let filteredShops = [...shops];
       
       // 詳細検索フィルターが設定されている場合
-      if (advancedFilterSettings.categories.length > 0 || 
-          advancedFilterSettings.wantToGo || 
-          advancedFilterSettings.favorite || 
+      if (advancedFilterSettings.categories.length > 0 ||
+          advancedFilterSettings.wantToGo ||
+          advancedFilterSettings.favorite ||
           (advancedFilterSettings.day !== '' && advancedFilterSettings.time !== '')) {
         
         // カテゴリフィルター（複数選択）
         if (advancedFilterSettings.categories.length > 0) {
-          filteredShops = filteredShops.filter(s => 
+          filteredShops = filteredShops.filter(s =>
             advancedFilterSettings.categories.includes(s.category)
           );
         }
@@ -7514,7 +7744,7 @@
         
         // 営業時間フィルター
         if (advancedFilterSettings.day !== '' && advancedFilterSettings.time !== '') {
-          filteredShops = filteredShops.filter(s => 
+          filteredShops = filteredShops.filter(s =>
             isOpenAtDayTime(s.openingHours, advancedFilterSettings.day, advancedFilterSettings.time)
           );
         }
@@ -7938,7 +8168,7 @@
       
       // カテゴリフィルター（複数選択）
       if (advancedFilterSettings.categories.length > 0) {
-        filteredShops = filteredShops.filter(s => 
+        filteredShops = filteredShops.filter(s =>
           advancedFilterSettings.categories.includes(s.category)
         );
       }
@@ -7955,7 +8185,7 @@
       
       // 営業時間フィルター
       if (advancedFilterSettings.day !== '' && advancedFilterSettings.time !== '') {
-        filteredShops = filteredShops.filter(s => 
+        filteredShops = filteredShops.filter(s =>
           isOpenAtDayTime(s.openingHours, advancedFilterSettings.day, advancedFilterSettings.time)
         );
       }
@@ -8040,14 +8270,14 @@
       let filteredShops = [...shops];
       
       // 詳細検索フィルターが設定されている場合
-      if (advancedFilterSettings.categories.length > 0 || 
-          advancedFilterSettings.wantToGo || 
-          advancedFilterSettings.favorite || 
+      if (advancedFilterSettings.categories.length > 0 ||
+          advancedFilterSettings.wantToGo ||
+          advancedFilterSettings.favorite ||
           (advancedFilterSettings.day !== '' && advancedFilterSettings.time !== '')) {
         
         // カテゴリフィルター（複数選択）
         if (advancedFilterSettings.categories.length > 0) {
-          filteredShops = filteredShops.filter(s => 
+          filteredShops = filteredShops.filter(s =>
             advancedFilterSettings.categories.includes(s.category)
           );
         }
@@ -8064,7 +8294,7 @@
         
         // 営業時間フィルター
         if (advancedFilterSettings.day !== '' && advancedFilterSettings.time !== '') {
-          filteredShops = filteredShops.filter(s => 
+          filteredShops = filteredShops.filter(s =>
             isOpenAtDayTime(s.openingHours, advancedFilterSettings.day, advancedFilterSettings.time)
           );
         }
@@ -9106,6 +9336,12 @@
         console.log('Groups:', Array.from(groups.keys()).map(k => `${k}: ${groups.get(k).shops.length}`));
         
         // セクションを描画
+        // 【重要】前回のズーム（scale(0.7)等）が残ったまま座標計算すると、
+        // getBoundingClientRectが縮小後の座標を返してノード位置・線が崩れる。
+        // 再描画時は必ず等倍に戻してから構築する（ズームはinitLineageUIが後で再適用）。
+        sectionsEl.style.transform = 'scale(1)';
+        sectionsEl.style.width = '100%';
+        sectionsEl.style.height = '';
         sectionsEl.innerHTML = '';
         groups.forEach((group, key) => {
           if (group.shops.length > 0) {
@@ -9555,7 +9791,7 @@
       wrapper.appendChild(badge);
 
       // ポップアップをbodyに動的生成
-      const colorMap = { 
+      const colorMap = {
         'yosh': '#c62828', 'yosh-light': '#ef5350',
         'honmoku': '#1976d2', 'rokkaku': '#43a047',
         'oud': '#f9a825', 'oud-light': '#fbc02d',
@@ -9880,6 +10116,20 @@
     }
     
     function initLineageUI() {
+      // 再描画のたびに呼ばれるが、イベントリスナーの登録は初回のみ。
+      // 2回目以降に再登録すると、ズームボタンや検索のリスナーが重複して
+      // 1タップで2段階ズームする等の不具合が起きるため、ここでガードする。
+      if (window._lineageUIInited) {
+        const sectionsEl = document.getElementById('lineage-sections');
+        if (sectionsEl && typeof window.applyLineageZoom === 'function') {
+          // 線描画(setTimeout 0)の後にズームを再適用。初期フラッシュ防止で一旦隠す
+          sectionsEl.style.visibility = 'hidden';
+          setTimeout(() => window.applyLineageZoom(), 50);
+        }
+        return;
+      }
+      window._lineageUIInited = true;
+
       const input = document.getElementById('lineage-search');
       const sug = document.getElementById('lineage-suggestions');
       const info = document.getElementById('lineage-info');
@@ -11054,6 +11304,7 @@
       const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
         .toISOString().slice(0, 16);
       document.getElementById('input-visited-at').value = localDateTime;
+      document.getElementById('input-visited-at').max = localDateTime; // 未来日時は選択不可
       
       document.getElementById('record-form').reset();
       document.getElementById('input-visited-at').value = localDateTime;
@@ -11154,6 +11405,7 @@
         const cancelBtn = document.getElementById('custom-confirm-cancel');
         
         messageEl.textContent = message;
+        cancelBtn.style.display = ''; // alert呼び出しで隠れている場合に備え再表示
         dialog.style.display = 'flex';
         
         // 一度だけ実行されるようにリスナーをクローン
@@ -11281,6 +11533,12 @@
           document.getElementById('input-visited-at').value = localDateTime;
         }
       }
+      {
+        // 編集時も未来日時は選択不可にする
+        const nowEdit = new Date();
+        document.getElementById('input-visited-at').max =
+          new Date(nowEdit.getTime() - nowEdit.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      }
       
       // モーダルのタイトルを変更
       document.querySelector('#record-modal .modal-header h2').textContent = '訪問記録を編集';
@@ -11392,7 +11650,7 @@
       if (window.webkit?.messageHandlers?.pickPhotos) {
         console.log('📸 iOS: ネイティブ写真選択を開く');
         window.webkit.messageHandlers.pickPhotos.postMessage('');
-      } 
+      }
       // Web版: file input
       else {
         console.log('📸 Web: file inputを開く');
@@ -11641,6 +11899,10 @@
         await showCustomAlert('来店日時を入力してください');
         return;
       }
+      if (new Date(visitedAt).getTime() > Date.now() + 5 * 60 * 1000) {
+        await showCustomAlert('未来の日時は設定できません');
+        return;
+      }
 
       // 写真をファイルとして保存（ファイル名のみを保存）
       let photoFileNames = [];
@@ -11711,6 +11973,10 @@
       const visitedAt = document.getElementById('input-visited-at').value;
       if (!visitedAt) {
         await showCustomAlert('来店日時を入力してください');
+        return;
+      }
+      if (new Date(visitedAt).getTime() > Date.now() + 5 * 60 * 1000) {
+        await showCustomAlert('未来の日時は設定できません');
         return;
       }
       
@@ -12712,6 +12978,11 @@
             border: 1.5px solid #e5e7eb; border-radius: 10px; background: white;
             font-size: 15px; font-weight: 600; color: #111827; cursor: pointer;
           ">保存した投稿</button>
+          <button onclick="openPublishSelectModal()" style="
+            width: 100%; padding: 12px 16px; margin-bottom: 10px;
+            border: 1.5px solid #e5e7eb; border-radius: 10px; background: white;
+            font-size: 15px; font-weight: 600; color: #111827; cursor: pointer;
+          ">過去の記録を公開</button>
           <button onclick="openProfileEditModal()" style="
             width: 100%; padding: 12px 16px; margin-bottom: 10px;
             border: 1.5px solid #e5e7eb; border-radius: 10px; background: white;
@@ -12722,12 +12993,24 @@
             border: 1.5px solid #e5e7eb; border-radius: 10px; background: white;
             font-size: 15px; font-weight: 600; color: #111827; cursor: pointer;
           ">ブロック中のユーザー</button>
-          <a href="mailto:iekei.map.app@gmail.com?subject=%E5%AE%B6%E7%B3%BB%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%B3map%20%E3%81%8A%E5%95%8F%E3%81%84%E5%90%88%E3%82%8F%E3%81%9B" style="
+          <a href="mailto:iekei.map@gmail.com?subject=%E5%AE%B6%E7%B3%BB%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%B3map%20%E3%81%8A%E5%95%8F%E3%81%84%E5%90%88%E3%82%8F%E3%81%9B" style="
             display:block; width: 100%; padding: 12px 16px; margin-bottom: 10px; box-sizing:border-box;
             border: 1.5px solid #e5e7eb; border-radius: 10px; background: white;
             font-size: 15px; font-weight: 600; color: #111827; cursor: pointer;
             text-align:center; text-decoration:none;
           ">お問い合わせ</a>
+          <a href="/Terms" target="_blank" rel="noopener noreferrer" style="
+            display:block; width: 100%; padding: 12px 16px; margin-bottom: 10px; box-sizing:border-box;
+            border: 1.5px solid #e5e7eb; border-radius: 10px; background: white;
+            font-size: 15px; font-weight: 600; color: #111827; cursor: pointer;
+            text-align:center; text-decoration:none;
+          ">利用規約</a>
+          <a href="/Privacypolicy" target="_blank" rel="noopener noreferrer" style="
+            display:block; width: 100%; padding: 12px 16px; margin-bottom: 10px; box-sizing:border-box;
+            border: 1.5px solid #e5e7eb; border-radius: 10px; background: white;
+            font-size: 15px; font-weight: 600; color: #111827; cursor: pointer;
+            text-align:center; text-decoration:none;
+          ">プライバシーポリシー</a>
           <button onclick="signOutAccount()" style="
             width: 100%; padding: 12px 16px;
             border: 1.5px solid #fecaca; border-radius: 10px; background: #fef2f2;
@@ -12777,6 +13060,33 @@
       </div>
       <div class="modal-body" style="padding: 16px 20px;">
         <div id="bookmarks-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="publish-select-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="font-size: 18px; font-weight: 700;">過去の記録を公開</h2>
+        <button onclick="closePublishSelectModal()" style="
+          width: 32px; height: 32px; border-radius: 50%; border: none;
+          background: #f3f4f6; color: #6b7280; font-size: 20px; cursor: pointer;
+          display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        ">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 12px 20px 16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#374151;cursor:pointer;">
+            <input type="checkbox" id="publish-select-all" onchange="togglePublishSelectAll(this.checked)" style="width:18px;height:18px;">
+            すべて選択
+          </label>
+          <span id="publish-select-count" style="font-size:13px;color:#6b7280;">0件選択中</span>
+        </div>
+        <div id="publish-select-list" style="display:flex;flex-direction:column;gap:8px;max-height:50vh;overflow-y:auto;"></div>
+        <button id="publish-select-submit" onclick="publishSelectedVisits()" disabled style="
+          width:100%;margin-top:14px;padding:13px 16px;border:none;border-radius:10px;
+          background:#c92232;color:white;font-size:15px;font-weight:700;cursor:pointer;
+        ">選択した記録を公開</button>
       </div>
     </div>
   </div>
@@ -12864,6 +13174,50 @@
             <div style="color: #9ca3af; font-size: 18px;">›</div>
           </div>
           
+          <!-- 利用規約 -->
+          <a href="/Terms" target="_blank" rel="noopener noreferrer" style="
+            background: white;
+            padding: 16px 20px;
+            margin-bottom: 1px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            text-decoration: none;
+            color: inherit;
+          ">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="font-size: 24px;">📄</div>
+              <div>
+                <div style="font-weight: 600; font-size: 15px; color: #111827;">利用規約</div>
+                <div style="font-size: 13px; color: #6b7280;">サービスの利用条件</div>
+              </div>
+            </div>
+            <div style="color: #9ca3af; font-size: 18px;">›</div>
+          </a>
+
+          <!-- プライバシーポリシー -->
+          <a href="/Privacypolicy" target="_blank" rel="noopener noreferrer" style="
+            background: white;
+            padding: 16px 20px;
+            margin-bottom: 1px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            text-decoration: none;
+            color: inherit;
+          ">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="font-size: 24px;">🔒</div>
+              <div>
+                <div style="font-weight: 600; font-size: 15px; color: #111827;">プライバシーポリシー</div>
+                <div style="font-size: 13px; color: #6b7280;">個人情報の取り扱い</div>
+              </div>
+            </div>
+            <div style="color: #9ca3af; font-size: 18px;">›</div>
+          </a>
+
           <!-- クレジット -->
           <div onclick="openCreditsPanel()" style="
             background: white;
