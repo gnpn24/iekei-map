@@ -2843,14 +2843,13 @@
       border-radius: 24px;
       overflow: hidden;
       margin-bottom: 16px;
-      cursor: default;
+      cursor: pointer;
       box-shadow: 0 10px 24px rgba(80, 40, 24, 0.10);
-      transition: box-shadow .12s ease;
+      transition: transform .12s ease, box-shadow .12s ease;
     }
-    /* 投稿カード全体は押しても遷移しない。店名・ユーザー名・各ボタンだけ反応させる */
     .feed-post-card:active {
-      transform: none;
-      box-shadow: 0 10px 24px rgba(80, 40, 24, 0.10);
+      transform: scale(0.992);
+      box-shadow: 0 6px 16px rgba(80, 40, 24, 0.10);
     }
     .feed-post-main {
       padding: 18px 18px 0;
@@ -3200,12 +3199,21 @@
     }
     .feed-actions {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: 1fr 1fr 1fr auto;
       align-items: center;
       padding: 10px 18px 12px;
       margin-top: 16px;
       border-top: 1px solid rgba(120, 72, 56, 0.14);
       color: #8b6f66;
+    }
+    /* ⋯メニュー（通報・ブロック）ボタン。幅を詰めて右端に置く */
+    .feed-more-btn {
+      padding: 8px 4px !important;
+      min-width: 32px;
+    }
+    .feed-more-btn .feed-action-icon {
+      fill: currentColor;
+      stroke: none;
     }
     .feed-action-cell {
       min-width: 0;
@@ -3328,11 +3336,16 @@
       .feed-post-main { padding: 16px 16px 0; }
       .feed-photo-wrap { margin-left: -16px; margin-right: -16px; }
       .feed-photo,
-      .feed-photo-swipe-view,
       .feed-photo-grid {
         aspect-ratio: 4 / 3;
         max-height: 360px;
         overflow: hidden;
+      }
+      .feed-photo-swipe-view {
+        aspect-ratio: 4 / 3;
+        max-height: 360px;
+        overflow-x: auto;
+        overflow-y: hidden;
       }
       .feed-shop-name { font-size: 19px; }
       .feed-memo { font-size: 15px; line-height: 1.7; }
@@ -3349,253 +3362,6 @@
       .feed-post-map-area { min-width: 82px; }
       .feed-map-btn { font-size: 12px; padding: 7px 9px; }
       .feed-rating-pill { font-size: 14px; padding: 6px 9px; }
-    }
-
-
-
-    /* ===== プロフィールシート改善 ===== */
-    #community-modal.profile-sheet {
-      align-items: flex-end;
-      background: rgba(17, 24, 39, 0.42);
-    }
-    #community-modal .community-modal-content {
-      padding: 0 !important;
-      overflow: hidden !important;
-    }
-    #community-modal.profile-sheet .community-modal-content {
-      width: 100% !important;
-      max-width: 640px !important;
-      height: 92vh !important;
-      max-height: 92vh !important;
-      border-radius: 28px 28px 0 0 !important;
-      display: flex !important;
-      flex-direction: column !important;
-      background: #fffdfb !important;
-      box-shadow: 0 -10px 32px rgba(17,24,39,.18) !important;
-    }
-    .community-modal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 16px;
-      flex-shrink: 0;
-      border-bottom: 1px solid rgba(120,72,56,.10);
-      background: rgba(255,253,251,.94);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      position: sticky;
-      top: 0;
-      z-index: 3;
-    }
-    .community-modal-title-btn {
-      font-size: 15px;
-      font-weight: 900;
-      color: #111827;
-      background: none;
-      border: none;
-      padding: 0;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      cursor: default;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .community-modal-close-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      border: none;
-      background: #f3f4f6;
-      color: #6b7280;
-      font-size: 19px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .community-modal-close-btn:active {
-      transform: scale(.94);
-      background: #e5e7eb;
-    }
-    .community-profile-view {
-      overflow-y: auto;
-      flex: 1;
-      display: none;
-      background: #fffdfb;
-      -webkit-overflow-scrolling: touch;
-    }
-    .community-profile-body {
-      padding: 18px 18px calc(28px + env(safe-area-inset-bottom, 0px));
-    }
-    .community-profile-loading {
-      text-align: center;
-      color: #9ca3af;
-      font-size: 13px;
-      padding: 36px 0;
-    }
-    .community-profile-hero {
-      display: grid;
-      grid-template-columns: 76px minmax(0, 1fr);
-      gap: 16px;
-      align-items: center;
-      margin-bottom: 14px;
-    }
-    .community-profile-hero img,
-    .community-profile-hero #user-profile-avatar-emoji {
-      width: 76px !important;
-      height: 76px !important;
-      border-radius: 50% !important;
-      object-fit: cover;
-      box-shadow: 0 8px 18px rgba(80,40,24,.12);
-    }
-    .community-profile-name {
-      font-weight: 900;
-      font-size: 22px;
-      color: #111827;
-      line-height: 1.25;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      letter-spacing: -.2px;
-    }
-    .community-profile-counts {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      color: #8b6f66;
-      margin-top: 5px;
-      font-weight: 700;
-    }
-    .community-profile-bio {
-      font-size: 14px;
-      color: #4b5563;
-      line-height: 1.65;
-      margin: 6px 0 14px;
-      white-space: pre-wrap;
-    }
-    .community-profile-follow-wrap {
-      margin: 0 0 18px;
-    }
-    .community-profile-follow-wrap button {
-      width: 100%;
-      padding: 11px 16px !important;
-      border-radius: 999px !important;
-      font-size: 14px !important;
-      font-weight: 900 !important;
-      box-shadow: 0 6px 14px rgba(17,24,39,.08);
-    }
-    .community-profile-section-title {
-      font-weight: 900;
-      font-size: 14px;
-      color: #111827;
-      margin: 8px -18px 0;
-      padding: 14px 18px 10px;
-      border-top: 1px solid rgba(120,72,56,.12);
-      background: #fffdfb;
-      position: sticky;
-      top: 57px;
-      z-index: 2;
-    }
-    .user-profile-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 3px;
-      margin-left: -18px;
-      margin-right: -18px;
-      background: rgba(120,72,56,.10);
-    }
-    .user-profile-grid-cell {
-      position: relative;
-      aspect-ratio: 1;
-      background: #f3f4f6;
-      cursor: pointer;
-      overflow: hidden;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .user-profile-grid-cell:active {
-      opacity: .86;
-    }
-    .user-profile-grid-cell img,
-    .user-profile-grid-cell > div:first-child {
-      width: 100% !important;
-      height: 100% !important;
-      aspect-ratio: 1 !important;
-      object-fit: cover !important;
-      border-radius: 0 !important;
-      display: block !important;
-    }
-    .user-profile-grid-cell.empty-photo {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #9ca3af;
-      font-size: 24px;
-      background: #f3f4f6;
-    }
-    .user-profile-grid-cell .profile-grid-badge {
-      position: absolute;
-      right: 6px;
-      top: 6px;
-      padding: 3px 6px;
-      border-radius: 999px;
-      background: rgba(0,0,0,.48);
-      color: white;
-      font-size: 10px;
-      font-weight: 900;
-      line-height: 1;
-    }
-    .user-profile-empty {
-      text-align: center;
-      color: #9ca3af;
-      font-size: 13px;
-      padding: 32px 0;
-      background: #fffdfb;
-    }
-
-    /* プロフィール内投稿 → 投稿詳細は、同じプロフィールシート内のページ遷移として見せる */
-    #community-modal.profile-sheet.visit-sheet .community-modal-content {
-      width: 100% !important;
-      max-width: 640px !important;
-      height: 92vh !important;
-      max-height: 92vh !important;
-      border-radius: 28px 28px 0 0 !important;
-      display: flex !important;
-      flex-direction: column !important;
-      background: #fffdfb !important;
-    }
-    #community-modal.profile-sheet.visit-sheet #community-visit-view {
-      background: #fffdfb;
-      -webkit-overflow-scrolling: touch;
-    }
-    #community-modal.profile-sheet.visit-sheet #community-visit-detail-photo-area {
-      background: #000;
-    }
-    .community-modal-title-btn.back-enabled {
-      cursor: pointer;
-      padding: 6px 10px;
-      margin-left: -10px;
-      border-radius: 999px;
-    }
-    .community-modal-title-btn.back-enabled:active {
-      background: #f3f4f6;
-      transform: scale(.98);
-    }
-    @media (max-width: 520px) {
-      #community-modal.profile-sheet .community-modal-content {
-        max-width: none !important;
-        height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top, 0px)) !important;
-        max-height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top, 0px)) !important;
-        border-radius: 24px 24px 0 0 !important;
-      }
-      .community-profile-body { padding: 16px 16px calc(28px + env(safe-area-inset-bottom, 0px)); }
-      .community-profile-hero { grid-template-columns: 72px minmax(0, 1fr); gap: 14px; }
-      .community-profile-hero img,
-      .community-profile-hero #user-profile-avatar-emoji { width: 72px !important; height: 72px !important; }
-      .community-profile-name { font-size: 21px; }
-      .community-profile-section-title { margin-left: -16px; margin-right: -16px; padding-left: 16px; padding-right: 16px; }
-      .user-profile-grid { margin-left: -16px; margin-right: -16px; }
     }
 
     </style></style>
@@ -3825,10 +3591,6 @@
           </div>
         </div>
 
-        <!-- コミュニティ関連（隠しフラグで表示制御） -->
-        <div id="auth-beta-area">
-        </div>
-        <!-- /auth-beta-area -->
         
         <div class="stats-new-container">
           
@@ -4324,45 +4086,271 @@
     let currentProfile = null; // profilesテーブルの自分の行（display_name, avatar_url, bio等）
     let isSyncingToCloud = false;
 
-    // ===== ログイン機能の隠しフラグ（一般公開前のテスト用） =====
-    // URLに ?authbeta=1 を付けてアクセス、または /test パスでアクセスすると、
-    // その端末でログイン関連UIが表示されるようになる。?authbeta=0 でオフに戻せる。
-    const AUTH_BETA_KEY = 'iekei-auth-beta-enabled';
-    (function setupAuthBetaFlag() {
-      // /test パスでのアクセスも同様にフラグON扱いにする
-      if (window.location.pathname.replace(/\/+$/, '') === '/test') {
-        localStorage.setItem(AUTH_BETA_KEY, '1');
-      }
+    // ===== 通報・ブロック（App Store 1.2 UGC対応）=====
+    // 自分がブロックしているユーザーIDの集合。ログイン時に読み込む。
+    let blockedUserIds = new Set();
 
-      const params = new URLSearchParams(window.location.search);
-      if (params.has('authbeta')) {
-        const val = params.get('authbeta');
-        if (val === '1') localStorage.setItem(AUTH_BETA_KEY, '1');
-        else if (val === '0') localStorage.removeItem(AUTH_BETA_KEY);
-        // URLからパラメータを消してリロードなしで綺麗にする
-        params.delete('authbeta');
-        const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
-        history.replaceState({}, '', newUrl);
+    // 自分が保存（ブックマーク）している投稿IDの集合。ログイン時に読み込む。
+    let bookmarkedVisitIds = new Set();
+
+    // 自分のブックマーク一覧をSupabaseから読み込む
+    async function loadBookmarks() {
+      bookmarkedVisitIds = new Set();
+      if (!supabaseClient || !currentUser) return;
+      try {
+        const { data, error } = await supabaseClient
+          .from('bookmarks')
+          .select('visit_id')
+          .eq('user_id', currentUser.id);
+        if (error) throw error;
+        (data || []).forEach(r => bookmarkedVisitIds.add(r.visit_id));
+      } catch (e) {
+        console.error('ブックマーク一覧の取得に失敗:', e);
       }
-    })();
-    function isAuthBetaEnabled() {
-      return localStorage.getItem(AUTH_BETA_KEY) === '1';
     }
-    function applyAuthBetaVisibility() {
-      const enabled = isAuthBetaEnabled();
-      const display = enabled ? '' : 'none';
-      const menuItem = document.getElementById('settings-account-menu-item');
-      const betaArea = document.getElementById('auth-beta-area');
-      const shopCommunity = document.getElementById('shop-community-section');
-      if (menuItem) menuItem.style.display = display;
-      if (betaArea) betaArea.style.display = display;
-      if (shopCommunity) shopCommunity.style.display = display;
+
+    // 自分のブロック一覧をSupabaseから読み込む
+    async function loadBlockedUsers() {
+      blockedUserIds = new Set();
+      if (!supabaseClient || !currentUser) return;
+      try {
+        const { data, error } = await supabaseClient
+          .from('blocked_users')
+          .select('blocked_id')
+          .eq('blocker_id', currentUser.id);
+        if (error) throw error;
+        (data || []).forEach(r => blockedUserIds.add(r.blocked_id));
+      } catch (e) {
+        console.error('ブロック一覧の取得に失敗:', e);
+      }
     }
-    document.addEventListener('DOMContentLoaded', applyAuthBetaVisibility);
-    // 既にDOM読み込み済みの場合（scriptが後方にある等）にも対応
-    if (document.readyState === 'interactive' || document.readyState === 'complete') {
-      applyAuthBetaVisibility();
+
+    // 投稿を通報する
+    async function reportVisit(visitId, reportedUserId) {
+      if (!supabaseClient || !currentUser) {
+        await showCustomAlert('通報するにはログインが必要です');
+        return;
+      }
+      const ok = await showCustomConfirm('この投稿を運営に通報しますか？\n不適切な内容として報告されます。');
+      if (!ok) return;
+      try {
+        const { error } = await supabaseClient.from('reports').insert({
+          reporter_id: currentUser.id,
+          visit_id: visitId,
+          reported_user_id: reportedUserId || null,
+          reason: null
+        });
+        // 重複通報（unique制約違反）はエラーにせず成功扱い
+        if (error && error.code !== '23505') throw error;
+        await showCustomAlert('通報を受け付けました。ご協力ありがとうございます。');
+      } catch (e) {
+        console.error('通報エラー:', e);
+        await showCustomAlert('通報に失敗しました。時間をおいて再度お試しください。');
+      }
     }
+
+    // ユーザーをブロックする
+    async function blockUser(targetUserId, targetName) {
+      if (!supabaseClient || !currentUser) {
+        await showCustomAlert('ブロックするにはログインが必要です');
+        return;
+      }
+      if (targetUserId === currentUser.id) {
+        await showCustomAlert('自分自身はブロックできません');
+        return;
+      }
+      const label = targetName ? `「${targetName}」` : 'このユーザー';
+      const ok = await showCustomConfirm(`${label}をブロックしますか？\nブロックすると、この人の投稿があなたに表示されなくなります。`);
+      if (!ok) return;
+      try {
+        const { error } = await supabaseClient.from('blocked_users').insert({
+          blocker_id: currentUser.id,
+          blocked_id: targetUserId
+        });
+        if (error && error.code !== '23505') throw error;
+        blockedUserIds.add(targetUserId);
+        // 表示中のフィードから該当ユーザーのカードを即座に除去
+        removeBlockedCardsFromFeed(targetUserId);
+        await showCustomAlert('ブロックしました。');
+        // コミュニティモーダルが開いていたら閉じる
+        const cm = document.getElementById('community-modal');
+        if (cm && cm.classList.contains('active')) closeCommunityModal();
+      } catch (e) {
+        console.error('ブロックエラー:', e);
+        await showCustomAlert('ブロックに失敗しました。時間をおいて再度お試しください。');
+      }
+    }
+
+    // ブロックを解除する
+    async function unblockUser(targetUserId) {
+      if (!supabaseClient || !currentUser) return;
+      try {
+        const { error } = await supabaseClient.from('blocked_users').delete()
+          .eq('blocker_id', currentUser.id).eq('blocked_id', targetUserId);
+        if (error) throw error;
+        blockedUserIds.delete(targetUserId);
+      } catch (e) {
+        console.error('ブロック解除エラー:', e);
+      }
+    }
+
+    // フィードのDOMから、指定ユーザーの投稿カードを取り除く
+    function removeBlockedCardsFromFeed(userId) {
+      const listEl = document.getElementById('community-feed-list');
+      if (!listEl) return;
+      listEl.querySelectorAll(`.feed-post-card[data-user-id="${userId}"]`).forEach(el => el.remove());
+    }
+
+    // ブロック中ユーザー管理モーダル
+    function closeBlockedUsersModal() {
+      const m = document.getElementById('blocked-users-modal');
+      if (m) m.classList.remove('active');
+    }
+
+    async function openBlockedUsersModal() {
+      const modal = document.getElementById('blocked-users-modal');
+      const listEl = document.getElementById('blocked-users-list');
+      if (!modal || !listEl) return;
+      modal.classList.add('active');
+      listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;">読み込み中...</div>';
+
+      if (!supabaseClient || !currentUser) {
+        listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;">ログインが必要です</div>';
+        return;
+      }
+      try {
+        // 最新のブロック一覧を取得
+        await loadBlockedUsers();
+        const ids = [...blockedUserIds];
+        if (ids.length === 0) {
+          listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;">ブロック中のユーザーはいません</div>';
+          return;
+        }
+        const { data: profileRows } = await supabaseClient
+          .from('profiles').select('id, display_name, avatar_url').in('id', ids);
+        const profileMap = new Map((profileRows || []).map(p => [p.id, p]));
+
+        listEl.innerHTML = '';
+        ids.forEach(uid => {
+          const p = profileMap.get(uid);
+          const name = p?.display_name || '匿名ユーザー';
+          const row = document.createElement('div');
+          row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;background:#f9fafb;border-radius:10px;';
+          const left = document.createElement('div');
+          left.style.cssText = 'display:flex;align-items:center;gap:10px;min-width:0;';
+          left.innerHTML = `${avatarHtml(p?.avatar_url || '', 36)}<span style="font-size:14px;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(name)}</span>`;
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.textContent = '解除';
+          btn.style.cssText = 'flex-shrink:0;padding:6px 14px;border-radius:8px;border:1.5px solid #e5e7eb;background:#fff;color:#374151;font-size:13px;font-weight:600;cursor:pointer;';
+          btn.onclick = async () => {
+            btn.disabled = true;
+            await unblockUser(uid);
+            row.remove();
+            if (document.getElementById('blocked-users-list').children.length === 0) {
+              document.getElementById('blocked-users-list').innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;">ブロック中のユーザーはいません</div>';
+            }
+          };
+          row.appendChild(left);
+          row.appendChild(btn);
+          listEl.appendChild(row);
+        });
+      } catch (e) {
+        console.error('ブロック一覧の表示に失敗:', e);
+        listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;">読み込みに失敗しました</div>';
+      }
+    }
+
+    // ===== 保存した投稿モーダル =====
+    function closeBookmarksModal() {
+      const m = document.getElementById('bookmarks-modal');
+      if (m) m.classList.remove('active');
+    }
+
+    async function openBookmarksModal() {
+      const modal = document.getElementById('bookmarks-modal');
+      const listEl = document.getElementById('bookmarks-list');
+      if (!modal || !listEl) return;
+      modal.classList.add('active');
+      listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;">読み込み中...</div>';
+
+      if (!supabaseClient || !currentUser) {
+        listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;">ログインが必要です</div>';
+        return;
+      }
+      try {
+        // 保存日時の新しい順に取得
+        const { data: bmRows, error } = await supabaseClient
+          .from('bookmarks')
+          .select('visit_id, created_at')
+          .eq('user_id', currentUser.id)
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+
+        const visitIds = (bmRows || []).map(b => b.visit_id);
+        if (visitIds.length === 0) {
+          listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;">保存した投稿はまだありません</div>';
+          return;
+        }
+
+        // 対象の投稿を取得
+        const { data: visitRows } = await supabaseClient
+          .from('visits')
+          .select('id, shop_id, visited_at, rating, memo, order_text, options, weather, temperature, wait_minutes, user_id, created_at')
+          .in('id', visitIds);
+        const visitMap = new Map((visitRows || []).map(v => [v.id, v]));
+
+        // 投稿者プロフィール
+        const userIds = [...new Set((visitRows || []).map(v => v.user_id))];
+        const { data: profileRows } = await supabaseClient
+          .from('profiles').select('id, display_name, avatar_url').in('id', userIds);
+        const profileMap = new Map((profileRows || []).map(p => [p.id, p]));
+
+        listEl.innerHTML = '';
+        // bmRowsの順（新しい順）で並べる。ブロック済みユーザーの投稿は除外。
+        let shown = 0;
+        bmRows.forEach(bm => {
+          const v = visitMap.get(bm.visit_id);
+          if (!v) return; // 投稿が削除済み
+          if (blockedUserIds.has(v.user_id)) return;
+          const profile = profileMap.get(v.user_id);
+          const name = profile?.display_name || '匿名ユーザー';
+          const shop = (typeof shops !== 'undefined' ? shops : []).find(s => s.id === v.shop_id);
+          const shopName = shop?.name || v.shop_id;
+
+          const row = document.createElement('div');
+          row.style.cssText = 'background:#f9fafb;border-radius:12px;padding:12px 14px;cursor:pointer;';
+          const ratingLabel = v.rating > 0 ? `★ ${v.rating}` : '';
+          const orderLine = [v.order_text, v.options].filter(Boolean).join(' / ');
+          row.innerHTML = `
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;">
+              <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+                ${avatarHtml(profile?.avatar_url || '', 28)}
+                <span style="font-size:13px;color:#6b7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(name)}</span>
+              </div>
+              ${ratingLabel ? `<span style="font-size:13px;font-weight:700;color:#c92232;flex-shrink:0;">${ratingLabel}</span>` : ''}
+            </div>
+            <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:2px;">${escapeHtml(shopName)}</div>
+            ${orderLine ? `<div style="font-size:13px;color:#374151;">🍜 ${escapeHtml(orderLine)}</div>` : ''}
+            ${v.memo ? `<div style="font-size:13px;color:#4b5563;line-height:1.5;margin-top:4px;">${escapeHtml(v.memo)}</div>` : ''}
+          `;
+          row.onclick = () => { closeBookmarksModal(); showShopDetail(v.shop_id); };
+          listEl.appendChild(row);
+          shown++;
+        });
+
+        if (shown === 0) {
+          listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;">保存した投稿はまだありません</div>';
+        }
+      } catch (e) {
+        console.error('保存した投稿の表示に失敗:', e);
+        listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;">読み込みに失敗しました</div>';
+      }
+    }
+
+
+    // ===== ログイン機能の隠しフラグ（一般公開前のテスト用） =====
+    // ログイン・コミュニティ機能は全ユーザーに公開。（旧authbetaゲートは撤去済み）
 
     try {
       supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -4475,11 +4463,13 @@
 
     // アバター表示用のHTML文字列を生成（カード一覧などのinnerHTML組み立てで使う）
     function avatarHtml(avatarValue, sizePx) {
+      // XSS対策：avatar_urlはユーザーが自分のprofiles行に任意文字列を保存できるため、
+      // 描画時に必ずエスケープし、画像URLはhttps://のみ許可する
       if (avatarValue && avatarValue.startsWith('emoji:')) {
-        const emoji = avatarValue.slice(6);
+        const emoji = escapeHtml(avatarValue.slice(6));
         return `<div style="width:${sizePx}px;height:${sizePx}px;border-radius:50%;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:${Math.round(sizePx*0.6)}px;flex-shrink:0;">${emoji}</div>`;
-      } else if (avatarValue) {
-        return `<img src="${avatarValue}" style="width:${sizePx}px;height:${sizePx}px;border-radius:50%;object-fit:cover;flex-shrink:0;">`;
+      } else if (avatarValue && /^https:\/\//.test(avatarValue)) {
+        return `<img src="${escapeHtml(avatarValue)}" style="width:${sizePx}px;height:${sizePx}px;border-radius:50%;object-fit:cover;flex-shrink:0;">`;
       }
       return `<div style="width:${sizePx}px;height:${sizePx}px;border-radius:50%;background:#e5e7eb;flex-shrink:0;"></div>`;
     }
@@ -4487,7 +4477,7 @@
     // 訪問記録の正方形サムネイル（写真があれば表示、無ければグレーのプレースホルダー）
     function postPhotoHtml(photoUrl, extraStyle) {
       if (photoUrl) {
-        return `<img src="${photoUrl}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;display:block;${extraStyle || ''}">`;
+        return `<img src="${escapeHtml(photoUrl)}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;display:block;${extraStyle || ''}">`;
       }
       return `<div style="width:100%;aspect-ratio:1;background:#e5e7eb;border-radius:8px;${extraStyle || ''}"></div>`;
     }
@@ -4579,6 +4569,17 @@
     }
 
     // みんなの記録カードの中身
+    function shortWeather(weather) {
+      if (!weather) return '';
+      // 「晴れ」「曇り」「雨」「雪」などを漢字1文字に短縮
+      const w = String(weather);
+      if (w.includes('晴')) return '晴';
+      if (w.includes('曇')) return '曇';
+      if (w.includes('雪')) return '雪';
+      if (w.includes('雨')) return '雨';
+      return w.charAt(0);
+    }
+
     function formatFeedVisitMeta(v) {
       const parts = [];
       const isSmallScreen = window.matchMedia && window.matchMedia('(max-width: 520px)').matches;
@@ -4592,9 +4593,10 @@
         parts.push(isSmallScreen ? `${month}/${day} ${hours}:${minutes}` : `${year}/${month}/${day} ${hours}:${minutes}`);
       }
       if (v.wait_minutes || v.wait_minutes === 0) parts.push(`待ち${v.wait_minutes}分`);
-      const weatherTemp = `${v.weather ? escapeHtml(v.weather) : ''}${v.temperature || v.temperature === 0 ? escapeHtml(String(v.temperature)) + '℃' : ''}`;
+      const weatherTemp = `${v.weather ? escapeHtml(shortWeather(v.weather)) : ''}${v.temperature || v.temperature === 0 ? escapeHtml(String(v.temperature)) + '℃' : ''}`;
       if (weatherTemp) parts.push(weatherTemp);
-      return parts.join(' ・ ');
+      // 区切りは「・」（前後空白なし）で詰める
+      return parts.join('・');
     }
 
     function formatFeedRelativeTime(dateStr) {
@@ -4695,14 +4697,39 @@
       btn.classList.remove('visible');
     }
 
-    function toggleFeedBookmarkUI(btnEl) {
+    async function toggleFeedBookmarkUI(btnEl, visitId) {
+      if (!supabaseClient || !currentUser) {
+        await showCustomAlert('保存するにはログインが必要です');
+        return;
+      }
       const saved = btnEl.dataset.saved === '1';
       const iconEl = btnEl.querySelector('.bookmark-icon');
+      // 先にUIを反映（楽観的更新）
       btnEl.dataset.saved = saved ? '0' : '1';
       if (iconEl) iconEl.classList.toggle('filled', !saved);
+      try {
+        if (saved) {
+          const { error } = await supabaseClient.from('bookmarks').delete()
+            .eq('user_id', currentUser.id).eq('visit_id', visitId);
+          if (error) throw error;
+          bookmarkedVisitIds.delete(visitId);
+        } else {
+          const { error } = await supabaseClient.from('bookmarks')
+            .insert({ user_id: currentUser.id, visit_id: visitId });
+          // 重複（unique違反）はエラー扱いにしない
+          if (error && error.code !== '23505') throw error;
+          bookmarkedVisitIds.add(visitId);
+        }
+      } catch (e) {
+        console.error('保存エラー:', e);
+        // 失敗したらUIを元に戻す
+        btnEl.dataset.saved = saved ? '1' : '0';
+        if (iconEl) iconEl.classList.toggle('filled', saved);
+        await showCustomAlert('保存に失敗しました。時間をおいて再度お試しください。');
+      }
     }
 
-    // 投稿カード本体。1-2行目はユーザー＋訪問情報、右に「マップ」。3-4行目は店名＋場所、右に評価。
+    // 投稿カード本体。1-2行目はユーザー＋訪問情報、右に「マップで見る」。3-4行目は店名＋場所、右に評価。
     function feedCardBodyHtml(v, name, avatarUrl, shopName, shopMeta) {
       const ratingLabel = v.rating > 0 ? String(v.rating) : '';
       const orderLine = [v.order_text, v.options].filter(Boolean).join(' / ');
@@ -4720,7 +4747,7 @@
               ${visitMeta ? `<div class="feed-user-meta">${visitMeta}</div>` : ''}
             </div>
             <div class="feed-post-map-area">
-              ${shopName ? `<button class="feed-map-btn" onclick="event.stopPropagation(); openShopOnMap('${v.shop_id}')">📍 マップ</button>` : ''}
+              ${shopName ? `<button class="feed-map-btn" onclick="event.stopPropagation(); openShopOnMap('${v.shop_id}')">📍 マップで見る</button>` : ''}
             </div>
           </div>
 
@@ -4750,76 +4777,52 @@
     let communityModalCurrentView = null;
     let communityModalCurrentVisitId = null;
     let communityModalCurrentUserId = null;
-    // プロフィール内の投稿を開いた時だけ、戻り先プロフィールIDを保持する
-    let communityModalProfileReturnUserId = null;
 
     function closeCommunityModal() {
-      const modal = document.getElementById('community-modal');
-      if (modal) modal.classList.remove('active', 'profile-sheet', 'visit-sheet');
+      document.getElementById('community-modal').classList.remove('active');
       communityModalCurrentView = null;
       communityModalCurrentVisitId = null;
       communityModalCurrentUserId = null;
-      communityModalProfileReturnUserId = null;
     }
 
     // 後方互換性のためのエイリアス（フィードカードのevent.stopPropagation()等で参照）
     function closeCommunityVisitDetailModal() { closeCommunityModal(); }
     function closeUserProfileModal() { closeCommunityModal(); }
 
-    // ヘッダー左側：プロフィール内の投稿詳細を開いた時だけ、プロフィールへ戻る
+    // ヘッダーのユーザー名ボタン：投稿詳細⇔プロフィールを切り替える
     function toggleCommunityModalView() {
-      if (communityModalCurrentView === 'visit' && communityModalProfileReturnUserId) {
-        const returnUserId = communityModalProfileReturnUserId;
-        communityModalProfileReturnUserId = null;
-        showCommunityProfileView(returnUserId);
+      if (communityModalCurrentView === 'visit') {
+        // 投稿詳細 → プロフィールへ
+        showCommunityProfileView(communityModalCurrentUserId);
+      } else if (communityModalCurrentView === 'profile' && communityModalCurrentVisitId) {
+        // プロフィール → 投稿詳細へ戻る
+        showCommunityVisitView(communityModalCurrentVisitId);
       }
     }
 
     function setModalHeader(name, canToggle) {
       const btn = document.getElementById('community-modal-user-btn');
       if (!btn) return;
-      btn.classList.remove('back-enabled');
-      btn.style.cursor = 'default';
-      if (communityModalCurrentView === 'visit' && communityModalProfileReturnUserId) {
-        btn.innerHTML = `<span style="font-size:18px;margin-right:2px;line-height:1;">←</span><span>プロフィール</span>`;
-        btn.classList.add('back-enabled');
-        btn.style.cursor = 'pointer';
+      if (canToggle && communityModalCurrentView === 'profile' && communityModalCurrentVisitId) {
+        btn.innerHTML = `<span style="font-size:18px;margin-right:2px;">←</span>${escapeHtml(name)}`;
+      } else if (canToggle && communityModalCurrentView === 'visit') {
+        btn.innerHTML = `${escapeHtml(name)}<span style="font-size:12px;color:#9ca3af;margin-left:4px;">▶ プロフィール</span>`;
       } else {
-        btn.textContent = communityModalCurrentView === 'profile' ? 'プロフィール' : (name || '投稿詳細');
+        btn.textContent = name;
+        btn.style.cursor = 'default';
       }
     }
 
     // 投稿詳細ビューを表示
-    async function showCommunityVisitDetail(visitId, options = {}) {
+    async function showCommunityVisitDetail(visitId) {
       communityModalCurrentVisitId = visitId;
-      const modal = document.getElementById('community-modal');
-      const isProfileTransition = !!options.fromProfile;
-      if (isProfileTransition && !communityModalProfileReturnUserId) {
-        communityModalProfileReturnUserId = communityModalCurrentUserId;
-      }
-      if (modal) modal.classList.add('active');
+      document.getElementById('community-modal').classList.add('active');
       showCommunityVisitView(visitId);
-    }
-
-    // プロフィールの投稿グリッドから開く時は、別モーダルではなく同じシート内で画面遷移させる
-    function openCommunityVisitFromProfile(visitId) {
-      if (!communityModalProfileReturnUserId) communityModalProfileReturnUserId = communityModalCurrentUserId;
-      showCommunityVisitDetail(visitId, { fromProfile: true });
     }
 
     async function showCommunityVisitView(visitId) {
       communityModalCurrentView = 'visit';
       communityModalCurrentVisitId = visitId;
-
-      const modal = document.getElementById('community-modal');
-      if (modal) {
-        if (communityModalProfileReturnUserId) {
-          modal.classList.add('profile-sheet', 'visit-sheet');
-        } else {
-          modal.classList.remove('profile-sheet');
-          modal.classList.add('visit-sheet');
-        }
-      }
 
       document.getElementById('community-visit-view').style.display = 'block';
       document.getElementById('community-profile-view').style.display = 'none';
@@ -4832,6 +4835,14 @@
 
       const shop = (typeof shops !== 'undefined' ? shops : []).find(s => s.id === v.shop_id);
       const shopName = v.shopName || shop?.name || currentShop?.name || v.shop_id || '';
+
+      const isOwnPost = currentUser && v.user_id === currentUser.id;
+      const nameArg = jsStr(v.displayName || '');
+      const reportBlockHTML = isOwnPost ? '' : `
+        <div style="display:flex;gap:8px;margin-top:16px;">
+          <button type="button" onclick="reportVisit('${v.id}', '${v.user_id}')" style="flex:1;padding:10px;border-radius:9px;border:1.5px solid #fecaca;background:#fff;color:#dc2626;font-size:13px;font-weight:600;cursor:pointer;">通報する</button>
+          <button type="button" onclick="blockUser('${v.user_id}', '${nameArg}')" style="flex:1;padding:10px;border-radius:9px;border:1.5px solid #fecaca;background:#fff;color:#dc2626;font-size:13px;font-weight:600;cursor:pointer;">ブロック</button>
+        </div>`;
 
       const infoHTML = `
         <div style="font-size:20px;font-weight:700;margin-bottom:12px;">${escapeHtml(shopName)}</div>
@@ -4848,6 +4859,7 @@
           oilAmount: v.oil_amount,
           memo: v.memo
         })}
+        ${reportBlockHTML}
       `;
 
       document.getElementById('community-visit-detail-info').innerHTML = infoHTML;
@@ -4881,20 +4893,13 @@
     // プロフィールビューを表示
     async function openUserProfile(userId) {
       communityModalCurrentUserId = userId;
-      communityModalCurrentVisitId = null;
-      communityModalProfileReturnUserId = null;
-      const modal = document.getElementById('community-modal');
-      if (modal) modal.classList.add('active');
+      document.getElementById('community-modal').classList.add('active');
       showCommunityProfileView(userId);
     }
 
     async function showCommunityProfileView(userId) {
       communityModalCurrentView = 'profile';
       communityModalCurrentUserId = userId;
-
-      const modal = document.getElementById('community-modal');
-      if (modal) modal.classList.remove('visit-sheet');
-      if (modal) modal.classList.add('profile-sheet');
 
       document.getElementById('community-visit-view').style.display = 'none';
       document.getElementById('community-profile-view').style.display = 'block';
@@ -4953,9 +4958,7 @@
       const name = profile?.display_name || 'ユーザー';
       const bio = profile?.bio || '';
       document.getElementById('user-profile-name').textContent = name;
-      const bioEl = document.getElementById('user-profile-bio');
-      bioEl.textContent = bio || '自己紹介はまだありません';
-      bioEl.style.color = bio ? '#4b5563' : '#9ca3af';
+      document.getElementById('user-profile-bio').textContent = bio;
       document.getElementById('user-profile-follow-counts').textContent = `フォロー中 ${followingCount} ・ フォロワー ${followerCount}`;
       applyAvatarDisplay(
         document.getElementById('user-profile-avatar-img'),
@@ -4981,28 +4984,22 @@
 
       // 訪れたお店一覧（Instagram風のグリッド表示）
       const listEl = document.getElementById('user-profile-visits-list');
-      listEl.className = 'user-profile-grid';
       if (!visitRows || visitRows.length === 0) {
-        listEl.className = 'user-profile-empty';
-        listEl.innerHTML = '公開されている記録がありません';
+        listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;">公開されている記録がありません</div>';
         return;
       }
+      listEl.style.display = 'grid';
+      listEl.style.gridTemplateColumns = 'repeat(3, 1fr)';
+      listEl.style.gap = '4px';
       listEl.innerHTML = '';
       visitRows.forEach(v => {
         const shop = (typeof shops !== 'undefined' ? shops : []).find(s => s.id === v.shop_id);
         const shopName = shop?.name || v.shop_id;
         communityVisitCache[v.id] = { ...v, shopName, displayName: name || '' };
         const cell = document.createElement('div');
-        cell.className = 'user-profile-grid-cell' + (v.photo_url ? '' : ' empty-photo');
-        cell.setAttribute('role', 'button');
-        cell.setAttribute('aria-label', `${shopName || '投稿'}の投稿詳細を開く`);
-        if (v.photo_url) {
-          cell.innerHTML = `<img src="${v.photo_url}" loading="lazy" alt="${escapeHtml(shopName || '投稿写真')}">${(v.photo_urls && v.photo_urls.length > 1) ? `<span class="profile-grid-badge">${v.photo_urls.length}</span>` : ''}`;
-        } else {
-          cell.textContent = '🍜';
-        }
-        // プロフィール内の投稿写真は、同じプロフィールシート内で投稿詳細へ画面遷移する
-        cell.onclick = () => openCommunityVisitFromProfile(v.id);
+        cell.style.cursor = 'pointer';
+        cell.innerHTML = postPhotoHtml(v.photo_url, 'border-radius:4px;');
+        cell.onclick = () => { closeCommunityModal(); showShopDetail(v.shop_id); };
         listEl.appendChild(cell);
       });
     }
@@ -5052,7 +5049,7 @@
       if (!listEl || !supabaseClient) return;
       listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;">読み込み中...</div>';
       try {
-        const { data: visitRows, error } = await supabaseClient
+        const { data: visitRowsRaw, error } = await supabaseClient
           .from('visits')
           .select('id, visited_at, rating, memo, order_text, options, noodle_firmness, flavor_intensity, oil_amount, weather, temperature, wait_minutes, user_id, created_at')
           .eq('shop_id', shopId)
@@ -5060,6 +5057,9 @@
           .order('created_at', { ascending: false })
           .limit(30);
         if (error) throw error;
+
+        // ブロックしたユーザーの記録は表示しない
+        const visitRows = (visitRowsRaw || []).filter(v => !blockedUserIds.has(v.user_id));
 
         if (!visitRows || visitRows.length === 0) {
           listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;">まだ公開されている記録がありません</div>';
@@ -5384,7 +5384,7 @@
         const from = feedPage * FEED_PAGE_SIZE;
         const to = from + FEED_PAGE_SIZE - 1;
 
-        const { data: visitRows, error } = await supabaseClient
+        const { data: visitRowsRaw, error } = await supabaseClient
           .from('visits')
           .select('id, shop_id, visited_at, rating, memo, order_text, options, noodle_firmness, flavor_intensity, oil_amount, weather, temperature, wait_minutes, user_id, created_at')
           .eq('is_public', true)
@@ -5392,20 +5392,31 @@
           .range(from, to);
         if (error) throw error;
 
+        // ブロックしたユーザーの投稿は表示しない
+        const visitRows = (visitRowsRaw || []).filter(v => !blockedUserIds.has(v.user_id));
+        // 次ページの有無は「除外前の取得件数」で判断する（ブロックで20件未満になっても
+        // サーバー側にはまだ続きがあるため）
+        const rawCount = (visitRowsRaw || []).length;
+
         if (loadingEl) loadingEl.remove();
 
-        if (isFirst) {
-          listEl.innerHTML = '';
-          if (!visitRows || visitRows.length === 0) {
-            listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:24px 0;">まだ公開されている記録がありません</div>';
-            feedHasMore = false;
-            return;
-          }
-        }
+        if (isFirst) listEl.innerHTML = '';
 
-        // 20件未満なら次ページなし
-        if (!visitRows || visitRows.length < FEED_PAGE_SIZE) {
+        // サーバーが返した生件数が1ページ未満なら、これ以上ページは無い
+        if (rawCount < FEED_PAGE_SIZE) {
           feedHasMore = false;
+        }
+        feedPage++;
+
+        // 初回で、ブロック除外の結果このページに表示できる投稿が無い場合：
+        // まだ後続ページがあるなら続けて読み、無ければ空メッセージを出す
+        if (isFirst && visitRows.length === 0) {
+          if (feedHasMore) {
+            feedIsLoading = false;
+            return loadFeedPage(true);
+          }
+          listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:24px 0;">まだ公開されている記録がありません</div>';
+          return;
         }
 
         if (visitRows && visitRows.length > 0) {
@@ -5439,26 +5450,28 @@
 
             const card = document.createElement('div');
             card.className = 'feed-post-card';
+            card.dataset.userId = v.user_id;
             communityVisitCache[v.id] = { ...v, shopName, displayName: name || '' };
-            // 投稿カード全体はタップしても何もしない。店舗詳細は店名タップから開く。
-            card.onclick = null;
+            card.onclick = () => showShopDetail(v.shop_id);
             const shopMeta = [shop?.area, shop?.station].filter(Boolean).join('・');
+            const isOwnPost = currentUser && v.user_id === currentUser.id;
             card.innerHTML = `
               ${feedCardBodyHtml(v, name, avatarUrl, shopName, shopMeta)}
               <div class="feed-actions">
                 <button onclick="event.stopPropagation(); toggleLike('${v.id}', this)" data-liked="${liked ? '1' : '0'}" class="feed-action-cell feed-like-btn">
                   <svg class="feed-action-icon like-icon ${liked ? 'filled' : ''}" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"></path></svg><span class="like-count">${likeCount}</span>
                 </button>
-                <button onclick="event.stopPropagation(); toggleFeedBookmarkUI(this)" data-saved="0" class="feed-action-cell feed-bookmark-btn" title="保存">
-                  <svg class="feed-action-icon bookmark-icon" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg><span>保存</span>
+                <button onclick="event.stopPropagation(); toggleFeedBookmarkUI(this, '${v.id}')" data-saved="${bookmarkedVisitIds.has(v.id) ? '1' : '0'}" class="feed-action-cell feed-bookmark-btn" title="保存">
+                  <svg class="feed-action-icon bookmark-icon ${bookmarkedVisitIds.has(v.id) ? 'filled' : ''}" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg><span>保存</span>
                 </button>
                 <div class="feed-action-cell feed-relative-time">${formatFeedRelativeTime(v.created_at || v.visited_at)}</div>
+                ${isOwnPost ? '' : `<button onclick="event.stopPropagation(); openFeedPostMenu('${v.id}', '${v.user_id}', this)" class="feed-action-cell feed-more-btn" title="その他" aria-label="その他の操作">
+                  <svg class="feed-action-icon" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+                </button>`}
               </div>
             `;
             listEl.appendChild(card);
           });
-
-          feedPage++;
         }
 
         // 次ページがあれば、末尾に監視用の番兵要素を設置
@@ -5498,6 +5511,61 @@
         }
       }, { threshold: 0.1 });
       feedObserver.observe(sentinel);
+    }
+
+    // 投稿カードの「⋯」メニュー（通報・ブロック）を表示する
+    function openFeedPostMenu(visitId, userId, btnEl) {
+      const cached = communityVisitCache[visitId] || {};
+      const name = cached.displayName || '';
+      showFeedActionSheet([
+        {
+          label: 'この投稿を通報する',
+          danger: true,
+          onSelect: () => reportVisit(visitId, userId)
+        },
+        {
+          label: name ? `「${name}」をブロック` : 'このユーザーをブロック',
+          danger: true,
+          onSelect: () => blockUser(userId, name)
+        }
+      ]);
+    }
+
+    // 汎用アクションシート（ボトムシート型）。項目 [{label, danger, onSelect}] を受け取る。
+    function showFeedActionSheet(items) {
+      const existing = document.getElementById('feed-action-sheet-overlay');
+      if (existing) existing.remove();
+
+      const overlay = document.createElement('div');
+      overlay.id = 'feed-action-sheet-overlay';
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:4000;display:flex;align-items:flex-end;justify-content:center;';
+
+      const sheet = document.createElement('div');
+      sheet.style.cssText = 'background:#fff;width:100%;max-width:500px;border-radius:16px 16px 0 0;padding:8px 0 max(8px,env(safe-area-inset-bottom));box-shadow:0 -4px 24px rgba(0,0,0,0.15);';
+
+      items.forEach(item => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = item.label;
+        btn.style.cssText = `display:block;width:100%;padding:16px 20px;background:none;border:none;font-size:16px;text-align:center;cursor:pointer;color:${item.danger ? '#dc2626' : '#111827'};`;
+        btn.onclick = () => { overlay.remove(); item.onSelect(); };
+        sheet.appendChild(btn);
+      });
+
+      const sep = document.createElement('div');
+      sep.style.cssText = 'height:6px;background:#f3f4f6;';
+      sheet.appendChild(sep);
+
+      const cancel = document.createElement('button');
+      cancel.type = 'button';
+      cancel.textContent = 'キャンセル';
+      cancel.style.cssText = 'display:block;width:100%;padding:16px 20px;background:none;border:none;font-size:16px;font-weight:600;text-align:center;cursor:pointer;color:#374151;';
+      cancel.onclick = () => overlay.remove();
+      sheet.appendChild(cancel);
+
+      overlay.appendChild(sheet);
+      overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+      document.body.appendChild(overlay);
     }
 
     async function toggleLike(visitId, btnEl) {
@@ -5829,7 +5897,7 @@
         currentUser = data?.session?.user || null;
         updateAccountMenuSubtitle();
         updateAccountModalUI();
-        if (currentUser) checkOnboardingThenSync();
+        if (currentUser) { await loadBlockedUsers(); await loadBookmarks(); checkOnboardingThenSync(); }
       } catch (e) {
         console.error('認証状態の取得に失敗:', e);
       }
@@ -5839,7 +5907,10 @@
         updateAccountMenuSubtitle();
         updateAccountModalUI();
         if (event === 'SIGNED_IN' && currentUser) {
-          checkOnboardingThenSync();
+          Promise.all([loadBlockedUsers(), loadBookmarks()]).then(() => checkOnboardingThenSync());
+        } else if (event === 'SIGNED_OUT') {
+          blockedUserIds = new Set();
+          bookmarkedVisitIds = new Set();
         }
       });
     }
@@ -8805,6 +8876,19 @@
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
     }
+
+    // onclick="fn('...')" のように、HTML属性値の中に埋め込むJS文字列リテラル用のエスケープ。
+    // バックスラッシュ・引用符・改行をJSエスケープしたうえで、HTML属性用に " と & も無害化する。
+    function jsStr(str) {
+      return String(str || "")
+        .replace(/\\/g, "\\\\")
+        .replace(/'/g, "\\'")
+        .replace(/\r?\n/g, "\\n")
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
     
     function jumpToLineageSection(chip) {
       const sectionId = chip.dataset.section;
@@ -10055,7 +10139,7 @@
       currentShop = shops.find(s => s.id === shopId);
       if (!currentShop) return;
       
-      if (isAuthBetaEnabled()) loadShopCommunityVisits(shopId);
+      loadShopCommunityVisits(shopId);
       
       const visitData = visits[shopId] || { logs: [], wantToGo: false };
       const openStatus = getOpenStatus(currentShop.openingHours);
@@ -10923,43 +11007,6 @@
     }
     
     // Record Modal
-    function restoreRecordModalFooter() {
-      const footer = document.querySelector('#record-modal .record-modal-footer');
-      if (!footer) return;
-      footer.innerHTML = `
-        <div style="display:flex;gap:8px;">
-          <button type="button" id="save-visit-btn" class="btn btn-primary" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;">
-            <svg style="width:18px;height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-              <polyline points="17 21 17 13 7 13 7 21"/>
-              <polyline points="7 3 7 8 15 8"/>
-            </svg>
-            保存
-          </button>
-          <button type="button" id="save-and-tweet-btn" class="btn" style="flex:1;background:#000000;color:white;border:none;display:flex;align-items:center;justify-content:center;gap:6px;">
-            <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-            </svg>
-            保存してシェア
-          </button>
-        </div>
-        <div style="text-align:center;font-size:12px;color:#6b7280;margin-top:4px;">
-          Xの投稿画面で写真を追加してください。
-        </div>
-      `;
-      // イベントリスナーを再設定
-      document.getElementById('save-visit-btn').addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        saveVisitRecord(e);
-      });
-      document.getElementById('save-and-tweet-btn').addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        saveAndTweet(e);
-      });
-    }
-
     function restoreRecordModalFooter() {
       const footer = document.querySelector('#record-modal .record-modal-footer');
       if (!footer) return;
@@ -12520,12 +12567,12 @@
   </div>
 
   <div id="community-modal" class="modal" onclick="closeCommunityModal()">
-    <div class="modal-content community-modal-content" onclick="event.stopPropagation()" style="max-width:500px;border-radius:16px;padding:0;max-height:90vh;display:flex;flex-direction:column;">
+    <div class="modal-content" onclick="event.stopPropagation()" style="max-width:500px;border-radius:16px;padding:0;max-height:90vh;display:flex;flex-direction:column;">
 
-      <!-- 共通ヘッダー：プロフィール/投稿詳細タイトル＋×ボタン。ビュー切替はしない -->
-      <div class="community-modal-header">
-        <button id="community-modal-user-btn" class="community-modal-title-btn" type="button" onclick="toggleCommunityModalView()">プロフィール</button>
-        <button class="community-modal-close-btn" type="button" onclick="closeCommunityModal()">×</button>
+      <!-- 共通ヘッダー：ユーザー名ボタン（ビュー切り替え）＋×ボタン -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;flex-shrink:0;border-bottom:1px solid #f3f4f6;">
+        <button id="community-modal-user-btn" onclick="toggleCommunityModalView()" style="font-size:15px;font-weight:700;color:#111827;background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;gap:6px;"></button>
+        <button onclick="closeCommunityModal()" style="width:30px;height:30px;border-radius:50%;border:none;background:#f3f4f6;color:#6b7280;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">×</button>
       </div>
 
       <!-- 投稿詳細ビュー -->
@@ -12538,22 +12585,22 @@
       </div>
 
       <!-- プロフィールビュー -->
-      <div id="community-profile-view" class="community-profile-view">
-        <div class="community-profile-body">
-          <div id="user-profile-loading" class="community-profile-loading">読み込み中...</div>
+      <div id="community-profile-view" style="overflow-y:auto;flex:1;display:none;">
+        <div class="modal-body" style="padding:20px;">
+          <div id="user-profile-loading" style="text-align:center;color:#9ca3af;font-size:13px;padding:24px 0;">読み込み中...</div>
           <div id="user-profile-content" style="display:none;">
-            <div class="community-profile-hero">
-              <img id="user-profile-avatar-img" src="" style="display:none;" />
-              <div id="user-profile-avatar-emoji" style="background:#f3f4f6;display:none;align-items:center;justify-content:center;font-size:34px;flex-shrink:0;"></div>
-              <div style="min-width:0;">
-                <div id="user-profile-name" class="community-profile-name"></div>
-                <div id="user-profile-follow-counts" class="community-profile-counts"></div>
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;">
+              <img id="user-profile-avatar-img" src="" style="width:64px;height:64px;border-radius:50%;display:none;object-fit:cover;flex-shrink:0;" />
+              <div id="user-profile-avatar-emoji" style="width:64px;height:64px;border-radius:50%;background:#f3f4f6;display:none;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;"></div>
+              <div style="flex:1;min-width:0;">
+                <div id="user-profile-name" style="font-weight:700;font-size:18px;color:#111827;"></div>
+                <div id="user-profile-follow-counts" style="font-size:13px;color:#6b7280;margin-top:2px;"></div>
               </div>
             </div>
-            <div id="user-profile-bio" class="community-profile-bio"></div>
-            <div id="user-profile-follow-btn-wrap" class="community-profile-follow-wrap"></div>
-            <div class="community-profile-section-title">公開投稿</div>
-            <div id="user-profile-visits-list" class="user-profile-grid"></div>
+            <div id="user-profile-bio" style="font-size:14px;color:#4b5563;line-height:1.5;margin-bottom:14px;"></div>
+            <div id="user-profile-follow-btn-wrap" style="margin-bottom:20px;"></div>
+            <div style="font-weight:700;font-size:14px;color:#111827;margin-bottom:10px;border-top:1px solid #f3f4f6;padding-top:14px;">訪れたお店（公開記録）</div>
+            <div id="user-profile-visits-list"></div>
           </div>
         </div>
       </div>
@@ -12660,11 +12707,27 @@
           ">クラウドの内容を今すぐ再取得する（通常は自動で同期されます）</button>
           <div style="font-size:11px;color:#9ca3af;text-align:center;margin-bottom:10px;margin-top:-2px;">※ ログイン時に自動で同期されるので、通常は押す必要はありません</div>
           <div id="restore-cloud-status" style="font-size:12px;color:#6b7280;text-align:center;margin-bottom:16px;min-height:16px;"></div>
+          <button onclick="openBookmarksModal()" style="
+            width: 100%; padding: 12px 16px; margin-bottom: 10px;
+            border: 1.5px solid #e5e7eb; border-radius: 10px; background: white;
+            font-size: 15px; font-weight: 600; color: #111827; cursor: pointer;
+          ">保存した投稿</button>
           <button onclick="openProfileEditModal()" style="
             width: 100%; padding: 12px 16px; margin-bottom: 10px;
             border: 1.5px solid #e5e7eb; border-radius: 10px; background: white;
             font-size: 15px; font-weight: 600; color: #111827; cursor: pointer;
           ">プロフィールを編集</button>
+          <button onclick="openBlockedUsersModal()" style="
+            width: 100%; padding: 12px 16px; margin-bottom: 10px;
+            border: 1.5px solid #e5e7eb; border-radius: 10px; background: white;
+            font-size: 15px; font-weight: 600; color: #111827; cursor: pointer;
+          ">ブロック中のユーザー</button>
+          <a href="mailto:iekei.map.app@gmail.com?subject=%E5%AE%B6%E7%B3%BB%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%B3map%20%E3%81%8A%E5%95%8F%E3%81%84%E5%90%88%E3%82%8F%E3%81%9B" style="
+            display:block; width: 100%; padding: 12px 16px; margin-bottom: 10px; box-sizing:border-box;
+            border: 1.5px solid #e5e7eb; border-radius: 10px; background: white;
+            font-size: 15px; font-weight: 600; color: #111827; cursor: pointer;
+            text-align:center; text-decoration:none;
+          ">お問い合わせ</a>
           <button onclick="signOutAccount()" style="
             width: 100%; padding: 12px 16px;
             border: 1.5px solid #fecaca; border-radius: 10px; background: #fef2f2;
@@ -12681,6 +12744,39 @@
           </div>
         </div>
 
+      </div>
+    </div>
+  </div>
+
+  <!-- ブロック中ユーザー管理モーダル -->
+  <div id="blocked-users-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="font-size: 18px; font-weight: 700;">ブロック中のユーザー</h2>
+        <button onclick="closeBlockedUsersModal()" style="
+          width: 32px; height: 32px; border-radius: 50%; border: none;
+          background: #f3f4f6; color: #6b7280; font-size: 20px; cursor: pointer;
+          display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        ">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 16px 20px;">
+        <div id="blocked-users-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="bookmarks-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="font-size: 18px; font-weight: 700;">保存した投稿</h2>
+        <button onclick="closeBookmarksModal()" style="
+          width: 32px; height: 32px; border-radius: 50%; border: none;
+          background: #f3f4f6; color: #6b7280; font-size: 20px; cursor: pointer;
+          display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        ">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 16px 20px;">
+        <div id="bookmarks-list" style="display:flex;flex-direction:column;gap:10px;"></div>
       </div>
     </div>
   </div>
