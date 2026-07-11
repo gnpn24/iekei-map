@@ -2974,6 +2974,14 @@
       margin-bottom: 4px;
       cursor: pointer;
       letter-spacing: -0.2px;
+      display: inline-block;
+      text-decoration: underline;
+      text-decoration-color: #c92232;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 3px;
+    }
+    .feed-shop-name:active {
+      opacity: 0.6;
     }
     .feed-shop-meta {
       font-size: 13px;
@@ -5683,7 +5691,7 @@
             card.className = 'feed-post-card';
             card.dataset.userId = v.user_id;
             communityVisitCache[v.id] = { ...v, shopName, displayName: name || '' };
-            card.onclick = () => showShopDetail(v.shop_id);
+            // カード全体のクリック反応は無し（店名タップでのみ店舗詳細を開く）
             const shopMeta = [shop?.area, shop?.station].filter(Boolean).join('・');
             const isOwnPost = currentUser && v.user_id === currentUser.id;
             card.innerHTML = `
