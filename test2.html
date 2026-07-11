@@ -2452,6 +2452,10 @@
     #tab-lineage {
       padding-bottom: 0;
     }
+
+    #lineage-sections {
+      padding-bottom: calc(var(--bottom-nav-height, 72px) + 88px);
+    }
     
     .lineage-info-left {
       display: flex;
@@ -4192,7 +4196,7 @@
         if (cm && cm.classList.contains('active')) closeCommunityModal();
       } catch (e) {
         console.error('ブロックエラー:', e);
-        await showCustomAlert('ブロックに失敗しました。時間をおいて再度お試しください。');
+        await showCustomAlert('【診断】ブロック失敗\ncode: ' + (e?.code || 'なし') + '\nmessage: ' + (e?.message || String(e)) + '\ndetails: ' + (e?.details || 'なし') + '\nhint: ' + (e?.hint || 'なし'));
       }
     }
 
@@ -4939,7 +4943,7 @@
         // 失敗したらUIを元に戻す
         btnEl.dataset.saved = saved ? '1' : '0';
         if (iconEl) iconEl.classList.toggle('filled', saved);
-        await showCustomAlert('保存に失敗しました。時間をおいて再度お試しください。');
+        await showCustomAlert('【診断】保存失敗\ncode: ' + (e?.code || 'なし') + '\nmessage: ' + (e?.message || String(e)) + '\ndetails: ' + (e?.details || 'なし') + '\nhint: ' + (e?.hint || 'なし'));
       }
     }
 
