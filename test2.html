@@ -2852,13 +2852,7 @@
       border-radius: 24px;
       overflow: hidden;
       margin-bottom: 16px;
-      cursor: pointer;
       box-shadow: 0 10px 24px rgba(80, 40, 24, 0.10);
-      transition: transform .12s ease, box-shadow .12s ease;
-    }
-    .feed-post-card:active {
-      transform: scale(0.992);
-      box-shadow: 0 6px 16px rgba(80, 40, 24, 0.10);
     }
     .feed-post-main {
       padding: 18px 18px 0;
@@ -2976,7 +2970,7 @@
       letter-spacing: -0.2px;
       display: inline-block;
       text-decoration: underline;
-      text-decoration-color: #c92232;
+      text-decoration-color: #111827;
       text-decoration-thickness: 2px;
       text-underline-offset: 3px;
     }
@@ -3018,6 +3012,7 @@
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
       background: #2a1a16;
+      /* touch-action は下の .feed-photo-wrap 等の一括指定（pan-x pan-y）に集約 */
     }
     .feed-photo-swipe-view::-webkit-scrollbar {
       display: none;
@@ -3319,7 +3314,6 @@
       -webkit-tap-highlight-color: rgba(0,0,0,0) !important;
       tap-highlight-color: rgba(0,0,0,0) !important;
     }
-    .feed-post-card,
     .feed-map-btn,
     .feed-photo-toggle,
     .feed-action-cell,
@@ -3327,6 +3321,26 @@
       touch-action: manipulation;
       -webkit-touch-callout: none;
       outline: none !important;
+    }
+    .feed-post-card {
+      touch-action: auto;
+      -webkit-touch-callout: none;
+      outline: none !important;
+    }
+    .feed-photo-wrap,
+    .feed-photo-swipe-view,
+    .feed-photo-swipe-view img {
+      /* pan-x だけだと縦方向のパンが禁止され、写真の上から
+         フィード全体を縦スクロールできなくなる。
+         pan-x pan-y にすると、指の動きの方向に応じて
+         横=写真スワイプ / 縦=フィードスクロール が自動で振り分けられる */
+      touch-action: pan-x pan-y !important;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+    .feed-photo-swipe-view {
+      overscroll-behavior-x: contain;
     }
     .feed-post-card:focus,
     .feed-post-card:focus-visible,
@@ -4020,8 +4034,15 @@
           </div>
           
           <div class="form-group" style="margin-top:16px;">
-            <label class="form-label">メモ</label>
-            <textarea class="form-input" id="input-memo" placeholder="味の感想など..."></textarea>
+            <label class="form-label">コメント</label>
+            <div style="font-size:12px;color:#6b7280;margin-bottom:6px;">記録を公開すると、みんなの投稿に表示されます</div>
+            <textarea class="form-input" id="input-comment" placeholder="味の感想など..."></textarea>
+          </div>
+
+          <div class="form-group" style="margin-top:16px;">
+            <label class="form-label">自分メモ</label>
+            <div style="font-size:12px;color:#6b7280;margin-bottom:6px;">自分だけが見られます。公開されません</div>
+            <textarea class="form-input" id="input-memo" placeholder="次回は硬めにする、駐車場は裏 など..."></textarea>
           </div>
 
           <div class="form-group" id="input-public-wrap" style="margin-top:8px;display:none;">
@@ -4112,6 +4133,36 @@
     let currentUser = null;
     let currentProfile = null; // profilesテーブルの自分の行（display_name, avatar_url, bio等）
     let isSyncingToCloud = false;
+    let automaticCloudSyncTimer = null;
+    let cloudRefreshPromise = null;
+    let lastCloudRefreshAt = 0;
+    let hasStartedCloudRefresh = false;
+    const CLOUD_REFRESH_INTERVAL_MS = 60 * 1000;
+
+    // 訪問記録は端末キャッシュを先に表示し、ログイン後にクラウドとの差分を反映する。
+    // iOSではSwiftからのUserDefaults復元が非同期なので、初回同期前に完了を待つ。
+    const isNativeApp = !!(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.saveVisits);
+    let resolveLocalVisitsReady;
+    let localVisitsReadyResolved = !isNativeApp;
+    const localVisitsReady = new Promise(resolve => {
+      resolveLocalVisitsReady = resolve;
+      if (!isNativeApp) resolve();
+    });
+
+    function markLocalVisitsReady() {
+      if (localVisitsReadyResolved) return;
+      localVisitsReadyResolved = true;
+      resolveLocalVisitsReady();
+    }
+
+    if (isNativeApp) {
+      setTimeout(() => {
+        if (!localVisitsReadyResolved) {
+          console.warn('端末データの読み込み待機がタイムアウトしました');
+          markLocalVisitsReady();
+        }
+      }, 5000);
+    }
 
     // ===== 通報・ブロック（App Store 1.2 UGC対応）=====
     // 自分がブロックしているユーザーIDの集合。ログイン時に読み込む。
@@ -4323,7 +4374,7 @@
         // 対象の投稿を取得
         const { data: visitRows } = await supabaseClient
           .from('visits')
-          .select('id, shop_id, visited_at, rating, memo, order_text, options, weather, temperature, wait_minutes, user_id, created_at')
+          .select('id, shop_id, visited_at, rating, comment, order_text, options, weather, temperature, wait_minutes, user_id, created_at')
           .in('id', visitIds);
         const visitMap = new Map((visitRows || []).map(v => [v.id, v]));
 
@@ -4359,7 +4410,7 @@
             </div>
             <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:2px;">${escapeHtml(shopName)}</div>
             ${orderLine ? `<div style="font-size:13px;color:#374151;">🍜 ${escapeHtml(orderLine)}</div>` : ''}
-            ${v.memo ? `<div style="font-size:13px;color:#4b5563;line-height:1.5;margin-top:4px;">${escapeHtml(v.memo)}</div>` : ''}
+            ${v.comment ? `<div style="font-size:13px;color:#4b5563;line-height:1.5;margin-top:4px;">${escapeHtml(v.comment)}</div>` : ''}
           `;
           row.onclick = () => { closeBookmarksModal(); showShopDetail(v.shop_id); };
           listEl.appendChild(row);
@@ -4623,13 +4674,107 @@
       await showCustomAlert(message || 'ログインに失敗しました。時間をおいて再度お試しください。');
     }
 
+    // 公開コメントの禁止ワードフィルタ（UGCの最低限の投稿前チェック）
+    // 完全な検閲ではなく、明確な誹謗・差別・わいせつ表現の投稿を抑止する目的。
+    // 通報・ブロックと併せてApp Store 1.2の体制要件を満たすための一次フィルタ。
+    const NG_WORDS = [
+      '死ね','しね','殺す','ころす','きもい','キモい','ブス','ぶす','デブ',
+      'カス','くたばれ','池沼','きちがい','キチガイ','障害者','ガイジ',
+      'まんこ','ちんこ','セックス','レイプ','ファック','fuck','shit',
+      'アホ','あほ','馬鹿野郎','ばか野郎','クズ','くず野郎'
+    ];
+    function containsNgWord(text) {
+      if (!text) return null;
+      const lower = String(text).toLowerCase();
+      for (const w of NG_WORDS) {
+        if (lower.includes(w.toLowerCase())) return w;
+      }
+      return null;
+    }
+
+    // お問い合わせ：mailto を試み、WKWebViewで開けない場合に備えて
+    // メールアドレスをクリップボードにコピーして案内するフォールバックを用意
+    function handleContactClick(event) {
+      const email = 'iekei.map@gmail.com';
+      // まず通常の mailto を試す（多くの環境ではこれで開く）
+      // 開けなかった場合のフォールバックとして、少し遅らせてコピー案内を出す
+      let opened = false;
+      try {
+        window.location.href = 'mailto:' + email + '?subject=' + encodeURIComponent('家系ラーメンmap お問い合わせ');
+        opened = true;
+      } catch (e) {
+        opened = false;
+      }
+      // mailtoが無反応な環境向けフォールバック（アプリ内WebView等）
+      setTimeout(async () => {
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(email);
+            await showCustomAlert('お問い合わせ先メールアドレスをコピーしました:\n' + email + '\n\nメールアプリからご連絡ください。');
+          } else {
+            await showCustomAlert('お問い合わせ先:\n' + email + '\n\nこのアドレスへメールでご連絡ください。');
+          }
+        } catch (e) { /* コピー不可時も無害に無視 */ }
+      }, 600);
+      event.preventDefault();
+      return false;
+    }
+
     async function signOutAccount() {
       if (!supabaseClient) return;
-      await supabaseClient.auth.signOut();
+
+      const confirmed = await showCustomConfirm('ログアウトします。よろしいですか？\nこの端末の記録は削除され、再ログイン時にクラウドから復元されます。');
+      if (!confirmed) return;
+
+      // 1. ログアウト前に未同期の記録をクラウドへ同期する
+      if (currentUser) {
+        const result = await syncVisitsToCloud();
+        // 2. 同期に1件でも失敗したらログアウトを中止（端末データ消失を防ぐ）
+        if (result && result.ok === false) {
+          await showCustomAlert('未同期の記録をクラウドに保存できませんでした。\n通信環境を確認してから、もう一度ログアウトしてください。');
+          return;
+        }
+      }
+
+      // 3. Supabaseのサインアウト。失敗したら中止
+      const { error: signOutError } = await supabaseClient.auth.signOut();
+      if (signOutError) {
+        console.error('サインアウトエラー:', signOutError);
+        await showCustomAlert('ログアウトに失敗しました。時間をおいて再度お試しください。');
+        return;
+      }
+
+      // 4. サインアウト成功後、端末内の写真とローカル記録を削除
+      try {
+        for (const shopId of Object.keys(visits)) {
+          const logs = visits[shopId]?.logs;
+          if (!Array.isArray(logs)) continue;
+          logs.forEach(log => {
+            if (Array.isArray(log.photos)) {
+              log.photos.forEach(photo => deletePhotoFile(photo));
+            }
+          });
+        }
+      } catch (e) { console.error('端末写真の削除エラー:', e); }
+
+      visits = {};
+      await saveVisits();
+
+      // メモリ上の状態もクリア
       currentUser = null;
       currentProfile = null;
+      blockedUserIds = new Set();
+      bookmarkedVisitIds = new Set();
       updateAccountMenuSubtitle();
       updateAccountModalUI();
+
+      // 画面を再描画
+      try {
+        if (typeof updateMarkers === 'function') updateMarkers();
+        if (typeof renderShopList === 'function') renderShopList();
+        const feedTabEl = document.getElementById('tab-feed');
+        if (feedTabEl && feedTabEl.classList.contains('active')) loadCommunityFeed();
+      } catch (e) { console.error('ログアウト後の再描画エラー:', e); }
     }
 
     function updateAccountMenuSubtitle() {
@@ -4782,7 +4927,7 @@
         ${starsStr ? `<div style="font-size:13px;color:#f59e0b;margin-bottom:2px;">${starsStr}</div>` : ''}
         ${v.order_text ? `<div style="font-size:13px;color:#1f2937;margin-bottom:2px;">${escapeHtml(v.order_text)}${v.options ? ' + ' + escapeHtml(v.options) : ''}</div>` : ''}
         ${customize ? `<div style="font-size:12px;color:#6b7280;margin-bottom:2px;">${escapeHtml(customize)}</div>` : ''}
-        ${v.memo ? `<div style="font-size:13px;color:#4b5563;line-height:1.4;margin-bottom:4px;">${escapeHtml(v.memo)}</div>` : ''}
+        ${v.comment ? `<div style="font-size:13px;color:#4b5563;line-height:1.4;margin-bottom:4px;">${escapeHtml(v.comment)}</div>` : ''}
       `;
     }
 
@@ -4988,7 +5133,7 @@
           ${feedPhotosHtml(v)}
 
           ${orderLine ? `<div class="feed-order-line">🍜 ${escapeHtml(orderLine)}</div>` : ''}
-          ${v.memo ? `<div class="feed-memo">${escapeHtml(v.memo)}</div><button class="feed-memo-more" onclick="event.stopPropagation(); expandFeedMemo(this)">続きを読む</button>` : ''}
+          ${v.comment ? `<div class="feed-memo">${escapeHtml(v.comment)}</div><button class="feed-memo-more" onclick="event.stopPropagation(); expandFeedMemo(this)">続きを読む</button>` : ''}
         </div>
       `;
     }
@@ -5083,7 +5228,7 @@
           noodleFirmness: v.noodle_firmness,
           flavorIntensity: v.flavor_intensity,
           oilAmount: v.oil_amount,
-          memo: v.memo
+          memo: v.comment
         })}
         ${reportBlockHTML}
       `;
@@ -5156,7 +5301,7 @@
 
         const { data: visitRows } = await supabaseClient
           .from('visits')
-          .select('id, shop_id, visited_at, rating, memo, order_text, options, noodle_firmness, flavor_intensity, oil_amount, weather, temperature, wait_minutes, created_at')
+          .select('id, shop_id, visited_at, rating, comment, order_text, options, noodle_firmness, flavor_intensity, oil_amount, weather, temperature, wait_minutes, created_at')
           .eq('user_id', userId)
           .eq('is_public', true)
           .lte('visited_on', getJstTodayStr())
@@ -5279,7 +5424,7 @@
       try {
         const { data: visitRowsRaw, error } = await supabaseClient
           .from('visits')
-          .select('id, visited_at, rating, memo, order_text, options, noodle_firmness, flavor_intensity, oil_amount, weather, temperature, wait_minutes, user_id, created_at')
+          .select('id, visited_at, rating, comment, order_text, options, noodle_firmness, flavor_intensity, oil_amount, weather, temperature, wait_minutes, user_id, created_at')
           .eq('shop_id', shopId)
           .eq('is_public', true)
           .lte('visited_on', getJstTodayStr())
@@ -5341,13 +5486,15 @@
                 <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
                   ${avatarHtml(avatarUrl, 22)}
                   <span onclick="event.stopPropagation(); openUserProfile('${v.user_id}')" style="font-size:12px;font-weight:600;color:#374151;cursor:pointer;">${escapeHtml(name)}</span>
-                  <span style="font-size:11px;color:#9ca3af;margin-left:auto;flex-shrink:0;">${dateStr}</span>
                 </div>
                 ${starsStr ? `<div style="font-size:12px;color:#f59e0b;margin-bottom:2px;">${starsStr}</div>` : ''}
                 ${orderLine ? `<div style="font-size:12px;color:#374151;line-height:1.4;">${escapeHtml(orderLine)}</div>` : ''}
-                ${v.memo ? `<div style="font-size:13px;color:#4b5563;line-height:1.45;margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(v.memo)}</div>` : ''}
+                ${v.comment ? `<div style="font-size:13px;color:#4b5563;line-height:1.45;margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(v.comment)}</div>` : ''}
               </div>
-              ${v.photo_url ? `<img src="${v.photo_url}" loading="lazy" style="width:64px;height:64px;object-fit:cover;border-radius:10px;flex-shrink:0;">` : ''}
+              <div style="width:96px;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+                <div style="font-size:12px;color:#9ca3af;line-height:1.2;text-align:right;white-space:nowrap;">${dateStr}</div>
+                ${v.photo_url ? `<img src="${v.photo_url}" loading="lazy" style="width:64px;height:64px;object-fit:cover;border-radius:10px;flex-shrink:0;">` : ''}
+              </div>
             </div>
             <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;">
               <button onclick="event.stopPropagation(); toggleLike('${v.id}', this)" data-liked="${liked ? '1' : '0'}" class="feed-action-cell feed-like-btn" style="padding:4px 8px;font-size:12px;">
@@ -5384,11 +5531,17 @@
     async function fetchPhotoListMapForVisits(visitIds) {
       const map = new Map();
       if (!visitIds || visitIds.length === 0) return map;
-      const { data: photoRows } = await supabaseClient
-        .from('visit_photos')
-        .select('visit_id, photo_url, created_at')
-        .in('visit_id', visitIds)
-        .order('created_at', { ascending: true });
+      const photoRows = [];
+      for (let offset = 0; offset < visitIds.length; offset += 100) {
+        const batch = visitIds.slice(offset, offset + 100);
+        const { data, error } = await supabaseClient
+          .from('visit_photos')
+          .select('visit_id, photo_url, created_at')
+          .in('visit_id', batch)
+          .order('created_at', { ascending: true });
+        if (error) throw error;
+        photoRows.push(...(data || []));
+      }
       (photoRows || []).forEach(p => {
         if (!map.has(p.visit_id)) map.set(p.visit_id, []);
         const arr = map.get(p.visit_id);
@@ -5623,7 +5776,7 @@
 
         const { data: visitRowsRaw, error } = await supabaseClient
           .from('visits')
-          .select('id, shop_id, visited_at, rating, memo, order_text, options, noodle_firmness, flavor_intensity, oil_amount, weather, temperature, wait_minutes, user_id, created_at')
+          .select('id, shop_id, visited_at, rating, comment, order_text, options, noodle_firmness, flavor_intensity, oil_amount, weather, temperature, wait_minutes, user_id, created_at')
           .eq('is_public', true)
           .lte('visited_on', getJstTodayStr())
           .order('visited_on', { ascending: false, nullsFirst: false })
@@ -5834,31 +5987,86 @@
 
     // 1件の訪問記録の写真をクラウド(Storage)にアップロードし、visit_photosテーブルに登録する。
     // 最大4枚まで（容量・通信量の節約のため）。成功したらtrueを返す。
-    async function syncLogPhotosToCloud(log) {
-      const photosToUpload = log.photos.slice(0, 4);
+    // 指定した訪問記録（_cloudId）に紐づくクラウドStorage上の写真をすべて削除する。
+    // 訪問記録を削除するとき、DBのvisits行だけでなく実画像も消すために使う。
+    async function deleteCloudPhotosForVisit(cloudId) {
+      if (!cloudId || !supabaseClient || !currentUser) return;
       try {
-        // 同じ記録の写真を一旦消してから登録し直す（再同期時の重複防止）
-        await supabaseClient.from('visit_photos').delete().eq('visit_id', log._cloudId);
+        const folder = `${currentUser.id}/${cloudId}`;
+        const { data: files } = await supabaseClient.storage.from('visit-photos').list(folder);
+        if (files && files.length > 0) {
+          const paths = files.map(f => `${folder}/${f.name}`);
+          await supabaseClient.storage.from('visit-photos').remove(paths);
+        }
+        // visit_photos テーブルの行も削除（visits削除のcascadeで消える場合もあるが明示的に）
+        await supabaseClient.from('visit_photos').delete().eq('visit_id', cloudId);
+      } catch (e) {
+        console.error('クラウド写真の削除エラー:', e);
+      }
+    }
 
-        for (let i = 0; i < photosToUpload.length; i++) {
-          const fileName = photosToUpload[i];
-          const dataUrl = await loadPhotoFromFile(fileName);
-          if (!dataUrl) continue;
-          const blob = await (await fetch(dataUrl)).blob();
+    async function syncLogPhotosToCloud(log) {
+      const photosToUpload = Array.isArray(log.photos) ? log.photos.slice(0, 4) : [];
+      try {
+        // クラウドURLを含む場合があるため、既存ファイルを消す前に画像を読み込む。
+        const photoBlobs = [];
+        for (const photoRef of photosToUpload) {
+          const dataUrl = await loadPhotoFromFile(photoRef);
+          if (!dataUrl) {
+            console.error('写真の読み込み失敗:', photoRef);
+            return false;
+          }
+          const response = await fetch(dataUrl);
+          if (!response.ok) {
+            console.error('写真の取得失敗:', response.status, photoRef);
+            return false;
+          }
+          photoBlobs.push(await response.blob());
+        }
+
+        // 同じ記録のStorageとDB行を一旦消してから登録し直す。
+        const folder = `${currentUser.id}/${log._cloudId}`;
+        const { data: existingFiles, error: listError } = await supabaseClient.storage
+          .from('visit-photos')
+          .list(folder);
+        if (listError) {
+          console.error('写真の既存ファイル確認エラー:', listError);
+          return false;
+        }
+        if (existingFiles && existingFiles.length > 0) {
+          const paths = existingFiles.map(file => `${folder}/${file.name}`);
+          const { error: removeError } = await supabaseClient.storage.from('visit-photos').remove(paths);
+          if (removeError) {
+            console.error('写真の既存ファイル削除エラー:', removeError);
+            return false;
+          }
+        }
+
+        const { error: delError } = await supabaseClient.from('visit_photos').delete().eq('visit_id', log._cloudId);
+        if (delError) {
+          console.error('写真の既存レコード削除エラー:', delError);
+          return false;
+        }
+
+        for (let i = 0; i < photoBlobs.length; i++) {
           const path = `${currentUser.id}/${log._cloudId}/${i}.jpg`;
           const { error: uploadError } = await supabaseClient.storage
             .from('visit-photos')
-            .upload(path, blob, { upsert: true, contentType: 'image/jpeg' });
+            .upload(path, photoBlobs[i], { upsert: true, contentType: 'image/jpeg' });
           if (uploadError) {
             console.error('写真アップロードエラー:', uploadError);
-            continue;
+            return false;
           }
           const { data: urlData } = supabaseClient.storage.from('visit-photos').getPublicUrl(path);
-          await supabaseClient.from('visit_photos').insert({
+          const { error: insertError } = await supabaseClient.from('visit_photos').insert({
             visit_id: log._cloudId,
             user_id: currentUser.id,
             photo_url: urlData.publicUrl
           });
+          if (insertError) {
+            console.error('写真レコード登録エラー:', insertError);
+            return false;
+          }
         }
         return true;
       } catch (e) {
@@ -5874,6 +6082,10 @@
     // 写真ファイルを先に削除 → 自分のアカウント(auth.users)を削除（連動して全データが自動削除される）→ ログアウト
     async function deleteAccountWithConfirm() {
       if (!supabaseClient || !currentUser) return;
+      const wasAppleUser =
+        currentUser.app_metadata?.provider === 'apple' ||
+        currentUser.app_metadata?.providers?.includes('apple') ||
+        currentUser.identities?.some(identity => identity.provider === 'apple');
       const confirmed1 = await showCustomConfirm(
         'アカウントを削除します。クラウドに保存した訪問記録・写真・プロフィール・フォロー関係など、すべてのデータが完全に削除され、元に戻せません。本当に削除しますか？'
       );
@@ -5886,12 +6098,37 @@
         const { error } = await supabaseClient.rpc('delete_own_account');
         if (error) throw error;
         await supabaseClient.auth.signOut();
+
+        // 端末側の記録・写真も削除（クラウドから消えた以上、端末にも残さない）
+        try {
+          for (const shopId of Object.keys(visits)) {
+            const logs = visits[shopId]?.logs;
+            if (!Array.isArray(logs)) continue;
+            logs.forEach(log => {
+              if (Array.isArray(log.photos)) {
+                log.photos.forEach(photo => deletePhotoFile(photo));
+              }
+            });
+          }
+        } catch (e) { console.error('端末写真の削除エラー:', e); }
+        visits = {};
+        await saveVisits();
+
         currentUser = null;
         currentProfile = null;
+        blockedUserIds = new Set();
+        bookmarkedVisitIds = new Set();
         closeAccountModal();
         updateAccountMenuSubtitle();
         updateAccountModalUI();
-        await showCustomAlert('アカウントを削除しました。ご利用ありがとうございました。');
+        try {
+          if (typeof updateMarkers === 'function') updateMarkers();
+          if (typeof renderShopList === 'function') renderShopList();
+        } catch (e) { console.error('削除後の再描画エラー:', e); }
+        const deletedMessage = wasAppleUser
+          ? 'アカウントとデータを削除しました。\n\nApple側の連携は、iPhoneの「設定」→「ユーザ名」→「Appleでサインイン」から解除できます。'
+          : 'アカウントを削除しました。ご利用ありがとうございました。';
+        await showCustomAlert(deletedMessage);
       } catch (e) {
         console.error('アカウント削除エラー:', e);
         await showCustomAlert('削除に失敗しました。時間をおいて再度お試しください。');
@@ -5900,116 +6137,237 @@
 
     // Storage上の自分のファイル（アイコン画像・訪問記録の写真）を削除する
     async function deleteAllUserStorageFiles() {
-      try {
-        await supabaseClient.storage.from('avatars').remove([`${currentUser.id}/avatar.jpg`]);
-      } catch (e) {
-        console.error('アイコン画像の削除エラー:', e);
-      }
-      try {
-        const { data: visitFolders } = await supabaseClient.storage.from('visit-photos').list(currentUser.id);
-        if (visitFolders && visitFolders.length > 0) {
-          for (const folder of visitFolders) {
-            const { data: files } = await supabaseClient.storage
-              .from('visit-photos').list(`${currentUser.id}/${folder.name}`);
-            if (files && files.length > 0) {
-              const paths = files.map(f => `${currentUser.id}/${folder.name}/${f.name}`);
-              await supabaseClient.storage.from('visit-photos').remove(paths);
-            }
-          }
+      const { error: avatarError } = await supabaseClient.storage
+        .from('avatars')
+        .remove([`${currentUser.id}/avatar.jpg`]);
+      if (avatarError) throw avatarError;
+
+      const { data: visitFolders, error: foldersError } = await supabaseClient.storage
+        .from('visit-photos')
+        .list(currentUser.id);
+      if (foldersError) throw foldersError;
+
+      for (const folder of visitFolders || []) {
+        const folderPath = `${currentUser.id}/${folder.name}`;
+        const { data: files, error: filesError } = await supabaseClient.storage
+          .from('visit-photos')
+          .list(folderPath);
+        if (filesError) throw filesError;
+
+        if (files && files.length > 0) {
+          const paths = files.map(file => `${folderPath}/${file.name}`);
+          const { error: removeError } = await supabaseClient.storage
+            .from('visit-photos')
+            .remove(paths);
+          if (removeError) throw removeError;
         }
-      } catch (e) {
-        console.error('訪問記録の写真削除エラー:', e);
       }
     }
 
-    async function restoreFromCloud() {
-      if (!supabaseClient || !currentUser) return;
-      const btn = document.getElementById('restore-cloud-btn');
-      const statusEl = document.getElementById('restore-cloud-status');
-      if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
-      if (statusEl) statusEl.textContent = '復元中...';
+    function buildLocalCloudLogMap() {
+      const map = new Map();
+      Object.entries(visits).forEach(([shopId, entry]) => {
+        if (!Array.isArray(entry?.logs)) return;
+        entry.logs.forEach((log, logIndex) => {
+          if (log?._cloudId) map.set(log._cloudId, { shopId, logIndex, log });
+        });
+      });
+      return map;
+    }
 
-      try {
-        // 自分の訪問記録を全部取得（公開/非公開どちらも）
-        const { data: visitRows, error: visitsError } = await supabaseClient
+    function addPhotoCacheVersion(url, updatedAt) {
+      if (!url || !updatedAt) return url;
+      const separator = url.includes('?') ? '&' : '?';
+      return `${url}${separator}v=${encodeURIComponent(updatedAt)}`;
+    }
+
+    function cloudVisitRowToLocalLog(row, photoUrls) {
+      return {
+        visitedAt: row.visited_at,
+        rating: row.rating,
+        waitMinutes: row.wait_minutes,
+        temperature: row.temperature,
+        weather: row.weather,
+        order: row.order_text || '',
+        options: row.options || '',
+        noodleFirmness: row.noodle_firmness || '普通',
+        flavorIntensity: row.flavor_intensity || '普通',
+        oilAmount: row.oil_amount || '普通',
+        memo: row.memo || '',
+        comment: row.comment || '',
+        isPublic: !!row.is_public,
+        photos: (photoUrls || []).map(url => addPhotoCacheVersion(url, row.updated_at)),
+        _cloudId: row.id,
+        _cloudUpdatedAt: row.updated_at,
+        _localModifiedAt: row.updated_at,
+        _cloudSynced: true,
+        _photosSynced: true
+      };
+    }
+
+    async function pullCloudVisitChanges() {
+      const metadata = [];
+      const pageSize = 500;
+      for (let from = 0; ; from += pageSize) {
+        const { data, error } = await supabaseClient
+          .from('visits')
+          .select('id, shop_id, updated_at')
+          .eq('user_id', currentUser.id)
+          .order('id', { ascending: true })
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        metadata.push(...(data || []));
+        if (!data || data.length < pageSize) break;
+      }
+
+      const remoteIds = new Set(metadata.map(row => row.id));
+      const localByCloudId = buildLocalCloudLogMap();
+      const changedIds = metadata
+        .filter(row => {
+          const local = localByCloudId.get(row.id)?.log;
+          if (!local) return true;
+          if (local._cloudSynced === false) return false;
+          return !local._cloudUpdatedAt || local._cloudUpdatedAt !== row.updated_at;
+        })
+        .map(row => row.id);
+
+      let changedRows = [];
+      for (let offset = 0; offset < changedIds.length; offset += 100) {
+        const batch = changedIds.slice(offset, offset + 100);
+        const { data, error } = await supabaseClient
           .from('visits')
           .select('*')
-          .eq('user_id', currentUser.id);
-        if (visitsError) throw visitsError;
-
-        // 写真も取得
-        const visitIds = (visitRows || []).map(v => v.id);
-        const photoMap = new Map(); // visit_id -> [url, url, ...]
-        if (visitIds.length > 0) {
-          const { data: photoRows } = await supabaseClient
-            .from('visit_photos')
-            .select('visit_id, photo_url, created_at')
-            .in('visit_id', visitIds)
-            .order('created_at', { ascending: true });
-          (photoRows || []).forEach(p => {
-            if (!photoMap.has(p.visit_id)) photoMap.set(p.visit_id, []);
-            photoMap.get(p.visit_id).push(p.photo_url);
-          });
-        }
-
-        // 行きたい/お気に入りも取得
-        const { data: statusRows } = await supabaseClient
-          .from('shop_status')
-          .select('*')
-          .eq('user_id', currentUser.id);
-
-        let addedCount = 0;
-
-        (statusRows || []).forEach(s => {
-          if (!visits[s.shop_id]) visits[s.shop_id] = { logs: [], wantToGo: false, favorite: false };
-          visits[s.shop_id].wantToGo = visits[s.shop_id].wantToGo || !!s.want_to_go;
-          visits[s.shop_id].favorite = visits[s.shop_id].favorite || !!s.favorite;
-        });
-
-        (visitRows || []).forEach(row => {
-          if (!visits[row.shop_id]) visits[row.shop_id] = { logs: [], wantToGo: false, favorite: false };
-          const logs = visits[row.shop_id].logs;
-          const alreadyExists = logs.some(l => l._cloudId === row.id);
-          if (alreadyExists) return; // この端末に既にある記録はスキップ（重複防止）
-
-          logs.push({
-            visitedAt: row.visited_at,
-            rating: row.rating,
-            waitMinutes: row.wait_minutes,
-            temperature: row.temperature,
-            weather: row.weather,
-            order: row.order_text,
-            options: row.options,
-            noodleFirmness: row.noodle_firmness,
-            flavorIntensity: row.flavor_intensity,
-            oilAmount: row.oil_amount,
-            memo: row.memo,
-            isPublic: !!row.is_public,
-            photos: photoMap.get(row.id) || [],
-            _cloudId: row.id,
-            _cloudSynced: true,
-            _photosSynced: true
-          });
-          addedCount++;
-        });
-
-        saveVisits();
-
-        // 画面を更新
-        updateMarkers();
-        renderShopList();
-        renderFeedTab();
-        renderLineageTab();
-        renderMypageTab();
-
-        if (statusEl) statusEl.textContent = `✅ ${addedCount}件の記録を復元しました`;
-      } catch (e) {
-        console.error('クラウドからの復元エラー:', e);
-        if (statusEl) statusEl.textContent = '復元に失敗しました。もう一度お試しください。';
-      } finally {
-        if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+          .in('id', batch);
+        if (error) throw error;
+        changedRows.push(...(data || []));
       }
+
+      const photoMap = await fetchPhotoListMapForVisits(changedIds);
+      let addedCount = 0;
+      let updatedCount = 0;
+
+      changedRows.forEach(row => {
+        const existing = localByCloudId.get(row.id);
+        if (existing?.log?._cloudSynced === false) return;
+        const cloudLog = cloudVisitRowToLocalLog(row, photoMap.get(row.id) || []);
+
+        if (existing) {
+          if (existing.shopId === row.shop_id) {
+            visits[existing.shopId].logs[existing.logIndex] = cloudLog;
+          } else {
+            visits[existing.shopId].logs.splice(existing.logIndex, 1);
+            if (!visits[row.shop_id]) visits[row.shop_id] = { logs: [], wantToGo: false, favorite: false };
+            visits[row.shop_id].logs.push(cloudLog);
+          }
+          updatedCount++;
+        } else {
+          if (!visits[row.shop_id]) visits[row.shop_id] = { logs: [], wantToGo: false, favorite: false };
+          visits[row.shop_id].logs.push(cloudLog);
+          addedCount++;
+        }
+      });
+
+      // クラウドから削除された同期済み記録を端末キャッシュからも削除する。
+      const deletionsByShop = new Map();
+      localByCloudId.forEach((entry, cloudId) => {
+        if (remoteIds.has(cloudId) || entry.log._cloudSynced === false) return;
+        if (!deletionsByShop.has(entry.shopId)) deletionsByShop.set(entry.shopId, []);
+        deletionsByShop.get(entry.shopId).push(entry.log);
+      });
+      let deletedCount = 0;
+      deletionsByShop.forEach((logsToDelete, shopId) => {
+        logsToDelete.forEach(log => {
+          (log?.photos || []).forEach(photo => {
+            if (photo && !photo.startsWith('data:image') && !photo.startsWith('http://') && !photo.startsWith('https://')) {
+              deletePhotoFile(photo);
+            }
+          });
+          const index = visits[shopId]?.logs?.indexOf(log) ?? -1;
+          if (index >= 0) {
+            visits[shopId].logs.splice(index, 1);
+            deletedCount++;
+          }
+        });
+      });
+
+      // 行きたい・お気に入りは軽量なので全件取得し、OFF変更も反映できるよう置き換える。
+      const { data: statusRows, error: statusError } = await supabaseClient
+        .from('shop_status')
+        .select('shop_id, want_to_go, favorite')
+        .eq('user_id', currentUser.id);
+      if (statusError) throw statusError;
+      Object.values(visits).forEach(entry => {
+        entry.wantToGo = false;
+        entry.favorite = false;
+        entry._statusSynced = true;
+      });
+      (statusRows || []).forEach(status => {
+        if (!visits[status.shop_id]) visits[status.shop_id] = { logs: [], wantToGo: false, favorite: false };
+        visits[status.shop_id].wantToGo = !!status.want_to_go;
+        visits[status.shop_id].favorite = !!status.favorite;
+        visits[status.shop_id]._statusSynced = true;
+      });
+
+      await saveVisits();
+      updateMarkers();
+      renderShopList();
+      renderFeedTab();
+      renderLineageTab();
+      renderMypageTab();
+
+      return { addedCount, updatedCount, deletedCount };
     }
+
+    async function restoreFromCloud(options = {}) {
+      if (!supabaseClient || !currentUser) return { ok: false, reason: 'no_auth' };
+      if (cloudRefreshPromise) return cloudRefreshPromise;
+
+      const silent = options.silent === true;
+      const btn = document.getElementById('restore-cloud-btn');
+      const statusEl = document.getElementById('restore-cloud-status');
+      if (!silent && btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+      if (!silent && statusEl) statusEl.textContent = '同期中...';
+
+      cloudRefreshPromise = (async () => {
+        try {
+          await localVisitsReady;
+          hasStartedCloudRefresh = true;
+          // 端末の未同期編集を先に送ってからクラウドの更新を取り込む。
+          const pushResult = await syncVisitsToCloud();
+          if (pushResult?.ok === false) throw new Error(`push_failed:${pushResult.reason || 'unknown'}`);
+
+          const result = await pullCloudVisitChanges();
+          lastCloudRefreshAt = Date.now();
+          if (!silent && statusEl) {
+            const total = result.addedCount + result.updatedCount + result.deletedCount;
+            statusEl.textContent = total > 0
+              ? `✅ 追加${result.addedCount}件・更新${result.updatedCount}件・削除${result.deletedCount}件を反映しました`
+              : '✅ クラウドと同期済みです';
+          }
+          return { ok: true, ...result };
+        } catch (e) {
+          console.error('クラウド同期エラー:', e);
+          if (!silent && statusEl) statusEl.textContent = '同期に失敗しました。もう一度お試しください。';
+          return { ok: false, error: e };
+        } finally {
+          if (!silent && btn) { btn.disabled = false; btn.style.opacity = '1'; }
+          cloudRefreshPromise = null;
+        }
+      })();
+
+      return cloudRefreshPromise;
+    }
+
+    function refreshCloudIfNeeded() {
+      if (!currentUser || !supabaseClient) return;
+      if (Date.now() - lastCloudRefreshAt < CLOUD_REFRESH_INTERVAL_MS) return;
+      restoreFromCloud({ silent: true });
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') refreshCloudIfNeeded();
+    });
+    window.addEventListener('pageshow', refreshCloudIfNeeded);
 
     async function manualSyncNow() {
       if (!supabaseClient || !currentUser) return;
@@ -6017,7 +6375,7 @@
       const statusEl = document.getElementById('manual-sync-status');
       if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
 
-      await syncVisitsToCloud((done, total) => {
+      const result = await syncVisitsToCloud((done, total) => {
         if (!statusEl) return;
         if (total === 0) {
           statusEl.textContent = '同期する記録はありません（すべて同期済みです）';
@@ -6026,18 +6384,59 @@
         }
       });
 
+      let pullError = null;
+      if (result?.ok !== false) {
+        try {
+          await pullCloudVisitChanges();
+          lastCloudRefreshAt = Date.now();
+        } catch (e) {
+          pullError = e;
+          console.error('手動同期の取得エラー:', e);
+        }
+      }
+
       if (statusEl) {
-        statusEl.textContent = statusEl.textContent.startsWith('同期する記録はありません')
-          ? statusEl.textContent
-          : '✅ 同期が完了しました';
+        if (result?.ok === false || pullError) {
+          statusEl.textContent = '同期に失敗しました。通信環境を確認して再度お試しください。';
+        } else {
+          statusEl.textContent = statusEl.textContent.startsWith('同期する記録はありません')
+            ? statusEl.textContent
+            : '✅ 同期が完了しました';
+        }
       }
       if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
     }
 
+    function scheduleAutomaticCloudSync(delay = 250) {
+      if (!supabaseClient || !currentUser) return;
+      if (automaticCloudSyncTimer) clearTimeout(automaticCloudSyncTimer);
+      automaticCloudSyncTimer = setTimeout(async () => {
+        automaticCloudSyncTimer = null;
+        const result = await syncVisitsToCloud();
+        if (result?.reason === 'busy') scheduleAutomaticCloudSync(500);
+        if (result?.needsPull) restoreFromCloud({ silent: true });
+      }, delay);
+    }
+
+    async function touchCloudVisitUpdatedAt(log) {
+      const { data, error } = await supabaseClient
+        .from('visits')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', log._cloudId)
+        .select('updated_at')
+        .single();
+      if (error) return { ok: false, error };
+      log._cloudUpdatedAt = data.updated_at;
+      return { ok: true };
+    }
+
     async function syncVisitsToCloud(onProgress) {
-      if (!supabaseClient || !currentUser || isSyncingToCloud) return;
+      if (!supabaseClient || !currentUser) return { ok: false, reason: 'no_auth' };
+      if (isSyncingToCloud) return { ok: false, reason: 'busy' };
       isSyncingToCloud = true;
       let changed = false;
+      let syncHadError = false;
+      let needsPull = false;
       try {
         // 進捗表示用に、未同期の件数を先に数える
         let totalUnsynced = 0;
@@ -6052,68 +6451,135 @@
           const entry = visits[shopId];
           if (!entry) continue;
 
-          if (entry.wantToGo || entry.favorite) {
-            await supabaseClient.from('shop_status').upsert({
+          // 端末で変更したステータスだけ送る。古い端末キャッシュのfalseで
+          // 別端末のクラウド状態を消さないよう、未変更データは取得側に任せる。
+          const shouldSyncStatus = entry._statusSynced === false ||
+            (entry._statusSynced == null && (entry.wantToGo || entry.favorite));
+          if (shouldSyncStatus && (entry.wantToGo || entry.favorite)) {
+            const { error: statusError } = await supabaseClient.from('shop_status').upsert({
               user_id: currentUser.id,
               shop_id: shopId,
               want_to_go: !!entry.wantToGo,
               favorite: !!entry.favorite,
               updated_at: new Date().toISOString()
             });
-          } else {
+            if (statusError) {
+              console.error('お気に入り/行きたいの同期エラー:', statusError);
+              syncHadError = true;
+            } else {
+              entry._statusSynced = true;
+              changed = true;
+            }
+          } else if (shouldSyncStatus) {
             // 両方OFFになった場合、クラウド側に古いtrueが残っていると
             // 次回restoreFromCloudで復活してしまうため、行を削除する
-            await supabaseClient.from('shop_status').delete()
+            const { error: statusDelError } = await supabaseClient.from('shop_status').delete()
               .eq('user_id', currentUser.id)
               .eq('shop_id', shopId);
+            if (statusDelError) {
+              console.error('お気に入り/行きたいの削除同期エラー:', statusDelError);
+              syncHadError = true;
+            } else {
+              entry._statusSynced = true;
+              changed = true;
+            }
           }
 
           const logs = entry.logs;
           if (!Array.isArray(logs)) continue;
           for (const log of logs) {
-            if (log._cloudSynced) continue;
-            const row = {
-              user_id: currentUser.id,
-              shop_id: shopId,
-              visited_at: log.visitedAt ? new Date(log.visitedAt).toISOString() : null,
-              rating: log.rating ?? null,
-              wait_minutes: log.waitMinutes ?? null,
-              temperature: log.temperature ?? null,
-              weather: log.weather ?? null,
-              order_text: log.order ?? null,
-              options: log.options ?? null,
-              noodle_firmness: log.noodleFirmness ?? null,
-              flavor_intensity: log.flavorIntensity ?? null,
-              oil_amount: log.oilAmount ?? null,
-              memo: log.memo ?? null,
-              is_public: !!log.isPublic
-            };
-            if (log._cloudId) {
-              // 既にクラウドにある記録 → 新規作成せず更新する（編集時の重複防止）
-              const { error } = await supabaseClient.from('visits').update(row).eq('id', log._cloudId);
-              if (!error) {
-                log._cloudSynced = true;
-                changed = true;
-              } else {
-                console.error('クラウド同期エラー（訪問記録の更新）:', error);
+            // 【記録の同期】まだクラウドに同期していない記録のみ
+            if (!log._cloudSynced) {
+              // 別端末で先に更新されている場合は時刻を比較する。
+              // クラウド側の方が新しければ、この端末の古い編集を送らず取得側へ任せる。
+              if (log._cloudId && log._cloudUpdatedAt && log._localModifiedAt) {
+                const { data: remoteMeta, error: metaError } = await supabaseClient
+                  .from('visits')
+                  .select('updated_at')
+                  .eq('id', log._cloudId)
+                  .single();
+                if (metaError) {
+                  console.error('クラウド更新時刻の確認エラー:', metaError);
+                  syncHadError = true;
+                  continue;
+                }
+                if (remoteMeta.updated_at !== log._cloudUpdatedAt &&
+                    new Date(remoteMeta.updated_at).getTime() >= new Date(log._localModifiedAt).getTime()) {
+                  log._cloudSynced = true;
+                  log._photosSynced = true;
+                  needsPull = true;
+                  changed = true;
+                  continue;
+                }
               }
-            } else {
-              const { data, error } = await supabaseClient.from('visits').insert(row).select('id').single();
-              if (!error && data) {
-                log._cloudId = data.id;
-                log._cloudSynced = true;
-                changed = true;
+
+              const row = {
+                user_id: currentUser.id,
+                shop_id: shopId,
+                visited_at: log.visitedAt ? new Date(log.visitedAt).toISOString() : null,
+                rating: log.rating ?? null,
+                wait_minutes: log.waitMinutes ?? null,
+                temperature: log.temperature ?? null,
+                weather: log.weather ?? null,
+                order_text: log.order ?? null,
+                options: log.options ?? null,
+                noodle_firmness: log.noodleFirmness ?? null,
+                flavor_intensity: log.flavorIntensity ?? null,
+                oil_amount: log.oilAmount ?? null,
+                memo: log.memo ?? null,
+                comment: log.comment ?? null,
+                is_public: !!log.isPublic
+              };
+              if (log._cloudId) {
+                // 既にクラウドにある記録 → 新規作成せず更新する（編集時の重複防止）
+                const { data, error } = await supabaseClient
+                  .from('visits')
+                  .update(row)
+                  .eq('id', log._cloudId)
+                  .select('id, updated_at')
+                  .single();
+                if (!error && data) {
+                  log._cloudSynced = true;
+                  log._cloudUpdatedAt = data.updated_at;
+                  changed = true;
+                } else {
+                  console.error('クラウド同期エラー（訪問記録の更新）:', error);
+                  syncHadError = true;
+                }
               } else {
-                console.error('クラウド同期エラー（訪問記録の新規作成）:', error);
+                const { data, error } = await supabaseClient
+                  .from('visits')
+                  .insert(row)
+                  .select('id, updated_at')
+                  .single();
+                if (!error && data) {
+                  log._cloudId = data.id;
+                  log._cloudSynced = true;
+                  log._cloudUpdatedAt = data.updated_at;
+                  changed = true;
+                } else {
+                  console.error('クラウド同期エラー（訪問記録の新規作成）:', error);
+                  syncHadError = true;
+                }
               }
             }
 
-            // 写真の同期（記録自体の同期が成功した場合のみ）
-            if (log._cloudId && !log._photosSynced && log.photos && log.photos.length > 0) {
+            // 【写真の同期】記録同期とは独立して判定する。
+            // 記録は同期済みだが写真だけ未同期、というケースを取りこぼさないため
+            // log._cloudSynced ではなく log._photosSynced で判断する。
+            if (log._cloudId && !log._photosSynced) {
               const photoUploadOk = await syncLogPhotosToCloud(log);
               if (photoUploadOk) {
-                log._photosSynced = true;
-                changed = true;
+                const touchResult = await touchCloudVisitUpdatedAt(log);
+                if (touchResult.ok) {
+                  log._photosSynced = true;
+                  changed = true;
+                } else {
+                  console.error('写真更新日時の同期エラー:', touchResult.error);
+                  syncHadError = true;
+                }
+              } else {
+                syncHadError = true;
               }
             }
 
@@ -6123,12 +6589,14 @@
         }
       } catch (e) {
         console.error('クラウド同期エラー:', e);
+        syncHadError = true;
       } finally {
         isSyncingToCloud = false;
       }
       if (changed) {
         saveVisits(); // _cloudSyncedフラグを保存（再度syncVisitsToCloudが呼ばれても変更が無いので安全）
       }
+      return { ok: !syncHadError, needsPull };
     }
 
     // 認証状態の初期化・監視
@@ -6163,6 +6631,7 @@
     async function checkOnboardingThenSync() {
       if (!supabaseClient || !currentUser) return;
       try {
+        await localVisitsReady;
         const { data: profile, error } = await supabaseClient
           .from('profiles')
           .select('onboarding_completed, display_name, bio, avatar_url')
@@ -6178,8 +6647,7 @@
         if (!profile || !profile.onboarding_completed) {
           showOnboardingModal(profile);
         } else {
-          await restoreFromCloud(); // ログインのたびに、クラウドの最新内容を自動で取り込む
-          syncVisitsToCloud();
+          await restoreFromCloud({ silent: true });
           maybeShowPublishPrompt(); // 未公開の記録があれば公開を案内（1回きり）
         }
       } catch (e) {
@@ -6769,9 +7237,6 @@
       }
     }
     
-    // ネイティブアプリ判定
-    const isNativeApp = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.saveVisits;
-    
     // State
     let visits = JSON.parse(localStorage.getItem('iekei-visits') || '{}');
     
@@ -6801,9 +7266,17 @@
     // Swift側からデータを受け取る関数
     window.restoreVisitsFromNative = function(jsonString) {
       try {
+        if (hasStartedCloudRefresh) {
+          console.log('ℹ️ クラウド同期開始後の端末データ再送はスキップしました');
+          window._nativeVisitsRestored = true;
+          markLocalVisitsReady();
+          return;
+        }
         console.log('📖 Swift側からデータを受信:', jsonString.substring(0, 100));
         const data = JSON.parse(jsonString);
         visits = migratePhotoData(data); // 変換を実行
+        window._nativeVisitsRestored = true;
+        markLocalVisitsReady();
         console.log('✅ 訪問記録を復元しました:', Object.keys(visits).length, '店舗');
         
         // UIを更新（モーダルが開いている場合）
@@ -6812,6 +7285,7 @@
         }
       } catch (error) {
         console.error('❌ データ復元エラー:', error.message || String(error));
+        markLocalVisitsReady();
       }
     };
     
@@ -10771,12 +11245,17 @@
         const confirmed = await showCustomConfirm('この訪問記録を削除しますか?');
         if (!confirmed) return;
         const targetLog = visits[shopId].logs[photoModalLogIndex];
+        if (targetLog._cloudId && supabaseClient) {
+          const { error } = await supabaseClient.from('visits').delete().eq('id', targetLog._cloudId);
+          if (error) {
+            console.error('クラウド同期エラー（訪問記録の削除）:', error);
+            await showCustomAlert('記録の削除に失敗しました。通信環境を確認して再度お試しください。');
+            return;
+          }
+          await deleteCloudPhotosForVisit(targetLog._cloudId);
+        }
         if (targetLog.photos && targetLog.photos.length > 0) {
           targetLog.photos.forEach(photo => deletePhotoFile(photo));
-        }
-        if (targetLog._cloudId && supabaseClient) {
-          supabaseClient.from('visits').delete().eq('id', targetLog._cloudId)
-            .then(({ error }) => { if (error) console.error('クラウド同期エラー（訪問記録の削除）:', error); });
         }
         visits[shopId].logs.splice(photoModalLogIndex, 1);
         saveVisits();
@@ -11207,7 +11686,9 @@
       }
       
       visits[currentShop.id].wantToGo = !visits[currentShop.id].wantToGo;
+      visits[currentShop.id]._statusSynced = false;
       saveVisits();
+      scheduleAutomaticCloudSync();
       
       const wantBtn = document.getElementById('btn-want');
       if (visits[currentShop.id].wantToGo) {
@@ -11232,7 +11713,9 @@
       }
       
       visits[currentShop.id].favorite = !visits[currentShop.id].favorite;
+      visits[currentShop.id]._statusSynced = false;
       saveVisits();
+      scheduleAutomaticCloudSync();
       
       const favoriteBtn = document.getElementById('btn-favorite');
       const favoriteIcon = document.getElementById('favorite-icon');
@@ -11515,6 +11998,7 @@
       document.getElementById('input-order').value = log.order || '';
       document.getElementById('input-options').value = log.options || '';
       document.getElementById('input-memo').value = log.memo || '';
+      document.getElementById('input-comment').value = log.comment || '';
 
       // 公開チェックボックス：ログイン中のみ表示、既存値を復元
       const publicWrap = document.getElementById('input-public-wrap');
@@ -11580,17 +12064,23 @@
       const confirmed = await showCustomConfirm('この訪問記録を削除しますか？');
       if (!confirmed) return;
 
-      // 写真ファイルも削除（複数対応）
       const log = visits[currentShop.id].logs[logIndex];
+      // クラウドに同期済みの記録なら、まずクラウド側の削除を待って成功を確認する
+      // （通信失敗時に端末側だけ消えて、次回復元で復活したり、写真だけ消えるのを防ぐ）
+      if (log._cloudId && supabaseClient) {
+        const { error } = await supabaseClient.from('visits').delete().eq('id', log._cloudId);
+        if (error) {
+          console.error('クラウド同期エラー（訪問記録の削除）:', error);
+          await showCustomAlert('記録の削除に失敗しました。通信環境を確認して再度お試しください。');
+          return;
+        }
+        await deleteCloudPhotosForVisit(log._cloudId);
+      }
+
+      // クラウド削除が成功（またはクラウド未同期）してから、端末の写真とローカル記録を削除
       if (log.photos && log.photos.length > 0) {
         log.photos.forEach(photo => deletePhotoFile(photo));
       }
-      // クラウドに同期済みの記録なら、クラウド側も削除する
-      if (log._cloudId && supabaseClient) {
-        supabaseClient.from('visits').delete().eq('id', log._cloudId)
-          .then(({ error }) => { if (error) console.error('クラウド同期エラー（訪問記録の削除）:', error); });
-      }
-
       visits[currentShop.id].logs.splice(logIndex, 1);
       saveVisits();
 
@@ -11609,17 +12099,23 @@
       const confirmed = await showCustomConfirm('この訪問記録を削除しますか?');
       if (!confirmed) return;
 
-      // 写真ファイルも削除（複数対応）
       const log = visits[currentShop.id].logs[logIndex];
+      // クラウドに同期済みの記録なら、まずクラウド側の削除を待って成功を確認する
+      // （通信失敗時に端末側だけ消えて、次回復元で復活したり、写真だけ消えるのを防ぐ）
+      if (log._cloudId && supabaseClient) {
+        const { error } = await supabaseClient.from('visits').delete().eq('id', log._cloudId);
+        if (error) {
+          console.error('クラウド同期エラー（訪問記録の削除）:', error);
+          await showCustomAlert('記録の削除に失敗しました。通信環境を確認して再度お試しください。');
+          return;
+        }
+        await deleteCloudPhotosForVisit(log._cloudId);
+      }
+
+      // クラウド削除が成功（またはクラウド未同期）してから、端末の写真とローカル記録を削除
       if (log.photos && log.photos.length > 0) {
         log.photos.forEach(photo => deletePhotoFile(photo));
       }
-      // クラウドに同期済みの記録なら、クラウド側も削除する
-      if (log._cloudId && supabaseClient) {
-        supabaseClient.from('visits').delete().eq('id', log._cloudId)
-          .then(({ error }) => { if (error) console.error('クラウド同期エラー（訪問記録の削除）:', error); });
-      }
-
       visits[currentShop.id].logs.splice(logIndex, 1);
       saveVisits();
 
@@ -11810,6 +12306,13 @@
     // 写真をファイルとして保存してファイル名を取得
     async function savePhotoToFile(base64Data) {
       return new Promise((resolve) => {
+        // 別端末から復元したクラウド写真はURLのまま保持する。
+        // SwiftへBase64として渡すと保存コールバックが返らず、編集保存が止まってしまう。
+        if (base64Data && (base64Data.startsWith('http://') || base64Data.startsWith('https://'))) {
+          resolve(base64Data);
+          return;
+        }
+
         window.onPhotoSaved = (fileName) => {
           console.log('📸 写真をファイルとして保存しました:', fileName);
           resolve(fileName);
@@ -11921,6 +12424,15 @@
         await showCustomAlert('未来の日時は設定できません');
         return;
       }
+      // 公開コメントの禁止ワードチェック（自分メモは対象外＝公開されないため）
+      {
+        const _cmt = document.getElementById('input-comment')?.value || '';
+        const _ng = containsNgWord(_cmt);
+        if (_ng) {
+          await showCustomAlert('コメントに不適切な表現が含まれている可能性があります。\n表現を見直してください。');
+          return;
+        }
+      }
 
       // 写真をファイルとして保存（ファイル名のみを保存）
       let photoFileNames = [];
@@ -11943,8 +12455,12 @@
         flavorIntensity: document.querySelector('[onclick*="flavor-intensity"].active')?.dataset.value || '普通',
         oilAmount: document.querySelector('[onclick*="oil-amount"].active')?.dataset.value || '普通',
         memo: document.getElementById('input-memo').value || '',
+        comment: document.getElementById('input-comment').value || '',
         photos: photoFileNames,
-        isPublic: (currentUser && document.getElementById('input-is-public')) ? document.getElementById('input-is-public').checked : false
+        isPublic: (currentUser && document.getElementById('input-is-public')) ? document.getElementById('input-is-public').checked : false,
+        _localModifiedAt: new Date().toISOString(),
+        _cloudSynced: false,
+        _photosSynced: false
       };
       
       if (!visits[currentShop.id]) {
@@ -11955,14 +12471,15 @@
         // 編集モード: 既存の記録を更新（クラウド側のIDは引き継いで、再送信時はinsertでなくupdateにする）
         const oldLog = visits[currentShop.id].logs[editingLogIndex];
         visitRecord._cloudId = oldLog?._cloudId || null;
-        visitRecord._cloudSynced = false; // 編集したので再同期が必要
+        visitRecord._cloudUpdatedAt = oldLog?._cloudUpdatedAt || null;
         visits[currentShop.id].logs[editingLogIndex] = visitRecord;
       } else {
         // 新規追加モード
         visits[currentShop.id].logs.push(visitRecord);
       }
       
-      saveVisits();
+      await saveVisits();
+      scheduleAutomaticCloudSync();
       editingLogIndex = null; // 編集モードを即座にリセット
       
       // 画面を更新
@@ -11997,6 +12514,15 @@
         await showCustomAlert('未来の日時は設定できません');
         return;
       }
+      // 公開コメントの禁止ワードチェック（自分メモは対象外＝公開されないため）
+      {
+        const _cmt = document.getElementById('input-comment')?.value || '';
+        const _ng = containsNgWord(_cmt);
+        if (_ng) {
+          await showCustomAlert('コメントに不適切な表現が含まれている可能性があります。\n表現を見直してください。');
+          return;
+        }
+      }
       
       // 写真をファイルとして保存（ファイル名のみを保存）
       let photoFileNames = [];
@@ -12020,8 +12546,12 @@
         flavorIntensity: document.querySelector('[onclick*="flavor-intensity"].active')?.dataset.value || '普通',
         oilAmount: document.querySelector('[onclick*="oil-amount"].active')?.dataset.value || '普通',
         memo: document.getElementById('input-memo').value || '',
+        comment: document.getElementById('input-comment').value || '',
         photos: photoFileNames,
-        isPublic: (currentUser && document.getElementById('input-is-public')) ? document.getElementById('input-is-public').checked : false
+        isPublic: (currentUser && document.getElementById('input-is-public')) ? document.getElementById('input-is-public').checked : false,
+        _localModifiedAt: new Date().toISOString(),
+        _cloudSynced: false,
+        _photosSynced: false
       };
       
       if (!visits[currentShop.id]) {
@@ -12031,13 +12561,14 @@
       if (editingLogIndex !== null) {
         const oldLog = visits[currentShop.id].logs[editingLogIndex];
         visitRecord._cloudId = oldLog?._cloudId || null;
-        visitRecord._cloudSynced = false; // 編集したので再同期が必要
+        visitRecord._cloudUpdatedAt = oldLog?._cloudUpdatedAt || null;
         visits[currentShop.id].logs[editingLogIndex] = visitRecord;
       } else {
         visits[currentShop.id].logs.push(visitRecord);
       }
       
-      saveVisits();
+      await saveVisits();
+      scheduleAutomaticCloudSync();
       editingLogIndex = null;
       
       // ツイート内容を生成
@@ -12060,13 +12591,13 @@
         tweetText += `待ち${visitRecord.waitMinutes}分\n`;
       }
       
-      // メモ（あれば）
-      if (visitRecord.memo) {
-        tweetText += `${visitRecord.memo}\n`;
+      // コメント（あれば）。自分メモは公開しないのでツイートには含めない
+      if (visitRecord.comment) {
+        tweetText += `${visitRecord.comment}\n`;
       }
       
-      // 待ち時間かメモがあれば改行
-      if (visitRecord.waitMinutes || visitRecord.memo) {
+      // 待ち時間かコメントがあれば改行
+      if (visitRecord.waitMinutes || visitRecord.comment) {
         tweetText += `\n`;
       }
       
@@ -12816,7 +13347,7 @@
         <div class="form-group" style="margin-bottom:20px;">
           <label style="display:flex;align-items:flex-start;gap:8px;font-size:13px;color:#374151;cursor:pointer;line-height:1.5;">
             <input type="checkbox" id="onboarding-agree-privacy" style="width:18px;height:18px;flex-shrink:0;margin-top:1px;">
-            <span><a href="/Terms" target="_blank" rel="noopener noreferrer" style="color:#2563eb;text-decoration:underline;">利用規約</a>と<a href="/Privacypolicy" target="_blank" rel="noopener noreferrer" style="color:#2563eb;text-decoration:underline;">プライバシーポリシー</a>に同意する</span>
+            <span><a href="https://iekei-map.com/terms" target="_blank" rel="noopener noreferrer" style="color:#2563eb;text-decoration:underline;">利用規約</a>と<a href="https://iekei-map.com/privacypolicy" target="_blank" rel="noopener noreferrer" style="color:#2563eb;text-decoration:underline;">プライバシーポリシー</a>に同意する</span>
           </label>
         </div>
 
@@ -13011,19 +13542,19 @@
             border: 1.5px solid #e5e7eb; border-radius: 10px; background: white;
             font-size: 15px; font-weight: 600; color: #111827; cursor: pointer;
           ">ブロック中のユーザー</button>
-          <a href="mailto:iekei.map@gmail.com?subject=%E5%AE%B6%E7%B3%BB%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%B3map%20%E3%81%8A%E5%95%8F%E3%81%84%E5%90%88%E3%82%8F%E3%81%9B" style="
+          <a href="mailto:iekei.map@gmail.com?subject=%E5%AE%B6%E7%B3%BB%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%B3map%20%E3%81%8A%E5%95%8F%E3%81%84%E5%90%88%E3%82%8F%E3%81%9B" onclick="return handleContactClick(event)" style="
             display:block; width: 100%; padding: 12px 16px; margin-bottom: 10px; box-sizing:border-box;
             border: 1.5px solid #e5e7eb; border-radius: 10px; background: white;
             font-size: 15px; font-weight: 600; color: #111827; cursor: pointer;
             text-align:center; text-decoration:none;
           ">お問い合わせ</a>
-          <a href="/Terms" target="_blank" rel="noopener noreferrer" style="
+          <a href="https://iekei-map.com/terms" target="_blank" rel="noopener noreferrer" style="
             display:block; width: 100%; padding: 12px 16px; margin-bottom: 10px; box-sizing:border-box;
             border: 1.5px solid #e5e7eb; border-radius: 10px; background: white;
             font-size: 15px; font-weight: 600; color: #111827; cursor: pointer;
             text-align:center; text-decoration:none;
           ">利用規約</a>
-          <a href="/Privacypolicy" target="_blank" rel="noopener noreferrer" style="
+          <a href="https://iekei-map.com/privacypolicy" target="_blank" rel="noopener noreferrer" style="
             display:block; width: 100%; padding: 12px 16px; margin-bottom: 10px; box-sizing:border-box;
             border: 1.5px solid #e5e7eb; border-radius: 10px; background: white;
             font-size: 15px; font-weight: 600; color: #111827; cursor: pointer;
@@ -13193,7 +13724,7 @@
           </div>
           
           <!-- 利用規約 -->
-          <a href="/Terms" target="_blank" rel="noopener noreferrer" style="
+          <a href="https://iekei-map.com/terms" target="_blank" rel="noopener noreferrer" style="
             background: white;
             padding: 16px 20px;
             margin-bottom: 1px;
@@ -13215,7 +13746,7 @@
           </a>
 
           <!-- プライバシーポリシー -->
-          <a href="/Privacypolicy" target="_blank" rel="noopener noreferrer" style="
+          <a href="https://iekei-map.com/privacypolicy" target="_blank" rel="noopener noreferrer" style="
             background: white;
             padding: 16px 20px;
             margin-bottom: 1px;
