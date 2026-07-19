@@ -7825,14 +7825,17 @@
           mapSearchBox.style.display = 'none';
           btnSearchToggle.classList.remove('active');
           document.querySelector('.map-view')?.classList.remove('drawer-search-open');
+          window.syncMapDrawerForSearch?.();
         } else {
           // 開く
           mapSearchBox.style.display = 'block';
           btnSearchToggle.classList.add('active');
           document.querySelector('.map-view')?.classList.add('drawer-search-open');
-          searchInput.focus(); // 自動フォーカス
+          window.openMapSearchDrawer?.(Boolean(searchQuery));
+          if (!window.matchMedia('(hover: none) and (pointer: coarse)').matches) {
+            searchInput.focus();
+          }
         }
-        window.syncMapDrawerForSearch?.();
       });
       
       // 検索機能（Mapタブ）
@@ -7843,6 +7846,9 @@
         searchQuery = e.target.value;
         console.log('検索クエリ:', searchQuery);
         searchClear.classList.toggle('visible', searchQuery.length > 0);
+        if (document.querySelector('.map-view')?.classList.contains('drawer-search-open')) {
+          window.openMapSearchDrawer?.(Boolean(searchQuery));
+        }
         renderShopList();
         updateMarkers();
       });
@@ -7875,7 +7881,7 @@
           mapSearchBox.style.display = 'block';
           btnSearchToggle.classList.add('active');
           document.querySelector('.map-view')?.classList.add('drawer-search-open');
-          window.syncMapDrawerForSearch?.();
+          window.openMapSearchDrawer?.(true);
         }
         renderFeedTab();
         updateMarkers();
@@ -8242,6 +8248,14 @@
         return Math.min(Math.round(viewHeight * 0.46), Math.max(360, viewHeight - getBottomNavHeight() - 220));
       }
 
+      function getSearchListHeight(hasQuery) {
+        const viewHeight = mapView.getBoundingClientRect().height || window.innerHeight;
+        const availableHeight = Math.max(320, viewHeight - getBottomNavHeight());
+        return hasQuery
+          ? Math.round(availableHeight * 0.5)
+          : Math.round(availableHeight * 0.72);
+      }
+
       function getMaxDrawerHeight() {
         const viewHeight = mapView.getBoundingClientRect().height || window.innerHeight;
         return Math.max(getSearchHeight(), Math.round((viewHeight - getBottomNavHeight()) * 0.72));
@@ -8272,15 +8286,18 @@
       }
 
       function syncDrawerForSearch() {
-        if (mapView.classList.contains('drawer-list-open')) {
+        if (mapView.classList.contains('drawer-search-open')) {
+          setDrawerHeight(getSearchListHeight(Boolean(searchQuery)), true);
+        } else if (mapView.classList.contains('drawer-list-open')) {
           setDrawerHeight(Math.max(drawer.offsetHeight, getDefaultListHeight()), true);
-        } else if (mapView.classList.contains('drawer-search-open')) {
-          setDrawerHeight(getSearchHeight(), false);
         } else {
           setDrawerHeight(getCollapsedHeight(), false);
         }
       }
 
+      window.openMapSearchDrawer = (hasQuery = false) => {
+        setDrawerHeight(getSearchListHeight(hasQuery), true);
+      };
       window.syncMapDrawerForSearch = syncDrawerForSearch;
       syncDrawerForSearch();
       window.addEventListener('resize', syncDrawerForSearch);
