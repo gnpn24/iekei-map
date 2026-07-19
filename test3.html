@@ -2209,6 +2209,7 @@
     .lineage-dot.yosh { background: #c62828; }
     .lineage-dot.honmoku { background: #1976d2; }
     .lineage-dot.oud { background: #f9a825; }
+    .lineage-dot.oud-light { background: #fff59d; border: 1px solid #d4c95d; box-sizing: border-box; }
     .lineage-dot.rokkaku { background: #43a047; }
     .lineage-dot.musa { background: #f57c00; }
     .lineage-dot.nonaka { background: #f57c00; }
@@ -3487,7 +3488,7 @@
                 <svg class="search-icon" style="width:16px;height:16px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
-                <input type="text" id="search-input" class="search-input" placeholder="店舗名・エリアで検索...">
+                <input type="text" id="search-input" class="search-input" placeholder="店舗名・エリアで検索..." enterkeyhint="search" autocomplete="off">
                 <button class="search-clear" id="search-clear">×</button>
               </div>
               <div id="search-results" class="search-results" style="display:none;"></div>
@@ -7346,7 +7347,7 @@
       '本牧家': '#1976d2',
       '六角家': '#43a047',
       '王道家': '#f9a825',
-      '王道家（王道乃印）': '#f9a825',
+      '王道家（王道乃印）': '#fff59d',
       '王道家（との丸家）': '#f9a825',
       '王道家（系列外）': '#f9a825',
       '武蔵家': '#f57c00',
@@ -7360,6 +7361,31 @@
 
     function getMapCategoryColor(category) {
       return MAP_CATEGORY_COLORS[category] || MAP_CATEGORY_COLORS['不明'];
+    }
+
+    // 詳細検索はチェック部分だけを系統色にして、画面全体は落ち着いた配色に保つ
+    function syncAdvancedCategoryColors() {
+      document.querySelectorAll('#advanced-filter-modal input.category-iekei, #advanced-filter-modal input.category-isse').forEach(input => {
+        const color = getMapCategoryColor(input.value);
+        const label = input.closest('label');
+        const text = label?.querySelector('span');
+
+        input.style.accentColor = color;
+        if (!label) return;
+
+        label.style.boxSizing = 'border-box';
+        label.style.border = '1px solid transparent';
+        label.style.background = '#f9fafb';
+        if (text) {
+          text.style.color = '#111827';
+          text.style.fontWeight = '400';
+        }
+
+        if (input.dataset.lineageColorBound !== 'true') {
+          input.dataset.lineageColorBound = 'true';
+          input.addEventListener('change', syncAdvancedCategoryColors);
+        }
+      });
     }
 
     function setMapMarkerSelected(marker, isSelected) {
@@ -7852,6 +7878,17 @@
         renderShopList();
         updateMarkers();
       });
+
+      // スマホの「検索／Enter」で結果を確定し、キーボードだけを閉じる
+      searchInput.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' || e.isComposing) return;
+        e.preventDefault();
+        searchQuery = e.target.value;
+        e.target.blur();
+        window.openMapSearchDrawer?.(Boolean(searchQuery));
+        renderShopList();
+        updateMarkers();
+      });
       
       searchClear.addEventListener('click', () => {
         searchQuery = '';
@@ -7973,12 +8010,14 @@
       document.getElementById('category-parent-iekei')?.addEventListener('change', (e) => {
         const isChecked = e.target.checked;
         document.querySelectorAll('.category-iekei').forEach(cb => cb.checked = isChecked);
+        syncAdvancedCategoryColors();
       });
       
       // 親チェックボックス: 壱系
       document.getElementById('category-parent-isse')?.addEventListener('change', (e) => {
         const isChecked = e.target.checked;
         document.querySelectorAll('.category-isse').forEach(cb => cb.checked = isChecked);
+        syncAdvancedCategoryColors();
       });
       
       // リストタブの営業中フィルタ（または現在時刻ボタン）
@@ -8556,11 +8595,17 @@
     };
     
     function openAdvancedFilterModal() {
+      syncAdvancedCategoryColors();
       document.getElementById('advanced-filter-modal').classList.add('active');
     }
     
     function closeAdvancedFilterModal() {
       document.getElementById('advanced-filter-modal').classList.remove('active');
+    }
+
+    function setFilterControlText(id, text) {
+      const element = document.getElementById(id);
+      if (element) element.textContent = text;
     }
     
     function resetAdvancedFilter() {
@@ -8584,8 +8629,8 @@
       };
       
       // 表示を更新
-      document.getElementById('list-filter-summary').textContent = 'すべて表示';
-      document.getElementById('map-filter-summary').textContent = 'すべて表示';
+      setFilterControlText('list-filter-summary', 'すべて表示');
+      setFilterControlText('map-filter-summary', 'すべて表示');
       
       // モーダルを閉じる
       closeAdvancedFilterModal();
@@ -8694,8 +8739,8 @@
         summary = 'すべて表示';
       }
       
-      document.getElementById('list-filter-summary').textContent = summary;
-      document.getElementById('map-filter-summary').textContent = summary;
+      setFilterControlText('list-filter-summary', summary);
+      setFilterControlText('map-filter-summary', summary);
       
       // 営業中ボタンのテキストを更新
       updateOpenButtonText();
@@ -8714,8 +8759,8 @@
       const hasTimeFilter = advancedFilterSettings.day !== '' || advancedFilterSettings.time !== '';
       const buttonText = hasTimeFilter ? '現在時刻' : '営業中';
       
-      document.getElementById('btn-open-toggle').textContent = buttonText;
-      document.getElementById('list-btn-open-toggle').textContent = buttonText;
+      setFilterControlText('btn-open-toggle', buttonText);
+      setFilterControlText('list-btn-open-toggle', buttonText);
       
       // 営業時間検索中はactiveクラスを解除
       if (hasTimeFilter) {
@@ -8789,8 +8834,8 @@
         summary = 'すべて表示';
       }
       
-      document.getElementById('list-filter-summary').textContent = summary;
-      document.getElementById('map-filter-summary').textContent = summary;
+      setFilterControlText('list-filter-summary', summary);
+      setFilterControlText('map-filter-summary', summary);
     }
     
     // 営業時間チェック関数（指定曜日・時刻）
@@ -10492,7 +10537,7 @@
       const colorMap = {
         'yosh': '#c62828', 'yosh-light': '#ef5350',
         'honmoku': '#1976d2', 'rokkaku': '#43a047',
-        'oud': '#f9a825', 'oud-light': '#fbc02d',
+        'oud': '#f9a825', 'oud-light': '#fff59d',
         'musa': '#f57c00', 'nonaka': '#f57c00',
         'taiki': '#00acc1', 'isse': '#8e24aa', 'oth': '#455a64'
       };
@@ -13506,8 +13551,8 @@
       </div>
       <div style="padding:12px 16px;border-top:1px solid #f3f4f6;background:white;flex-shrink:0;">
         <div style="display:flex;gap:8px;">
-          <button onclick="resetAdvancedFilter()" style="flex:1;padding:12px;border:1px solid #e5e7eb;border-radius:8px;background:white;cursor:pointer;font-weight:600;">リセット</button>
-          <button onclick="applyAdvancedFilter()" style="flex:2;padding:12px;border:none;border-radius:8px;background:#3b82f6;color:white;cursor:pointer;font-weight:600;">検索する</button>
+          <button type="button" onclick="resetAdvancedFilter()" style="flex:1;padding:12px;border:1px solid #e5e7eb;border-radius:8px;background:white;cursor:pointer;font-weight:600;">リセット</button>
+          <button type="button" onclick="applyAdvancedFilter()" style="flex:2;padding:12px;border:none;border-radius:8px;background:#3b82f6;color:white;cursor:pointer;font-weight:600;">検索する</button>
         </div>
       </div>
     </div>
