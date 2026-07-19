@@ -4120,29 +4120,35 @@
     // standaloneモードでdvhがずれて下部ナビが隠れる問題を防ぐため、
     // window.innerHeightを実測して --app-height に反映する。
     (function setupAppHeight() {
-      function applyAppHeight() {
-        document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
+      let stableAppHeight = window.innerHeight;
+
+      function applyAppHeight(force = false) {
+        // 検索中はソフトキーボードによるviewport縮小をレイアウトへ反映しない
+        const mapSearchOpen = document.querySelector('.map-view.drawer-search-open');
+        if (!force && mapSearchOpen) return;
+        stableAppHeight = window.innerHeight;
+        document.documentElement.style.setProperty('--app-height', stableAppHeight + 'px');
       }
       function applyBottomNavHeight() {
         const bottomNav = document.querySelector('.bottom-nav');
         const height = bottomNav ? Math.ceil(bottomNav.getBoundingClientRect().height) : 72;
         document.documentElement.style.setProperty('--bottom-nav-height', height + 'px');
       }
-      function applyViewportMetrics() {
-        applyAppHeight();
+      function applyViewportMetrics(force = false) {
+        applyAppHeight(force);
         applyBottomNavHeight();
       }
       applyViewportMetrics();
-      window.addEventListener('resize', applyViewportMetrics);
-      window.addEventListener('orientationchange', () => setTimeout(applyViewportMetrics, 150));
-      window.addEventListener('pageshow', applyViewportMetrics);
-      document.addEventListener('DOMContentLoaded', applyViewportMetrics);
+      window.addEventListener('resize', () => applyViewportMetrics());
+      window.addEventListener('orientationchange', () => setTimeout(() => applyViewportMetrics(true), 150));
+      window.addEventListener('pageshow', () => applyViewportMetrics(true));
+      document.addEventListener('DOMContentLoaded', () => applyViewportMetrics(true));
       // visualViewport があればより正確（ソフトキーボードやバー出現に追従）
       if (window.visualViewport) {
-        window.visualViewport.addEventListener('resize', applyViewportMetrics);
+        window.visualViewport.addEventListener('resize', () => applyViewportMetrics());
       }
       // 起動直後・リロード直後にバーの高さが確定するまで数回測り直す
-      [60, 200, 500, 1000].forEach(t => setTimeout(applyViewportMetrics, t));
+      [60, 200, 500, 1000].forEach(t => setTimeout(() => applyViewportMetrics(), t));
     })();
 
     // App Version (手動で更新)
@@ -7386,6 +7392,15 @@
           input.addEventListener('change', syncAdvancedCategoryColors);
         }
       });
+
+      ['iekei', 'isse'].forEach(group => {
+        const children = Array.from(document.querySelectorAll(`.category-${group}`));
+        const parent = document.getElementById(`category-parent-${group}`);
+        if (!parent || children.length === 0) return;
+        const checkedCount = children.filter(input => input.checked).length;
+        parent.checked = checkedCount === children.length;
+        parent.indeterminate = checkedCount > 0 && checkedCount < children.length;
+      });
     }
 
     function setMapMarkerSelected(marker, isSelected) {
@@ -7848,6 +7863,7 @@
         
         if (isVisible) {
           // 閉じる
+          searchInput.blur();
           mapSearchBox.style.display = 'none';
           btnSearchToggle.classList.remove('active');
           document.querySelector('.map-view')?.classList.remove('drawer-search-open');
@@ -7858,9 +7874,7 @@
           btnSearchToggle.classList.add('active');
           document.querySelector('.map-view')?.classList.add('drawer-search-open');
           window.openMapSearchDrawer?.(Boolean(searchQuery));
-          if (!window.matchMedia('(hover: none) and (pointer: coarse)').matches) {
-            searchInput.focus();
-          }
+          searchInput.focus({ preventScroll: true });
         }
       });
       
@@ -7872,20 +7886,17 @@
         searchQuery = e.target.value;
         console.log('検索クエリ:', searchQuery);
         searchClear.classList.toggle('visible', searchQuery.length > 0);
-        if (document.querySelector('.map-view')?.classList.contains('drawer-search-open')) {
-          window.openMapSearchDrawer?.(Boolean(searchQuery));
-        }
         renderShopList();
         updateMarkers();
       });
 
-      // スマホの「検索／Enter」で結果を確定し、キーボードだけを閉じる
+      // スマホの「検索／Enter」で結果を確定し、地図とリストを半分ずつ表示する
       searchInput.addEventListener('keydown', (e) => {
         if (e.key !== 'Enter' || e.isComposing) return;
         e.preventDefault();
         searchQuery = e.target.value;
         e.target.blur();
-        window.openMapSearchDrawer?.(Boolean(searchQuery));
+        window.setMapSearchResultsHeight?.();
         renderShopList();
         updateMarkers();
       });
@@ -7893,6 +7904,7 @@
       searchClear.addEventListener('click', () => {
         searchQuery = '';
         searchInput.value = '';
+        searchInput.blur();
         searchClear.classList.remove('visible');
         // 検索ボックスを閉じる
         mapSearchBox.style.display = 'none';
@@ -8266,7 +8278,9 @@
       let startHeight = 0;
       let didDrag = false;
       let lastListHeight = 0;
+      let lockedSearchListHeight = 0;
       let resizeFrame = null;
+      let resizeSettleTimer = null;
       const drawerHandle = drawer.querySelector('.drawer-handle');
 
       function getBottomNavHeight() {
@@ -8287,12 +8301,17 @@
         return Math.min(Math.round(viewHeight * 0.46), Math.max(360, viewHeight - getBottomNavHeight() - 220));
       }
 
-      function getSearchListHeight(hasQuery) {
+      function getSearchListHeight() {
         const viewHeight = mapView.getBoundingClientRect().height || window.innerHeight;
         const availableHeight = Math.max(320, viewHeight - getBottomNavHeight());
-        return hasQuery
-          ? Math.round(availableHeight * 0.5)
-          : Math.round(availableHeight * 0.72);
+        return Math.round(availableHeight * 0.72);
+      }
+
+      function getHalfSplitHeight() {
+        const viewHeight = mapView.getBoundingClientRect().height || window.innerHeight;
+        const handleHeight = Math.ceil(handle.getBoundingClientRect().height) || 16;
+        const availableHeight = Math.max(320, viewHeight - getBottomNavHeight() - handleHeight);
+        return Math.round(availableHeight / 2);
       }
 
       function getMaxDrawerHeight() {
@@ -8312,8 +8331,20 @@
         if (!map || resizeFrame) return;
         resizeFrame = requestAnimationFrame(() => {
           resizeFrame = null;
-          map.invalidateSize();
+          map.invalidateSize({ pan: false, animate: false });
         });
+      }
+
+      function scheduleSettledMapRedraw() {
+        if (!map) return;
+        clearTimeout(resizeSettleTimer);
+        // パネルの高さアニメーション完了後に、広がった領域のタイルまで描き直す
+        resizeSettleTimer = setTimeout(() => {
+          map.invalidateSize({ pan: false, animate: false });
+          map.eachLayer(layer => {
+            if (layer instanceof L.TileLayer) layer.redraw();
+          });
+        }, 260);
       }
 
       function setDrawerHeight(height, openList) {
@@ -8322,24 +8353,37 @@
         mapView.classList.toggle('drawer-list-open', openList);
         if (openList) lastListHeight = nextHeight;
         requestMapResize();
+        scheduleSettledMapRedraw();
       }
 
       function syncDrawerForSearch() {
         if (mapView.classList.contains('drawer-search-open')) {
-          setDrawerHeight(getSearchListHeight(Boolean(searchQuery)), true);
+          lockedSearchListHeight ||= getSearchListHeight();
+          setDrawerHeight(lockedSearchListHeight, true);
         } else if (mapView.classList.contains('drawer-list-open')) {
+          lockedSearchListHeight = 0;
           setDrawerHeight(Math.max(drawer.offsetHeight, getDefaultListHeight()), true);
         } else {
+          lockedSearchListHeight = 0;
           setDrawerHeight(getCollapsedHeight(), false);
         }
       }
 
-      window.openMapSearchDrawer = (hasQuery = false) => {
-        setDrawerHeight(getSearchListHeight(hasQuery), true);
+      window.openMapSearchDrawer = () => {
+        lockedSearchListHeight ||= getSearchListHeight();
+        setDrawerHeight(lockedSearchListHeight, true);
+      };
+      window.setMapSearchResultsHeight = () => {
+        lockedSearchListHeight = getHalfSplitHeight();
+        setDrawerHeight(lockedSearchListHeight, true);
       };
       window.syncMapDrawerForSearch = syncDrawerForSearch;
       syncDrawerForSearch();
       window.addEventListener('resize', syncDrawerForSearch);
+      window.addEventListener('orientationchange', () => {
+        lockedSearchListHeight = 0;
+        setTimeout(syncDrawerForSearch, 150);
+      });
       
       // マウスイベント
       handle.addEventListener('mousedown', startResize);
@@ -8378,6 +8422,9 @@
         const diff = startY - currentY;
         const newHeight = startHeight + diff;
         didDrag = didDrag || Math.abs(diff) > 6;
+        if (mapView.classList.contains('drawer-search-open')) {
+          lockedSearchListHeight = clampDrawerHeight(newHeight);
+        }
         setDrawerHeight(newHeight, newHeight > getSearchHeight() + 24);
       }
       
@@ -8389,9 +8436,11 @@
         document.body.style.cursor = '';
 
         if (!didDrag) {
-          if (mapView.classList.contains('drawer-list-open')) {
+          if (mapView.classList.contains('drawer-search-open')) {
+            setDrawerHeight(lockedSearchListHeight || getSearchListHeight(), true);
+          } else if (mapView.classList.contains('drawer-list-open')) {
             setDrawerHeight(
-              mapView.classList.contains('drawer-search-open') ? getSearchHeight() : getCollapsedHeight(),
+              getCollapsedHeight(),
               false
             );
           } else {
@@ -8595,6 +8644,11 @@
     };
     
     function openAdvancedFilterModal() {
+      const selectedCategories = advancedFilterSettings.categories;
+      const showAllCategories = selectedCategories.length === 0;
+      document.querySelectorAll('.category-iekei, .category-isse').forEach(input => {
+        input.checked = showAllCategories || selectedCategories.includes(input.value);
+      });
       syncAdvancedCategoryColors();
       document.getElementById('advanced-filter-modal').classList.add('active');
     }
@@ -8609,11 +8663,12 @@
     }
     
     function resetAdvancedFilter() {
-      // チェックボックスをすべて解除
-      document.querySelectorAll('.category-iekei').forEach(cb => cb.checked = false);
-      document.querySelectorAll('.category-isse').forEach(cb => cb.checked = false);
-      document.getElementById('category-parent-iekei').checked = false;
-      document.getElementById('category-parent-isse').checked = false;
+      // 「すべて表示」は、画面上では全系統を選択中として見せる
+      document.querySelectorAll('.category-iekei').forEach(cb => cb.checked = true);
+      document.querySelectorAll('.category-isse').forEach(cb => cb.checked = true);
+      document.getElementById('category-parent-iekei').checked = true;
+      document.getElementById('category-parent-isse').checked = true;
+      syncAdvancedCategoryColors();
       document.getElementById('filter-want').checked = false;
       document.getElementById('filter-favorite').checked = false;
       document.getElementById('filter-day').value = '';
@@ -8652,6 +8707,14 @@
       ).map(cb => cb.value);
       
       const selectedCategories = [...iekeiCategories, ...isseCategories];
+      const allCategoryValues = Array.from(
+        document.querySelectorAll('.category-iekei, .category-isse')
+      ).map(cb => cb.value);
+      // 全選択は絞り込みなしとして保持し、今後追加される系統も表示対象にする
+      const categoriesForFilter = allCategoryValues.length > 0 &&
+        allCategoryValues.every(category => selectedCategories.includes(category))
+          ? []
+          : selectedCategories;
       
       // 訪問状況
       const wantToGo = document.getElementById('filter-want').checked;
@@ -8663,7 +8726,7 @@
       
       // 設定を保存
       advancedFilterSettings = {
-        categories: selectedCategories,
+        categories: categoriesForFilter,
         wantToGo,
         favorite,
         day,
@@ -8682,21 +8745,21 @@
       
       // カテゴリ部分の生成
       let categoryPart = '';
-      if (selectedCategories.length > 0) {
+      if (categoriesForFilter.length > 0) {
         // 家系グループの全カテゴリ（12項目）
         const iekeiAll = ['直系', '吉村家（直系以外）', '王道家', '王道家（王道乃印）', '王道家（との丸家）', '本牧家', '六角家', '武蔵家', '野中家', '大輝家', 'オリジナル'];
         // 壱系グループの全カテゴリ（2項目）
         const isseAll = ['壱系', '壱系（資本系）'];
         
-        const hasAllIekei = iekeiAll.every(cat => selectedCategories.includes(cat));
-        const hasAllIsse = isseAll.every(cat => selectedCategories.includes(cat));
+        const hasAllIekei = iekeiAll.every(cat => categoriesForFilter.includes(cat));
+        const hasAllIsse = isseAll.every(cat => categoriesForFilter.includes(cat));
         
         if (hasAllIekei && hasAllIsse) {
           // 家系 + 壱系 全選択
           categoryPart = '家系、壱系';
         } else if (hasAllIekei) {
           // 家系のみ全選択
-          const remainingIsse = selectedCategories.filter(cat => isseAll.includes(cat));
+          const remainingIsse = categoriesForFilter.filter(cat => isseAll.includes(cat));
           if (remainingIsse.length > 0) {
             categoryPart = '家系、' + remainingIsse.join('、');
           } else {
@@ -8704,7 +8767,7 @@
           }
         } else if (hasAllIsse) {
           // 壱系のみ全選択
-          const remainingIekei = selectedCategories.filter(cat => iekeiAll.includes(cat));
+          const remainingIekei = categoriesForFilter.filter(cat => iekeiAll.includes(cat));
           if (remainingIekei.length > 0) {
             categoryPart = remainingIekei.join('、') + '、壱系';
           } else {
@@ -8712,7 +8775,7 @@
           }
         } else {
           // 個別選択：全件表示し、長い場合は「...」で省略
-          categoryPart = selectedCategories.join('、');
+          categoryPart = categoriesForFilter.join('、');
         }
       }
       
