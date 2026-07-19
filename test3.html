@@ -209,6 +209,11 @@
     .tab-content.active {
       display: block;
     }
+
+    #tab-map {
+      overflow: hidden;
+      padding-bottom: 0;
+    }
     
     .bottom-nav {
       display: flex;
@@ -313,14 +318,16 @@
       display: flex;
       flex-direction: column;
       height: 100%;
+      padding-bottom: var(--bottom-nav-height, 72px);
+      box-sizing: border-box;
       position: relative;
+      --map-drawer-height: 112px;
     }
     
     .map-container {
       position: relative;
-      height: 60%; /* 初期値: 60% */
-      min-height: 30%;
-      max-height: 100%;
+      flex: 1 1 auto;
+      min-height: 0;
     }
     
     .resize-handle {
@@ -394,11 +401,17 @@
     .shop-list-drawer {
       background: white;
       box-shadow: 0 -2px 16px rgba(0,0,0,0.1);
-      flex: 1;
+      flex: 0 0 var(--map-drawer-height);
+      height: var(--map-drawer-height);
       display: flex;
       flex-direction: column;
-      min-height: 78px;
+      min-height: 80px;
       overflow: hidden;
+      transition: flex-basis 0.22s ease, height 0.22s ease;
+    }
+
+    .map-view.drawer-resizing .shop-list-drawer {
+      transition: none;
     }
     
     .drawer-handle {
@@ -524,6 +537,10 @@
       flex: 1;
       overflow-y: auto;
       padding: 8px 16px calc(var(--bottom-nav-height, 72px) + 16px);
+    }
+
+    .map-view:not(.drawer-list-open) .drawer-content {
+      display: none;
     }
     
     .shop-list-item {
@@ -3450,12 +3467,16 @@
             <button id="btn-location-search" onclick="openLocationSearchModal()" style="position:absolute;bottom:24px;right:10px;z-index:1000;background:rgba(255,255,255,0.78);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(15,23,42,0.08);border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.08);padding:8px 10px;cursor:pointer;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:#374151;"><svg width="16" height="16" viewBox="0 0 24 24" fill="#ef4444"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>地点を指定</button>
             <div class="map-overlay map-legend">
               <div class="legend-item">
-                <div class="legend-dot" style="background:#ef4444;"></div>
-                <span>未訪問</span>
+                <div class="legend-dot" style="background:conic-gradient(#c62828 0 25%,#1976d2 0 50%,#43a047 0 75%,#8e24aa 0);"></div>
+                <span>色：系統</span>
               </div>
               <div class="legend-item">
-                <div class="legend-dot" style="background:#10b981;"></div>
+                <div class="legend-dot" style="background:white;border:3px solid #10b981;box-sizing:border-box;"></div>
                 <span>訪問済み</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot" style="background:white;border:3px solid #facc15;box-sizing:border-box;"></div>
+                <span>行きたい</span>
               </div>
             </div>
           </div>
@@ -7297,6 +7318,8 @@
     
     let map = null;
     let markers = {};
+    let markerHalos = {};
+    let selectedMapShopId = null;
     let currentShop = null;
     let currentRating = 0;
     let currentPhotos = []; // 最大4枚
@@ -7314,6 +7337,50 @@
       'samurai': '侍',
       'ryu': '龍',
     };
+
+    // 地図の店舗ドットは家系図と同じ系統カラーを使う
+    const MAP_CATEGORY_COLORS = Object.freeze({
+      '総本山': '#c62828',
+      '直系': '#c62828',
+      '吉村家（直系以外）': '#ef5350',
+      '本牧家': '#1976d2',
+      '六角家': '#43a047',
+      '王道家': '#f9a825',
+      '王道家（王道乃印）': '#f9a825',
+      '王道家（との丸家）': '#f9a825',
+      '王道家（系列外）': '#f9a825',
+      '武蔵家': '#f57c00',
+      '野中家': '#f57c00',
+      '大輝家': '#00acc1',
+      '壱系': '#8e24aa',
+      '壱系（資本系）': '#ce93d8',
+      'オリジナル': '#455a64',
+      '不明': '#9ca3af'
+    });
+
+    function getMapCategoryColor(category) {
+      return MAP_CATEGORY_COLORS[category] || MAP_CATEGORY_COLORS['不明'];
+    }
+
+    function setMapMarkerSelected(marker, isSelected) {
+      marker.setRadius(isSelected ? 11 : 9);
+      marker.setStyle({
+        color: '#ffffff',
+        weight: isSelected ? 4 : 2
+      });
+      if (isSelected) marker.bringToFront();
+    }
+
+    function selectMapMarker(shopId) {
+      if (selectedMapShopId && selectedMapShopId !== shopId) {
+        const previousMarker = markers[selectedMapShopId];
+        if (previousMarker) setMapMarkerSelected(previousMarker, false);
+      }
+
+      selectedMapShopId = shopId;
+      const selectedMarker = markers[shopId];
+      if (selectedMarker) setMapMarkerSelected(selectedMarker, true);
+    }
 
     // グループポップアップ管理
     let activeGroupPopup = null;
@@ -7757,12 +7824,15 @@
           // 閉じる
           mapSearchBox.style.display = 'none';
           btnSearchToggle.classList.remove('active');
+          document.querySelector('.map-view')?.classList.remove('drawer-search-open');
         } else {
           // 開く
           mapSearchBox.style.display = 'block';
           btnSearchToggle.classList.add('active');
+          document.querySelector('.map-view')?.classList.add('drawer-search-open');
           searchInput.focus(); // 自動フォーカス
         }
+        window.syncMapDrawerForSearch?.();
       });
       
       // 検索機能（Mapタブ）
@@ -7784,6 +7854,8 @@
         // 検索ボックスを閉じる
         mapSearchBox.style.display = 'none';
         btnSearchToggle.classList.remove('active');
+        document.querySelector('.map-view')?.classList.remove('drawer-search-open');
+        window.syncMapDrawerForSearch?.();
         renderShopList();
         updateMarkers();
       });
@@ -7802,6 +7874,8 @@
         if (searchQuery) {
           mapSearchBox.style.display = 'block';
           btnSearchToggle.classList.add('active');
+          document.querySelector('.map-view')?.classList.add('drawer-search-open');
+          window.syncMapDrawerForSearch?.();
         }
         renderFeedTab();
         updateMarkers();
@@ -7817,6 +7891,8 @@
         // Mapタブの検索ボックスを閉じる
         mapSearchBox.style.display = 'none';
         btnSearchToggle.classList.remove('active');
+        document.querySelector('.map-view')?.classList.remove('drawer-search-open');
+        window.syncMapDrawerForSearch?.();
         renderFeedTab();
         updateMarkers();
         renderShopList();
@@ -8136,12 +8212,78 @@
     
     function initResizeHandle() {
       const handle = document.getElementById('resize-handle');
-      const mapContainer = document.querySelector('.map-container');
       const mapView = document.querySelector('.map-view');
+      const drawer = document.querySelector('.shop-list-drawer');
+      if (!handle || !mapView || !drawer) return;
       
       let isResizing = false;
       let startY = 0;
       let startHeight = 0;
+      let didDrag = false;
+      let lastListHeight = 0;
+      let resizeFrame = null;
+      const drawerHandle = drawer.querySelector('.drawer-handle');
+
+      function getBottomNavHeight() {
+        const bottomNav = document.querySelector('.bottom-nav');
+        return bottomNav ? Math.ceil(bottomNav.getBoundingClientRect().height) : 72;
+      }
+
+      function getCollapsedHeight() {
+        return drawerHandle ? Math.max(80, Math.ceil(drawerHandle.scrollHeight) - 14) : 98;
+      }
+
+      function getSearchHeight() {
+        return drawerHandle ? Math.ceil(drawerHandle.scrollHeight) : 184;
+      }
+
+      function getDefaultListHeight() {
+        const viewHeight = mapView.getBoundingClientRect().height || window.innerHeight;
+        return Math.min(Math.round(viewHeight * 0.46), Math.max(360, viewHeight - getBottomNavHeight() - 220));
+      }
+
+      function getMaxDrawerHeight() {
+        const viewHeight = mapView.getBoundingClientRect().height || window.innerHeight;
+        return Math.max(getSearchHeight(), Math.round((viewHeight - getBottomNavHeight()) * 0.72));
+      }
+
+      function getMinDrawerHeight() {
+        return mapView.classList.contains('drawer-search-open') ? getSearchHeight() : getCollapsedHeight();
+      }
+
+      function clampDrawerHeight(height) {
+        return Math.min(getMaxDrawerHeight(), Math.max(getMinDrawerHeight(), height));
+      }
+
+      function requestMapResize() {
+        if (!map || resizeFrame) return;
+        resizeFrame = requestAnimationFrame(() => {
+          resizeFrame = null;
+          map.invalidateSize();
+        });
+      }
+
+      function setDrawerHeight(height, openList) {
+        const nextHeight = clampDrawerHeight(height);
+        mapView.style.setProperty('--map-drawer-height', `${nextHeight}px`);
+        mapView.classList.toggle('drawer-list-open', openList);
+        if (openList) lastListHeight = nextHeight;
+        requestMapResize();
+      }
+
+      function syncDrawerForSearch() {
+        if (mapView.classList.contains('drawer-list-open')) {
+          setDrawerHeight(Math.max(drawer.offsetHeight, getDefaultListHeight()), true);
+        } else if (mapView.classList.contains('drawer-search-open')) {
+          setDrawerHeight(getSearchHeight(), false);
+        } else {
+          setDrawerHeight(getCollapsedHeight(), false);
+        }
+      }
+
+      window.syncMapDrawerForSearch = syncDrawerForSearch;
+      syncDrawerForSearch();
+      window.addEventListener('resize', syncDrawerForSearch);
       
       // マウスイベント
       handle.addEventListener('mousedown', startResize);
@@ -8155,7 +8297,9 @@
       function startResize(e) {
         isResizing = true;
         startY = e.clientY || e.pageY;
-        startHeight = mapContainer.offsetHeight;
+        startHeight = drawer.offsetHeight;
+        didDrag = false;
+        mapView.classList.add('drawer-resizing');
         
         document.body.style.userSelect = 'none';
         document.body.style.cursor = 'ns-resize';
@@ -8175,26 +8319,29 @@
         if (!isResizing) return;
         
         const currentY = e.clientY || e.pageY;
-        const diff = currentY - startY;
+        const diff = startY - currentY;
         const newHeight = startHeight + diff;
-        const viewHeight = mapView.offsetHeight;
-        const percentage = (newHeight / viewHeight) * 100;
-        
-        // 30%〜100%の範囲に制限
-        if (percentage >= 30 && percentage <= 100) {
-          mapContainer.style.height = percentage + '%';
-          
-          // 地図のサイズを更新
-          if (map) {
-            setTimeout(() => map.invalidateSize(), 0);
-          }
-        }
+        didDrag = didDrag || Math.abs(diff) > 6;
+        setDrawerHeight(newHeight, newHeight > getSearchHeight() + 24);
       }
       
       function stopResize() {
+        if (!isResizing) return;
         isResizing = false;
+        mapView.classList.remove('drawer-resizing');
         document.body.style.userSelect = '';
         document.body.style.cursor = '';
+
+        if (!didDrag) {
+          if (mapView.classList.contains('drawer-list-open')) {
+            setDrawerHeight(
+              mapView.classList.contains('drawer-search-open') ? getSearchHeight() : getCollapsedHeight(),
+              false
+            );
+          } else {
+            setDrawerHeight(lastListHeight || getDefaultListHeight(), true);
+          }
+        }
         
         document.removeEventListener('mousemove', doResize);
         document.removeEventListener('mouseup', stopResize);
@@ -8207,7 +8354,9 @@
     
     function updateMarkers() {
       Object.values(markers).forEach(m => m.remove());
+      Object.values(markerHalos).forEach(halos => halos.forEach(halo => halo.remove()));
       markers = {};
+      markerHalos = {};
       
       let filteredShops = [...shops];
       
@@ -8258,11 +8407,39 @@
       if (showOpenOnly) {
         filteredShops = filteredShops.filter(shop => isOpenNow(shop.openingHours));
       }
+
+      // Canvasは後から描いたドットが上に来るため、取得JSONの逆順で描画する
+      filteredShops.reverse();
       
       filteredShops.forEach(shop => {
         const visitData = visits[shop.id];
         const isVisited = visitData?.logs?.length > 0;
-        const color = isVisited ? '#10b981' : '#ef4444';
+        const isWantToGo = !!visitData?.wantToGo;
+        const categoryColor = getMapCategoryColor(shop.category);
+
+        // 状態リングは系統カラーと分離して重ねる（両方の状態も同時表示可能）
+        const halos = [];
+        if (isVisited) {
+          halos.push(L.circleMarker([shop.lat, shop.lng], {
+            radius: 11.5,
+            color: '#10b981',
+            weight: 3,
+            opacity: 1,
+            fill: false,
+            interactive: false
+          }).addTo(map));
+        }
+        if (isWantToGo) {
+          halos.push(L.circleMarker([shop.lat, shop.lng], {
+            radius: 15,
+            color: '#facc15',
+            weight: 3,
+            opacity: 1,
+            fill: false,
+            interactive: false
+          }).addTo(map));
+        }
+        markerHalos[shop.id] = halos;
         
         // 本日の営業時間を取得
         const todayHours = getTodayHours(shop.openingHours);
@@ -8322,21 +8499,34 @@
         </div>`;
         
         const marker = L.circleMarker([shop.lat, shop.lng], {
-          radius: 9,
+          radius: selectedMapShopId === shop.id ? 11 : 9,
           color: '#ffffff',
-          weight: 2,
+          weight: selectedMapShopId === shop.id ? 4 : 2,
           opacity: 1,
-          fillColor: color,
+          fillColor: categoryColor,
           fillOpacity: 1
         })
           .addTo(map)
           .bindPopup(popup, {
             closeButton: false,
-            offset: [0, -9]  // ドットの上部と吹き出しの下部をくっつける
+            offset: [0, 0]  // 吹き出しの先端をドットに密着させる
           });
+
+        // ポップアップを閉じても、次の店舗を選ぶまで選択状態を残す
+        marker.on('popupopen', () => {
+          // 円のどこをタップしても、吹き出しは店舗ドットの中心へ固定する
+          const markerPopup = marker.getPopup();
+          if (markerPopup) markerPopup.setLatLng(marker.getLatLng());
+          selectMapMarker(shop.id);
+        });
         
         markers[shop.id] = marker;
       });
+
+      // 再描画後も選択中のドットを最前面に保つ
+      if (selectedMapShopId && markers[selectedMapShopId]) {
+        setMapMarkerSelected(markers[selectedMapShopId], true);
+      }
     }
     
     // 詳細検索モーダル関数
