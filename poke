@@ -1,0 +1,719 @@
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Calculator, Coffee, Sun, Moon, Check, Settings, X, ChevronUp, ChevronDown, Sparkles, Trash2 } from 'lucide-react';
+
+// ─── 定数データ ───────────────────────────────────────────
+const INGREDIENT_ICONS = {
+  'とくせんリンゴ': '🍎', 'おいしいシッポ': '🦎', 'げきからハーブ': '🌶️',
+  'あんみんトマト': '🍅', 'ほっこりポテト': '🥔', 'リラックスカカオ': '🍫',
+  'モーモーミルク': '🥛', 'ふといながねぎ': '🧅', 'あったかジンジャー': '🫚',
+  'あじわいキノコ': '🍄', 'とくせんエッグ': '🥚', 'あまいミツ': '🍯',
+  'マメミート': '🥩', 'ワカクサ大豆': '🫘', 'ピュアなオイル': '🫗',
+  'ワカクサコーン': '🌽', 'めざましコーヒー': '☕',
+  'つやつやアボカド': '🥑', 'ずっしりカボチャ': '🎃'
+};
+
+const RECIPES = {
+  'カレー・シチュー': [
+    { name: 'とくせんリンゴカレー', ing: { 'とくせんリンゴ': 7 } },
+    { name: 'グリルテールカレー', ing: { 'おいしいシッポ': 8, 'げきからハーブ': 25 } },
+    { name: 'ソーラービームトマトカレー', ing: { 'あんみんトマト': 10, 'げきからハーブ': 5 } },
+    { name: 'ゆめくいバターカレー', ing: { 'ほっこりポテト': 18, 'あんみんトマト': 15, 'リラックスカカオ': 12, 'モーモーミルク': 10 } },
+    { name: 'ねぎまカレー', ing: { 'ふといながねぎ': 14, 'あったかジンジャー': 10, 'げきからハーブ': 8 } },
+    { name: 'キノコのほうしカレー', ing: { 'あじわいキノコ': 14, 'ほっこりポテト': 9 } },
+    { name: 'タマゴばくだんカレー', ing: { 'あまいミツ': 12, 'とくせんリンゴ': 11, 'とくせんエッグ': 8, 'ほっこりポテト': 4 } },
+    { name: '満腹チーズバーグカレー', ing: { 'モーモーミルク': 8, 'マメミート': 8 } },
+    { name: 'ほっこりポテトチャウダー', ing: { 'モーモーミルク': 10, 'ほっこりポテト': 8, 'あじわいキノコ': 4 } },
+    { name: 'たんじゅんホワイトシチュー', ing: { 'モーモーミルク': 7 } },
+    { name: 'マメバーグカレー', ing: { 'マメミート': 7 } },
+    { name: 'ベイビィハニーカレー', ing: { 'あまいミツ': 7 } },
+    { name: 'にんじゃカレー', ing: { 'ワカクサ大豆': 24, 'マメミート': 9, 'ふといながねぎ': 12, 'あじわいキノコ': 5 } },
+    { name: 'からぶりカツカレー', ing: { 'マメミート': 10, 'ピュアなオイル': 5 } },
+    { name: 'とろけるオムカレー', ing: { 'とくせんエッグ': 10, 'あんみんトマト': 6 } },
+    { name: 'きあいいれパワフル豆カレー', ing: { 'ワカクサ大豆': 12, 'マメミート': 6, 'げきからハーブ': 4, 'とくせんエッグ': 4 } },
+    { name: 'しなやかコーンシチュー', ing: { 'ワカクサコーン': 14, 'モーモーミルク': 8, 'ほっこりポテト': 8 } },
+    { name: 'ゴーカコーンキーマカレー', ing: { 'げきからハーブ': 27, 'マメミート': 24, 'ワカクサコーン': 14, 'あったかジンジャー': 12 } },
+    { name: 'ピヨピヨパンチカレー', ing: { 'めざましコーヒー': 11, 'げきからハーブ': 11, 'あまいミツ': 11 } },
+    { name: 'めざめるパワーシチュー', ing: { 'ワカクサ大豆': 28, 'あんみんトマト': 25, 'あじわいキノコ': 23, 'めざましコーヒー': 16 } },
+    { name: 'いあいぎりすき焼きカレー', ing: { 'ふといながねぎ': 27, 'マメミート': 26, 'あまいミツ': 26, 'とくせんエッグ': 22 } },
+  ],
+  'サラダ': [
+    { name: 'ヤドンテールのペッパーサラダ', ing: { 'おいしいシッポ': 10, 'げきからハーブ': 10, 'ピュアなオイル': 15 } },
+    { name: 'キノコのほうしサラダ', ing: { 'あじわいキノコ': 17, 'あんみんトマト': 8, 'ピュアなオイル': 8 } },
+    { name: 'ゆきかきシーザーサラダ', ing: { 'モーモーミルク': 10, 'マメミート': 6 } },
+    { name: 'くいしんぼうポテトサラダ', ing: { 'ほっこりポテト': 14, 'とくせんエッグ': 9, 'マメミート': 7, 'とくせんリンゴ': 6 } },
+    { name: 'うるおいとうふサラダ', ing: { 'ワカクサ大豆': 15, 'あんみんトマト': 9 } },
+    { name: 'ばかぢからワイルドサラダ', ing: { 'マメミート': 9, 'あったかジンジャー': 6, 'とくせんエッグ': 5, 'ほっこりポテト': 3 } },
+    { name: 'マメハムサラダ', ing: { 'マメミート': 8 } },
+    { name: 'あんみんトマトサラダ', ing: { 'あんみんトマト': 8 } },
+    { name: 'モーモーカプレーゼ', ing: { 'モーモーミルク': 12, 'あんみんトマト': 6, 'ピュアなオイル': 5 } },
+    { name: 'ムラっけチョコミートサラダ', ing: { 'リラックスカカオ': 14, 'マメミート': 9 } },
+    { name: 'オーバーヒートサラダ', ing: { 'げきからハーブ': 17, 'あったかジンジャー': 10, 'あんみんトマト': 8 } },
+    { name: 'とくせんリンゴサラダ', ing: { 'とくせんリンゴ': 8 } },
+    { name: 'めんえきねぎサラダ', ing: { 'ふといながねぎ': 10, 'あったかジンジャー': 5 } },
+    { name: 'メロメロりんごのチーズサラダ', ing: { 'とくせんリンゴ': 15, 'モーモーミルク': 5, 'ピュアなオイル': 3 } },
+    { name: 'ニンジャサラダ', ing: { 'ふといながねぎ': 15, 'ワカクサ大豆': 19, 'あじわいキノコ': 12, 'あったかジンジャー': 11 } },
+    { name: 'ねっぷうとうふサラダ', ing: { 'ワカクサ大豆': 10, 'げきからハーブ': 6 } },
+    { name: 'ワカクササラダ', ing: { 'ピュアなオイル': 22, 'ワカクサコーン': 17, 'あんみんトマト': 14, 'ほっこりポテト': 9 } },
+    { name: 'めいそうスイートサラダ', ing: { 'とくせんリンゴ': 21, 'あまいミツ': 16, 'ワカクサコーン': 12 } },
+    { name: 'みだれづきコーンサラダ', ing: { 'ワカクサコーン': 9, 'ピュアなオイル': 8 } },
+    { name: 'クロスチョップドサラダ', ing: { 'とくせんエッグ': 20, 'マメミート': 15, 'ワカクサコーン': 11, 'あんみんトマト': 10 } },
+    { name: 'まけんきコーヒーサラダ', ing: { 'めざましコーヒー': 28, 'マメミート': 28, 'ピュアなオイル': 22, 'ほっこりポテト': 22 } },
+    { name: 'はなふぶきミモザサラダ', ing: { 'とくせんエッグ': 25, 'ピュアなオイル': 17, 'ほっこりポテト': 15, 'マメミート': 12 } },
+    { name: 'りんごさんヨーグルトサラダ', ing: { 'とくせんエッグ': 35, 'とくせんリンゴ': 28, 'あんみんトマト': 23, 'モーモーミルク': 18 } },
+    { name: 'くだけるアボカドサラダ', ing: { 'つやつやアボカド': 14, 'ワカクサ大豆': 18, 'ピュアなオイル': 10 } },
+    { name: 'じならしワカモレチップス', ing: { 'つやつやアボカド': 28, 'ワカクサコーン': 25, 'げきからハーブ': 30, 'ワカクサ大豆': 22 } },
+    { name: 'ごろごろねっとうサラダ', ing: { 'ずっしりカボチャ': 20, 'ほっこりポテト': 30, 'ワカクサコーン': 18, 'あじわいキノコ': 27 } },
+  ],
+  'デザート・ドリンク': [
+    { name: 'ほっこりポテトのスイートポテト', ing: { 'ほっこりポテト': 9, 'モーモーミルク': 5 } },
+    { name: 'ふんばりジンジャークッキー', ing: { 'あまいミツ': 14, 'あったかジンジャー': 12, 'リラックスカカオ': 5, 'とくせんエッグ': 4 } },
+    { name: 'とくせんリンゴジュース', ing: { 'とくせんリンゴ': 8 } },
+    { name: 'クラフトサイコソーダ', ing: { 'あまいミツ': 9 } },
+    { name: 'かえんほのおのジンジャーティー', ing: { 'あったかジンジャー': 9, 'とくせんリンゴ': 7 } },
+    { name: 'プリンのトロピカルフラン', ing: { 'とくせんエッグ': 10, 'あまいミツ': 20, 'とくせんリンゴ': 15, 'モーモーミルク': 10 } },
+    { name: 'ネロリのお花畑フラワーティー', ing: { 'あまいミツ': 7, 'とくせんリンゴ': 9, 'モーモーミルク': 7 } },
+    { name: 'あまいかおりチョコケーキ', ing: { 'リラックスカカオ': 9, 'あまいミツ': 8, 'モーモーミルク': 7 } },
+    { name: 'あくまのキッスショコラトルテ', ing: { 'リラックスカカオ': 8, 'モーモーミルク': 7, 'あまいミツ': 8, 'とくせんエッグ': 8 } },
+    { name: 'ねごとおやすみフルーツシェイク', ing: { 'モーモーミルク': 9, 'とくせんリンゴ': 8, 'あまいミツ': 7 } },
+    { name: 'モーモーホットミルク', ing: { 'モーモーミルク': 7 } },
+    { name: 'あまいミツのかくばくデザート', ing: { 'あまいミツ': 8 } },
+    { name: 'ラッキーミルクパンケーキ', ing: { 'モーモーミルク': 10, 'あまいミツ': 7, 'とくせんエッグ': 6 } },
+    { name: 'ラッキーバリアドリンク', ing: { 'あまいミツ': 14, 'とくせんリンゴ': 11, 'あったかジンジャー': 7, 'モーモーミルク': 6 } },
+    { name: 'せいなるはいポップコーン', ing: { 'ワカクサコーン': 15, 'モーモーミルク': 7, 'ピュアなオイル': 6 } },
+    { name: 'フラワーギフトマカロン', ing: { 'リラックスカカオ': 25, 'とくせんエッグ': 25, 'あまいミツ': 17, 'モーモーミルク': 17 } },
+    { name: 'スイートスイーツデザート', ing: { 'リラックスカカオ': 25, 'あまいミツ': 22, 'とくせんエッグ': 21 } },
+    { name: 'ぜったいねむりカップケーキ', ing: { 'リラックスカカオ': 18, 'モーモーミルク': 11, 'とくせんエッグ': 9, 'あまいミツ': 9 } },
+    { name: 'さいみんじゅつネムリソーダ', ing: { 'めざましコーヒー': 9, 'あまいミツ': 15, 'モーモーミルク': 15 } },
+    { name: 'ねっとうクリアスムージー', ing: { 'モーモーミルク': 10, 'あまいミツ': 7, 'とくせんリンゴ': 11, 'ワカクサコーン': 8 } },
+    { name: 'ストーンエッジチョコボール', ing: { 'ワカクサ大豆': 19, 'リラックスカカオ': 12 } },
+    { name: 'ドオーのエクレア', ing: { 'リラックスカカオ': 30, 'モーモーミルク': 26, 'めざましコーヒー': 24, 'あまいミツ': 22 } },
+    { name: 'めざましコーヒー', ing: { 'めざましコーヒー': 8 } },
+    { name: 'ドキドキこわいかおパンケーキ', ing: { 'リラックスカカオ': 35, 'モーモーミルク': 28, 'あまいミツ': 23, 'とくせんエッグ': 17 } },
+    { name: 'なりきりバケッチャシチュー', ing: { 'ほっこりポテト': 27, 'モーモーミルク': 15, 'マメミート': 15, 'あじわいキノコ': 12 } },
+    { name: 'おちゃかいコーンスコーン', ing: { 'とくせんリンゴ': 20, 'あったかジンジャー': 20, 'ワカクサコーン': 18, 'モーモーミルク': 9 } },
+    { name: 'スパークスパイスコーラ', ing: { 'とくせんリンゴ': 35, 'あったかジンジャー': 20, 'ふといながねぎ': 20, 'めざましコーヒー': 12 } },
+  ]
+};
+
+const CATEGORIES = Object.keys(RECIPES);
+const CAT_EMOJI = { 'カレー・シチュー': '🍛', 'サラダ': '🥗', 'デザート・ドリンク': '🍰' };
+const DAYS = ['月', '火', '水', '木', '金', '土', '日'];
+const MEAL_TIMES = ['朝', '昼', '夜'];
+const MEAL_ICONS = { '朝': Coffee, '昼': Sun, '夜': Moon };
+const STORAGE_KEY = 'psleep-planner-v2';
+
+// 連続選択の巡回順: 月朝→月昼→月夜→火朝…
+const SLOT_SEQUENCE = DAYS.flatMap(d => MEAL_TIMES.map(t => `${d}-${t}`));
+
+// 自動完了判定: そのスロットが「過ぎた」かどうか
+function isSlotPast(dayIndex, time, now) {
+  const dow = now.getDay(); // 0=日
+  const cur = dow === 0 ? 6 : dow - 1; // 月=0..日=6
+  const h = now.getHours();
+  if (time === '朝') {
+    return dayIndex < cur || (dayIndex === cur && h >= 12);
+  }
+  if (time === '昼') {
+    return dayIndex < cur || (dayIndex === cur && h >= 18);
+  }
+  // 夜: 翌日4時以降に完了。日曜(6)の夜は週内では過ぎない扱い
+  if (dayIndex === cur) return false;
+  if (dayIndex === cur - 1) return h >= 4;
+  return dayIndex < cur - 1 ? true : false;
+}
+
+export default function App() {
+  const [meals, setMeals] = useState({});
+  const [completed, setCompleted] = useState({});
+  const [manualOverride, setManualOverride] = useState({});
+  const [hidden, setHidden] = useState({});
+  const [order, setOrder] = useState({});
+  const [autoComplete, setAutoComplete] = useState(false);
+  const [weekCategory, setWeekCategory] = useState(null);
+  const [loaded, setLoaded] = useState(false);
+
+  const [pickerSlot, setPickerSlot] = useState(null);
+  const [pickerCat, setPickerCat] = useState(CATEGORIES[0]);
+  const [showSettings, setShowSettings] = useState(false);
+  const [openCats, setOpenCats] = useState({ [CATEGORIES[0]]: true, [CATEGORIES[1]]: false, [CATEGORIES[2]]: false });
+  const [toast, setToast] = useState(null);
+  const [chainMode, setChainMode] = useState(false);
+  const [chainCursor, setChainCursor] = useState(0);
+  const [chainFilled, setChainFilled] = useState([]);
+  const [now, setNow] = useState(new Date());
+  const toastTimer = useRef(null);
+
+  // ── 永続化: 読み込み ──
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await window.storage.get(STORAGE_KEY);
+        if (res && res.value) {
+          const d = JSON.parse(res.value);
+          setMeals(d.meals || {});
+          setCompleted(d.completed || {});
+          setManualOverride(d.manualOverride || {});
+          setHidden(d.hidden || {});
+          setOrder(d.order || {});
+          setAutoComplete(!!d.autoComplete);
+          setWeekCategory(d.weekCategory || null);
+        }
+      } catch (e) { /* 初回起動: データなし */ }
+      setLoaded(true);
+    })();
+  }, []);
+
+  // ── 永続化: 保存 ──
+  useEffect(() => {
+    if (!loaded) return;
+    const t = setTimeout(async () => {
+      try {
+        await window.storage.set(STORAGE_KEY, JSON.stringify({ meals, completed, manualOverride, hidden, order, autoComplete, weekCategory }));
+      } catch (e) { console.error('save failed', e); }
+    }, 400);
+    return () => clearTimeout(t);
+  }, [meals, completed, manualOverride, hidden, order, autoComplete, weekCategory, loaded]);
+
+  // ── 時計 (1分ごと) ──
+  useEffect(() => {
+    const iv = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(iv);
+  }, []);
+
+  // 完了判定: 手動操作があればそれを優先、なければ自動判定
+  const isCompleted = useCallback((day, time) => {
+    const key = `${day}-${time}`;
+    if (key in manualOverride) return manualOverride[key];
+    if (completed[key]) return true;
+    if (autoComplete) {
+      return isSlotPast(DAYS.indexOf(day), time, now);
+    }
+    return false;
+  }, [manualOverride, completed, autoComplete, now]);
+
+  const showToastMsg = (msg) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast(msg);
+    toastTimer.current = setTimeout(() => setToast(null), 3000);
+  };
+
+  // 料理の食材合計数
+  const recipeTotal = (recipe) => Object.values(recipe.ing).reduce((s, n) => s + n, 0);
+
+  // ── 料理リスト (合計数の少ない順 → 手動並び替えで上書き / 非表示は最下部) ──
+  const sortedRecipes = useCallback((cat) => {
+    const list = RECIPES[cat];
+    const ord = order[cat] || [];
+    const byTotal = (a, b) => recipeTotal(a) - recipeTotal(b);
+    const visible = list.filter(r => !hidden[`${cat}-${r.name}`]).sort(byTotal);
+    const hiddenList = list.filter(r => hidden[`${cat}-${r.name}`]).sort(byTotal);
+    const sorted = [...visible].sort((a, b) => {
+      const ia = ord.indexOf(a.name), ib = ord.indexOf(b.name);
+      if (ia === -1 && ib === -1) return 0;
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
+    });
+    return { visible: sorted, hiddenList };
+  }, [order, hidden]);
+
+  // ── 操作 ──
+  const assignMeal = (recipeName, cat) => {
+    const recipe = RECIPES[cat].find(r => r.name === recipeName);
+    if (chainMode) {
+      if (chainCursor >= SLOT_SEQUENCE.length) return;
+      const key = SLOT_SEQUENCE[chainCursor];
+      setMeals(prev => ({ ...prev, [key]: { name: recipeName, cat, ing: recipe.ing } }));
+      setChainFilled(prev => [...prev, { key, name: recipeName }]);
+      setChainCursor(c => c + 1);
+      return;
+    }
+    if (!pickerSlot) return;
+    setMeals(prev => ({ ...prev, [pickerSlot]: { name: recipeName, cat, ing: recipe.ing } }));
+    setPickerSlot(null);
+  };
+
+  const startChain = (startKey) => {
+    setChainMode(true);
+    setChainCursor(SLOT_SEQUENCE.indexOf(startKey));
+    setChainFilled([]);
+    setPickerSlot(startKey);
+  };
+
+  const endChain = () => {
+    const n = chainFilled.length;
+    setChainMode(false);
+    setChainFilled([]);
+    setPickerSlot(null);
+    if (n > 0) showToastMsg(`${n}食を設定しました`);
+  };
+
+  const undoChain = () => {
+    if (chainFilled.length === 0) return;
+    const last = chainFilled[chainFilled.length - 1];
+    setMeals(prev => { const n = { ...prev }; delete n[last.key]; return n; });
+    setChainFilled(prev => prev.slice(0, -1));
+    setChainCursor(c => Math.max(0, c - 1));
+  };
+
+  const clearSlot = (key) => {
+    setMeals(prev => { const n = { ...prev }; delete n[key]; return n; });
+    setPickerSlot(null);
+  };
+
+  const toggleComplete = (day, time, e) => {
+    e.stopPropagation();
+    const key = `${day}-${time}`;
+    const cur = isCompleted(day, time);
+    setManualOverride(prev => ({ ...prev, [key]: !cur }));
+  };
+
+  const toggleHidden = (cat, name) => {
+    setHidden(prev => ({ ...prev, [`${cat}-${name}`]: !prev[`${cat}-${name}`] }));
+  };
+
+  const moveRecipe = (cat, name, dir) => {
+    setOrder(prev => {
+      const { visible } = sortedRecipes(cat);
+      const names = visible.map(r => r.name);
+      const i = names.indexOf(name);
+      const j = dir === 'up' ? i - 1 : i + 1;
+      if (j < 0 || j >= names.length) return prev;
+      [names[i], names[j]] = [names[j], names[i]];
+      return { ...prev, [cat]: names };
+    });
+  };
+
+  const resetWeek = () => {
+    setMeals({}); setCompleted({}); setManualOverride({});
+    showToastMsg('週間プランをリセットしました');
+  };
+
+  // ── 集計 ──
+  const totals = {};
+  Object.entries(meals).forEach(([key, meal]) => {
+    const [day, time] = key.split('-');
+    if (isCompleted(day, time)) return;
+    Object.entries(meal.ing).forEach(([ing, amt]) => {
+      totals[ing] = (totals[ing] || 0) + amt;
+    });
+  });
+  const totalEntries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+
+  if (!loaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-950 via-purple-950 to-slate-900">
+        <div className="text-purple-300 animate-pulse text-lg">読み込み中… 💤</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-purple-950 to-slate-900 text-slate-100 pb-24">
+      {/* ── ヘッダー ── */}
+      <header className="sticky top-0 z-30 backdrop-blur-xl bg-indigo-950/70 border-b border-purple-500/20">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">💤</span>
+            <div>
+              <h1 className="font-bold text-lg leading-tight bg-gradient-to-r from-purple-300 to-pink-300 bg-clip-text text-transparent">
+                ポケモンスリープ 食材プランナー
+              </h1>
+              <p className="text-[11px] text-purple-300/60">週間の必要食材を自動計算</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={resetWeek}
+              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-purple-300 transition-colors"
+              title="週間プランをリセット"
+            >
+              <Trash2 size={18} />
+            </button>
+            <button
+              onClick={() => setShowSettings(true)}
+              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-purple-300 transition-colors"
+              title="設定"
+            >
+              <Settings size={18} />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-6xl mx-auto px-4 pt-5 space-y-6">
+
+        {/* ── 今週のカテゴリ ── */}
+        <section className="rounded-2xl bg-white/5 border border-purple-500/20 p-4 backdrop-blur">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-lg">🍳</span>
+            <h2 className="font-bold text-purple-200">今週のなべ</h2>
+            <span className="text-[11px] text-purple-300/50">作る料理の種類を選択</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {CATEGORIES.map(cat => (
+              <button key={cat}
+                onClick={() => { setWeekCategory(prev => prev === cat ? null : cat); setPickerCat(cat); }}
+                className={`py-3 px-2 rounded-xl border text-xs font-medium transition-all ${
+                  weekCategory === cat
+                    ? 'bg-pink-500/25 border-pink-400/50 text-pink-100 shadow-[0_0_16px_rgba(236,72,153,0.2)]'
+                    : 'bg-white/[0.03] border-white/10 text-purple-300/70 hover:bg-purple-500/10 hover:border-purple-400/30'
+                }`}>
+                <div className="text-2xl mb-1">{CAT_EMOJI[cat]}</div>
+                {cat}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* ── 残り必要食材 (1行 flex-wrap) ── */}
+        <section className="rounded-2xl bg-white/5 border border-purple-500/20 p-4 backdrop-blur">
+          <div className="flex items-center gap-2 mb-3">
+            <Calculator size={18} className="text-purple-300" />
+            <h2 className="font-bold text-purple-200">残り必要食材</h2>
+            <span className="text-[11px] text-purple-300/50">完了分は除外</span>
+          </div>
+          {totalEntries.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {totalEntries.map(([ing, total]) => (
+                <div key={ing}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/15 border border-purple-400/20 hover:bg-purple-500/25 transition-colors">
+                  <span className="text-lg leading-none">{INGREDIENT_ICONS[ing] || '📦'}</span>
+                  <span className="text-xs text-purple-100">{ing}</span>
+                  <span className="text-sm font-bold text-pink-300">×{total}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-purple-300/50 py-2 text-center">
+              {Object.keys(meals).length === 0 ? 'カレンダーのマスをタップして料理を設定しましょう' : 'すべての食事が完了済みです 🎉'}
+            </p>
+          )}
+        </section>
+
+        {/* ── 週間カレンダー ── */}
+        <section className="rounded-2xl bg-white/5 border border-purple-500/20 p-4 backdrop-blur overflow-x-auto">
+          <h2 className="font-bold text-purple-200 mb-3">週間カレンダー</h2>
+          <div className="grid gap-1.5" style={{ gridTemplateColumns: '44px repeat(7, minmax(104px, 1fr))', minWidth: '790px' }}>
+            <div />
+            {DAYS.map(d => (
+              <div key={d} className={`text-center text-sm font-bold py-1.5 rounded-lg ${
+                (now.getDay() === 0 ? 6 : now.getDay() - 1) === DAYS.indexOf(d)
+                  ? 'bg-pink-500/25 text-pink-200' : 'bg-purple-500/15 text-purple-200'
+              }`}>
+                {d}
+              </div>
+            ))}
+            {MEAL_TIMES.map(time => {
+              const Icon = MEAL_ICONS[time];
+              return (
+                <React.Fragment key={time}>
+                  <div className="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-purple-500/10 text-purple-300">
+                    <Icon size={14} />
+                    <span className="text-[11px]">{time}</span>
+                  </div>
+                  {DAYS.map(day => {
+                    const key = `${day}-${time}`;
+                    const meal = meals[key];
+                    const done = isCompleted(day, time);
+                    return (
+                      <div key={key} className="relative group">
+                        <button
+                          onClick={() => { if (weekCategory) setPickerCat(weekCategory); setPickerSlot(key); }}
+                          className={`w-full h-[104px] p-1.5 rounded-xl border text-left transition-all duration-200 ${
+                            done
+                              ? 'bg-slate-800/40 border-slate-700/40 opacity-50'
+                              : meal
+                                ? 'bg-purple-500/20 border-purple-400/40 hover:border-pink-400/60 hover:shadow-[0_0_16px_rgba(216,180,254,0.15)]'
+                                : 'bg-white/[0.03] border-white/10 hover:bg-purple-500/10 hover:border-purple-400/30'
+                          }`}
+                        >
+                          {meal ? (
+                            <div className={`flex flex-col h-full ${done ? 'line-through' : ''}`}>
+                              <div className="text-[10px] font-bold text-purple-100 leading-tight line-clamp-2 mb-1">
+                                {meal.name}
+                              </div>
+                              <div className="flex-1 space-y-px overflow-hidden">
+                                {Object.entries(meal.ing).map(([ing, amt]) => (
+                                  <div key={ing} className="flex items-center gap-0.5 text-[9px] text-purple-300/80">
+                                    <span>{INGREDIENT_ICONS[ing] || '📦'}</span>
+                                    <span className="font-medium">×{amt}</span>
+                                    <span className="truncate opacity-70">{ing}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="h-full flex items-center justify-center text-[11px] text-purple-300/30">
+                              {done ? '完了' : '＋'}
+                            </div>
+                          )}
+                        </button>
+                        <button
+                          onClick={(e) => toggleComplete(day, time, e)}
+                          className={`absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full border flex items-center justify-center transition-all z-10 ${
+                            done
+                              ? 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_8px_rgba(16,185,129,0.5)]'
+                              : 'bg-slate-800 border-slate-600 text-slate-500 hover:border-emerald-400 hover:text-emerald-400'
+                          }`}
+                          title={done ? '完了済み(タップで戻す)' : '完了にする'}
+                        >
+                          <Check size={11} strokeWidth={3} />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </React.Fragment>
+              );
+            })}
+          </div>
+          <p className="mt-3 text-[11px] text-purple-300/40 text-center">
+            マスをタップ → 料理を選択 ／ ✓ボタンで完了(計算から除外)
+          </p>
+        </section>
+      </main>
+
+      {/* ── 料理選択モーダル (ボトムシート) ── */}
+      {pickerSlot && (
+        <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { if (!chainMode) setPickerSlot(null); }} />
+          <div
+            className="relative w-full sm:max-w-lg h-[80vh] bg-slate-900 border-t sm:border border-purple-500/30 sm:rounded-2xl rounded-t-3xl flex flex-col overflow-hidden animate-[slideUp_.25s_ease-out]"
+          >
+            <div className="p-3 border-b border-purple-500/20 shrink-0">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="min-w-0">
+                  {chainMode ? (
+                    <>
+                      <h3 className="font-bold text-pink-200 flex items-center gap-1.5 text-sm">
+                        <Sparkles size={14} /> 連続選択モード
+                      </h3>
+                      <p className="text-[11px] text-purple-300/60">
+                        {chainCursor < SLOT_SEQUENCE.length
+                          ? `次: ${SLOT_SEQUENCE[chainCursor].replace('-', '曜 ')} ／ ${chainFilled.length}食設定済`
+                          : `週の最後まで設定しました (${chainFilled.length}食)`}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <h3 className="font-bold text-purple-100 text-sm">{pickerSlot.replace('-', '曜日 ')} の料理</h3>
+                      {meals[pickerSlot] && (
+                        <p className="text-[11px] text-purple-300/60 truncate">現在: {meals[pickerSlot].name}</p>
+                      )}
+                    </>
+                  )}
+                </div>
+                <button onClick={() => chainMode ? endChain() : setPickerSlot(null)}
+                  className="p-1.5 rounded-lg bg-white/5 text-purple-300 hover:bg-white/10 shrink-0">
+                  <X size={16} />
+                </button>
+              </div>
+              <div className="flex gap-2">
+                {chainMode ? (
+                  <>
+                    <button onClick={undoChain} disabled={chainFilled.length === 0}
+                      className="flex-1 py-2 text-xs rounded-lg bg-white/5 text-purple-300 hover:bg-white/10 disabled:opacity-30">
+                      ↩ 戻す
+                    </button>
+                    <button onClick={endChain}
+                      className="flex-1 py-2 text-xs rounded-lg bg-emerald-500/25 text-emerald-200 hover:bg-emerald-500/35 font-bold">
+                      ✓ 完了
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button onClick={() => startChain(pickerSlot)}
+                      className="flex-1 py-2 text-xs rounded-lg bg-pink-500/20 text-pink-200 hover:bg-pink-500/30 font-medium">
+                      ⚡ 連続選択モード
+                    </button>
+                    {meals[pickerSlot] && (
+                      <button onClick={() => clearSlot(pickerSlot)}
+                        className="px-4 py-2 text-xs rounded-lg bg-red-500/15 text-red-300 hover:bg-red-500/25">
+                        削除
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+            <div className="flex gap-1 p-2 border-b border-purple-500/20 shrink-0">
+              {CATEGORIES.map(cat => (
+                <button key={cat}
+                  onClick={() => setPickerCat(cat)}
+                  className={`flex-1 py-2 px-1 rounded-xl text-xs font-medium transition-all ${
+                    pickerCat === cat
+                      ? 'bg-purple-500/30 text-purple-100 shadow-inner'
+                      : 'text-purple-300/60 hover:bg-white/5'
+                  }`}>
+                  {CAT_EMOJI[cat]} {cat}
+                </button>
+              ))}
+            </div>
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 space-y-1.5" style={{ WebkitOverflowScrolling: 'touch' }}>
+              {sortedRecipes(pickerCat).visible.map(recipe => {
+                const chainCount = chainFilled.filter(f => f.name === recipe.name).length;
+                const atEnd = chainMode && chainCursor >= SLOT_SEQUENCE.length;
+                return (
+                <button key={recipe.name}
+                  onClick={() => assignMeal(recipe.name, pickerCat)}
+                  disabled={atEnd}
+                  className={`relative w-full text-left p-3 rounded-xl border transition-all disabled:opacity-40 ${
+                    !chainMode && meals[pickerSlot]?.name === recipe.name
+                      ? 'bg-pink-500/15 border-pink-400/40'
+                      : chainCount > 0
+                        ? 'bg-pink-500/10 border-pink-400/30'
+                        : 'bg-white/[0.03] border-white/10 hover:bg-purple-500/15 hover:border-purple-400/30'
+                  }`}>
+                  {chainMode && !atEnd && (
+                    <span className="absolute -top-1.5 -right-1.5 px-2 py-0.5 rounded-full bg-pink-500 text-white text-[10px] font-bold shadow-lg shadow-pink-900/40">
+                      {SLOT_SEQUENCE[chainCursor].replace('-', '')}
+                    </span>
+                  )}
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <span className="text-sm font-medium text-purple-100">
+                      {recipe.name}
+                      {chainCount > 0 && <span className="ml-1.5 text-[11px] text-pink-300">×{chainCount}</span>}
+                    </span>
+                    <span className="text-[11px] font-bold text-pink-300 bg-pink-500/10 px-2 py-0.5 rounded-full shrink-0">
+                      計{recipeTotal(recipe)}個
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-x-2.5 gap-y-0.5">
+                    {Object.entries(recipe.ing).map(([ing, amt]) => (
+                      <span key={ing} className="text-[11px] text-purple-300/70">
+                        {INGREDIENT_ICONS[ing] || '📦'}×{amt}
+                      </span>
+                    ))}
+                  </div>
+                </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 設定モーダル ── */}
+      {showSettings && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowSettings(false)} />
+          <div
+            className="relative w-full max-w-md h-[85vh] bg-slate-900 border border-purple-500/30 rounded-2xl flex flex-col overflow-hidden">
+            <div className="p-4 border-b border-purple-500/20 flex items-center justify-between">
+              <h3 className="font-bold text-purple-100 flex items-center gap-2">
+                <Settings size={16} /> 設定
+              </h3>
+              <button onClick={() => setShowSettings(false)}
+                className="p-1.5 rounded-lg bg-white/5 text-purple-300 hover:bg-white/10">
+                <X size={16} />
+              </button>
+            </div>
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 space-y-5" style={{ WebkitOverflowScrolling: 'touch' }}>
+              {/* 自動完了 */}
+              <label className="flex items-center justify-between gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/10 cursor-pointer">
+                <div>
+                  <div className="text-sm font-medium text-purple-100 flex items-center gap-1.5">
+                    <Sparkles size={14} className="text-pink-300" /> 自動完了
+                  </div>
+                  <div className="text-[11px] text-purple-300/60 mt-0.5">
+                    朝→12時 / 昼→18時 / 夜→翌4時 に自動でグレーアウト
+                  </div>
+                </div>
+                <button
+                  onClick={(e) => { e.preventDefault(); setAutoComplete(v => !v); }}
+                  className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${
+                    autoComplete ? 'bg-pink-500' : 'bg-slate-700'
+                  }`}>
+                  <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all ${
+                    autoComplete ? 'left-[22px]' : 'left-0.5'
+                  }`} />
+                </button>
+              </label>
+
+              {/* 料理の表示・順序 */}
+              <div>
+                <h4 className="text-sm font-medium text-purple-100 mb-1">料理の表示・順序</h4>
+                <p className="text-[11px] text-purple-300/60 mb-3">
+                  チェックを外すと非表示になり一番下に移動します(いつでも復活可能)
+                </p>
+                {CATEGORIES.map(cat => {
+                  const { visible, hiddenList } = sortedRecipes(cat);
+                  const open = openCats[cat];
+                  return (
+                    <div key={cat} className="mb-2 rounded-xl bg-white/[0.03] border border-white/10 overflow-hidden">
+                      <button
+                        onClick={() => setOpenCats(prev => ({ ...prev, [cat]: !prev[cat] }))}
+                        className="w-full flex items-center justify-between p-3 text-sm font-medium text-purple-200 hover:bg-white/5">
+                        <span>{CAT_EMOJI[cat]} {cat}</span>
+                        <ChevronDown size={16} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+                      </button>
+                      {open && (
+                        <div className="px-2 pb-2 space-y-1 max-h-64 overflow-y-auto">
+                          {visible.map((recipe, i) => (
+                            <div key={recipe.name} className="flex items-center gap-1.5 p-1.5 rounded-lg bg-white/[0.03]">
+                              <div className="flex flex-col">
+                                <button onClick={() => moveRecipe(cat, recipe.name, 'up')} disabled={i === 0}
+                                  className="text-purple-400/60 hover:text-pink-300 disabled:opacity-20 p-0.5">
+                                  <ChevronUp size={12} />
+                                </button>
+                                <button onClick={() => moveRecipe(cat, recipe.name, 'down')} disabled={i === visible.length - 1}
+                                  className="text-purple-400/60 hover:text-pink-300 disabled:opacity-20 p-0.5">
+                                  <ChevronDown size={12} />
+                                </button>
+                              </div>
+                              <input type="checkbox" checked readOnly
+                                onClick={() => toggleHidden(cat, recipe.name)}
+                                className="w-3.5 h-3.5 accent-pink-500 cursor-pointer" />
+                              <span className="text-xs text-purple-100 flex-1">{recipe.name}</span>
+                              <span className="text-[10px] text-purple-300/50 shrink-0">計{recipeTotal(recipe)}</span>
+                            </div>
+                          ))}
+                          {hiddenList.length > 0 && (
+                            <div className="pt-1 mt-1 border-t border-white/10">
+                              <div className="text-[10px] text-purple-300/40 px-1.5 mb-1">非表示中</div>
+                              {hiddenList.map(recipe => (
+                                <div key={recipe.name} className="flex items-center gap-1.5 p-1.5 rounded-lg opacity-50">
+                                  <div className="w-[22px]" />
+                                  <input type="checkbox" checked={false} readOnly
+                                    onClick={() => toggleHidden(cat, recipe.name)}
+                                    className="w-3.5 h-3.5 accent-pink-500 cursor-pointer" />
+                                  <span className="text-xs text-purple-200 flex-1 line-through decoration-purple-400/40">{recipe.name}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── トースト ── */}
+      <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${
+        toast ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
+      }`}>
+        <div className="px-5 py-2.5 rounded-full bg-purple-600 text-white text-sm shadow-lg shadow-purple-900/50">
+          {toast}
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes slideUp {
+          from { transform: translateY(24px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+      `}</style>
+    </div>
+  );
+}
