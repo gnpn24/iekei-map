@@ -2028,6 +2028,148 @@
     .leaflet-popup-tip{
       box-shadow: 0 2px 8px rgba(0,0,0,.15);
     }
+
+    /* 地図ポップアップ：店舗公式Xの無料埋め込み導線 */
+    .shop-x-embed-trigger {
+      width: 100%;
+      height: 32px;
+      margin-bottom: 8px;
+      padding: 0 10px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      border: 1px solid #d1d5db;
+      border-radius: 9px;
+      background: #fff;
+      color: #111827;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 700;
+      text-align: left;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .shop-x-embed-trigger:active {
+      background: #f3f4f6;
+      transform: scale(.99);
+    }
+    .shop-x-embed-trigger-mark {
+      flex: 0 0 auto;
+      font-size: 14px;
+    }
+    .shop-x-embed-trigger-label {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .shop-x-embed-trigger-arrow {
+      flex: 0 0 auto;
+      color: #6b7280;
+      font-size: 16px;
+    }
+
+    .x-embed-modal {
+      z-index: 3100;
+    }
+    .x-embed-modal-content {
+      max-width: 600px;
+      max-height: 86vh;
+      padding-bottom: max(10px, env(safe-area-inset-bottom));
+    }
+    .x-embed-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid #f3f4f6;
+      flex: 0 0 auto;
+    }
+    .x-embed-title-wrap {
+      min-width: 0;
+    }
+    .x-embed-eyebrow {
+      margin-bottom: 2px;
+      color: #6b7280;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .x-embed-title {
+      overflow: hidden;
+      color: #111827;
+      font-size: 16px;
+      font-weight: 800;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .x-embed-close {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      border: none;
+      border-radius: 50%;
+      background: #f3f4f6;
+      color: #6b7280;
+      cursor: pointer;
+      font-size: 18px;
+    }
+    .x-embed-body {
+      position: relative;
+      min-height: 220px;
+      padding: 8px 12px 4px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .x-embed-host.is-loading {
+      min-height: 220px;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .x-embed-loading,
+    .x-embed-error {
+      min-height: 210px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 10px;
+      color: #6b7280;
+      font-size: 13px;
+      text-align: center;
+    }
+    .x-embed-loading {
+      position: absolute;
+      inset: 8px 12px 4px;
+      z-index: 1;
+      background: #fff;
+    }
+    .x-embed-spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid #e5e7eb;
+      border-top-color: #111827;
+      border-radius: 50%;
+      animation: xEmbedSpin .8s linear infinite;
+    }
+    @keyframes xEmbedSpin {
+      to { transform: rotate(360deg); }
+    }
+    .x-embed-profile-link {
+      display: block;
+      margin: 4px 12px 0;
+      padding: 10px;
+      border-radius: 10px;
+      background: #111827;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      text-align: center;
+      text-decoration: none;
+    }
   
     /* 🔍 Padding可視化（デバッグ用） */
     /* Safe Areaが効いている場合：青い帯が表示される */
@@ -3990,12 +4132,12 @@
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">気温（°C）</label>
-              <input type="number" class="form-input" id="input-temp" step="0.1" placeholder="例: 25">
+              <input type="number" class="form-input" id="input-temp" step="0.1" placeholder="例: 25.0">
             </div>
             <div class="form-group">
               <label class="form-label">天気</label>
               <select class="form-input" id="input-weather">
-                <option value="">選択してください</option>
+                <option value="" id="input-weather-empty-option">選択してください</option>
                 <option value="晴れ">☀️ 晴れ</option>
                 <option value="曇り">☁️ 曇り</option>
                 <option value="雨">🌧️ 雨</option>
@@ -4003,6 +4145,7 @@
               </select>
             </div>
           </div>
+          <div id="weather-fetch-status" aria-live="polite" style="min-height:16px;margin-top:-8px;margin-bottom:8px;font-size:12px;color:#6b7280;"></div>
           
           <!-- 評価+注文内容+オプション | 麺・味・油 -->
           <div class="form-row" style="align-items: stretch;">
@@ -4152,7 +4295,7 @@
     })();
 
     // App Version (手動で更新)
-    const APP_VERSION = "1.22.0";
+    const APP_VERSION = "1.24.0";
 
     // ===== Supabase（ログイン・クラウド同期） =====
     const SUPABASE_URL = 'https://ggmfsnyhkrdoytbpvtxd.supabase.co';
@@ -4915,14 +5058,20 @@
       });
     }
 
+    function formatTemperatureValue(value) {
+      if (value === null || value === undefined || value === '') return '';
+      const numericValue = Number(value);
+      return Number.isFinite(numericValue) ? numericValue.toFixed(1) : '';
+    }
+
     // 訪問記録の詳細情報（ラベル＋値ボックス形式）。photo-modal・みんなの投稿詳細の両方で共通利用。
     // d = { visitedAt, rating, weather, temperature, waitMinutes, order, options, noodleFirmness, flavorIntensity, oilAmount, memo }
     function visitDetailInfoBoxesHtml(d) {
       // 日時・待ち時間・天気・気温を1行に
       const metaParts = [formatDateTime(d.visitedAt)];
       if (d.waitMinutes) metaParts.push(`待ち${d.waitMinutes}分`);
-      if (d.weather || d.temperature) {
-        metaParts.push(`${d.weather ? escapeHtml(d.weather) : ''}${d.temperature ? d.temperature + '°C' : ''}`);
+      if (d.weather || d.temperature || d.temperature === 0) {
+        metaParts.push(`${d.weather ? escapeHtml(d.weather) : ''}${d.temperature || d.temperature === 0 ? formatTemperatureValue(d.temperature) + '°C' : ''}`);
       }
 
       const customizeParts = [];
@@ -4995,7 +5144,7 @@
         parts.push(isSmallScreen ? `${month}/${day} ${hours}:${minutes}` : `${year}/${month}/${day} ${hours}:${minutes}`);
       }
       if (v.wait_minutes || v.wait_minutes === 0) parts.push(`待ち${v.wait_minutes}分`);
-      const weatherTemp = `${v.weather ? escapeHtml(shortWeather(v.weather)) : ''}${v.temperature || v.temperature === 0 ? escapeHtml(String(v.temperature)) + '℃' : ''}`;
+      const weatherTemp = `${v.weather ? escapeHtml(shortWeather(v.weather)) : ''}${v.temperature || v.temperature === 0 ? escapeHtml(formatTemperatureValue(v.temperature)) + '℃' : ''}`;
       if (weatherTemp) parts.push(weatherTemp);
       // 区切りは「・」（前後空白なし）で詰める
       return parts.join('・');
@@ -7014,7 +7163,7 @@
         description: "1974年創業の家系ラーメン発祥店。濃厚豚骨醤油スープに太麺",
         googleMapUrl: "https://www.google.co.jp/maps/place/%E5%AE%B6%E7%B3%BB%E7%B7%8F%E6%9C%AC%E5%B1%B1+%E5%90%89%E6%9D%91%E5%AE%B6/@35.4629487,139.6150264,154m/",
         websiteUrl: "http://ieke1.com/",
-        xURL: "https://x.com/yoshimuraya1974",
+        xURL: "https://x.com/yosimuraya",
         openingHours: {
           mon: {times:[]},
           tue: {times:[{start:"11:00",end:"20:00"}]},
@@ -7338,6 +7487,171 @@
     let nearbyMode = false; // 今からモード
     let isRequestingLocation = false; // 位置情報取得中フラグ
     let locationMode = false; // 地点指定モード
+
+    function getShopXURL(shop) {
+      if (shop?.id === 'yoshimuraya') return 'https://x.com/yosimuraya';
+      const spreadsheetURL = String(shop?.xURL || '').trim();
+      if (spreadsheetURL) return spreadsheetURL;
+      return '';
+    }
+
+    function getXUsername(xURL) {
+      try {
+        const url = new URL(String(xURL || '').trim());
+        const hostname = url.hostname.toLowerCase().replace(/^www\./, '');
+        if (hostname !== 'x.com' && hostname !== 'twitter.com') return '';
+        const username = url.pathname.split('/').filter(Boolean)[0] || '';
+        if (!/^[A-Za-z0-9_]{1,15}$/.test(username)) return '';
+        return username.toLowerCase();
+      } catch (_) {
+        return '';
+      }
+    }
+
+    let xWidgetsLoaderPromise = null;
+    let xEmbedRenderToken = 0;
+
+    function loadXWidgetsScript() {
+      if (window.twttr?.widgets?.load) return Promise.resolve(window.twttr);
+      if (xWidgetsLoaderPromise) return xWidgetsLoaderPromise;
+
+      xWidgetsLoaderPromise = new Promise((resolve, reject) => {
+        const scriptId = 'x-widgets-script';
+        let script = document.getElementById(scriptId);
+        if (!script) {
+          script = document.createElement('script');
+          script.id = scriptId;
+          script.src = 'https://platform.x.com/widgets.js';
+          script.async = true;
+          script.charset = 'utf-8';
+          document.head.appendChild(script);
+        }
+
+        const startedAt = Date.now();
+        const timer = setInterval(() => {
+          if (window.twttr?.widgets?.load) {
+            clearInterval(timer);
+            resolve(window.twttr);
+          } else if (Date.now() - startedAt > 12000) {
+            clearInterval(timer);
+            xWidgetsLoaderPromise = null;
+            reject(new Error('Xの埋め込み読み込みがタイムアウトしました'));
+          }
+        }, 100);
+
+        script.addEventListener('error', () => {
+          clearInterval(timer);
+          xWidgetsLoaderPromise = null;
+          reject(new Error('Xの埋め込みを読み込めませんでした'));
+        }, { once: true });
+      });
+
+      return xWidgetsLoaderPromise;
+    }
+
+    function waitForXEmbedRendered(host, timeoutMs = 15000) {
+      return new Promise((resolve, reject) => {
+        const startedAt = Date.now();
+        const observer = new MutationObserver(checkRendered);
+        const timer = setInterval(checkRendered, 150);
+
+        function finish(error) {
+          clearInterval(timer);
+          observer.disconnect();
+          if (error) reject(error);
+          else resolve();
+        }
+
+        function checkRendered() {
+          const iframe = host.querySelector('iframe');
+          if (iframe) {
+            const style = getComputedStyle(iframe);
+            const rect = iframe.getBoundingClientRect();
+            if (style.visibility !== 'hidden' && rect.width >= 180 && rect.height >= 180) {
+              finish();
+              return;
+            }
+          }
+          if (Date.now() - startedAt > timeoutMs) {
+            finish(new Error('Xの投稿描画がタイムアウトしました'));
+          }
+        }
+
+        observer.observe(host, { childList: true, subtree: true, attributes: true });
+        checkRendered();
+      });
+    }
+
+    async function openShopXEmbed(shopId) {
+      const shop = shops.find(item => item.id === shopId);
+      const xURL = getShopXURL(shop);
+      const username = getXUsername(xURL);
+      if (!shop || !username) return;
+
+      const renderToken = ++xEmbedRenderToken;
+      const modal = document.getElementById('x-embed-modal');
+      const title = document.getElementById('x-embed-title');
+      const body = document.getElementById('x-embed-body');
+      const profileLink = document.getElementById('x-embed-profile-link');
+      if (!modal || !title || !body || !profileLink) return;
+
+      title.textContent = shop.name;
+      profileLink.href = xURL;
+      profileLink.textContent = `@${username} をXで開く`;
+      modal.classList.add('active');
+
+      const host = document.createElement('div');
+      host.className = 'x-embed-host is-loading';
+      host.innerHTML = `
+        <a class="twitter-timeline"
+           data-lang="ja"
+           data-width="550"
+           data-height="480"
+           data-dnt="true"
+           data-tweet-limit="1"
+           data-chrome="noheader nofooter noborders transparent"
+           href="https://x.com/${escapeHtml(username)}?ref_src=twsrc%5Etfw">
+          @${escapeHtml(username)} の公式X
+        </a>
+      `;
+      const loading = document.createElement('div');
+      loading.className = 'x-embed-loading';
+      loading.setAttribute('aria-live', 'polite');
+      loading.innerHTML = `
+        <div class="x-embed-spinner" aria-hidden="true"></div>
+        <div>公式Xの最新投稿を読み込んでいます…</div>
+      `;
+      body.replaceChildren(host, loading);
+
+      try {
+        const twttr = await loadXWidgetsScript();
+        if (renderToken !== xEmbedRenderToken || !modal.classList.contains('active')) return;
+        await Promise.resolve(twttr.widgets.load(host));
+        await waitForXEmbedRendered(host);
+        if (renderToken !== xEmbedRenderToken || !modal.classList.contains('active')) return;
+        loading.remove();
+        host.classList.remove('is-loading');
+      } catch (error) {
+        if (renderToken !== xEmbedRenderToken) return;
+        body.innerHTML = `
+          <div class="x-embed-error">
+            <div>埋め込みを表示できませんでした。</div>
+            <div style="font-size:11px;">通信環境やコンテンツブロッカーの設定をご確認ください。</div>
+          </div>
+        `;
+        console.log('ℹ️ Xの公式埋め込みを表示できませんでした:', error.message || String(error));
+      }
+    }
+
+    function closeShopXEmbed() {
+      xEmbedRenderToken += 1;
+      document.getElementById('x-embed-modal')?.classList.remove('active');
+      const body = document.getElementById('x-embed-body');
+      if (body) body.innerHTML = '';
+    }
+
+    window.openShopXEmbed = openShopXEmbed;
+    window.closeShopXEmbed = closeShopXEmbed;
 
     // グループID → 日本語名マップ
     const GROUP_LABELS = {
@@ -8536,7 +8850,7 @@
         }
         if (isWantToGo) {
           halos.push(L.circleMarker([shop.lat, shop.lng], {
-            radius: 15,
+            radius: 11.5,
             color: '#facc15',
             weight: 3,
             opacity: 1,
@@ -8583,23 +8897,33 @@
           ? 'font-weight:bold;font-size:16px;margin-bottom:8px;padding:8px 12px;padding-right:40px;background:#dc2626;color:#000000;border-radius:0;text-shadow:0.7px 0.7px 0 #fff,-0.7px -0.7px 0 #fff,0.7px -0.7px 0 #fff,-0.7px 0.7px 0 #fff;'
           : 'font-weight:bold;font-size:16px;margin-bottom:8px;padding-right:28px;';
         
-        const popup = `<div style="padding:8px;min-width:180px;max-width:240px;position:relative;">
-          <button onclick="markers['${shop.id}'].closePopup(); event.stopPropagation();" style="position:absolute;top:4px;right:4px;width:20px;height:20px;border:none;background:#f3f4f6;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:#6b7280;padding:0;">×</button>
-          <div style="${nameStyle}">${shop.name}</div>
-          <div style="font-size:11px;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
-            <span style="background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:8px;font-size:10px">${getShortCategoryName(shop.category)}</span>
-            ${statusBadge}
-          </div>
-          <div style="font-size:11px;color:#6b7280;margin-bottom:8px">
-            ${todayHours}
-          </div>
-          <div style="display:flex;gap:6px;align-items:stretch;">
-            <button onclick="showShopDetail('${shop.id}')" style="flex:1;background:#3b82f6;color:white;padding:6px 8px;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:12px;height:32px;display:flex;align-items:center;justify-content:center;">詳細・訪問</button>
-            ${googleMapLink ? `<a href="${shop.googleMapUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" style="width:32px;height:32px;background:#34a853;color:white;border:none;border-radius:8px;cursor:pointer;text-decoration:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="Googleマップで開く">
-              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
-              </svg>
-            </a>` : ''}
+        const hasXAccount = !!getXUsername(getShopXURL(shop));
+        const popup = `<div style="padding:8px;min-width:${hasXAccount ? '250px' : '180px'};max-width:${hasXAccount ? '300px' : '240px'};">
+          <div style="position:relative;">
+            <button onclick="markers['${shop.id}'].closePopup(); event.stopPropagation();" style="position:absolute;top:4px;right:4px;width:20px;height:20px;border:none;background:#f3f4f6;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:#6b7280;padding:0;">×</button>
+            <div style="${nameStyle}">${shop.name}</div>
+            <div style="font-size:11px;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+              <span style="background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:8px;font-size:10px">${getShortCategoryName(shop.category)}</span>
+              ${statusBadge}
+            </div>
+            <div style="font-size:11px;color:#6b7280;margin-bottom:8px">
+              ${todayHours}
+            </div>
+            ${hasXAccount ? `
+              <button class="shop-x-embed-trigger" onclick="openShopXEmbed('${shop.id}'); event.stopPropagation();" aria-label="${escapeHtml(shop.name)}の公式X最新投稿を表示">
+                <span class="shop-x-embed-trigger-mark" aria-hidden="true">𝕏</span>
+                <span class="shop-x-embed-trigger-label">公式Xの最新情報を見る</span>
+                <span class="shop-x-embed-trigger-arrow" aria-hidden="true">›</span>
+              </button>
+            ` : ''}
+            <div style="display:flex;gap:6px;align-items:stretch;">
+              <button onclick="showShopDetail('${shop.id}')" style="flex:1;background:#3b82f6;color:white;padding:6px 8px;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:12px;height:32px;display:flex;align-items:center;justify-content:center;">詳細・訪問</button>
+              ${googleMapLink ? `<a href="${shop.googleMapUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" style="width:32px;height:32px;background:#34a853;color:white;border:none;border-radius:8px;cursor:pointer;text-decoration:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="Googleマップで開く">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                </svg>
+              </a>` : ''}
+            </div>
           </div>
         </div>`;
         
@@ -11324,7 +11648,8 @@
       // リンクの設定
       const hasGoogleMap = !!currentShop.googleMapUrl;
       const hasWebsite = !!currentShop.websiteUrl;
-      const hasX = !!currentShop.xURL;
+      const currentShopXURL = getShopXURL(currentShop);
+      const hasX = !!currentShopXURL;
       
       if (currentShop.googleMapUrl) {
         document.getElementById('nav-google-map').href = currentShop.googleMapUrl;
@@ -11340,8 +11665,8 @@
         document.getElementById('nav-website').style.display = 'none';
       }
       
-      if (currentShop.xURL) {
-        document.getElementById('nav-x').href = currentShop.xURL;
+      if (currentShopXURL) {
+        document.getElementById('nav-x').href = currentShopXURL;
         document.getElementById('nav-x').style.display = 'flex';
       } else {
         document.getElementById('nav-x').style.display = 'none';
@@ -11888,12 +12213,12 @@
             </div>
           ` : ''}
           
-          ${log.weather || log.temperature || log.waitMinutes ? `
+          ${log.weather || log.temperature || log.temperature === 0 || log.waitMinutes ? `
             <div style="margin-bottom:16px;">
               <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">訪問時の情報</div>
               <div style="font-size:14px;">
                 ${log.weather ? `${log.weather}` : ''}
-                ${log.temperature ? ` ${log.temperature}°C` : ''}
+                ${log.temperature || log.temperature === 0 ? ` ${formatTemperatureValue(log.temperature)}°C` : ''}
                 ${log.waitMinutes ? ` • 待ち時間: ${log.waitMinutes}分` : ''}
               </div>
             </div>
@@ -12109,6 +12434,151 @@
       });
     }
 
+    const WEATHER_LOOKBACK_MS = 24 * 60 * 60 * 1000;
+    const WEATHER_FUTURE_TOLERANCE_MS = 5 * 60 * 1000;
+    const WEATHER_REQUEST_TIMEOUT_MS = 8000;
+    const WEATHER_CHANGE_DEBOUNCE_MS = 500;
+    let weatherRequestController = null;
+    let weatherRequestTimer = null;
+    let weatherRequestSequence = 0;
+    let isWeatherLoading = false;
+
+    function setWeatherFieldsLoading(loading, statusText = '') {
+      const tempInput = document.getElementById('input-temp');
+      const weatherInput = document.getElementById('input-weather');
+      const emptyOption = document.getElementById('input-weather-empty-option');
+      const status = document.getElementById('weather-fetch-status');
+
+      isWeatherLoading = loading;
+      tempInput.disabled = loading;
+      weatherInput.disabled = loading;
+
+      if (loading) {
+        tempInput.value = '';
+        weatherInput.value = '';
+        tempInput.placeholder = '再取得中…';
+        if (emptyOption) emptyOption.textContent = '再取得中…';
+      } else {
+        tempInput.placeholder = '例: 25.0';
+        if (emptyOption) emptyOption.textContent = '選択してください';
+      }
+
+      if (status) status.textContent = statusText;
+      ['save-visit-btn', 'save-and-tweet-btn'].forEach(id => {
+        const button = document.getElementById(id);
+        if (!button) return;
+        button.disabled = loading;
+        button.style.opacity = loading ? '0.55' : '1';
+      });
+    }
+
+    function clearWeatherFields(statusText = '') {
+      document.getElementById('input-temp').value = '';
+      document.getElementById('input-weather').value = '';
+      setWeatherFieldsLoading(false, statusText);
+    }
+
+    function cancelPendingWeatherRequest() {
+      weatherRequestSequence += 1;
+      if (weatherRequestTimer) {
+        clearTimeout(weatherRequestTimer);
+        weatherRequestTimer = null;
+      }
+      if (weatherRequestController) {
+        weatherRequestController.abort();
+        weatherRequestController = null;
+      }
+    }
+
+    function requestWeatherForVisitTime({ forceCurrent = false, delay = 0 } = {}) {
+      cancelPendingWeatherRequest();
+      const requestId = ++weatherRequestSequence;
+      const visitedAtValue = document.getElementById('input-visited-at').value;
+      const visitedAt = visitedAtValue ? new Date(visitedAtValue) : null;
+      const visitedAtMs = visitedAt?.getTime();
+      const ageMs = Number.isFinite(visitedAtMs) ? Date.now() - visitedAtMs : NaN;
+
+      setWeatherFieldsLoading(true, '天気と気温を再取得しています…');
+
+      if (!Number.isFinite(ageMs)) {
+        clearWeatherFields('日時を確認して手動で入力してください');
+        return;
+      }
+      if (ageMs < -WEATHER_FUTURE_TOLERANCE_MS || ageMs > WEATHER_LOOKBACK_MS) {
+        clearWeatherFields('自動取得の対象は現在から24時間以内です');
+        return;
+      }
+      if (!currentShop || !Number.isFinite(Number(currentShop.lat)) || !Number.isFinite(Number(currentShop.lng))) {
+        clearWeatherFields('店舗位置を取得できないため手動で入力してください');
+        return;
+      }
+
+      weatherRequestTimer = setTimeout(() => {
+        weatherRequestTimer = null;
+        performWeatherFetch({
+          requestId,
+          visitedAtIso: visitedAt.toISOString(),
+          forceCurrent
+        });
+      }, delay);
+    }
+
+    async function performWeatherFetch({ requestId, visitedAtIso, forceCurrent }) {
+      const controller = new AbortController();
+      weatherRequestController = controller;
+      const timeoutId = setTimeout(() => controller.abort(), WEATHER_REQUEST_TIMEOUT_MS);
+
+      try {
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/weather`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+          },
+          body: JSON.stringify({
+            latitude: Number(currentShop.lat),
+            longitude: Number(currentShop.lng),
+            visitedAt: visitedAtIso,
+            forceCurrent
+          }),
+          signal: controller.signal
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          const error = new Error(data.error || '天気情報の取得に失敗しました');
+          error.code = data.code || `http_${response.status}`;
+          throw error;
+        }
+        if (requestId !== weatherRequestSequence) return;
+
+        const temperature = formatTemperatureValue(data.temperature);
+        if (!temperature || !['晴れ', '曇り', '雨', '雪'].includes(data.weather)) {
+          throw new Error('天気情報の形式が不正です');
+        }
+        document.getElementById('input-temp').value = temperature;
+        document.getElementById('input-weather').value = data.weather;
+        setWeatherFieldsLoading(false, 'WeatherAPI.comから取得しました');
+        console.log('✅ 天気情報を自動取得しました:', data.sourceTime || visitedAtIso);
+      } catch (error) {
+        if (requestId !== weatherRequestSequence) return;
+        const message = error.name === 'AbortError'
+          ? '取得がタイムアウトしました。手動で入力できます'
+          : error.code === 'out_of_range'
+            ? '自動取得の対象は現在から24時間以内です'
+            : '取得できませんでした。手動で入力できます';
+        clearWeatherFields(message);
+        console.log('⚠️ 天気情報の取得に失敗:', error.message);
+      } finally {
+        clearTimeout(timeoutId);
+        if (requestId === weatherRequestSequence) weatherRequestController = null;
+      }
+    }
+
+    document.getElementById('input-visited-at').addEventListener('change', () => {
+      requestWeatherForVisitTime({ delay: WEATHER_CHANGE_DEBOUNCE_MS });
+    });
+
     function openRecordModal() {
       
       if (!currentShop) return;
@@ -12137,9 +12607,6 @@
       // モーダルのタイトルをリセット
       document.querySelector('#record-modal .modal-header h2').textContent = '訪問記録';
       
-      // 天気と気温を自動取得
-      fetchCurrentWeather();
-      
       // フォームを表示状態にする
       document.getElementById('record-form').style.display = 'block';
       
@@ -12153,6 +12620,9 @@
       // フッターを保存ボタンに戻す
       restoreRecordModalFooter();
 
+      // 現在の天気と気温を自動取得
+      requestWeatherForVisitTime({ forceCurrent: true });
+
       document.getElementById('record-modal').classList.add('active');
 
       // モーダルを開く時にスクロール位置を最上部にリセット
@@ -12161,54 +12631,6 @@
         const mb = modal?.querySelector('.modal-body');
         if (mb) mb.scrollTop = 0;
       }, 50);
-    }
-    
-    // 現在の天気を取得して自動挿入
-    async function fetchCurrentWeather() {
-      if (!currentShop || !currentShop.lat || !currentShop.lng) return;
-      
-      try {
-        // Open-Meteo API (無料、登録不要)
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${currentShop.lat}&longitude=${currentShop.lng}&current=temperature_2m,weather_code&timezone=Asia/Tokyo`;
-        
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('天気情報の取得に失敗しました');
-        
-        const data = await response.json();
-        
-        // 気温を挿入
-        if (data.current && data.current.temperature_2m) {
-          document.getElementById('input-temp').value = data.current.temperature_2m;
-        }
-        
-        // 天気コードを天気に変換して挿入
-        if (data.current && data.current.weather_code !== undefined) {
-          const weatherText = getWeatherText(data.current.weather_code);
-          document.getElementById('input-weather').value = weatherText;
-        }
-        
-        console.log('✅ 天気情報を自動取得しました');
-      } catch (error) {
-        console.log('⚠️ 天気情報の取得に失敗:', error.message);
-        // エラーでも何もしない（手動入力できる）
-      }
-    }
-    
-    // WMO天気コードを日本語に変換（4つの選択肢に対応）
-    function getWeatherText(code) {
-      // 晴れ系 (0-3)
-      if (code >= 0 && code <= 2) return '晴れ';
-      
-      // 曇り系 (3, 45, 48)
-      if (code === 3 || code === 45 || code === 48) return '曇り';
-      
-      // 雪系 (71-77, 85-86)
-      if ((code >= 71 && code <= 77) || code === 85 || code === 86) return '雪';
-      
-      // 雨系 (それ以外の降水)
-      if (code >= 51) return '雨';
-      
-      return '晴れ'; // デフォルト
     }
     
     // カスタム確認ダイアログ（iOS対応）
@@ -12273,6 +12695,9 @@
           return;
         }
       }
+
+      cancelPendingWeatherRequest();
+      setWeatherFieldsLoading(false, '');
       
       document.getElementById('record-modal').classList.remove('active');
       editingLogIndex = null; // 編集モードをリセット
@@ -12294,6 +12719,9 @@
       
       const log = visits[currentShop.id].logs[logIndex];
       if (!log) return;
+
+      cancelPendingWeatherRequest();
+      setWeatherFieldsLoading(false, '');
       
       editingLogIndex = logIndex;
       
@@ -12306,7 +12734,7 @@
       document.getElementById('record-form').style.display = 'block';
       
       // フォームに既存データを入力
-      document.getElementById('input-temp').value = log.temperature || '';
+      document.getElementById('input-temp').value = formatTemperatureValue(log.temperature);
       document.getElementById('input-wait').value = log.waitMinutes || '';
       document.getElementById('input-weather').value = log.weather || '';
       document.getElementById('input-order').value = log.order || '';
@@ -12723,6 +13151,11 @@
 
     async function saveVisitRecord(event) {
       event.preventDefault();
+
+      if (isWeatherLoading) {
+        await showCustomAlert('天気と気温の取得が終わるまでお待ちください');
+        return;
+      }
       
       if (!currentShop) {
         await showCustomAlert('店舗情報が見つかりません');
@@ -12813,6 +13246,11 @@
     // Xに投稿する関数
     async function saveAndTweet(event) {
       event.preventDefault();
+
+      if (isWeatherLoading) {
+        await showCustomAlert('天気と気温の取得が終わるまでお待ちください');
+        return;
+      }
       
       if (!currentShop) {
         await showCustomAlert('店舗情報が見つかりません');
@@ -13431,6 +13869,21 @@
     }
     
     </script></script>
+
+  <!-- 店舗公式X（認証不要の公式埋め込み） -->
+  <div id="x-embed-modal" class="modal x-embed-modal" onclick="closeShopXEmbed()">
+    <div class="modal-content x-embed-modal-content" onclick="event.stopPropagation()">
+      <div class="x-embed-header">
+        <div class="x-embed-title-wrap">
+          <div class="x-embed-eyebrow">𝕏 公式タイムライン · 最新1件</div>
+          <div id="x-embed-title" class="x-embed-title"></div>
+        </div>
+        <button class="x-embed-close" onclick="closeShopXEmbed()" aria-label="閉じる">×</button>
+      </div>
+      <div id="x-embed-body" class="x-embed-body"></div>
+      <a id="x-embed-profile-link" class="x-embed-profile-link" href="https://x.com" target="_blank" rel="noopener noreferrer">Xで開く</a>
+    </div>
+  </div>
   
   <!-- Share Modal -->
   <div id="share-modal" class="modal" onclick="closeShareModal()">
@@ -15154,6 +15607,11 @@
           <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">住所・地名検索</div>
           <a href="https://maps.gsi.go.jp" target="_blank" rel="noopener noreferrer" style="font-size:15px;font-weight:600;color:#111827;text-decoration:none;">国土地理院</a>
           <div style="font-size:12px;color:#6b7280;margin-top:2px;">地理院地図 / GSI Maps</div>
+        </div>
+        <div style="background:white;padding:16px;border-top:1px solid #f3f4f6;">
+          <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">気象情報</div>
+          <a href="https://www.weatherapi.com/" target="_blank" rel="noopener noreferrer" style="font-size:15px;font-weight:600;color:#111827;text-decoration:none;">WeatherAPI.com</a>
+          <div style="font-size:12px;color:#6b7280;margin-top:2px;">Powered by WeatherAPI.com</div>
         </div>
       </div>
     </div>
