@@ -1,2 +1,6 @@
 /auth/google https://ggmfsnyhkrdoytbpvtxd.supabase.co/auth/v1/authorize?provider=google&redirect_to=com.sota.iekeimap%3A%2F%2Fauth%2Fcallback 302
 /auth/apple https://ggmfsnyhkrdoytbpvtxd.supabase.co/auth/v1/authorize?provider=apple&redirect_to=com.sota.iekeimap%3A%2F%2Fauth%2Fcallback 302
+/index.html / 301
+/tutorial.html /tutorial 301
+/iekei-ramen-app / 301
+/iekei-ramen-app.html / 301
