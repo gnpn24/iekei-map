@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="吉村家から広がる家系ラーメンの家系図と系譜を解説。直系、本牧家系、六角家系、王道家系、武蔵家系などのつながりを、店舗マップとインタラクティブな家系図でたどれます。">
+  <meta name="theme-color" content="#c41e3a">
+  <link rel="canonical" href="https://iekei-map.com/lineage">
+  <link rel="icon" type="image/png" sizes="180x180" href="/icons/icon-180.png">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="家系ラーメン家系図｜吉村家から広がる系譜">
+  <meta property="og:description" content="家系ラーメンの修行元・独立・のれん分けのつながりを、家系図と地図でたどれます。">
+  <meta property="og:url" content="https://iekei-map.com/lineage">
+  <meta property="og:image" content="https://iekei-map.com/icons/icon-1024.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="家系ラーメン家系図｜吉村家から広がる系譜">
+  <meta name="twitter:description" content="直系、本牧家系、六角家系、王道家系、武蔵家系などのつながりを解説。">
+  <meta name="twitter:image" content="https://iekei-map.com/icons/icon-1024.png">
+  <title>家系ラーメン家系図｜吉村家から広がる系譜</title>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "家系ラーメン家系図｜吉村家から広がる系譜",
+    "description": "吉村家から広がる家系ラーメンの修行元・独立・のれん分けのつながりを解説し、インタラクティブな家系図を案内するページ。",
+    "url": "https://iekei-map.com/lineage",
+    "inLanguage": "ja",
+    "isPartOf": { "@type": "WebSite", "name": "家系ラーメンmap", "url": "https://iekei-map.com/" },
+    "about": { "@type": "Thing", "name": "家系ラーメンの家系図と系譜" }
+  }
+  </script>
+  <style>
+    :root { color-scheme:light; --red:#c41e3a; --ink:#171717; --muted:#57534e; --paper:#fffdf5; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:#f6f0d7; color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans",sans-serif; line-height:1.8; }
+    header { background:var(--red); color:#fff; }
+    .nav, main, footer { width:min(920px,calc(100% - 32px)); margin:0 auto; }
+    .nav { display:flex; align-items:center; justify-content:space-between; min-height:64px; gap:16px; }
+    .brand { color:#fff; font-weight:800; text-decoration:none; }
+    .nav a:last-child { color:#fff; font-size:14px; }
+    main { padding:40px 0 64px; }
+    .hero, article { background:var(--paper); border:1px solid rgba(64,48,16,.12); border-radius:20px; box-shadow:0 12px 32px rgba(64,48,16,.08); }
+    .hero { padding:clamp(28px,6vw,56px); text-align:center; }
+    .eyebrow { margin:0 0 8px; color:var(--red); font-size:14px; font-weight:800; letter-spacing:.08em; }
+    h1 { margin:0; font-size:clamp(30px,7vw,52px); line-height:1.25; letter-spacing:-.03em; }
+    .lead { max-width:720px; margin:20px auto 0; color:var(--muted); font-size:clamp(16px,2.4vw,19px); }
+    .actions { display:flex; flex-wrap:wrap; justify-content:center; gap:12px; margin-top:28px; }
+    .button { display:inline-block; border-radius:12px; padding:12px 20px; font-weight:800; text-decoration:none; }
+    .button-primary { background:var(--red); color:#fff; }
+    .button-secondary { border:1px solid #d6d3d1; background:#fff; color:var(--ink); }
+    article { margin-top:24px; padding:clamp(24px,5vw,48px); }
+    article section + section { margin-top:40px; padding-top:32px; border-top:1px solid #e7e5e4; }
+    h2 { margin:0 0 12px; font-size:clamp(23px,4vw,30px); line-height:1.4; }
+    p { margin:10px 0 0; }
+    .lineages { display:flex; flex-wrap:wrap; gap:8px; padding:0; list-style:none; }
+    .lineages li { border:1px solid #d6d3d1; border-radius:999px; background:#fff; padding:7px 12px; font-weight:700; }
+    .steps { padding-left:1.4em; }
+    .note { border-left:4px solid #d97706; background:#fffbeb; padding:14px 16px; color:#78350f; }
+    footer { padding:0 0 40px; color:#57534e; font-size:13px; text-align:center; }
+    footer a { color:inherit; }
+    @media (max-width:560px) { .nav a:last-child { display:none; } main { padding-top:24px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <nav class="nav" aria-label="メインナビゲーション">
+      <a class="brand" href="/">🍜 家系ラーメンmap</a>
+      <a href="/?tab=lineage">インタラクティブ家系図を開く</a>
+    </nav>
+  </header>
+  <main>
+    <section class="hero">
+      <p class="eyebrow">吉村家から広がる系譜</p>
+      <h1>家系ラーメン家系図</h1>
+      <p class="lead">家系ラーメンの店どうしのつながりを、修行元・独立・のれん分けの関係からたどれる家系図です。店名を検索し、家系図と全国店舗マップを行き来しながら見られます。</p>
+      <div class="actions">
+        <a class="button button-primary" href="/?tab=lineage">家系図を見る</a>
+        <a class="button button-secondary" href="/">店舗マップを見る</a>
+      </div>
+    </section>
+    <article>
+      <section>
+        <h2>家系ラーメンの家系図とは</h2>
+        <p>家系ラーメンは、横浜の吉村家を起点に、修行した職人の独立やのれん分けを通じて広がってきました。その後、本牧家、六角家、武蔵家、王道家などそれぞれの流れから多くの店が生まれ、現在の大きな系譜になっています。</p>
+        <p>このサイトの家系図は、店舗間の関係を見やすく整理し、気になる店の出身や系統を探せるようにしたものです。</p>
+      </section>
+      <section>
+        <h2>掲載している主な系統</h2>
+        <p>インタラクティブ家系図では、次の系統やグループを切り替えながら確認できます。</p>
+        <ul class="lineages">
+          <li>吉村家系</li><li>本牧家系</li><li>六角家系</li><li>王道家系</li><li>新中野武蔵家系</li><li>大輝家系</li><li>壱系</li><li>オリジナル</li>
+        </ul>
+        <p>各店の系統に加え、現在地、営業情報、公式サイトやSNS、訪問記録も店舗マップから確認できます。</p>
+      </section>
+      <section>
+        <h2>家系図の見方</h2>
+        <ol class="steps">
+          <li>家系図タブを開き、上部の系統名から見たいグループを選びます。</li>
+          <li>店舗名をタップすると、出身元や関連する店を確認できます。</li>
+          <li>店名検索で、大きな家系図の中から目的の店へ直接移動できます。</li>
+          <li>店舗詳細から地図を開き、場所や経路を調べられます。</li>
+        </ol>
+      </section>
+      <section>
+        <h2>掲載情報について</h2>
+        <p class="note">家系ラーメンの系譜や修行元には、公表情報が限られる店や見方が分かれる関係もあります。本サイトの家系図は公開情報をもとに整理したもので、公式な認定や完全性を保証するものではありません。店舗の移転・閉店や系譜の追加情報は随時更新します。</p>
+      </section>
+    </article>
+  </main>
+  <footer><p><a href="/">家系ラーメンmap</a> ・ <a href="/terms">利用規約</a> ・ <a href="/privacypolicy">プライバシーポリシー</a></p></footer>
+</body>
+</html>
