@@ -57,6 +57,74 @@ html[data-map-ui="a"] .leaflet-control-attribution {
   line-height: 1.25;
 }
 
+.map-a-color-legend {
+  position: absolute;
+  z-index: 5;
+  top: 8px;
+  left: 56px;
+  right: 8px;
+  height: 32px;
+  padding: 4px 5px 4px 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.78), rgba(255, 253, 250, 0.58));
+  box-shadow: 0 4px 14px rgba(42, 34, 29, 0.14);
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+  pointer-events: auto;
+}
+
+.map-a-color-legend-title {
+  flex: 0 0 auto;
+  color: #4a443f;
+  font-size: 9px;
+  font-weight: 850;
+}
+
+.map-a-color-legend-items {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  touch-action: pan-x;
+  -webkit-overflow-scrolling: touch;
+}
+
+.map-a-color-legend-items::-webkit-scrollbar { display: none; }
+
+.map-a-color-legend-item {
+  min-height: 22px;
+  flex: 0 0 auto;
+  padding: 0 7px 0 5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid rgba(42, 34, 29, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.74);
+  color: #403a36;
+  font-size: 8px;
+  font-weight: 760;
+  white-space: nowrap;
+}
+
+.map-a-color-legend-dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-radius: 50%;
+  background: var(--map-a-legend-color, #64748b);
+  box-shadow: 0 0 0 1px rgba(37, 33, 31, 0.12);
+}
+
 /* Make the geographic center explicit; the sort order is calculated from this point. */
 .map-a-center-target {
   position: absolute;
@@ -345,23 +413,58 @@ html[data-map-ui="a"] .leaflet-control-attribution {
   cursor: pointer;
 }
 
-.map-a-card-photo-slot.has-photo { display: block; }
+.map-a-card-photo-slot.has-photo { display: flex; }
 
-.map-a-card-photo-slot img {
+.map-a-card-photo-slot.has-multiple {
+  width: 100px;
+  flex-basis: 100px;
+}
+
+.map-a-card-photo-preview {
+  position: relative;
+  min-width: 0;
+  height: 100%;
+  flex: 1 1 0;
+  display: block;
+  overflow: hidden;
+}
+
+.map-a-card-photo-preview + .map-a-card-photo-preview {
+  border-left: 2px solid var(--map-a-paper);
+}
+
+.map-a-card-photo-preview img {
   width: 100%;
   height: 100%;
   display: block;
   object-fit: cover;
 }
 
+.map-a-card-photo-more {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(25, 22, 20, 0.52);
+  color: white;
+  font-size: 12px;
+  font-weight: 820;
+  line-height: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
 .map-a-card-hours {
-  flex: 1;
-  min-width: 0;
+  position: absolute;
+  right: 10px;
+  bottom: 56px;
+  max-width: calc(100% - 108px);
   overflow: hidden;
   color: var(--map-a-muted);
-  font-size: 9px;
-  font-weight: 620;
-  line-height: 1.2;
+  font-size: 8px;
+  font-weight: 680;
+  line-height: 1;
+  text-align: right;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -608,25 +711,25 @@ html[data-map-ui="a"] .leaflet-control-attribution {
 .map-a-close-button svg { width: 19px; height: 19px; }
 
 .map-a-adjust-tabs {
-  margin: 10px 12px 0;
-  padding: 3px;
+  margin: 7px 12px 0;
+  padding: 2px;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 3px;
+  gap: 2px;
   border: 1px solid var(--map-a-line);
-  border-radius: 14px;
+  border-radius: 12px;
   background: #f2eee9;
 }
 
 .map-a-adjust-tab {
   min-width: 0;
-  min-height: 40px;
+  min-height: 34px;
   padding: 0 4px;
   border: 0;
-  border-radius: 10px;
+  border-radius: 9px;
   background: transparent;
   color: #746d67;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
   white-space: nowrap;
   cursor: pointer;
@@ -641,7 +744,7 @@ html[data-map-ui="a"] .leaflet-control-attribution {
 .map-a-adjust-body {
   flex: 1;
   min-height: 0;
-  padding: 12px 14px 116px;
+  padding: 9px 14px 116px;
   overflow-y: auto;
 }
 
@@ -752,6 +855,70 @@ html[data-map-ui="a"] .leaflet-control-attribution {
 
 .map-a-switch-row input:checked { background: var(--map-a-brand); }
 .map-a-switch-row input:checked::before { transform: translateX(18px); }
+
+.map-a-quick-filter-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.map-a-quick-filter-list .map-a-switch-row {
+  position: relative;
+  min-width: 0;
+  min-height: 38px;
+  padding: 0 5px;
+  justify-content: center;
+  gap: 0;
+  border: 1px solid rgba(42, 34, 29, 0.16);
+  border-radius: 11px;
+  background: white;
+  box-shadow: none;
+  text-align: center;
+}
+
+.map-a-quick-filter-list .map-a-switch-row + .map-a-switch-row {
+  border-top: 1px solid rgba(42, 34, 29, 0.16);
+}
+
+.map-a-quick-filter-list .map-a-choice-copy {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.map-a-quick-filter-list .map-a-choice-copy strong {
+  overflow: hidden;
+  font-size: 10px;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.map-a-quick-filter-list .map-a-choice-copy span {
+  display: none;
+}
+
+.map-a-quick-filter-list .map-a-switch-row input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.map-a-quick-filter-list .map-a-switch-row:has(input:checked) {
+  border-color: var(--map-a-brand);
+  background: #fff3f1;
+  box-shadow: inset 0 0 0 1px var(--map-a-brand);
+}
+
+.map-a-quick-filter-list .map-a-switch-row:has(input:focus-visible) {
+  outline: 2px solid rgba(229, 70, 60, 0.32);
+  outline-offset: 2px;
+}
 
 .map-a-category-groups {
   display: grid;
@@ -1236,6 +1403,12 @@ body.map-a-search-open { overflow: hidden; }
   display: none;
 }
 
+/* WebViewではbackdrop-filterを含む地図UIがモーダルより前に合成されることがある。 */
+body.shop-detail-open .map-a-root,
+body.shop-detail-open .bottom-nav {
+  visibility: hidden;
+}
+
 html[data-map-ui="a"] #shop-detail-modal .modal-content,
 html[data-map-ui="a"] #shop-detail-modal .modal-header,
 html[data-map-ui="a"] #shop-detail-modal .modal-body {
@@ -1252,6 +1425,62 @@ html[data-map-ui="a"] #shop-detail-modal .detail-lineage-bar {
   display: block;
   flex: 0 0 auto;
   background: var(--detail-lineage-color, #64748b);
+}
+
+.map-a-detail-photo-section[hidden] {
+  display: none !important;
+}
+
+.map-a-detail-photo-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.map-a-detail-photo-heading .section-title {
+  margin-bottom: 0;
+}
+
+#detail-photo-count {
+  color: #77716c;
+  font-size: 12px;
+  font-weight: 720;
+}
+
+.map-a-detail-photo-gallery {
+  margin-top: 9px;
+  padding: 1px 0 5px;
+  display: flex;
+  gap: 9px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.map-a-detail-photo-gallery::-webkit-scrollbar {
+  display: none;
+}
+
+.map-a-detail-photo {
+  min-width: 0;
+  flex: 0 0 min(78%, 248px);
+  aspect-ratio: 4 / 3;
+  margin: 0;
+  overflow: hidden;
+  scroll-snap-align: start;
+  border: 1px solid rgba(41, 35, 31, 0.12);
+  border-radius: 14px;
+  background: #ece7e1;
+}
+
+.map-a-detail-photo img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
 }
 
 @media (max-width: 350px) {
