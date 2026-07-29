@@ -3,6 +3,53 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <script>
+    // Android WebViewのJavaScriptInterfaceを、既存のiOSメッセージ形式へ合わせる。
+    // これにより、アプリ本体の処理はiOS/Androidで同じコードを利用できる。
+    (function installAndroidNativeBridge() {
+      if (!window.AndroidNative || window.webkit?.messageHandlers) return;
+
+      const handlerNames = [
+        'requestLocation', 'saveVisits', 'loadVisits', 'savePhoto', 'loadPhoto',
+        'deletePhoto', 'reloadPage', 'openTutorial', 'closeTutorial',
+        'setTutorialCompleted', 'openURL', 'nativeOAuth', 'pickPhotos'
+      ];
+      const messageHandlers = {};
+      handlerNames.forEach(name => {
+        messageHandlers[name] = {
+          postMessage(value) {
+            if (typeof window.AndroidNative[name] === 'function') {
+              window.AndroidNative[name](String(value ?? ''));
+            }
+          }
+        };
+      });
+      window.webkit = { messageHandlers };
+
+      const nativeGeolocation = {
+        _successCallback: null,
+        _errorCallback: null,
+        getCurrentPosition(success, error) {
+          this._successCallback = success;
+          this._errorCallback = error;
+          messageHandlers.requestLocation.postMessage('');
+        },
+        watchPosition(success, error) {
+          this.getCurrentPosition(success, error);
+          return 1;
+        },
+        clearWatch() {}
+      };
+      try {
+        Object.defineProperty(navigator, 'geolocation', {
+          value: nativeGeolocation,
+          configurable: true
+        });
+      } catch (_) {
+        navigator.geolocation = nativeGeolocation;
+      }
+    })();
+  </script>
   <!-- Apple Smart Banner (iOSブラウザでApp Storeへ誘導) -->
   <meta name="apple-itunes-app" content="app-id=6758105373">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -76,7 +123,7 @@
   </script>
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
-  <link rel="stylesheet" href="map-discovery-v2.css?v=26" />
+  <link rel="stylesheet" href="map-discovery-v2.css?v=30" />
   <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
   <style>
     * {
@@ -2301,7 +2348,7 @@
     .lineage-dot.oud-light { background: #fff59d; border: 1px solid #d4c95d; box-sizing: border-box; }
     .lineage-dot.rokkaku { background: #43a047; }
     .lineage-dot.musa { background: #f57c00; }
-    .lineage-dot.nonaka { background: #f57c00; }
+    .lineage-dot.nonaka { background: #00838f; }
     .lineage-dot.taiki { background: #00acc1; }
     .lineage-dot.isse { background: #8e24aa; }
     .lineage-dot.isse-light { background: #ce93d8; }
@@ -2411,7 +2458,7 @@
     .lineage-node.g-oud-light { background: #fff59d; color: #000; }
     .lineage-node.g-rokkaku { background: #43a047; }
     .lineage-node.g-musa { background: #f57c00; }
-    .lineage-node.g-nonaka { background: #f57c00; }
+    .lineage-node.g-nonaka { background: #00838f; }
     .lineage-node.g-taiki { background: #00acc1; }
     .lineage-node.g-isse { background: #8e24aa; }
     .lineage-node.g-isse-light { background: #ce93d8; color: #000; }
@@ -2469,7 +2516,7 @@
     .lineage-node-group .g-layer.g-oud-light { background: #fff59d; color: #000; }
     .lineage-node-group .g-layer.g-rokkaku { background: #43a047; }
     .lineage-node-group .g-layer.g-musa { background: #f57c00; }
-    .lineage-node-group .g-layer.g-nonaka { background: #f57c00; }
+    .lineage-node-group .g-layer.g-nonaka { background: #00838f; }
     .lineage-node-group .g-layer.g-taiki { background: #00acc1; }
     .lineage-node-group .g-layer.g-isse { background: #8e24aa; }
     .lineage-node-group .g-layer.g-isse-light { background: #ce93d8; }
@@ -7558,7 +7605,7 @@
       '王道家（との丸家）': '#f9a825',
       '王道家（系列外）': '#f9a825',
       '武蔵家': '#f57c00',
-      '野中家': '#f57c00',
+      '野中家': '#00838f',
       '大輝家': '#00acc1',
       '壱系': '#8e24aa',
       '壱系（資本系）': '#ce93d8',
@@ -10882,7 +10929,7 @@
         'yosh': '#c62828', 'yosh-light': '#ef5350',
         'honmoku': '#1976d2', 'rokkaku': '#43a047',
         'oud': '#f9a825', 'oud-light': '#fff59d',
-        'musa': '#f57c00', 'nonaka': '#f57c00',
+        'musa': '#f57c00', 'nonaka': '#00838f',
         'taiki': '#00acc1', 'isse': '#8e24aa', 'oth': '#455a64'
       };
       const dotColor = colorMap[colorClass] || '#666';
@@ -11658,7 +11705,7 @@
       // モーダルを表示
       const modal = document.getElementById('shop-detail-modal');
       
-      
+      document.body.classList.add('shop-detail-open');
       modal.classList.add('active');
       
       // モーダルを開く時に常にスクロール位置を最上部にリセット
@@ -11731,6 +11778,7 @@
       document.title = '家系ラーメンMAP｜全国の家系ラーメンを探して記録できる地図アプリ';
       
       document.getElementById('shop-detail-modal').classList.remove('active');
+      document.body.classList.remove('shop-detail-open');
     }
     
     // シェア機能
@@ -15637,7 +15685,7 @@
     </div>
   </div>
 
-  <script src="map-discovery-v2.js?v=29"></script>
+  <script src="map-discovery-v2.js?v=33"></script>
 
 </body>
 </html>
