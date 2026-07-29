@@ -58,7 +58,10 @@
     forceShopId: null,
     warnedLongLabels: new Set(),
     cardPhotos: new Map(),
-    cardPhotoLoading: new Set()
+    cardPhotoLoading: new Set(),
+    cardPhotoHydrated: new Set(),
+    detailPhotoLoading: new Map(),
+    detailPhotoHydrated: new Set()
   };
 
   let mapShopLabels = {};
@@ -118,6 +121,10 @@
       root.className = 'map-a-root';
       root.setAttribute('aria-label', '新しいマップ探索UI');
       root.innerHTML = `
+        <div id="map-a-color-legend" class="map-a-color-legend" role="region" aria-label="系統色の凡例">
+          <span class="map-a-color-legend-title">系統</span>
+          <div id="map-a-color-legend-items" class="map-a-color-legend-items"></div>
+        </div>
         <div class="map-a-center-target" aria-hidden="true"><span>中心</span></div>
         <section class="map-a-card-region" aria-label="地図中心に近い店舗">
           <div class="map-a-card-head"><strong id="map-a-rail-heading">中心から近いお店</strong><span id="map-a-rail-position">0 / 0</span></div>
@@ -187,7 +194,7 @@
           <section id="map-a-adjust-pane-filter" class="map-a-adjust-pane is-active" role="tabpanel" data-map-a-adjust-pane="filter">
             <div class="map-a-control-group">
               <h2 class="map-a-control-title">表示する店舗</h2>
-              <div class="map-a-choice-list">
+              <div class="map-a-choice-list map-a-quick-filter-list" role="group" aria-label="表示する店舗">
                 ${switchRow('map-a-filter-open', '営業中のみ', '今入れる店に絞る')}
                 ${switchRow('map-a-filter-want', '行きたい', '保存した候補だけ表示')}
                 ${switchRow('map-a-filter-favorite', 'お気に入り', 'お気に入りの店だけ表示')}
@@ -827,7 +834,9 @@
     const googleURL = String(shop.googleMapUrl || '');
     const active = String(shop.id) === String(state.activeShopId);
     const color = typeof getMapCategoryColor === 'function' ? getMapCategoryColor(shop.category) : '#64748b';
-    const photoURL = getCachedRailCardPhoto(shop.id);
+    const photoURLs = getCachedRailCardPhotos(shop.id);
+    const todayHours = typeof getTodayHours === 'function' ? getTodayHours(shop.openingHours) : '';
+    const showTodayHours = todayHours && todayHours !== '営業時間情報なし';
     const originLabel = origin
       ? (getShopMapLabel(origin) || String(origin.name || '').replace(/[\s　]+(?:本店|総本店)$/u, ''))
       : '';
@@ -843,8 +852,9 @@
           <span class="map-a-card-area-inline">${icons.pin}<span>${escapeText(shop.area || 'エリア情報なし')}</span></span>
           <span class="map-a-chip is-status is-${status.state}">${statusLabel}</span>
         </div>
+        ${showTodayHours ? `<span class="map-a-card-hours" title="本日の営業時間 ${escapeAttribute(todayHours)}">本日 ${escapeText(todayHours)}</span>` : ''}
         <div class="map-a-card-bottom">
-          <button class="map-a-card-photo-slot${photoURL ? ' has-photo' : ''}" type="button" data-card-action="detail" data-card-photo-slot aria-label="${escapeAttribute(shop.name)}の投稿写真を詳細で見る" aria-hidden="${photoURL ? 'false' : 'true'}" tabindex="${photoURL ? '0' : '-1'}">${photoURL ? `<img src="${escapeAttribute(photoURL)}" loading="lazy" alt="">` : ''}</button>
+          <button class="map-a-card-photo-slot${photoURLs.length ? ' has-photo' : ''}${photoURLs.length > 1 ? ' has-multiple' : ''}" type="button" data-card-action="detail" data-card-photo-slot aria-label="${escapeAttribute(shop.name)}の投稿写真${photoURLs.length ? `${photoURLs.length}枚` : ''}を詳細で見る" aria-hidden="${photoURLs.length ? 'false' : 'true'}" tabindex="${photoURLs.length ? '0' : '-1'}">${renderRailCardPhotoPreview(photoURLs)}</button>
           <span class="map-a-card-bottom-spacer"></span>
           ${xURL ? `<a class="map-a-card-action" href="${escapeAttribute(xURL)}" target="_blank" rel="noopener noreferrer" data-card-action="x" aria-label="公式Xを開く">${icons.xmark}</a>` : ''}
           <button class="map-a-card-action is-detail" type="button" data-card-action="detail">詳細</button>
@@ -858,66 +868,90 @@
     return /^(?:https?:\/\/|data:image\/)/i.test(photo) ? photo : '';
   }
 
-  function getLatestLocalPhotoReference(shopId) {
-    const logs = visits?.[shopId]?.logs;
-    if (!Array.isArray(logs)) return '';
-    for (let index = logs.length - 1; index >= 0; index -= 1) {
-      const photo = logs[index]?.photos?.[0];
-      if (photo) return photo;
-    }
-    return '';
+  function normalizeRailCardPhotos(values) {
+    const photos = [];
+    const seen = new Set();
+    (Array.isArray(values) ? values.flat(Infinity) : [values]).forEach(value => {
+      const photo = normalizeRailCardPhoto(value);
+      if (!photo || seen.has(photo)) return;
+      seen.add(photo);
+      photos.push(photo);
+    });
+    return photos;
   }
 
-  function getCachedCommunityPhoto(shopId) {
-    if (typeof communityVisitCache === 'undefined' || !communityVisitCache) return '';
+  function mergeRailCardPhotos(...groups) {
+    return normalizeRailCardPhotos(groups);
+  }
+
+  function renderRailCardPhotoPreview(values) {
+    const photos = normalizeRailCardPhotos(values);
+    return photos.slice(0, 2).map((photo, index) => `
+      <span class="map-a-card-photo-preview">
+        <img src="${escapeAttribute(photo)}" loading="lazy" alt="" data-card-photo-url="${escapeAttribute(photo)}">
+        ${index === 1 && photos.length > 2 ? `<span class="map-a-card-photo-more">+${photos.length - 2}</span>` : ''}
+      </span>`).join('');
+  }
+
+  function getLatestLocalPhotoReferences(shopId) {
+    const logs = visits?.[shopId]?.logs;
+    if (!Array.isArray(logs)) return [];
+    const references = [];
+    for (let index = logs.length - 1; index >= 0; index -= 1) {
+      const photos = Array.isArray(logs[index]?.photos) ? logs[index].photos : [];
+      photos.forEach(photo => {
+        if (photo && !references.includes(photo)) references.push(photo);
+      });
+    }
+    return references;
+  }
+
+  function getCachedCommunityPhotos(shopId) {
+    if (typeof communityVisitCache === 'undefined' || !communityVisitCache) return [];
     const key = String(shopId);
+    const photos = [];
     for (const visit of Object.values(communityVisitCache)) {
       if (String(visit?.shop_id || '') !== key) continue;
-      const photo = normalizeRailCardPhoto(visit?.photo_urls?.[0] || visit?.photo_url);
-      if (photo) return photo;
+      photos.push(...(Array.isArray(visit?.photo_urls) ? visit.photo_urls : []));
+      if (visit?.photo_url) photos.push(visit.photo_url);
     }
-    return '';
+    return normalizeRailCardPhotos(photos);
   }
 
-  function getCachedRailCardPhoto(shopId) {
+  function getCachedRailCardPhotos(shopId) {
     const key = String(shopId);
-    if (state.cardPhotos.has(key)) return state.cardPhotos.get(key) || '';
-    const localPhoto = normalizeRailCardPhoto(getLatestLocalPhotoReference(key));
-    const communityPhoto = localPhoto ? '' : getCachedCommunityPhoto(key);
-    const photo = localPhoto || communityPhoto;
-    if (photo) state.cardPhotos.set(key, photo);
-    return photo;
+    if (state.cardPhotos.has(key)) return normalizeRailCardPhotos(state.cardPhotos.get(key));
+    const localPhotos = normalizeRailCardPhotos(getLatestLocalPhotoReferences(key));
+    const photos = mergeRailCardPhotos(localPhotos, getCachedCommunityPhotos(key));
+    if (photos.length) state.cardPhotos.set(key, photos);
+    return photos;
   }
 
-  function applyRailCardPhoto(shopId, value) {
+  function applyRailCardPhotos(shopId, values) {
     const key = String(shopId);
-    const photo = normalizeRailCardPhoto(value);
-    state.cardPhotos.set(key, photo);
-    if (!photo) return;
+    const photos = normalizeRailCardPhotos(values);
+    state.cardPhotos.set(key, photos);
     const rail = document.getElementById('map-a-card-rail');
     const card = rail && Array.from(rail.querySelectorAll('.map-a-card')).find(item => String(item.dataset.shopId) === key);
     const slot = card?.querySelector('[data-card-photo-slot]');
     if (!slot) return;
-    const image = document.createElement('img');
-    image.src = photo;
-    image.alt = '';
-    image.loading = 'lazy';
-    image.addEventListener('error', () => {
-      state.cardPhotos.set(key, '');
-      slot.classList.remove('has-photo');
-      slot.setAttribute('aria-hidden', 'true');
-      slot.tabIndex = -1;
-      slot.replaceChildren();
-    }, { once: true });
-    slot.replaceChildren(image);
-    slot.classList.add('has-photo');
-    slot.setAttribute('aria-hidden', 'false');
-    slot.tabIndex = 0;
+    slot.innerHTML = renderRailCardPhotoPreview(photos);
+    slot.classList.toggle('has-photo', photos.length > 0);
+    slot.classList.toggle('has-multiple', photos.length > 1);
+    slot.setAttribute('aria-hidden', photos.length ? 'false' : 'true');
+    slot.setAttribute('aria-label', `${findShop(key)?.name || '店舗'}の投稿写真${photos.length ? `${photos.length}枚` : ''}を詳細で見る`);
+    slot.tabIndex = photos.length ? 0 : -1;
+    slot.querySelectorAll('img[data-card-photo-url]').forEach(image => {
+      image.addEventListener('error', () => {
+        const failedURL = image.dataset.cardPhotoUrl || image.currentSrc || image.src;
+        applyRailCardPhotos(key, getCachedRailCardPhotos(key).filter(photo => photo !== failedURL));
+      }, { once: true });
+    });
   }
 
   async function hydrateRailCardPhotos(shopIds) {
     const pending = [...new Set(shopIds.map(String))].filter(shopId =>
-      !state.cardPhotos.has(shopId) && !state.cardPhotoLoading.has(shopId)
+      !state.cardPhotoHydrated.has(shopId) && !state.cardPhotoLoading.has(shopId)
     );
     if (!pending.length) return;
     pending.forEach(shopId => state.cardPhotoLoading.add(shopId));
@@ -925,15 +959,20 @@
     try {
       const remoteShopIds = [];
       for (const shopId of pending) {
-        let photo = getCachedCommunityPhoto(shopId);
-        const localReference = getLatestLocalPhotoReference(shopId);
-        if (localReference && typeof loadPhotoFromFile === 'function') {
-          try {
-            photo = normalizeRailCardPhoto(await loadPhotoFromFile(localReference)) || photo;
-          } catch (_) {}
+        let photos = mergeRailCardPhotos(getCachedRailCardPhotos(shopId), getCachedCommunityPhotos(shopId));
+        const localReferences = getLatestLocalPhotoReferences(shopId);
+        if (localReferences.length && typeof loadPhotoFromFile === 'function') {
+          const loadedLocalPhotos = await Promise.all(localReferences.map(async reference => {
+            try {
+              return normalizeRailCardPhoto(await loadPhotoFromFile(reference));
+            } catch (_) {
+              return '';
+            }
+          }));
+          photos = mergeRailCardPhotos(loadedLocalPhotos, photos);
         }
-        if (photo) applyRailCardPhoto(shopId, photo);
-        else remoteShopIds.push(shopId);
+        if (photos.length) applyRailCardPhotos(shopId, photos);
+        remoteShopIds.push(shopId);
       }
 
       if (remoteShopIds.length && typeof supabaseClient !== 'undefined' && supabaseClient && typeof fetchPhotoListMapForVisits === 'function') {
@@ -951,23 +990,115 @@
           typeof blockedUserIds === 'undefined' || !blockedUserIds?.has?.(visit.user_id)
         );
         const photoMap = await fetchPhotoListMapForVisits(visibleVisits.map(visit => visit.id));
+        const photosByShop = new Map();
         visibleVisits.forEach(visit => {
           const key = String(visit.shop_id);
-          if (state.cardPhotos.has(key)) return;
-          const photo = normalizeRailCardPhoto(photoMap.get(visit.id)?.[0]);
-          if (photo) applyRailCardPhoto(key, photo);
+          photosByShop.set(key, mergeRailCardPhotos(photosByShop.get(key), photoMap.get(visit.id)));
+        });
+        remoteShopIds.forEach(shopId => {
+          const photos = mergeRailCardPhotos(getCachedRailCardPhotos(shopId), photosByShop.get(shopId));
+          if (photos.length) applyRailCardPhotos(shopId, photos);
         });
       }
 
       pending.forEach(shopId => {
-        if (!state.cardPhotos.has(shopId)) state.cardPhotos.set(shopId, '');
+        if (!state.cardPhotos.has(shopId)) state.cardPhotos.set(shopId, []);
       });
     } catch (error) {
       console.warn('カード写真を取得できませんでした:', error);
     } finally {
-      pending.forEach(shopId => state.cardPhotoLoading.delete(shopId));
+      pending.forEach(shopId => {
+        state.cardPhotoLoading.delete(shopId);
+        state.cardPhotoHydrated.add(shopId);
+      });
     }
   }
+
+  async function hydrateDetailShopPhotos(shopId) {
+    const key = String(shopId);
+    if (state.detailPhotoHydrated.has(key)) return getCachedRailCardPhotos(key);
+    if (state.detailPhotoLoading.has(key)) return state.detailPhotoLoading.get(key);
+
+    const request = (async () => {
+      let localPhotos = normalizeRailCardPhotos(getLatestLocalPhotoReferences(key));
+      let photos = mergeRailCardPhotos(localPhotos, getCachedRailCardPhotos(key), getCachedCommunityPhotos(key));
+      const localReferences = getLatestLocalPhotoReferences(key);
+      if (localReferences.length && typeof loadPhotoFromFile === 'function') {
+        const loadedLocalPhotos = await Promise.all(localReferences.map(async reference => {
+          try {
+            return normalizeRailCardPhoto(await loadPhotoFromFile(reference));
+          } catch (_) {
+            return '';
+          }
+        }));
+        localPhotos = mergeRailCardPhotos(loadedLocalPhotos, localPhotos);
+        photos = mergeRailCardPhotos(localPhotos, photos);
+      }
+
+      if (typeof supabaseClient !== 'undefined' && supabaseClient && typeof fetchPhotoListMapForVisits === 'function') {
+        const { data: visitRows, error } = await supabaseClient
+          .from('visits')
+          .select('id, shop_id, user_id, visited_on, created_at')
+          .eq('shop_id', key)
+          .eq('is_public', true)
+          .lte('visited_on', typeof getJstTodayStr === 'function' ? getJstTodayStr() : new Date().toISOString().slice(0, 10))
+          .order('visited_on', { ascending: false, nullsFirst: false })
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        const visibleVisits = (visitRows || []).filter(visit =>
+          typeof blockedUserIds === 'undefined' || !blockedUserIds?.has?.(visit.user_id)
+        );
+        const photoMap = await fetchPhotoListMapForVisits(visibleVisits.map(visit => visit.id));
+        let remotePhotos = [];
+        visibleVisits.forEach(visit => {
+          remotePhotos = mergeRailCardPhotos(remotePhotos, photoMap.get(visit.id));
+        });
+        photos = mergeRailCardPhotos(localPhotos, remotePhotos, photos);
+      }
+
+      applyRailCardPhotos(key, photos);
+      state.detailPhotoHydrated.add(key);
+      return photos;
+    })().catch(error => {
+      console.warn('詳細写真を取得できませんでした:', error);
+      return getCachedRailCardPhotos(key);
+    }).finally(() => {
+      state.detailPhotoLoading.delete(key);
+    });
+
+    state.detailPhotoLoading.set(key, request);
+    return request;
+  }
+
+  function updateDetailPhotoGallery(shopId, values) {
+    const key = String(shopId);
+    const section = document.getElementById('detail-photo-section');
+    const gallery = document.getElementById('detail-photo-gallery');
+    const count = document.getElementById('detail-photo-count');
+    if (!section || !gallery || !count || section.dataset.shopId !== key) return;
+    const photos = normalizeRailCardPhotos(values);
+    section.hidden = photos.length === 0;
+    count.textContent = photos.length ? `${photos.length}枚` : '';
+    gallery.innerHTML = photos.map((photo, index) => `
+      <figure class="map-a-detail-photo">
+        <img src="${escapeAttribute(photo)}" loading="lazy" alt="${escapeAttribute(findShop(key)?.name || '店舗')}の投稿写真 ${index + 1}枚目">
+      </figure>`).join('');
+    gallery.querySelectorAll('img').forEach(image => {
+      image.addEventListener('error', () => image.closest('.map-a-detail-photo')?.remove(), { once: true });
+    });
+  }
+
+  async function renderMapDiscoveryDetailPhotos(shopId) {
+    const key = String(shopId);
+    const section = document.getElementById('detail-photo-section');
+    if (!section) return;
+    section.dataset.shopId = key;
+    updateDetailPhotoGallery(key, getCachedRailCardPhotos(key));
+    const photos = await hydrateDetailShopPhotos(key);
+    updateDetailPhotoGallery(key, photos);
+  }
+
+  window.renderMapDiscoveryDetailPhotos = renderMapDiscoveryDetailPhotos;
 
   function getOriginShop(shop) {
     if (!shop?.parent) return null;
@@ -1487,7 +1618,25 @@
     syncOpenToggle();
     syncCurrentLocationButton();
     syncFilterLabel();
+    syncMapColorLegend();
     syncMapUiSetting();
+  }
+
+  function syncMapColorLegend() {
+    const legend = document.getElementById('map-a-color-legend');
+    const items = document.getElementById('map-a-color-legend-items');
+    if (!legend || !items) return;
+    const selected = getEffectiveAdjustCategorySelection();
+    const options = ['iekei', 'isse']
+      .flatMap(group => getAdjustCategoryOptions(group))
+      .filter(option => option.value !== '王道家（との丸家）')
+      .filter(option => selected.has(option.value) || option.value === '壱系');
+    items.innerHTML = options.map(option => {
+      const color = typeof getMapCategoryColor === 'function' ? getMapCategoryColor(option.value) : '#64748b';
+      const label = typeof getShortCategoryName === 'function' ? getShortCategoryName(option.value) : option.label;
+      return `<span class="map-a-color-legend-item" style="--map-a-legend-color:${escapeMarkup(color)}"><span class="map-a-color-legend-dot" aria-hidden="true"></span>${escapeMarkup(label)}</span>`;
+    }).join('');
+    legend.hidden = options.length === 0;
   }
 
   function handleCurrentLocationClick() {
