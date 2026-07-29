@@ -3,6 +3,53 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <script>
+    // Android WebViewのJavaScriptInterfaceを、既存のiOSメッセージ形式へ合わせる。
+    // これにより、アプリ本体の処理はiOS/Androidで同じコードを利用できる。
+    (function installAndroidNativeBridge() {
+      if (!window.AndroidNative || window.webkit?.messageHandlers) return;
+
+      const handlerNames = [
+        'requestLocation', 'saveVisits', 'loadVisits', 'savePhoto', 'loadPhoto',
+        'deletePhoto', 'reloadPage', 'openTutorial', 'closeTutorial',
+        'setTutorialCompleted', 'openURL', 'nativeOAuth', 'pickPhotos'
+      ];
+      const messageHandlers = {};
+      handlerNames.forEach(name => {
+        messageHandlers[name] = {
+          postMessage(value) {
+            if (typeof window.AndroidNative[name] === 'function') {
+              window.AndroidNative[name](String(value ?? ''));
+            }
+          }
+        };
+      });
+      window.webkit = { messageHandlers };
+
+      const nativeGeolocation = {
+        _successCallback: null,
+        _errorCallback: null,
+        getCurrentPosition(success, error) {
+          this._successCallback = success;
+          this._errorCallback = error;
+          messageHandlers.requestLocation.postMessage('');
+        },
+        watchPosition(success, error) {
+          this.getCurrentPosition(success, error);
+          return 1;
+        },
+        clearWatch() {}
+      };
+      try {
+        Object.defineProperty(navigator, 'geolocation', {
+          value: nativeGeolocation,
+          configurable: true
+        });
+      } catch (_) {
+        navigator.geolocation = nativeGeolocation;
+      }
+    })();
+  </script>
   <!-- Apple Smart Banner (iOSブラウザでApp Storeへ誘導) -->
   <meta name="apple-itunes-app" content="app-id=6758105373">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -76,6 +123,7 @@
   </script>
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+  <link rel="stylesheet" href="map-discovery-v2.css?v=31" />
   <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
   <style>
     * {
@@ -2300,7 +2348,7 @@
     .lineage-dot.oud-light { background: #fff59d; border: 1px solid #d4c95d; box-sizing: border-box; }
     .lineage-dot.rokkaku { background: #43a047; }
     .lineage-dot.musa { background: #f57c00; }
-    .lineage-dot.nonaka { background: #f57c00; }
+    .lineage-dot.nonaka { background: #00838f; }
     .lineage-dot.taiki { background: #00acc1; }
     .lineage-dot.isse { background: #8e24aa; }
     .lineage-dot.isse-light { background: #ce93d8; }
@@ -2410,7 +2458,7 @@
     .lineage-node.g-oud-light { background: #fff59d; color: #000; }
     .lineage-node.g-rokkaku { background: #43a047; }
     .lineage-node.g-musa { background: #f57c00; }
-    .lineage-node.g-nonaka { background: #f57c00; }
+    .lineage-node.g-nonaka { background: #00838f; }
     .lineage-node.g-taiki { background: #00acc1; }
     .lineage-node.g-isse { background: #8e24aa; }
     .lineage-node.g-isse-light { background: #ce93d8; color: #000; }
@@ -2468,7 +2516,7 @@
     .lineage-node-group .g-layer.g-oud-light { background: #fff59d; color: #000; }
     .lineage-node-group .g-layer.g-rokkaku { background: #43a047; }
     .lineage-node-group .g-layer.g-musa { background: #f57c00; }
-    .lineage-node-group .g-layer.g-nonaka { background: #f57c00; }
+    .lineage-node-group .g-layer.g-nonaka { background: #00838f; }
     .lineage-node-group .g-layer.g-taiki { background: #00acc1; }
     .lineage-node-group .g-layer.g-isse { background: #8e24aa; }
     .lineage-node-group .g-layer.g-isse-light { background: #ce93d8; }
@@ -3897,6 +3945,7 @@
   <!-- Shop Detail Modal -->
   <div id="shop-detail-modal" class="modal">
     <div class="modal-content" onclick="event.stopPropagation()">
+      <div class="detail-lineage-bar" aria-hidden="true"></div>
       <div class="modal-header">
         <div class="modal-handle"></div>
         <div class="modal-title-row">
@@ -3926,6 +3975,14 @@
         </div>
       </div>
       <div class="modal-body">
+        <div class="section map-a-detail-photo-section" id="detail-photo-section" hidden>
+          <div class="map-a-detail-photo-heading">
+            <span class="section-title">投稿写真</span>
+            <span id="detail-photo-count" aria-live="polite"></span>
+          </div>
+          <div id="detail-photo-gallery" class="map-a-detail-photo-gallery" aria-label="投稿写真。横にスクロールできます"></div>
+        </div>
+
         <div class="section">
           <p class="description" id="detail-description"></p>
         </div>
@@ -4232,7 +4289,7 @@
 
       function applyAppHeight(force = false) {
         // 検索中はソフトキーボードによるviewport縮小をレイアウトへ反映しない
-        const mapSearchOpen = document.querySelector('.map-view.drawer-search-open');
+        const mapSearchOpen = document.querySelector('.map-view.drawer-search-open') || document.body.classList.contains('map-a-search-open');
         if (!force && mapSearchOpen) return;
         stableAppHeight = window.innerHeight;
         document.documentElement.style.setProperty('--app-height', stableAppHeight + 'px');
@@ -7164,6 +7221,7 @@
       {
         id: "yoshimuraya",
         name: "家系総本山 吉村家",
+        mapLabel: "吉村家",
         nameHiragana: "よしむらや",
         category: "総本山",
         area: "横浜駅",
@@ -7188,6 +7246,7 @@
       {
         id: "oudouya",
         name: "王道家",
+        mapLabel: "王道家",
         category: "王道家",
         area: "柏",
         lat: 35.8631125139897,
@@ -7274,8 +7333,15 @@
           console.log('  cachedTimestamp:', cachedTimestamp);
           console.log('  一致?', data.updatedAt === cachedTimestamp);
           
-          // 3. updatedAtが違っていたら更新
-          if (data.updatedAt !== cachedTimestamp) {
+          // 3. updatedAt、または地図用短縮名が変わっていたら更新
+          // mapLabel列の追加時にタイムスタンプ更新を忘れても、既存端末へ新列を届ける。
+          const mapLabelValue = shop => [shop.mapLabel, shop.shortName, shop['店舗名省略'], shop['店舗名の省略']]
+            .find(value => String(value ?? '').trim()) ?? '';
+          const mapLabelSignature = list => (Array.isArray(list) ? list : [])
+            .map(shop => `${shop.id}:${mapLabelValue(shop)}`)
+            .join('|');
+          const hasMapLabelChange = mapLabelSignature(data.shops) !== mapLabelSignature(shops);
+          if (data.updatedAt !== cachedTimestamp || hasMapLabelChange) {
             shops = data.shops;
             injectGroupDummyData();
             localStorage.setItem(CACHE_KEY, JSON.stringify(shops));
@@ -7388,6 +7454,8 @@
       console.log('🏷️ グループデータはスプレッドシートから取得');
     }
 
+    let appUiInitialized = false;
+
     function initializeApp() {
       updateDataTimestampDisplay();
       console.log('🚀 アプリを初期化中...');
@@ -7403,15 +7471,27 @@
       
       // 地図とUIを初期化
       initMap();
-      initTabs();
+      if (!appUiInitialized) {
+        initTabs();
+        initRecordForm();
+        initResizeHandle();
+        restoreTabAfterReload();
+
+        // キャッシュクリアボタンのイベントリスナー（iOS対応）
+        const clearCacheBtn = document.getElementById('clear-cache-btn');
+        if (clearCacheBtn) clearCacheBtn.addEventListener('click', clearCache);
+
+        // 統計タブの期間選択イベントリスナー
+        const periodSelect = document.getElementById('stats-period-select');
+        if (periodSelect) periodSelect.addEventListener('change', renderMypageTab);
+        appUiInitialized = true;
+      }
+      // 最新APIで初めて追加された店舗のディープリンクも再解決する。
       checkUrlParams();
       renderShopList();
       renderFeedTab();
       // renderLineageTab(); // タブ表示時に初期化
       renderMypageTab();
-      initRecordForm();
-      initResizeHandle();
-      restoreTabAfterReload();
 
       // キャッシュ表示後に最新データでinitializeAppが再度呼ばれても、
       // 家系図の描画要求はまとめて最後の1回だけ実行する。
@@ -7419,17 +7499,6 @@
         requestLineageRender();
       }
       
-      // キャッシュクリアボタンのイベントリスナー（iOS対応）
-      const clearCacheBtn = document.getElementById('clear-cache-btn');
-      if (clearCacheBtn) {
-        clearCacheBtn.addEventListener('click', clearCache);
-      }
-      
-      // 統計タブの期間選択イベントリスナー
-      const periodSelect = document.getElementById('stats-period-select');
-      if (periodSelect) {
-        periodSelect.addEventListener('change', renderMypageTab);
-      }
     }
     
     // State
@@ -7499,7 +7568,7 @@
     let currentPhotos = []; // 最大4枚
     let editingLogIndex = null; // 編集中のログインデックス
     let photoModalLogIndex = null; // photo-modalで表示中のログインデックス（編集・削除ボタン用）
-    let showOpenOnly = false; // 営業中フィルタ
+    let showOpenOnly = true; // 営業中フィルタ（初期状態はオン）
     let userLocation = null; // ユーザー位置
     let userMarker = null; // ユーザー位置マーカー
     let nearbyMode = false; // 今からモード
@@ -7544,7 +7613,7 @@
       '王道家（との丸家）': '#f9a825',
       '王道家（系列外）': '#f9a825',
       '武蔵家': '#f57c00',
-      '野中家': '#f57c00',
+      '野中家': '#00838f',
       '大輝家': '#00acc1',
       '壱系': '#8e24aa',
       '壱系（資本系）': '#ce93d8',
@@ -7591,11 +7660,15 @@
     }
 
     function setMapMarkerSelected(marker, isSelected) {
-      marker.setRadius(isSelected ? 11 : 9);
+      const useDiscoverySelectionLayer = document.documentElement.dataset.mapUi === 'a';
+      const useMarkerSelectionStyle = isSelected && !useDiscoverySelectionLayer;
+      marker.setRadius(useMarkerSelectionStyle ? 13 : 9);
       marker.setStyle({
-        color: '#ffffff',
-        weight: isSelected ? 4 : 2
+        color: useMarkerSelectionStyle ? '#25211f' : '#ffffff',
+        weight: useMarkerSelectionStyle ? 4 : 2
       });
+      const markerElement = marker.getElement?.();
+      markerElement?.classList.toggle('map-a-marker-selected', useMarkerSelectionStyle);
       if (isSelected) marker.bringToFront();
     }
 
@@ -8440,7 +8513,13 @@
     // Map Functions
     function initMap() {
       // console.log('initMap called');
-      map = L.map('map', { preferCanvas: true }).setView([35.45, 139.62], 11);
+      map = L.map('map', {
+        preferCanvas: true,
+        touchZoom: 'center',
+        doubleClickZoom: 'center',
+        scrollWheelZoom: 'center',
+        bounceAtZoomLimits: false
+      }).setView([35.45, 139.62], 11);
       
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap',
@@ -8829,8 +8908,13 @@
     }
     
     // 詳細検索モーダル関数
+    const DEFAULT_IEKEI_FILTER_CATEGORIES = Object.freeze([
+      '直系', '吉村家（直系以外）', '王道家', '王道家（王道乃印）', '王道家（との丸家）',
+      '本牧家', '六角家', '武蔵家', '野中家', '大輝家', 'オリジナル'
+    ]);
+
     let advancedFilterSettings = {
-      categories: [],
+      categories: [...DEFAULT_IEKEI_FILTER_CATEGORIES],
       wantToGo: false,
       favorite: false,
       day: '',
@@ -8857,11 +8941,11 @@
     }
     
     function resetAdvancedFilter() {
-      // 「すべて表示」は、画面上では全系統を選択中として見せる
+      // デフォルトは家系のみ。壱系は必要な時に追加する。
       document.querySelectorAll('.category-iekei').forEach(cb => cb.checked = true);
-      document.querySelectorAll('.category-isse').forEach(cb => cb.checked = true);
+      document.querySelectorAll('.category-isse').forEach(cb => cb.checked = false);
       document.getElementById('category-parent-iekei').checked = true;
-      document.getElementById('category-parent-isse').checked = true;
+      document.getElementById('category-parent-isse').checked = false;
       syncAdvancedCategoryColors();
       document.getElementById('filter-want').checked = false;
       document.getElementById('filter-favorite').checked = false;
@@ -8870,7 +8954,7 @@
       
       // 設定をリセット
       advancedFilterSettings = {
-        categories: [],
+        categories: [...DEFAULT_IEKEI_FILTER_CATEGORIES],
         wantToGo: false,
         favorite: false,
         day: '',
@@ -8878,8 +8962,7 @@
       };
       
       // 表示を更新
-      setFilterControlText('list-filter-summary', 'すべて表示');
-      setFilterControlText('map-filter-summary', 'すべて表示');
+      updateFilterSummary();
       
       // モーダルを閉じる
       closeAdvancedFilterModal();
@@ -9013,7 +9096,7 @@
     
     // 営業中ボタンのテキストを更新
     function updateOpenButtonText() {
-      const hasTimeFilter = advancedFilterSettings.day !== '' || advancedFilterSettings.time !== '';
+      const hasTimeFilter = advancedFilterSettings.day !== '' && advancedFilterSettings.time !== '';
       const buttonText = hasTimeFilter ? '現在時刻' : '営業中';
       
       setFilterControlText('btn-open-toggle', buttonText);
@@ -10854,7 +10937,7 @@
         'yosh': '#c62828', 'yosh-light': '#ef5350',
         'honmoku': '#1976d2', 'rokkaku': '#43a047',
         'oud': '#f9a825', 'oud-light': '#fff59d',
-        'musa': '#f57c00', 'nonaka': '#f57c00',
+        'musa': '#f57c00', 'nonaka': '#00838f',
         'taiki': '#00acc1', 'isse': '#8e24aa', 'oth': '#455a64'
       };
       const dotColor = colorMap[colorClass] || '#666';
@@ -11484,6 +11567,11 @@
       }
       
       document.getElementById('detail-category').textContent = getShortCategoryName(currentShop.category);
+
+      const detailModalContent = document.querySelector('#shop-detail-modal .modal-content');
+      if (detailModalContent) {
+        detailModalContent.style.setProperty('--detail-lineage-color', getMapCategoryColor(currentShop.category));
+      }
       
       // 出身（修行元）表示
       const originEl = document.getElementById('detail-origin');
@@ -11501,6 +11589,9 @@
       }
       document.getElementById('detail-area').textContent = currentShop.area;
       document.getElementById('detail-description').textContent = currentShop.description;
+      if (typeof window.renderMapDiscoveryDetailPhotos === 'function') {
+        void window.renderMapDiscoveryDetailPhotos(shopId);
+      }
       
       const statusBadge = document.getElementById('detail-status-badge');
       const hasTimeFilter = advancedFilterSettings.day !== '' || advancedFilterSettings.time !== '';
@@ -11625,7 +11716,7 @@
       // モーダルを表示
       const modal = document.getElementById('shop-detail-modal');
       
-      
+      document.body.classList.add('shop-detail-open');
       modal.classList.add('active');
       
       // モーダルを開く時に常にスクロール位置を最上部にリセット
@@ -11698,6 +11789,7 @@
       document.title = '家系ラーメンMAP｜全国の家系ラーメンを探して記録できる地図アプリ';
       
       document.getElementById('shop-detail-modal').classList.remove('active');
+      document.body.classList.remove('shop-detail-open');
     }
     
     // シェア機能
@@ -14517,7 +14609,7 @@
           <div style="background: white; padding: 20px;">
             <div class="stats-title">📝 変更履歴</div>
             <div class="version-info">
-              <div class="version-current">現在のバージョン: <strong>v3.0.0</strong></div>
+              <div class="version-current">現在のバージョン: <strong>v3.0.1</strong></div>
               <div class="version-date">最終更新: 2026/06/27</div>
             </div>
             
@@ -15603,6 +15695,8 @@
       </div>
     </div>
   </div>
+
+  <script src="map-discovery-v2.js?v=34"></script>
 
 </body>
 </html>
