@@ -123,7 +123,7 @@
   </script>
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
-  <link rel="stylesheet" href="map-discovery-v2.css?v=31" />
+  <link rel="stylesheet" href="map-discovery-v2.css?v=36" />
   <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
   <style>
     * {
@@ -4104,6 +4104,79 @@
     </div>
   </div>
   
+  <!-- Shop addition / correction request modal -->
+  <div id="shop-request-modal" class="modal" onclick="closeShopRequestForm()">
+    <div class="modal-content" onclick="event.stopPropagation()" style="max-width:540px;max-height:90vh;">
+      <div class="modal-header" style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <h2 id="shop-request-title" style="font-size:18px;font-weight:750;color:#111827;">店舗の追加申請</h2>
+          <p style="margin-top:3px;color:#6b7280;font-size:11px;">内容を確認後、店舗リストへ反映します</p>
+        </div>
+        <button type="button" onclick="closeShopRequestForm()" aria-label="閉じる" style="width:32px;height:32px;border:0;border-radius:50%;background:#f3f4f6;color:#6b7280;font-size:19px;cursor:pointer;">×</button>
+      </div>
+      <form id="shop-request-form" class="modal-body" style="padding:18px 20px 24px;overflow-y:auto;" onsubmit="submitShopRequest(event)">
+        <input type="hidden" id="shop-request-type" value="addition">
+        <input type="hidden" id="shop-request-existing-id">
+        <input type="hidden" id="shop-request-place-id">
+        <input type="hidden" id="shop-request-latitude">
+        <input type="hidden" id="shop-request-longitude">
+        <input type="hidden" id="shop-request-search-query">
+
+        <div class="form-group" style="margin-bottom:13px;">
+          <label class="form-label" for="shop-request-name">店舗名 <span style="color:#dc2626;">*</span></label>
+          <input id="shop-request-name" class="form-input" type="text" maxlength="100" required placeholder="例：○○家 横浜店">
+        </div>
+        <div class="form-group" style="margin-bottom:13px;">
+          <label class="form-label" for="shop-request-address">住所・エリア</label>
+          <input id="shop-request-address" class="form-input" type="text" maxlength="200" placeholder="例：神奈川県横浜市…">
+        </div>
+        <div class="form-group" style="margin-bottom:13px;">
+          <label class="form-label" for="shop-request-google-url">Google Maps URL</label>
+          <input id="shop-request-google-url" class="form-input" type="url" maxlength="1000" inputmode="url" placeholder="https://maps.google.com/…">
+        </div>
+        <div class="form-group" style="margin-bottom:13px;">
+          <label class="form-label" for="shop-request-category">系統（分かる場合）</label>
+          <select id="shop-request-category" class="form-input">
+            <option value="">不明・未選択</option>
+            <option value="直系">直系</option>
+            <option value="吉村家（直系以外）">吉村家（直系以外）</option>
+            <option value="王道家">王道家</option>
+            <option value="王道家（王道乃印）">王道家（王道乃印）</option>
+            <option value="王道家（との丸家）">王道家（との丸家）</option>
+            <option value="本牧家">本牧家</option>
+            <option value="六角家">六角家</option>
+            <option value="武蔵家">武蔵家</option>
+            <option value="野中家">野中家</option>
+            <option value="大輝家">大輝家</option>
+            <option value="壱系">壱系</option>
+            <option value="壱系（資本系）">壱系（資本系）</option>
+            <option value="オリジナル">オリジナル</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:13px;">
+          <label class="form-label" for="shop-request-parent">修行元・出身店（分かる場合）</label>
+          <input id="shop-request-parent" class="form-input" type="text" maxlength="100" placeholder="例：吉村家">
+        </div>
+        <div class="form-group" id="shop-request-correction-wrap" style="margin-bottom:13px;display:none;">
+          <label class="form-label" for="shop-request-correction">修正したい内容 <span style="color:#dc2626;">*</span></label>
+          <textarea id="shop-request-correction" class="form-input" maxlength="1000" rows="4" placeholder="間違っている情報と、正しい情報を入力してください"></textarea>
+        </div>
+        <div class="form-group" style="margin-bottom:13px;">
+          <label class="form-label" for="shop-request-evidence-url">確認できるURL</label>
+          <input id="shop-request-evidence-url" class="form-input" type="url" maxlength="1000" inputmode="url" placeholder="公式サイト・公式SNSなど">
+        </div>
+        <div class="form-group" style="margin-bottom:16px;">
+          <label class="form-label" for="shop-request-notes">補足</label>
+          <textarea id="shop-request-notes" class="form-input" maxlength="1000" rows="3" placeholder="営業時間、開店・閉店情報など"></textarea>
+        </div>
+        <div style="padding:11px 12px;margin-bottom:14px;border-radius:10px;background:#f9fafb;color:#6b7280;font-size:11px;line-height:1.6;">
+          申請にはログインが必要です。送信内容は管理者確認用の申請データとして保存されます。
+        </div>
+        <button id="shop-request-submit" type="submit" class="btn btn-primary" style="width:100%;">申請を送信</button>
+      </form>
+    </div>
+  </div>
+
   <!-- Location Search Modal -->
   <div id="location-search-modal" onclick="closeLocationSearchModal()" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.4);align-items:flex-end;justify-content:center;">
     <div onclick="event.stopPropagation()" style="background:white;border-radius:20px 20px 0 0;padding:20px 20px 32px;width:100%;max-width:480px;box-shadow:0 -4px 24px rgba(0,0,0,0.15);">
@@ -9181,48 +9254,35 @@
     // 営業時間チェック関数（指定曜日・時刻）
     function isOpenAtDayTime(openingHours, dayOfWeek, timeStr) {
       if (!openingHours || dayOfWeek === '' || !timeStr) return true;
-      
-      console.log('🕐 isOpenAtDayTime check:', { dayOfWeek, timeStr, openingHours });
-      
+
       const dayNames = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-      const dayKey = dayNames[parseInt(dayOfWeek)];
-      const dayData = openingHours[dayKey];
-      
-      console.log('  dayKey:', dayKey, 'dayData:', dayData);
-      
-      if (!dayData || !dayData.times || dayData.times.length === 0) {
-        console.log('  ❌ 定休日または営業時間データなし');
-        return false; // 定休日または営業時間データなし
-      }
-      
-      // 時刻を分に変換
+      const dayIndex = Number(dayOfWeek);
+      if (!Number.isInteger(dayIndex) || dayIndex < 0 || dayIndex > 6) return false;
+
       const [hour, minute] = timeStr.split(':').map(Number);
+      if (!Number.isFinite(hour) || !Number.isFinite(minute)) return false;
       const targetMinutes = hour * 60 + minute;
-      
-      console.log('  targetMinutes:', targetMinutes);
-      
-      // 営業時間の範囲をチェック
-      for (const timeRange of dayData.times) {
-        const [startHour, startMinute] = timeRange.start.split(':').map(Number);
-        const [endHour, endMinute] = timeRange.end.split(':').map(Number);
-        
-        const startMinutes = startHour * 60 + startMinute;
-        let endMinutes = endHour * 60 + endMinute;
-        
-        // 24時を超える場合の処理（例: 23:00-01:00）
-        if (endMinutes <= startMinutes) {
-          endMinutes += 24 * 60;
-        }
-        
-        console.log('  range:', timeRange.start, '-', timeRange.end, 'startMinutes:', startMinutes, 'endMinutes:', endMinutes);
-        
-        if (targetMinutes >= startMinutes && targetMinutes <= endMinutes) {
-          console.log('  ✅ MATCH!');
-          return true;
-        }
+
+      const selectedDayTimes = openingHours[dayNames[dayIndex]]?.times || [];
+      for (const timeRange of selectedDayTimes) {
+        const startMinutes = parseHHMM(timeRange.start);
+        const endMinutes = parseHHMM(timeRange.end);
+        if (timeRange.start === '00:00' && timeRange.end === '24:00') return true;
+        if (endMinutes > startMinutes &&
+            targetMinutes >= startMinutes && targetMinutes < endMinutes) return true;
+        // 選択した曜日に始まり、翌日まで続く営業時間の当日側。
+        if (endMinutes < startMinutes && targetMinutes >= startMinutes) return true;
       }
-      
-      console.log('  ❌ NO MATCH');
+
+      // 0時以降は、前日に始まった深夜営業の翌日側も対象にする。
+      const previousDayIndex = (dayIndex + 6) % 7;
+      const previousDayTimes = openingHours[dayNames[previousDayIndex]]?.times || [];
+      for (const timeRange of previousDayTimes) {
+        const startMinutes = parseHHMM(timeRange.start);
+        const endMinutes = parseHHMM(timeRange.end);
+        if (endMinutes < startMinutes && targetMinutes < endMinutes) return true;
+      }
+
       return false;
     }
     
@@ -11815,30 +11875,116 @@
       return `${baseUrl}?shop=${currentShop.id}`;
     }
 
+    function reportShopInformation(shopId) {
+      const shop = shops.find(item => String(item.id) === String(shopId));
+      if (!shop) return;
+      const parentShop = shops.find(item => String(item.id) === String(shop.parent));
+      openShopRequestForm({
+        requestType: 'correction',
+        existingShopId: shop.id,
+        shopName: shop.name,
+        address: shop.area || '',
+        googleMapsUrl: shop.googleMapUrl || '',
+        category: shop.category || '',
+        parentShop: parentShop?.name || shop.parent || '',
+        latitude: shop.lat,
+        longitude: shop.lng
+      });
+    }
+
     function reportCurrentShopInformation() {
       if (!currentShop) return;
+      reportShopInformation(currentShop.id);
+    }
 
-      const email = 'iekei.map@gmail.com';
-      const subject = `【店舗情報修正】${currentShop.name}`;
-      const body = [
-        `店舗名: ${currentShop.name}`,
-        `店舗ID: ${currentShop.id}`,
-        `掲載エリア: ${currentShop.area || '未設定'}`,
-        '',
-        '修正したい項目（閉店・移転・営業時間・住所など）:',
-        '',
-        '正しい情報:',
-        '',
-        '確認できるURL（任意）:'
-      ].join('\n');
-      const mailto = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    function closeShopRequestForm() {
+      document.getElementById('shop-request-modal')?.classList.remove('active');
+    }
 
-      if (window.webkit?.messageHandlers?.openURL) {
-        window.webkit.messageHandlers.openURL.postMessage(mailto);
-      } else {
-        window.location.href = mailto;
+    function setShopRequestValue(id, value) {
+      const element = document.getElementById(id);
+      if (element) element.value = value == null ? '' : String(value);
+    }
+
+    function openShopRequestForm(options = {}) {
+      const requestType = options.requestType === 'correction' ? 'correction' : 'addition';
+      const isCorrection = requestType === 'correction';
+      setShopRequestValue('shop-request-type', requestType);
+      setShopRequestValue('shop-request-existing-id', options.existingShopId);
+      setShopRequestValue('shop-request-place-id', options.googlePlaceId);
+      setShopRequestValue('shop-request-latitude', options.latitude);
+      setShopRequestValue('shop-request-longitude', options.longitude);
+      setShopRequestValue('shop-request-search-query', options.searchQuery);
+      setShopRequestValue('shop-request-name', options.shopName);
+      setShopRequestValue('shop-request-address', options.address);
+      setShopRequestValue('shop-request-google-url', options.googleMapsUrl);
+      setShopRequestValue('shop-request-category', options.category);
+      setShopRequestValue('shop-request-parent', options.parentShop);
+      setShopRequestValue('shop-request-correction', '');
+      setShopRequestValue('shop-request-evidence-url', '');
+      setShopRequestValue('shop-request-notes', '');
+
+      const title = document.getElementById('shop-request-title');
+      if (title) title.textContent = isCorrection ? '店舗情報の修正申請' : '店舗の追加申請';
+      const correctionWrap = document.getElementById('shop-request-correction-wrap');
+      const correctionInput = document.getElementById('shop-request-correction');
+      if (correctionWrap) correctionWrap.style.display = isCorrection ? 'block' : 'none';
+      if (correctionInput) correctionInput.required = isCorrection;
+      document.getElementById('shop-request-modal')?.classList.add('active');
+      setTimeout(() => document.getElementById('shop-request-name')?.focus(), 80);
+    }
+
+    async function submitShopRequest(event) {
+      event.preventDefault();
+      if (!(await ensureLoggedInFor('店舗情報の申請'))) return;
+      const submitButton = document.getElementById('shop-request-submit');
+      const requestType = document.getElementById('shop-request-type')?.value === 'correction' ? 'correction' : 'addition';
+      const shopName = document.getElementById('shop-request-name')?.value.trim() || '';
+      const correctionDetails = document.getElementById('shop-request-correction')?.value.trim() || '';
+      if (!shopName || (requestType === 'correction' && !correctionDetails)) return;
+
+      const numberOrNull = id => {
+        const raw = document.getElementById(id)?.value;
+        if (raw == null || String(raw).trim() === '') return null;
+        const value = Number(raw);
+        return Number.isFinite(value) ? value : null;
+      };
+      const requestRow = {
+        request_type: requestType,
+        existing_shop_id: document.getElementById('shop-request-existing-id')?.value || null,
+        google_place_id: document.getElementById('shop-request-place-id')?.value || null,
+        search_query: document.getElementById('shop-request-search-query')?.value || null,
+        shop_name: shopName,
+        address: document.getElementById('shop-request-address')?.value.trim() || null,
+        latitude: numberOrNull('shop-request-latitude'),
+        longitude: numberOrNull('shop-request-longitude'),
+        google_maps_url: document.getElementById('shop-request-google-url')?.value.trim() || null,
+        category: document.getElementById('shop-request-category')?.value || null,
+        parent_shop: document.getElementById('shop-request-parent')?.value.trim() || null,
+        correction_details: correctionDetails || null,
+        evidence_url: document.getElementById('shop-request-evidence-url')?.value.trim() || null,
+        notes: document.getElementById('shop-request-notes')?.value.trim() || null,
+        submitted_by: currentUser.id
+      };
+
+      submitButton.disabled = true;
+      submitButton.textContent = '送信中…';
+      try {
+        const { error } = await supabaseClient.from('shop_change_requests').insert(requestRow);
+        if (error) throw error;
+        closeShopRequestForm();
+        await showCustomAlert('申請を受け付けました。管理者が内容を確認します。');
+      } catch (error) {
+        console.error('店舗情報申請の送信に失敗:', error);
+        await showCustomAlert('申請を送信できませんでした。時間をおいて再度お試しください。');
+      } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = '申請を送信';
       }
     }
+
+    window.openShopRequestForm = openShopRequestForm;
+    window.reportShopInformation = reportShopInformation;
 
     function shareToX() {
       const text = getShareText();
@@ -15696,7 +15842,7 @@
     </div>
   </div>
 
-  <script src="map-discovery-v2.js?v=34"></script>
+  <script src="map-discovery-v2.js?v=41"></script>
 
 </body>
 </html>
