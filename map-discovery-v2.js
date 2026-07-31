@@ -13,6 +13,7 @@
   const MAX_RAIL_SHOPS = 30;
   const MAP_FOCUS_Y_RATIO = 0.43;
   const PLACE_SEARCH_DELAY = 360;
+  const GOOGLE_PLACES_ENDPOINT = 'https://ggmfsnyhkrdoytbpvtxd.supabase.co/functions/v1/google-places';
   const SEARCH_HISTORY_STATE = 'mapDiscoverySearch';
 
   const icons = {
@@ -41,6 +42,13 @@
     placeSequence: 0,
     placeController: null,
     placeTimer: 0,
+    googleResults: [],
+    googleLoading: false,
+    googleError: '',
+    googleSequence: 0,
+    googleController: null,
+    googleTimer: 0,
+    googleExpanded: false,
     mapMoveTimer: 0,
     refreshFrame: 0,
     programmaticMapMove: '',
@@ -164,6 +172,7 @@
               <input id="map-a-search-input" class="map-a-search-input" type="search" enterkeyhint="search" autocomplete="off" placeholder="店名・駅名・地名">
               <button id="map-a-search-clear" class="map-a-search-clear" type="button" aria-label="検索文字を消去">×</button>
             </div>
+            <button id="map-a-search-submit" class="map-a-search-submit" type="button">検索</button>
           </div>
           <div class="map-a-search-tabs" role="tablist" aria-label="検索対象">
             <button class="map-a-search-tab is-active" type="button" role="tab" data-map-a-search-tab="shops" aria-selected="true">ラーメン店 <span id="map-a-shop-count">0</span></button>
@@ -355,6 +364,7 @@
     document.querySelectorAll('[data-map-a-category], [data-map-a-category-group]').forEach(button => {
       button.addEventListener('click', handleAdjustCategoryClick);
     });
+    document.getElementById('map-a-color-legend-items')?.addEventListener('click', handleLegendCategoryClick);
     document.querySelectorAll('#map-a-adjust-panel input, #map-a-adjust-panel select').forEach(control => {
       control.addEventListener('change', handleAdjustInputChange);
     });
@@ -380,6 +390,8 @@
       if (state.searchTab === 'places') schedulePlaceSearch();
       else {
         cancelPlaceSearch(false);
+        cancelGoogleSearch(true);
+        state.googleExpanded = false;
         renderSearchResults();
       }
     });
@@ -387,13 +399,20 @@
       if (event.key === 'Enter' && state.searchTab === 'places') {
         event.preventDefault();
         runPlaceSearch(searchInput.value.trim());
+      } else if (event.key === 'Enter' && state.searchTab === 'shops') {
+        event.preventDefault();
+        submitShopSearch();
       }
     });
+    document.getElementById('map-a-search-submit')?.addEventListener('click', submitShopSearch);
     document.getElementById('map-a-search-clear')?.addEventListener('click', () => {
       if (!searchInput) return;
       searchInput.value = '';
       cancelPlaceSearch(true);
+      cancelGoogleSearch(true);
+      state.googleExpanded = false;
       state.placeError = '';
+      state.googleError = '';
       renderSearchResults();
       searchInput.focus();
     });
@@ -828,7 +847,11 @@
   function renderRailCard(item, index) {
     const shop = item.shop;
     const status = getOpenStatus(shop.openingHours);
-    const statusLabel = status.state === 'open' ? '営業中' : status.state === 'soon' ? '閉店間近' : '時間外';
+    const hasScheduledTime = advancedFilterSettings.day !== '' && advancedFilterSettings.time !== '';
+    const statusState = hasScheduledTime ? 'open' : status.state;
+    const statusLabel = hasScheduledTime
+      ? '営業予定'
+      : status.state === 'open' ? '営業中' : status.state === 'soon' ? '閉店間近' : '時間外';
     const origin = getOriginShop(shop);
     const xURL = typeof getShopXURL === 'function' ? getShopXURL(shop) : String(shop.xURL || '');
     const googleURL = String(shop.googleMapUrl || '');
@@ -836,7 +859,9 @@
     const color = typeof getMapCategoryColor === 'function' ? getMapCategoryColor(shop.category) : '#64748b';
     const photoURLs = getCachedRailCardPhotos(shop.id);
     const todayHours = typeof getTodayHours === 'function' ? getTodayHours(shop.openingHours) : '';
-    const showTodayHours = todayHours && todayHours !== '営業時間情報なし';
+    const cardHours = hasScheduledTime
+      ? getScheduledDayHours(shop.openingHours, advancedFilterSettings.day)
+      : todayHours && todayHours !== '営業時間情報なし' ? `本日 ${todayHours}` : '';
     const originLabel = origin
       ? (getShopMapLabel(origin) || String(origin.name || '').replace(/[\s　]+(?:本店|総本店)$/u, ''))
       : '';
@@ -850,9 +875,9 @@
           <span class="map-a-chip is-category">${escapeText(getShortCategoryName(shop.category))}</span>
           ${origin ? `<button class="map-a-chip is-origin" type="button" data-card-action="origin" data-origin-id="${escapeAttribute(origin.id)}" aria-label="出身店 ${escapeAttribute(originLabel)}を家系図で表示">${escapeText(originLabel)}</button>` : ''}
           <span class="map-a-card-area-inline">${icons.pin}<span>${escapeText(shop.area || 'エリア情報なし')}</span></span>
-          <span class="map-a-chip is-status is-${status.state}">${statusLabel}</span>
+          <span class="map-a-chip is-status is-${statusState}">${statusLabel}</span>
         </div>
-        ${showTodayHours ? `<span class="map-a-card-hours" title="本日の営業時間 ${escapeAttribute(todayHours)}">本日 ${escapeText(todayHours)}</span>` : ''}
+        ${cardHours ? `<span class="map-a-card-hours" title="${escapeAttribute(cardHours)}">${escapeText(cardHours)}</span>` : ''}
         <div class="map-a-card-bottom">
           <button class="map-a-card-photo-slot${photoURLs.length ? ' has-photo' : ''}${photoURLs.length > 1 ? ' has-multiple' : ''}" type="button" data-card-action="detail" data-card-photo-slot aria-label="${escapeAttribute(shop.name)}の投稿写真${photoURLs.length ? `${photoURLs.length}枚` : ''}を詳細で見る" aria-hidden="${photoURLs.length ? 'false' : 'true'}" tabindex="${photoURLs.length ? '0' : '-1'}">${renderRailCardPhotoPreview(photoURLs)}</button>
           <span class="map-a-card-bottom-spacer"></span>
@@ -861,6 +886,24 @@
           ${googleURL ? `<a class="map-a-card-action" href="${escapeAttribute(googleURL)}" target="_blank" rel="noopener noreferrer" data-card-action="map" aria-label="Googleマップで開く">${icons.map}</a>` : ''}
         </div>
       </article>`;
+  }
+
+  function getScheduledDayHours(openingHours, selectedDay) {
+    const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+    const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+    const dayIndex = Number(selectedDay);
+    if (!Number.isInteger(dayIndex) || dayIndex < 0 || dayIndex > 6) return '';
+    const dayLabel = `${dayNames[dayIndex]}曜`;
+    if (!openingHours) return `${dayLabel} 営業時間情報なし`;
+    const times = openingHours[dayKeys[dayIndex]]?.times;
+    if (!Array.isArray(times) || times.length === 0) return `${dayLabel} 定休日`;
+    if (times.length === 1 && times[0]?.start === '00:00' && times[0]?.end === '24:00') {
+      return `${dayLabel} 24時間営業`;
+    }
+    const ranges = times
+      .filter(time => time?.start && time?.end)
+      .map(time => `${time.start}–${time.end}`);
+    return ranges.length ? `${dayLabel} ${ranges.join('、')}` : `${dayLabel} 営業時間情報なし`;
   }
 
   function normalizeRailCardPhoto(value) {
@@ -1408,7 +1451,12 @@
 
   function handleAdjustInputChange(event) {
     if (event.target?.id === 'map-a-filter-day' || event.target?.id === 'map-a-filter-time') {
-      setChecked('map-a-filter-open', true);
+      const day = document.getElementById('map-a-filter-day')?.value || '';
+      const time = document.getElementById('map-a-filter-time')?.value || '';
+      // 指定日時検索と「現在時刻で営業中」は排他的。
+      // 曜日または時刻を入力した時点で現在時刻フィルターを解除し、
+      // もう片方を選んだ時に指定日時検索がそのまま有効になるようにする。
+      if (day !== '' || time !== '') setChecked('map-a-filter-open', false);
     }
     const preserveActive = event.target?.name === 'map-a-card-map';
     applyAdjustDraft({ closePanel: false, preserveActive });
@@ -1433,6 +1481,27 @@
     }
     storeAdjustCategorySelection(selected);
     syncAdjustCategoryControls();
+    applyAdjustDraft({ closePanel: false });
+  }
+
+  function handleLegendCategoryClick(event) {
+    const button = event.target.closest('[data-map-a-legend-category]');
+    if (!button) return;
+    const value = button.dataset.mapALegendCategory;
+    const selected = getEffectiveAdjustCategorySelection();
+    if (selected.has(value)) {
+      // An empty array means "all categories" in the legacy filter, so retain
+      // the last category instead of unexpectedly restoring every category.
+      if (selected.size <= 1) return;
+      selected.delete(value);
+    } else {
+      selected.add(value);
+    }
+    storeAdjustCategorySelection(selected);
+    // The legend lives outside the adjust panel. Refresh every panel control
+    // from the committed state before applying the category change so a stale
+    // checkbox cannot overwrite filters changed from the map controls.
+    syncAdjustControls();
     applyAdjustDraft({ closePanel: false });
   }
 
@@ -1615,6 +1684,7 @@
 
   function syncAllControls() {
     syncLegacyFilterControls();
+    syncAdjustControls();
     syncOpenToggle();
     syncCurrentLocationButton();
     syncFilterLabel();
@@ -1628,13 +1698,17 @@
     if (!legend || !items) return;
     const selected = getEffectiveAdjustCategorySelection();
     const options = ['iekei', 'isse']
-      .flatMap(group => getAdjustCategoryOptions(group))
-      .filter(option => option.value !== '王道家（との丸家）')
-      .filter(option => selected.has(option.value) || option.value === '壱系');
+      .flatMap(group => getAdjustCategoryOptions(group));
     items.innerHTML = options.map(option => {
       const color = typeof getMapCategoryColor === 'function' ? getMapCategoryColor(option.value) : '#64748b';
-      const label = typeof getShortCategoryName === 'function' ? getShortCategoryName(option.value) : option.label;
-      return `<span class="map-a-color-legend-item" style="--map-a-legend-color:${escapeMarkup(color)}"><span class="map-a-color-legend-dot" aria-hidden="true"></span>${escapeMarkup(label)}</span>`;
+      const shortLabel = typeof getShortCategoryName === 'function' ? getShortCategoryName(option.value) : option.label;
+      const label = option.value === '王道家（との丸家）'
+        ? 'との丸'
+        : option.value === '壱系（資本系）'
+          ? '壱系（資本）'
+          : shortLabel;
+      const active = selected.has(option.value);
+      return `<button class="map-a-color-legend-item${active ? ' is-active' : ''}" type="button" data-map-a-legend-category="${escapeMarkup(option.value)}" aria-pressed="${active}" aria-label="${escapeMarkup(label)}を${active ? '非表示' : '表示'}" style="--map-a-legend-color:${escapeMarkup(color)}"><span class="map-a-color-legend-dot" aria-hidden="true"></span>${escapeMarkup(label)}</button>`;
     }).join('');
     legend.hidden = options.length === 0;
   }
@@ -1664,13 +1738,18 @@
   function syncOpenToggle() {
     const button = document.getElementById('map-a-open-toggle');
     if (!button) return;
-    button.classList.toggle('is-active', !!showOpenOnly);
-    button.setAttribute('aria-pressed', String(!!showOpenOnly));
-    button.setAttribute('aria-label', showOpenOnly
-      ? '営業中の店舗だけ表示中。全店舗表示に戻す'
-      : '全店舗を表示中。営業中のみに絞る');
+    const hasScheduledTime = advancedFilterSettings.day !== '' && advancedFilterSettings.time !== '';
+    const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+    button.classList.toggle('is-active', !!showOpenOnly || hasScheduledTime);
+    button.classList.toggle('is-scheduled', hasScheduledTime);
+    button.setAttribute('aria-pressed', String(!!showOpenOnly || hasScheduledTime));
+    button.setAttribute('aria-label', hasScheduledTime
+      ? `${dayNames[Number(advancedFilterSettings.day)]}曜 ${advancedFilterSettings.time}に営業する店舗を表示中。現在時刻の営業中検索に戻す`
+      : showOpenOnly
+        ? '営業中の店舗だけ表示中。全店舗表示に戻す'
+        : '全店舗を表示中。営業中のみに絞る');
     const label = document.getElementById('map-a-open-label');
-    if (label) label.textContent = showOpenOnly ? '営業中' : '全店舗';
+    if (label) label.textContent = hasScheduledTime ? '指定時間' : showOpenOnly ? '営業中' : '全店舗';
   }
 
   function syncFilterLabel() {
@@ -1714,6 +1793,7 @@
     document.body.classList.remove('map-a-search-open');
     document.getElementById('map-a-search-input')?.blur();
     cancelPlaceSearch(false);
+    cancelGoogleSearch(false);
     if (wasOpen && !options.fromHistory) {
       try {
         if (history.state?.[SEARCH_HISTORY_STATE]) history.back();
@@ -1740,6 +1820,8 @@
     if (tab === 'places') schedulePlaceSearch(true);
     else {
       cancelPlaceSearch(true);
+      cancelGoogleSearch(true);
+      state.googleExpanded = false;
       renderSearchResults();
     }
   }
@@ -1772,23 +1854,142 @@
     candidates = candidates.slice(0, 60);
     const count = document.getElementById('map-a-shop-count');
     if (count) count.textContent = String(totalCount);
-    if (!candidates.length) {
-      container.innerHTML = '<div class="map-a-search-state"><strong>お店が見つかりませんでした</strong><span>店名、ひらがな、エリアを変えて試してください。</span></div>';
-      return;
-    }
-    container.innerHTML = `
-      <div class="map-a-search-summary">${normalized ? `「${escapeText(query)}」の店舗検索結果` : '地図の中心付近にある店舗'}</div>
-      <div class="map-a-result-list">
-        ${candidates.map(({ shop, distance }) => {
+    const localResults = candidates.length
+      ? `<div class="map-a-search-summary">${normalized ? `「${escapeText(query)}」の登録店舗` : '地図の中心付近にある登録店舗'}</div>
+        <div class="map-a-result-list">
+          ${candidates.map(({ shop, distance }) => {
           const status = getOpenStatus(shop.openingHours);
           const statusLabel = status.state === 'open' ? '営業中' : status.state === 'soon' ? '閉店間近' : '時間外';
-          return `<button class="map-a-result-row" type="button" data-map-a-shop-result="${escapeAttribute(shop.id)}">
-            <span class="map-a-result-icon">🍜</span>
-            <span class="map-a-result-copy"><strong>${escapeText(shop.name)}</strong><span>${escapeText(getShortCategoryName(shop.category))} · ${escapeText(shop.area || '')} · ${statusLabel}</span></span>
-            <span class="map-a-result-distance">${Number.isFinite(distance) ? formatDistance(distance) : ''}</span>
-          </button>`;
+          return `<div class="map-a-result-entry">
+            <button class="map-a-result-row" type="button" data-map-a-shop-result="${escapeAttribute(shop.id)}">
+              <span class="map-a-result-icon">🍜</span>
+              <span class="map-a-result-copy"><strong>${escapeText(shop.name)}</strong><span>${escapeText(getShortCategoryName(shop.category))} · ${escapeText(shop.area || '')} · ${statusLabel}</span></span>
+              <span class="map-a-result-distance">${Number.isFinite(distance) ? formatDistance(distance) : ''}</span>
+            </button>
+            <button class="map-a-result-subaction" type="button" data-map-a-correction="${escapeAttribute(shop.id)}">情報を修正申請</button>
+          </div>`;
         }).join('')}
-      </div>`;
+        </div>`
+      : `<div class="map-a-search-state map-a-search-state-compact"><strong>登録店舗には見つかりませんでした</strong><span>Google Mapsの候補も確認できます。</span></div>`;
+
+    container.innerHTML = `${localResults}${renderGoogleShopResults(query)}`;
+  }
+
+  function renderGoogleShopResults(query) {
+    if (query.length < 2) {
+      return '<div class="map-a-search-hint">店名を2文字以上入力して検索してください。</div>';
+    }
+    if (!state.googleExpanded) {
+      return `<button class="map-a-not-found-button" type="button" data-map-a-google-expand>
+        <strong>見つからない場合はこちら</strong>
+        <span>Google Mapsの候補を確認して、店舗追加を申請できます</span>
+      </button>`;
+    }
+    const googleMapsSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+    let body = '';
+    if (state.googleLoading) {
+      body = '<div class="map-a-google-state">Google Mapsを検索中…</div>';
+    } else if (state.googleError) {
+      body = `<div class="map-a-google-state">${escapeText(state.googleError)}</div>`;
+    } else if (!state.googleResults.length) {
+      body = '<div class="map-a-google-state">Google Mapsにも候補が見つかりませんでした。</div>';
+    } else {
+      body = `<div class="map-a-google-list">${state.googleResults.map((place, index) => {
+        const registeredShop = findLikelyRegisteredShop(place.name);
+        return `<article class="map-a-google-row">
+          <a class="map-a-google-place" href="${escapeAttribute(place.googleMapsUri)}" target="_blank" rel="noopener noreferrer">
+            <span class="map-a-google-pin">G</span>
+            <span class="map-a-result-copy"><strong>${escapeText(place.name)}</strong><span>${escapeText(place.address || '住所情報なし')}</span></span>
+            <span class="map-a-google-open">${icons.chevron}</span>
+          </a>
+          ${registeredShop
+            ? `<button class="map-a-google-registered" type="button" data-map-a-shop-result="${escapeAttribute(registeredShop.id)}">登録済み店舗を開く</button>`
+            : `<button class="map-a-google-apply" type="button" data-map-a-google-apply="${index}">この店舗を追加申請</button>`}
+        </article>`;
+      }).join('')}</div>`;
+    }
+    return `<section class="map-a-google-section" aria-label="Google Mapsの検索結果">
+      <div class="map-a-google-heading"><strong>Google Mapsの候補</strong><span>Google</span></div>
+      ${body}
+      <div class="map-a-google-actions">
+        <a href="${googleMapsSearchUrl}" target="_blank" rel="noopener noreferrer">Google Mapsですべて見る</a>
+        <button type="button" data-map-a-manual-apply>見つからない店舗を追加申請</button>
+      </div>
+    </section>`;
+  }
+
+  function findLikelyRegisteredShop(name) {
+    const normalizedName = normalizeSearch(name);
+    if (!normalizedName) return null;
+    return (Array.isArray(shops) ? shops : []).find(shop =>
+      shop.name !== 'ダミー' && normalizeSearch(shop.name) === normalizedName
+    ) || null;
+  }
+
+  function submitShopSearch() {
+    const input = document.getElementById('map-a-search-input');
+    if (!input) return;
+    input.blur();
+    state.googleExpanded = false;
+    cancelGoogleSearch(true);
+    renderSearchResults();
+  }
+
+  function cancelGoogleSearch(clearResults) {
+    window.clearTimeout(state.googleTimer);
+    state.googleTimer = 0;
+    state.googleController?.abort();
+    state.googleController = null;
+    state.googleSequence += 1;
+    state.googleLoading = false;
+    if (clearResults) state.googleResults = [];
+  }
+
+  async function runGoogleSearch(query) {
+    const querySnapshot = String(query || '').trim();
+    if (querySnapshot.length < 2 || state.searchTab !== 'shops') return;
+    window.clearTimeout(state.googleTimer);
+    state.googleTimer = 0;
+    state.googleController?.abort();
+    state.googleController = new AbortController();
+    const sequence = ++state.googleSequence;
+    const controller = state.googleController;
+    state.googleLoading = true;
+    state.googleError = '';
+    state.googleResults = [];
+    renderSearchResults();
+    const center = getMapFocusLatLng();
+    try {
+      const response = await fetch(GOOGLE_PLACES_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': typeof SUPABASE_ANON_KEY !== 'undefined' ? SUPABASE_ANON_KEY : ''
+        },
+        body: JSON.stringify({ query: querySnapshot, latitude: center.lat, longitude: center.lng }),
+        signal: controller.signal
+      });
+      const data = await response.json().catch(() => ({}));
+      const currentQuery = document.getElementById('map-a-search-input')?.value.trim() || '';
+      if (sequence !== state.googleSequence || currentQuery !== querySnapshot || state.searchTab !== 'shops') return;
+      if (!response.ok) {
+        throw new Error(data?.code === 'not_configured'
+          ? 'Google Maps検索は準備中です。下のボタンからGoogle Mapsで検索できます。'
+          : 'Google Mapsの候補を取得できませんでした。');
+      }
+      state.googleResults = Array.isArray(data.places) ? data.places.slice(0, 8) : [];
+      state.googleLoading = false;
+      state.googleController = null;
+      renderSearchResults();
+    } catch (error) {
+      if (error?.name === 'AbortError' || sequence !== state.googleSequence) return;
+      state.googleLoading = false;
+      state.googleController = null;
+      state.googleError = String(error?.message || '').startsWith('Google Maps')
+        ? error.message
+        : 'Google Mapsの候補を取得できませんでした。下のボタンからGoogle Mapsで検索できます。';
+      renderSearchResults();
+    }
   }
 
   function renderPlaceSearchResults(container, query) {
@@ -1918,6 +2119,41 @@
   }
 
   function handleSearchResultClick(event) {
+    if (event.target.closest('[data-map-a-google-expand]')) {
+      const query = document.getElementById('map-a-search-input')?.value.trim() || '';
+      if (query.length < 2) return;
+      state.googleExpanded = true;
+      runGoogleSearch(query);
+      return;
+    }
+    const correctionButton = event.target.closest('[data-map-a-correction]');
+    if (correctionButton) {
+      window.reportShopInformation?.(correctionButton.dataset.mapACorrection);
+      return;
+    }
+    const googleApplyButton = event.target.closest('[data-map-a-google-apply]');
+    if (googleApplyButton) {
+      const place = state.googleResults[Number(googleApplyButton.dataset.mapAGoogleApply)];
+      if (place) window.openShopRequestForm?.({
+        requestType: 'addition',
+        shopName: place.name,
+        address: place.address,
+        googleMapsUrl: place.googleMapsUri,
+        googlePlaceId: place.placeId,
+        latitude: place.latitude,
+        longitude: place.longitude,
+        searchQuery: document.getElementById('map-a-search-input')?.value.trim() || ''
+      });
+      return;
+    }
+    if (event.target.closest('[data-map-a-manual-apply]')) {
+      window.openShopRequestForm?.({
+        requestType: 'addition',
+        shopName: document.getElementById('map-a-search-input')?.value.trim() || '',
+        searchQuery: document.getElementById('map-a-search-input')?.value.trim() || ''
+      });
+      return;
+    }
     const shopRow = event.target.closest('[data-map-a-shop-result]');
     if (shopRow) {
       const shop = findShop(shopRow.dataset.mapAShopResult);
