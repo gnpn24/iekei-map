@@ -420,6 +420,9 @@
       button.addEventListener('click', () => setSearchTab(button.dataset.mapASearchTab));
     });
     document.getElementById('map-a-search-results')?.addEventListener('click', handleSearchResultClick);
+    document.addEventListener('click', event => {
+      if (!event.target.closest('.map-a-result-more')) closeSearchResultMenus();
+    });
 
     document.querySelectorAll('[data-map-ui-mode]').forEach(button => {
       button.addEventListener('click', () => setMapUiMode(button.dataset.mapUiMode));
@@ -431,6 +434,10 @@
 
     document.addEventListener('keydown', event => {
       if (event.key !== 'Escape') return;
+      if (closeSearchResultMenus()) {
+        event.preventDefault();
+        return;
+      }
       if (document.getElementById('map-a-search-surface')?.classList.contains('is-open')) closeSearchSurface();
       else closeAdjustPanel();
     });
@@ -1860,13 +1867,26 @@
           ${candidates.map(({ shop, distance }) => {
           const status = getOpenStatus(shop.openingHours);
           const statusLabel = status.state === 'open' ? '営業中' : status.state === 'soon' ? '閉店間近' : '時間外';
+          const googleMapUrl = String(shop.googleMapUrl || '').trim()
+            || (Number.isFinite(Number(shop.lat)) && Number.isFinite(Number(shop.lng))
+              ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${shop.lat},${shop.lng}`)}`
+              : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${shop.name} ${shop.area || ''}`.trim())}`);
           return `<div class="map-a-result-entry">
             <button class="map-a-result-row" type="button" data-map-a-shop-result="${escapeAttribute(shop.id)}">
               <span class="map-a-result-icon">🍜</span>
               <span class="map-a-result-copy"><strong>${escapeText(shop.name)}</strong><span>${escapeText(getShortCategoryName(shop.category))} · ${escapeText(shop.area || '')} · ${statusLabel}</span></span>
               <span class="map-a-result-distance">${Number.isFinite(distance) ? formatDistance(distance) : ''}</span>
             </button>
-            <button class="map-a-result-subaction" type="button" data-map-a-correction="${escapeAttribute(shop.id)}">情報を修正申請</button>
+            <div class="map-a-result-actions">
+              <button class="map-a-result-detail" type="button" data-map-a-shop-detail="${escapeAttribute(shop.id)}">詳細</button>
+              <details class="map-a-result-more">
+                <summary aria-label="${escapeAttribute(shop.name)}のその他の操作">•••</summary>
+                <div class="map-a-result-menu" role="menu">
+                  <a href="${escapeAttribute(googleMapUrl)}" target="_blank" rel="noopener noreferrer" role="menuitem">${icons.map}<span>Googleマップ</span></a>
+                  <button type="button" role="menuitem" data-map-a-correction="${escapeAttribute(shop.id)}">情報を修正申請</button>
+                </div>
+              </details>
+            </div>
           </div>`;
         }).join('')}
         </div>`
@@ -2119,11 +2139,22 @@
   }
 
   function handleSearchResultClick(event) {
+    if (event.target.closest('.map-a-result-more > summary')) return;
+    if (event.target.closest('.map-a-result-menu a')) {
+      closeSearchResultMenus();
+      return;
+    }
+    closeSearchResultMenus();
     if (event.target.closest('[data-map-a-google-expand]')) {
       const query = document.getElementById('map-a-search-input')?.value.trim() || '';
       if (query.length < 2) return;
       state.googleExpanded = true;
       runGoogleSearch(query);
+      return;
+    }
+    const detailButton = event.target.closest('[data-map-a-shop-detail]');
+    if (detailButton) {
+      window.showShopDetail?.(detailButton.dataset.mapAShopDetail);
       return;
     }
     const correctionButton = event.target.closest('[data-map-a-correction]');
@@ -2181,6 +2212,16 @@
       applyLocationPoint(place.lat, place.lng, place.name);
       setTimeout(() => renderRail({ selectFirst: true, resetScroll: true }), 300);
     }
+  }
+
+  function closeSearchResultMenus(exceptDetails = null) {
+    let closed = false;
+    document.querySelectorAll('details.map-a-result-more[open]').forEach(details => {
+      if (details === exceptDetails) return;
+      details.removeAttribute('open');
+      closed = true;
+    });
+    return closed;
   }
 
   function setMapUiMode(mode) {
