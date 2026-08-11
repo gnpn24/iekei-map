@@ -2,9 +2,26 @@
   'use strict';
 
   const MODE_KEY = 'iekei-map-ui';
-  const SORT_KEY = 'iekei-map-a-sort';
+  const IS_JIRO_MODE = window.JIRO_INTEGRATED_MODE === true;
+  const JIRO_CATEGORY_COLORS = {
+    '直系': '#d9a800',
+    '富士丸系': '#e0433e',
+    '二郎出身': '#f07c1f',
+    'インスパイア': '#2b7de0',
+    '資本系': '#2f9e44',
+    '不明': '#909090'
+  };
+  const JIRO_CATEGORY_OPTIONS = Object.keys(JIRO_CATEGORY_COLORS).map(value => ({ value, label: value }));
+  const SORT_KEY = IS_JIRO_MODE ? 'jiro-map-a-sort' : 'iekei-map-a-sort';
+  const JIRO_DEFAULT_CATEGORIES_KEY = 'jiro-map-a-default-categories';
   const CARD_MAP_BEHAVIOR_KEY = 'iekei-map-a-card-map-behavior';
-  const MAP_LABEL_MIN_ZOOM = 12;
+  const SHOP_SEARCH_HISTORY_KEY = 'iekei-map-a-shop-search-history';
+  const MAP_VISITED_COLOR = '#c62828';
+  const MAX_SHOP_SEARCH_HISTORY = 5;
+  const MAP_LABEL_CAPITAL_REGION_MIN_ZOOM = 11;
+  const MAP_LABEL_TOKAI_KANSAI_MIN_ZOOM = 7;
+  const MAP_LABEL_OTHER_REGION_MIN_ZOOM = 6;
+  const MAP_LABEL_CHOKUSEI_MIN_ZOOM = 0;
   const MAP_LABEL_MAX_GRAPHEMES = 4;
   const MAP_LABEL_OFFSET_Y = 8;
   const MAP_SELECTED_LABEL_OFFSET_Y = 13;
@@ -20,6 +37,7 @@
     search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path stroke-linecap="round" d="m20 20-4-4"></path></svg>',
     location: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"></path></svg>',
     tune: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M14 4v6M4 17h2M10 17h10M6 14v6"></path></svg>',
+    layers: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3-9 5 9 5 9-5-9-5Z"></path><path d="m3 12 9 5 9-5"></path><path d="m3 16 9 5 9-5"></path></svg>',
     back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>',
     close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>',
     map: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Z"></path><path d="M9 3v15M15 6v15"></path></svg>',
@@ -29,7 +47,14 @@
   };
 
   const state = {
-    sort: readStoredValue(SORT_KEY, ['center', 'current', 'open', 'name'], 'center'),
+    sort: readStoredValue(SORT_KEY, ['center', 'current', 'open', 'name'], IS_JIRO_MODE ? 'name' : 'center'),
+    defaultCategories: readDefaultFilterCategories(),
+    shopSearchSort: 'name',
+    // 検索画面の系統絞り込みは、マップの初期表示設定と分ける。
+    // null は全系統。配列は明示的に選択されている系統（空配列は選択なし）。
+    shopSearchCategories: null,
+    shopSearchNewOnly: false,
+    shopSearchHistory: readShopSearchHistory(),
     cardMapBehavior: readStoredValue(CARD_MAP_BEHAVIOR_KEY, ['keep', 'zoomout'], 'zoomout'),
     adjustTab: 'filter',
     activeShopId: null,
@@ -37,6 +62,8 @@
     totalShopCount: 0,
     placeResults: [],
     searchTab: 'shops',
+    photoLookupStatus: 'idle',
+    photoLookupResult: null,
     placeLoading: false,
     placeError: '',
     placeSequence: 0,
@@ -69,7 +96,9 @@
     cardPhotoLoading: new Set(),
     cardPhotoHydrated: new Set(),
     detailPhotoLoading: new Map(),
-    detailPhotoHydrated: new Set()
+    detailPhotoHydrated: new Set(),
+    mapLabelsVisible: true,
+    mapColorMode: 'lineage'
   };
 
   let mapShopLabels = {};
@@ -115,6 +144,39 @@
     }
   }
 
+  function readShopSearchHistory() {
+    try {
+      const stored = JSON.parse(localStorage.getItem(SHOP_SEARCH_HISTORY_KEY) || '[]');
+      if (!Array.isArray(stored)) return [];
+      const seen = new Set();
+      return stored.map(value => String(value || '').trim()).filter(value => {
+        const normalized = normalizeSearch(value);
+        if (!normalized || seen.has(normalized)) return false;
+        seen.add(normalized);
+        return true;
+      }).slice(0, MAX_SHOP_SEARCH_HISTORY);
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function persistShopSearchHistory() {
+    try {
+      localStorage.setItem(SHOP_SEARCH_HISTORY_KEY, JSON.stringify(state.shopSearchHistory));
+    } catch (_) {}
+  }
+
+  function saveShopSearchHistory(query) {
+    const value = String(query || '').trim();
+    const normalized = normalizeSearch(value);
+    if (!normalized) return;
+    state.shopSearchHistory = [
+      value,
+      ...state.shopSearchHistory.filter(item => normalizeSearch(item) !== normalized)
+    ].slice(0, MAX_SHOP_SEARCH_HISTORY);
+    persistShopSearchHistory();
+  }
+
   function isMapUiA() {
     return document.documentElement.dataset.mapUi === 'a';
   }
@@ -129,9 +191,29 @@
       root.className = 'map-a-root';
       root.setAttribute('aria-label', '新しいマップ探索UI');
       root.innerHTML = `
-        <div id="map-a-color-legend" class="map-a-color-legend" role="region" aria-label="系統色の凡例">
-          <span class="map-a-color-legend-title">系統</span>
-          <div id="map-a-color-legend-items" class="map-a-color-legend-items"></div>
+        <div id="map-a-color-legend" class="map-a-color-legend" role="region" aria-label="マップの凡例">
+          <div class="map-a-color-legend-row">
+            <span class="map-a-color-legend-title">系統</span>
+            <div id="map-a-color-legend-items" class="map-a-color-legend-items"></div>
+          </div>
+          <div id="map-a-visit-legend" class="map-a-visit-legend" aria-label="訪問有無の凡例" hidden>
+            <span class="map-a-visit-legend-item"><span class="map-a-visit-legend-dot is-visited" aria-hidden="true"></span>訪問済</span>
+            <span class="map-a-visit-legend-item"><span class="map-a-visit-legend-dot is-unvisited" aria-hidden="true"></span>未訪問</span>
+          </div>
+        </div>
+        <div class="map-a-layer-control">
+          <button id="map-a-layer-trigger" class="map-a-layer-trigger" type="button" aria-label="マップの表示設定" aria-expanded="false">${icons.layers}</button>
+          <section id="map-a-layer-panel" class="map-a-layer-panel" role="dialog" aria-label="マップの表示設定" hidden>
+            <div class="map-a-layer-panel-head"><strong>マップ表示</strong><button id="map-a-layer-close" type="button" aria-label="閉じる">${icons.close}</button></div>
+            <label class="map-a-layer-toggle-row" for="map-a-label-toggle"><span><strong>店名を表示</strong><small>マップ上の店名ラベル</small></span><input id="map-a-label-toggle" type="checkbox" checked><i aria-hidden="true"></i></label>
+            <div class="map-a-layer-color-setting">
+              <span class="map-a-layer-setting-label">色分け</span>
+              <div class="map-a-layer-segments" role="group" aria-label="マーカーの色分け">
+                <button type="button" data-map-a-color-mode="lineage" class="is-active" aria-pressed="true">系統</button>
+                <button type="button" data-map-a-color-mode="visit" aria-pressed="false">訪問有無</button>
+              </div>
+            </div>
+          </section>
         </div>
         <div class="map-a-center-target" aria-hidden="true"><span>中心</span></div>
         <section class="map-a-card-region" aria-label="地図中心に近い店舗">
@@ -146,11 +228,11 @@
           <button id="map-a-location-trigger" class="map-a-location-trigger" type="button" aria-label="現在地を表示" aria-pressed="false">
             ${icons.location}
           </button>
-          <button id="map-a-adjust-trigger" class="map-a-adjust-trigger" type="button" aria-label="絞り込み、並び順、地図設定" aria-expanded="false">
+          <button id="map-a-adjust-trigger" class="map-a-adjust-trigger" type="button" aria-label="検索・ソート設定" aria-expanded="false">
             ${icons.tune}<span id="map-a-filter-label" class="map-a-filter-label" aria-hidden="true"></span>
           </button>
         </div>
-        <button id="map-a-scrim" class="map-a-scrim" type="button" aria-label="表示の調整を閉じる"></button>
+        <button id="map-a-scrim" class="map-a-scrim" type="button" aria-label="検索・ソート設定を閉じる"></button>
         ${renderAdjustPanelMarkup()}
       `;
       mapContainer.appendChild(root);
@@ -176,10 +258,12 @@
           </div>
           <div class="map-a-search-tabs" role="tablist" aria-label="検索対象">
             <button class="map-a-search-tab is-active" type="button" role="tab" data-map-a-search-tab="shops" aria-selected="true">ラーメン店 <span id="map-a-shop-count">0</span></button>
-            <button class="map-a-search-tab" type="button" role="tab" data-map-a-search-tab="places" aria-selected="false">地名・駅 <span id="map-a-place-count">0</span></button>
+            <button class="map-a-search-tab" type="button" role="tab" data-map-a-search-tab="places" aria-selected="false">地名・駅</button>
+            <button class="map-a-search-tab" type="button" role="tab" data-map-a-search-tab="photo" aria-selected="false">写真から逆引き</button>
           </div>
         </div>
         <div id="map-a-search-results" class="map-a-search-results"></div>
+        ${renderSearchLineagePanelMarkup()}
       `;
       document.body.appendChild(searchSurface);
     }
@@ -189,15 +273,18 @@
 
   function renderAdjustPanelMarkup() {
     return `
-      <aside id="map-a-adjust-panel" class="map-a-adjust-panel" role="dialog" aria-modal="true" aria-hidden="true" aria-label="地図の調整">
+      <aside id="map-a-adjust-panel" class="map-a-adjust-panel" role="dialog" aria-modal="true" aria-hidden="true" aria-label="検索・ソート設定">
         <div class="map-a-adjust-head">
-          <div class="map-a-adjust-title"><strong>地図の調整</strong><span id="map-a-adjust-subtitle">表示する店舗を選ぶ</span></div>
-          <button id="map-a-adjust-close" class="map-a-close-button" type="button" aria-label="閉じる">${icons.close}</button>
+          <div class="map-a-adjust-title"><strong>検索・ソート設定</strong><span id="map-a-adjust-subtitle">表示する店舗を選ぶ</span></div>
+          <div class="map-a-adjust-head-actions">
+            <span id="map-a-adjust-updated-at" class="map-a-adjust-updated-at"></span>
+            <button id="map-a-adjust-close" class="map-a-close-button" type="button" aria-label="閉じる">${icons.close}</button>
+          </div>
         </div>
         <div class="map-a-adjust-tabs" role="tablist" aria-label="調整項目">
           <button class="map-a-adjust-tab is-active" type="button" role="tab" data-map-a-adjust-tab="filter" aria-selected="true" aria-controls="map-a-adjust-pane-filter">絞り込み</button>
           <button class="map-a-adjust-tab" type="button" role="tab" data-map-a-adjust-tab="sort" aria-selected="false" aria-controls="map-a-adjust-pane-sort">並び順</button>
-          <button class="map-a-adjust-tab" type="button" role="tab" data-map-a-adjust-tab="settings" aria-selected="false" aria-controls="map-a-adjust-pane-settings">地図設定</button>
+          <button class="map-a-adjust-tab" type="button" role="tab" data-map-a-adjust-tab="settings" aria-selected="false" aria-controls="map-a-adjust-pane-settings">初期設定</button>
         </div>
         <div class="map-a-adjust-body">
           <section id="map-a-adjust-pane-filter" class="map-a-adjust-pane is-active" role="tabpanel" data-map-a-adjust-pane="filter">
@@ -207,16 +294,19 @@
                 ${switchRow('map-a-filter-open', '営業中のみ', '今入れる店に絞る')}
                 ${switchRow('map-a-filter-want', '行きたい', '保存した候補だけ表示')}
                 ${switchRow('map-a-filter-favorite', 'お気に入り', 'お気に入りの店だけ表示')}
+                ${switchRow('map-a-filter-new', '新店舗', '検索画面と同じ新店舗だけ表示')}
+                ${switchRow('map-a-filter-unvisited', '未訪問', 'まだ訪れていない店だけ表示')}
+                ${switchRow('map-a-filter-visited', '訪問済', '訪問記録がある店だけ表示')}
               </div>
             </div>
             <div class="map-a-control-group">
               <div class="map-a-control-title-row">
                 <h2 class="map-a-control-title">系統</h2>
-                <span id="map-a-category-summary" class="map-a-control-summary">家系</span>
+                <span id="map-a-category-summary" class="map-a-control-summary">${IS_JIRO_MODE ? '二郎系' : '家系'}</span>
               </div>
               <div class="map-a-category-groups">
-                ${renderAdjustCategoryGroup('iekei', '家系')}
-                ${renderAdjustCategoryGroup('isse', '壱系')}
+                ${renderAdjustCategoryGroup('iekei', IS_JIRO_MODE ? '二郎系' : '家系')}
+                ${IS_JIRO_MODE ? '' : renderAdjustCategoryGroup('isse', '壱系')}
               </div>
             </div>
             <div class="map-a-control-group">
@@ -250,11 +340,19 @@
               ${radioRow('map-a-sort', 'center', '地図の中心に近い順', '地図を動かした後に近い順へ更新')}
               ${radioRow('map-a-sort', 'current', '現在地・指定地点に近い順', '位置を指定している時に利用できます')}
               ${radioRow('map-a-sort', 'open', '営業中を優先', '営業中の店を距離順で先に表示')}
-              ${radioRow('map-a-sort', 'name', '店名 あ→ん', '店舗名の五十音順')}
+              ${radioRow('map-a-sort', 'name', IS_JIRO_MODE ? 'カテゴリ・店名順' : '店名 あ→ん', IS_JIRO_MODE ? '元の二郎マップと同じ並び順' : '店舗名の五十音順')}
             </div>
             </div>
           </section>
           <section id="map-a-adjust-pane-settings" class="map-a-adjust-pane" role="tabpanel" data-map-a-adjust-pane="settings" hidden>
+            <div class="map-a-control-group">
+              <h2 class="map-a-control-title">マップに表示する系統の初期設定</h2>
+              <p class="map-a-schedule-help">マップの次回起動時と「リセット」時に使います。</p>
+              <div class="map-a-category-groups map-a-default-category-groups">
+                ${renderDefaultCategoryGroup('iekei', IS_JIRO_MODE ? '二郎系' : '家系')}
+                ${IS_JIRO_MODE ? '' : renderDefaultCategoryGroup('isse', '壱系')}
+              </div>
+            </div>
             <div class="map-a-control-group">
               <h2 class="map-a-control-title">カード切替時の地図</h2>
               <div class="map-a-choice-list">
@@ -280,6 +378,7 @@
   }
 
   function getAdjustCategoryOptions(group) {
+    if (IS_JIRO_MODE) return group === 'iekei' ? JIRO_CATEGORY_OPTIONS : [];
     return Array.from(document.querySelectorAll(`#advanced-filter-modal input.category-${group}`)).map(input => ({
       value: String(input.value || '').trim(),
       label: input.closest('label')?.querySelector('span')?.textContent?.trim() || String(input.value || '').trim()
@@ -289,7 +388,7 @@
   function renderAdjustCategoryGroup(group, title) {
     const options = getAdjustCategoryOptions(group);
     const buttons = options.map(option => {
-      const color = typeof getMapCategoryColor === 'function' ? getMapCategoryColor(option.value) : '#64748b';
+      const color = getCategoryUiColor(option.value);
       return `<button class="map-a-category-chip" type="button" data-map-a-category="${escapeMarkup(option.value)}" aria-pressed="false" style="--map-a-category-color:${escapeMarkup(color)}"><span class="map-a-category-dot" aria-hidden="true"></span><span>${escapeMarkup(option.label)}</span></button>`;
     }).join('');
     return `<section class="map-a-category-group" aria-label="${escapeMarkup(title)}">
@@ -301,17 +400,85 @@
     </section>`;
   }
 
+  function renderDefaultCategoryGroup(group, title) {
+    const options = getAdjustCategoryOptions(group);
+    const buttons = options.map(option => {
+      const color = getCategoryUiColor(option.value);
+      return `<button class="map-a-category-chip" type="button" data-map-a-default-category="${escapeMarkup(option.value)}" aria-pressed="false" style="--map-a-category-color:${escapeMarkup(color)}"><span class="map-a-category-dot" aria-hidden="true"></span><span>${escapeMarkup(option.label)}</span></button>`;
+    }).join('');
+    return `<section class="map-a-category-group" aria-label="${escapeMarkup(title)}の初期設定">
+      <div class="map-a-category-group-head">
+        <strong>${escapeMarkup(title)}</strong>
+        <button class="map-a-category-group-toggle" type="button" data-map-a-default-category-group="${escapeMarkup(group)}" aria-pressed="false">${escapeMarkup(title)}をすべて</button>
+      </div>
+      <div class="map-a-category-grid" role="group" aria-label="${escapeMarkup(title)}の初期系統">${buttons}</div>
+    </section>`;
+  }
+
+  function readDefaultFilterCategories() {
+    if (IS_JIRO_MODE) {
+      try {
+        const stored = JSON.parse(localStorage.getItem(JIRO_DEFAULT_CATEGORIES_KEY) || '[]');
+        return Array.isArray(stored) ? stored.filter(value => JIRO_CATEGORY_COLORS[value]) : [];
+      } catch (_) {
+        return [];
+      }
+    }
+    const categories = window.getDefaultFilterCategories?.();
+    return Array.isArray(categories) ? [...categories] : [...(advancedFilterSettings?.categories || [])];
+  }
+
+  function renderSearchLineagePanelMarkup() {
+    const renderGroup = (group, title) => {
+      const buttons = getAdjustCategoryOptions(group).map(option => {
+        const color = getCategoryUiColor(option.value);
+        return `<button class="map-a-category-chip" type="button" data-map-a-search-category="${escapeMarkup(option.value)}" aria-pressed="false" style="--map-a-category-color:${escapeMarkup(color)}"><span class="map-a-category-dot" aria-hidden="true"></span><span>${escapeMarkup(option.label)}</span></button>`;
+      }).join('');
+      return `<section class="map-a-search-lineage-group" aria-label="${escapeMarkup(title)}">
+        <div class="map-a-category-group-head">
+          <strong>${escapeMarkup(title)}</strong>
+          <button class="map-a-category-group-toggle" type="button" data-map-a-search-category-group="${escapeMarkup(group)}" aria-label="${escapeMarkup(title)}をまとめて選択・解除" aria-pressed="false">${escapeMarkup(title)}</button>
+        </div>
+        <div class="map-a-category-grid" role="group" aria-label="${escapeMarkup(title)}の系統">${buttons}</div>
+      </section>`;
+    };
+    return `
+      <button id="map-a-search-lineage-scrim" class="map-a-search-lineage-scrim" type="button" aria-label="系統の絞り込みを閉じる"></button>
+      <aside id="map-a-search-lineage-panel" class="map-a-search-lineage-panel" role="dialog" aria-modal="true" aria-hidden="true" aria-label="系統で絞り込む">
+        <div class="map-a-search-lineage-head">
+          <div><strong>系統で絞り込む</strong><span>複数の系統を選べます</span></div>
+          <button id="map-a-search-lineage-close" class="map-a-close-button" type="button" aria-label="閉じる">${icons.close}</button>
+        </div>
+        <div class="map-a-search-lineage-body">
+          <button class="map-a-search-lineage-all is-active" type="button" data-map-a-search-category-all aria-pressed="true">すべての系統</button>
+          ${renderGroup('iekei', IS_JIRO_MODE ? '二郎系' : '家系')}
+          ${IS_JIRO_MODE ? '' : renderGroup('isse', '壱系')}
+        </div>
+        <div class="map-a-search-lineage-footer">
+          <button id="map-a-search-lineage-reset" class="map-a-reset-button" type="button">すべて表示</button>
+          <button id="map-a-search-lineage-done" class="map-a-apply-button" type="button">完了</button>
+        </div>
+      </aside>`;
+  }
+
   function getAllAdjustCategoryValues() {
     return ['iekei', 'isse'].flatMap(group => getAdjustCategoryOptions(group).map(option => option.value));
   }
 
+  function getCategoryUiColor(category) {
+    if (IS_JIRO_MODE) return JIRO_CATEGORY_COLORS[category] || JIRO_CATEGORY_COLORS['不明'];
+    return typeof getMapCategoryColor === 'function' ? getMapCategoryColor(category) : '#64748b';
+  }
+
   function getEffectiveAdjustCategorySelection() {
+    if (advancedFilterSettings?.noCategories) return new Set();
     const stored = advancedFilterSettings?.categories || [];
     return new Set(stored.length ? stored : getAllAdjustCategoryValues());
   }
 
   function storeAdjustCategorySelection(selected) {
     const allValues = getAllAdjustCategoryValues();
+    advancedFilterSettings.noCategories = selected.size === 0;
     advancedFilterSettings.categories = allValues.length > 0 && allValues.every(value => selected.has(value))
       ? []
       : allValues.filter(value => selected.has(value));
@@ -354,17 +521,29 @@
     document.getElementById('map-a-open-toggle')?.addEventListener('click', toggleOpenOnlyImmediately);
     document.getElementById('map-a-location-trigger')?.addEventListener('click', handleCurrentLocationClick);
     document.getElementById('map-a-adjust-trigger')?.addEventListener('click', openAdjustPanel);
-    document.getElementById('map-a-adjust-close')?.addEventListener('click', closeAdjustPanel);
-    document.getElementById('map-a-scrim')?.addEventListener('click', closeAdjustPanel);
+    document.getElementById('map-a-adjust-close')?.addEventListener('click', () => closeAdjustPanel());
+    document.getElementById('map-a-scrim')?.addEventListener('click', () => closeAdjustPanel());
     document.getElementById('map-a-reset')?.addEventListener('click', resetAdjustDraft);
-    document.getElementById('map-a-apply')?.addEventListener('click', closeAdjustPanel);
+    document.getElementById('map-a-apply')?.addEventListener('click', () => closeAdjustPanel());
     document.querySelectorAll('[data-map-a-adjust-tab]').forEach(button => {
       button.addEventListener('click', () => switchAdjustTab(button.dataset.mapAAdjustTab));
     });
     document.querySelectorAll('[data-map-a-category], [data-map-a-category-group]').forEach(button => {
       button.addEventListener('click', handleAdjustCategoryClick);
     });
+    document.querySelectorAll('[data-map-a-default-category], [data-map-a-default-category-group]').forEach(button => {
+      button.addEventListener('click', handleDefaultCategoryClick);
+    });
     document.getElementById('map-a-color-legend-items')?.addEventListener('click', handleLegendCategoryClick);
+    document.getElementById('map-a-layer-trigger')?.addEventListener('click', toggleMapLayerPanel);
+    document.getElementById('map-a-layer-close')?.addEventListener('click', closeMapLayerPanel);
+    document.getElementById('map-a-label-toggle')?.addEventListener('change', event => {
+      state.mapLabelsVisible = !!event.target.checked;
+      syncMapShopLabels();
+    });
+    document.querySelectorAll('[data-map-a-color-mode]').forEach(button => {
+      button.addEventListener('click', () => setMapColorMode(button.dataset.mapAColorMode));
+    });
     document.querySelectorAll('#map-a-adjust-panel input, #map-a-adjust-panel select').forEach(control => {
       control.addEventListener('change', handleAdjustInputChange);
     });
@@ -404,7 +583,7 @@
         submitShopSearch();
       }
     });
-    document.getElementById('map-a-search-submit')?.addEventListener('click', submitShopSearch);
+    document.getElementById('map-a-search-submit')?.addEventListener('click', submitCurrentSearch);
     document.getElementById('map-a-search-clear')?.addEventListener('click', () => {
       if (!searchInput) return;
       searchInput.value = '';
@@ -420,6 +599,17 @@
       button.addEventListener('click', () => setSearchTab(button.dataset.mapASearchTab));
     });
     document.getElementById('map-a-search-results')?.addEventListener('click', handleSearchResultClick);
+    document.getElementById('map-a-search-lineage-scrim')?.addEventListener('click', closeSearchLineagePanel);
+    document.getElementById('map-a-search-lineage-close')?.addEventListener('click', closeSearchLineagePanel);
+    document.getElementById('map-a-search-lineage-done')?.addEventListener('click', closeSearchLineagePanel);
+    document.getElementById('map-a-search-lineage-reset')?.addEventListener('click', resetShopSearchCategories);
+    document.querySelectorAll('[data-map-a-search-category]').forEach(button => {
+      button.addEventListener('click', () => toggleShopSearchCategory(button.dataset.mapASearchCategory));
+    });
+    document.querySelectorAll('[data-map-a-search-category-group]').forEach(button => {
+      button.addEventListener('click', () => toggleShopSearchCategoryGroup(button.dataset.mapASearchCategoryGroup));
+    });
+    document.querySelector('[data-map-a-search-category-all]')?.addEventListener('click', resetShopSearchCategories);
     document.addEventListener('click', event => {
       if (!event.target.closest('.map-a-result-more')) closeSearchResultMenus();
     });
@@ -439,6 +629,7 @@
         return;
       }
       if (document.getElementById('map-a-search-surface')?.classList.contains('is-open')) closeSearchSurface();
+      else if (!document.getElementById('map-a-layer-panel')?.hidden) closeMapLayerPanel();
       else closeAdjustPanel();
     });
 
@@ -488,6 +679,7 @@
         ensureForcedMarker();
         installMapHooks();
         decorateCurrentMarkers();
+        applyMapLayerMarkerStyles();
         rebuildMapShopLabels();
         syncMapShopLabels();
         scheduleRailRefresh({ preserveActive: true });
@@ -506,13 +698,18 @@
 
     if (typeof focusShop === 'function') {
       const classicFocusShop = focusShop;
-      focusShop = function mapDiscoveryFocusShop(shopId) {
+      focusShop = function mapDiscoveryFocusShop(shopId, options = {}) {
         if (!isMapUiA()) return classicFocusShop.call(this, shopId);
         const shop = findShop(shopId);
         if (!shop || !map) return;
         state.forceShopId = shop.id;
         renderRail({ preserveActive: true, scrollToShopId: shop.id });
         selectMapShop(shop.id);
+        if (options.centerOnTarget) {
+          markProgrammaticMapMove('external-focus-center');
+          setMapViewAtFocus([Number(shop.lat), Number(shop.lng)], map.getZoom(), { animate: true });
+          return;
+        }
         if (!isShopInSafeArea(shop)) {
           markProgrammaticMapMove('external-focus');
           panShopIntoSafeArea(shop, true);
@@ -610,10 +807,10 @@
     if (!isMapUiA() || !map || typeof L === 'undefined' || !state.forceShopId || markers?.[state.forceShopId]) return;
     const shop = findShop(state.forceShopId);
     if (!shop || !Number.isFinite(Number(shop.lat)) || !Number.isFinite(Number(shop.lng))) return;
-    const categoryColor = typeof getMapCategoryColor === 'function' ? getMapCategoryColor(shop.category) : '#64748b';
+    const categoryColor = getMapLayerMarkerColor(shop);
     const marker = L.circleMarker([Number(shop.lat), Number(shop.lng)], {
       radius: String(selectedMapShopId) === String(shop.id) ? 11 : 9,
-      color: '#ffffff',
+      color: state.mapColorMode === 'visit' ? '#25211f' : '#ffffff',
       weight: String(selectedMapShopId) === String(shop.id) ? 4 : 2,
       opacity: 1,
       fillColor: categoryColor,
@@ -675,6 +872,69 @@
     mapShopLabels = {};
   }
 
+  // The shop API currently has no prefecture field. Treat Tokyo, Chiba,
+  // Saitama and Kanagawa as one region and identify their combined outline
+  // from shop coordinates. This avoids a broad rectangle pulling nearby
+  // shops in Ibaraki, Gunma, Yamanashi and Shizuoka into the dense-area rule.
+  const MAP_LABEL_CAPITAL_REGION_POLYGON = [
+    [35.128, 139.026], [35.157, 139.620], [35.120, 139.860],
+    [35.178, 140.105], [35.276, 140.335], [35.526, 140.515],
+    [35.693, 140.870], [35.845, 140.755], [35.905, 140.360],
+    [36.105, 140.115], [36.090, 139.900], [36.235, 139.770],
+    [36.285, 139.485], [36.205, 139.170], [36.095, 138.930],
+    [35.900, 138.765], [35.690, 138.875], [35.510, 139.035],
+    [35.365, 139.105]
+  ];
+
+  const MAP_LABEL_TOKAI_POLYGON = [
+    [33.700, 135.920], [34.170, 136.580], [34.570, 137.050],
+    [34.610, 138.060], [34.890, 138.760], [35.060, 139.190],
+    [35.630, 138.930], [35.720, 138.250], [36.030, 137.590],
+    [36.470, 137.020], [36.350, 136.420], [35.820, 136.020],
+    [35.190, 135.840], [34.620, 135.760]
+  ];
+
+  const MAP_LABEL_KANSAI_POLYGON = [
+    [33.430, 135.080], [33.850, 135.720], [34.130, 136.520],
+    [34.640, 136.980], [35.160, 136.750], [35.690, 136.300],
+    [35.790, 135.500], [35.650, 134.650], [35.380, 134.200],
+    [34.870, 134.420], [34.540, 134.690], [34.150, 134.910]
+  ];
+
+  function isPointInMapLabelRegion(lat, lng, polygon) {
+    let inside = false;
+    for (let index = 0, previous = polygon.length - 1; index < polygon.length; previous = index++) {
+      const [latA, lngA] = polygon[index];
+      const [latB, lngB] = polygon[previous];
+      const crosses = (latA > lat) !== (latB > lat)
+        && lng < ((lngB - lngA) * (lat - latA)) / (latB - latA) + lngA;
+      if (crosses) inside = !inside;
+    }
+    return inside;
+  }
+
+  function isCapitalRegionShop(shop) {
+    const lat = Number(shop?.lat);
+    const lng = Number(shop?.lng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+    return isPointInMapLabelRegion(lat, lng, MAP_LABEL_CAPITAL_REGION_POLYGON);
+  }
+
+  function isTokaiKansaiShop(shop) {
+    const lat = Number(shop?.lat);
+    const lng = Number(shop?.lng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+    return isPointInMapLabelRegion(lat, lng, MAP_LABEL_TOKAI_POLYGON)
+      || isPointInMapLabelRegion(lat, lng, MAP_LABEL_KANSAI_POLYGON);
+  }
+
+  function getMapLabelMinZoom(shop) {
+    if (shop?.category === '直系') return MAP_LABEL_CHOKUSEI_MIN_ZOOM;
+    if (isCapitalRegionShop(shop)) return MAP_LABEL_CAPITAL_REGION_MIN_ZOOM;
+    if (isTokaiKansaiShop(shop)) return MAP_LABEL_TOKAI_KANSAI_MIN_ZOOM;
+    return MAP_LABEL_OTHER_REGION_MIN_ZOOM;
+  }
+
   function rebuildMapShopLabels() {
     if (!map || typeof L === 'undefined') return;
     ensureMapShopLabelPane();
@@ -695,13 +955,15 @@
         className: 'map-shop-label'
       }).setLatLng([Number(shop.lat), Number(shop.lng)]).setContent(content);
       mapShopLabels[shop.id].__mapDiscoveryOffsetY = MAP_LABEL_OFFSET_Y;
+      mapShopLabels[shop.id].__mapDiscoveryMinZoom = getMapLabelMinZoom(shop);
     });
   }
 
   function syncMapShopLabels() {
     if (!map) return;
-    const canShow = map.getZoom() >= MAP_LABEL_MIN_ZOOM;
-    const bounds = canShow ? map.getBounds().pad(0.1) : null;
+    const currentZoom = map.getZoom();
+    const canShowAny = currentZoom >= MAP_LABEL_CHOKUSEI_MIN_ZOOM;
+    const bounds = canShowAny ? map.getBounds().pad(0.1) : null;
     Object.entries(mapShopLabels).forEach(([shopId, label]) => {
       const isSelected = String(shopId) === String(state.activeShopId);
       const pane = isSelected ? 'mapSelectedShopLabelPane' : 'mapShopLabelPane';
@@ -718,7 +980,8 @@
           shown = false;
         }
       }
-      const shouldShow = canShow && !!markers?.[shopId] && bounds.contains(label.getLatLng());
+      const canShow = state.mapLabelsVisible && currentZoom >= (label.__mapDiscoveryMinZoom ?? MAP_LABEL_OTHER_REGION_MIN_ZOOM);
+      const shouldShow = canShow && !!markers?.[shopId] && bounds?.contains(label.getLatLng());
       if (shouldShow && !shown) label.addTo(map);
       if (!shouldShow && shown) label.remove();
       label.getElement?.()?.classList.toggle('is-selected', isSelected);
@@ -762,15 +1025,22 @@
     const filter = {
       openOnly: overrides.openOnly ?? !!showOpenOnly,
       want: overrides.want ?? !!advancedFilterSettings?.wantToGo,
-      favorite: overrides.favorite ?? !!advancedFilterSettings?.favorite
+      favorite: overrides.favorite ?? !!advancedFilterSettings?.favorite,
+      newShop: overrides.newShop ?? !!advancedFilterSettings?.newShop,
+      unvisited: overrides.unvisited ?? !!advancedFilterSettings?.unvisited,
+      visited: overrides.visited ?? !!advancedFilterSettings?.visited
     };
     let result = (Array.isArray(shops) ? shops : []).filter(shop =>
       Number.isFinite(Number(shop.lat)) && Number.isFinite(Number(shop.lng)) && shop.name !== 'ダミー'
     );
     const settings = advancedFilterSettings || { categories: [], day: '', time: '' };
+    if (settings.noCategories) return [];
     if (settings.categories?.length) result = result.filter(shop => settings.categories.includes(shop.category));
     if (filter.want) result = result.filter(shop => visits?.[shop.id]?.wantToGo);
     if (filter.favorite) result = result.filter(shop => visits?.[shop.id]?.favorite);
+    if (filter.newShop) result = result.filter(hasNewShopMarker);
+    if (filter.unvisited) result = result.filter(shop => !visits?.[shop.id]?.logs?.length);
+    if (filter.visited) result = result.filter(shop => !!visits?.[shop.id]?.logs?.length);
     if (settings.day !== '' && settings.time !== '') {
       result = result.filter(shop => isOpenAtDayTime(shop.openingHours, settings.day, settings.time));
     }
@@ -786,6 +1056,44 @@
     return map.containerPointToLatLng([size.x / 2, size.y * MAP_FOCUS_Y_RATIO]);
   }
 
+  function setMapViewAtFocus(latLng, zoom, options = {}) {
+    if (!map?.project || !map?.unproject || !map?.getSize) return;
+    const shouldSelectNearest = options.selectNearest === true;
+    const mapOptions = { ...options };
+    delete mapOptions.selectNearest;
+    if (!isMapUiA()) {
+      map.setView(latLng, zoom, mapOptions);
+      return;
+    }
+
+    let selectionSettled = false;
+    let selectionFallbackTimer = 0;
+    const selectNearestAfterMove = () => {
+      if (!shouldSelectNearest || selectionSettled) return;
+      selectionSettled = true;
+      window.clearTimeout(selectionFallbackTimer);
+      map.off?.('moveend', selectNearestAfterMove);
+      releaseForcedShopMarker();
+      renderRail({ selectFirst: true, resetScroll: true });
+    };
+    if (shouldSelectNearest && map.once) {
+      map.once('moveend', selectNearestAfterMove);
+    }
+
+    const size = map.getSize();
+    const target = map.project(latLng, zoom);
+    const center = target.add(L.point(0, size.y * (0.5 - MAP_FOCUS_Y_RATIO)));
+    map.setView(map.unproject(center, zoom), zoom, mapOptions);
+    if (shouldSelectNearest && !selectionSettled) {
+      // Leaflet does not emit moveend when the requested camera is already equal.
+      selectionFallbackTimer = window.setTimeout(selectNearestAfterMove, mapOptions.animate ? 500 : 0);
+    }
+  }
+
+  // Classic map actions (such as the current-location button) can use the
+  // same visual focus point as the discovery UI.
+  window.setMapViewAtDiscoveryFocus = setMapViewAtFocus;
+
   function sortRailShops(list, sortMode = state.sort) {
     const center = getMapFocusLatLng();
     const distanceFrom = sortMode === 'current' && userLocation ? userLocation : center;
@@ -795,6 +1103,11 @@
     }));
     withDistance.sort((a, b) => {
       if (sortMode === 'name') {
+        if (IS_JIRO_MODE) {
+          const categories = ['直系', '富士丸系', '二郎出身', 'インスパイア', '資本系', '不明'];
+          const categoryDiff = categories.indexOf(a.shop.category) - categories.indexOf(b.shop.category);
+          if (categoryDiff) return categoryDiff;
+        }
         const aName = a.shop.nameHiragana || a.shop.name || '';
         const bName = b.shop.nameHiragana || b.shop.name || '';
         return String(aName).localeCompare(String(bName), 'ja');
@@ -829,8 +1142,15 @@
     }
 
     state.visibleShops = sorted;
+    let selectedNearestJiroShop = false;
     if (options.selectFirst || !sorted.some(item => String(item.shop.id) === String(state.activeShopId))) {
-      state.activeShopId = sorted[0]?.shop.id || null;
+      if (IS_JIRO_MODE && state.sort === 'name' && sorted.length) {
+        const nearest = sorted.reduce((best, item) => item.distance < best.distance ? item : best, sorted[0]);
+        state.activeShopId = nearest.shop.id;
+        selectedNearestJiroShop = true;
+      } else {
+        state.activeShopId = sorted[0]?.shop.id || null;
+      }
     }
     if (options.scrollToShopId) state.activeShopId = options.scrollToShopId;
 
@@ -843,7 +1163,9 @@
     void hydrateRailCardPhotos(sorted.map(item => item.shop.id));
 
     requestAnimationFrame(() => {
-      if (options.resetScroll || options.selectFirst) {
+      if (selectedNearestJiroShop) {
+        scrollRailToShop(state.activeShopId, false, false);
+      } else if (options.resetScroll || options.selectFirst) {
         rail.scrollTo({ left: 0, behavior: 'auto' });
       } else if (options.scrollToShopId) {
         scrollRailToShop(options.scrollToShopId, true, false);
@@ -918,13 +1240,34 @@
     return /^(?:https?:\/\/|data:image\/)/i.test(photo) ? photo : '';
   }
 
+  function getRailCardPhotoIdentity(photo) {
+    if (!/^https?:\/\//i.test(photo)) return photo;
+    try {
+      const parsed = new URL(photo);
+      let pathname = parsed.pathname;
+      try { pathname = decodeURIComponent(pathname); } catch (_) {}
+      // ローカル復元側の ?v=... と公開投稿側のURLは、同じ保存画像でも
+      // 文字列が異なる。同じStorage内パスなら1枚として扱う。
+      // 親フォルダは残し、別投稿の「0.jpg」同士はまとめない。
+      const bucketMarker = '/visit-photos/';
+      const markerIndex = pathname.indexOf(bucketMarker);
+      return markerIndex >= 0
+        ? `visit-photo:${pathname.slice(markerIndex + bucketMarker.length)}`
+        : `url:${parsed.origin}${pathname}`;
+    } catch (_) {
+      return `url:${photo.split(/[?#]/, 1)[0]}`;
+    }
+  }
+
   function normalizeRailCardPhotos(values) {
     const photos = [];
     const seen = new Set();
     (Array.isArray(values) ? values.flat(Infinity) : [values]).forEach(value => {
       const photo = normalizeRailCardPhoto(value);
-      if (!photo || seen.has(photo)) return;
-      seen.add(photo);
+      if (!photo) return;
+      const identity = getRailCardPhotoIdentity(photo);
+      if (seen.has(identity)) return;
+      seen.add(identity);
       photos.push(photo);
     });
     return photos;
@@ -936,10 +1279,9 @@
 
   function renderRailCardPhotoPreview(values) {
     const photos = normalizeRailCardPhotos(values);
-    return photos.slice(0, 2).map((photo, index) => `
+    return photos.slice(0, 2).map(photo => `
       <span class="map-a-card-photo-preview">
         <img src="${escapeAttribute(photo)}" loading="lazy" alt="" data-card-photo-url="${escapeAttribute(photo)}">
-        ${index === 1 && photos.length > 2 ? `<span class="map-a-card-photo-more">+${photos.length - 2}</span>` : ''}
       </span>`).join('');
   }
 
@@ -1163,7 +1505,7 @@
       center: '地図中心から近い順',
       current: '現在地・指定地点から近い順',
       open: '営業中を優先',
-      name: '店名 あ→ん'
+      name: IS_JIRO_MODE ? 'カテゴリ・店名順' : '店名 あ→ん'
     };
     if (heading) heading.textContent = state.sort === 'center' ? '中心から近いお店' : labels[state.sort];
     const index = Math.max(0, state.visibleShops.findIndex(item => String(item.shop.id) === String(state.activeShopId)));
@@ -1178,17 +1520,14 @@
   }
 
   function finishRailGesture(event) {
-    const rail = event.currentTarget;
     if (state.railGestureStartIndex === null) return;
-    const startIndex = state.railGestureStartIndex;
     const deltaX = event.clientX - state.railGestureStartX;
     state.railGestureStartIndex = null;
     if (Math.abs(deltaX) <= 6) return;
     if (Math.abs(deltaX) > 6) state.suppressCardClickUntil = Date.now() + 450;
-    const nearest = getNearestRailIndex(rail);
-    let target = Math.max(startIndex - 1, Math.min(startIndex + 1, nearest));
-    if (Math.abs(deltaX) > 24) target = Math.max(0, Math.min(state.visibleShops.length - 1, startIndex + (deltaX < 0 ? 1 : -1)));
-    settleRailAt(target, true, true);
+    // Native momentum may continue after pointerup. Do not force the rail back
+    // to the adjacent card here; scrollend/debounced scroll selects the card
+    // where the swipe actually settles.
   }
 
   function cancelRailGesture(event) {
@@ -1209,10 +1548,8 @@
         state.railGestureStartIndex = null;
         state.suppressCardClickUntil = Date.now() + 300;
       }
-      const activeIndex = Math.max(0, state.visibleShops.findIndex(item => String(item.shop.id) === String(state.activeShopId)));
       const nearest = getNearestRailIndex(rail);
-      const target = Math.max(activeIndex - 1, Math.min(activeIndex + 1, nearest));
-      settleRailAt(target, true, true);
+      settleRailAt(nearest, true, true);
     }, 180);
   }
 
@@ -1223,8 +1560,7 @@
     if (nearest === activeIndex) return;
     state.railGestureStartIndex = null;
     state.suppressCardClickUntil = Date.now() + 300;
-    const target = Math.max(activeIndex - 1, Math.min(activeIndex + 1, nearest));
-    settleRailAt(target, false, true);
+    settleRailAt(nearest, false, true);
   }
 
   function getNearestRailIndex(rail) {
@@ -1319,7 +1655,7 @@
     if (!shop || !Number.isFinite(Number(shop.lat)) || !Number.isFinite(Number(shop.lng))) return;
     ensureMapShopLabelPane();
     const position = [Number(shop.lat), Number(shop.lng)];
-    const categoryColor = typeof getMapCategoryColor === 'function' ? getMapCategoryColor(shop.category) : '#64748b';
+    const categoryColor = getMapLayerMarkerColor(shop);
     if (!selectedShopIndicator) {
       selectedShopIndicator = L.circleMarker(position, {
         radius: 13,
@@ -1426,11 +1762,18 @@
     document.getElementById('map-a-adjust-trigger')?.setAttribute('aria-expanded', 'true');
   }
 
-  function closeAdjustPanel() {
-    document.getElementById('map-a-adjust-panel')?.classList.remove('is-open');
-    document.getElementById('map-a-adjust-panel')?.setAttribute('aria-hidden', 'true');
+  function closeAdjustPanel(options = {}) {
+    const panel = document.getElementById('map-a-adjust-panel');
+    if (options.force !== true && panel?.classList.contains('is-open') && advancedFilterSettings?.noCategories) {
+      if (typeof showToast === 'function') showToast('系統を1つ選択してください。');
+      else window.alert('系統を1つ選択してください。');
+      return false;
+    }
+    panel?.classList.remove('is-open');
+    panel?.setAttribute('aria-hidden', 'true');
     document.getElementById('map-a-scrim')?.classList.remove('is-open');
     document.getElementById('map-a-adjust-trigger')?.setAttribute('aria-expanded', 'false');
+    return true;
   }
 
   function switchAdjustTab(tab) {
@@ -1450,13 +1793,22 @@
     const subtitles = {
       filter: '表示する店舗を選ぶ',
       sort: 'カードの並び順を選ぶ',
-      settings: 'カードと地図の動きを選ぶ'
+      settings: 'マップに表示する系統の初期状態を選ぶ'
     };
     const subtitle = document.getElementById('map-a-adjust-subtitle');
     if (subtitle) subtitle.textContent = subtitles[nextTab];
+    const applyButton = document.getElementById('map-a-apply');
+    if (applyButton) {
+      applyButton.innerHTML = nextTab === 'filter'
+        ? `完了・<span id="map-a-draft-count">${getFilteredShops().length}</span>店表示中`
+        : nextTab === 'settings' ? '自動保存済み・完了' : '完了';
+    }
+    syncAdjustCompletionState();
   }
 
   function handleAdjustInputChange(event) {
+    if (event.target?.id === 'map-a-filter-unvisited' && event.target.checked) setChecked('map-a-filter-visited', false);
+    if (event.target?.id === 'map-a-filter-visited' && event.target.checked) setChecked('map-a-filter-unvisited', false);
     if (event.target?.id === 'map-a-filter-day' || event.target?.id === 'map-a-filter-time') {
       const day = document.getElementById('map-a-filter-day')?.value || '';
       const time = document.getElementById('map-a-filter-time')?.value || '';
@@ -1477,10 +1829,8 @@
     if (group) {
       const groupValues = getAdjustCategoryOptions(group).map(option => option.value);
       const groupIsSelected = groupValues.length > 0 && groupValues.every(value => selected.has(value));
-      groupValues.forEach(value => {
-        if (groupIsSelected) selected.delete(value);
-        else selected.add(value);
-      });
+      if (groupIsSelected) selected.clear();
+      else groupValues.forEach(value => selected.add(value));
     } else {
       const value = button.dataset.mapACategory;
       if (selected.has(value)) selected.delete(value);
@@ -1512,6 +1862,50 @@
     applyAdjustDraft({ closePanel: false });
   }
 
+  function getEffectiveDefaultCategorySelection() {
+    const stored = Array.isArray(state.defaultCategories) ? state.defaultCategories : [];
+    return new Set(stored.length ? stored : getAllAdjustCategoryValues());
+  }
+
+  function storeDefaultCategorySelection(selected) {
+    const allValues = getAllAdjustCategoryValues();
+    state.defaultCategories = allValues.length > 0 && allValues.every(value => selected.has(value))
+      ? []
+      : allValues.filter(value => selected.has(value));
+    if (IS_JIRO_MODE) {
+      try {
+        localStorage.setItem(JIRO_DEFAULT_CATEGORIES_KEY, JSON.stringify(state.defaultCategories));
+      } catch (_) {}
+    } else {
+      state.defaultCategories = window.saveDefaultFilterCategories?.(state.defaultCategories) ?? state.defaultCategories;
+    }
+  }
+
+  function handleDefaultCategoryClick(event) {
+    const button = event.currentTarget;
+    if (!button) return;
+    const selected = getEffectiveDefaultCategorySelection();
+    const group = button.dataset.mapADefaultCategoryGroup;
+    if (group) {
+      const groupValues = getAdjustCategoryOptions(group).map(option => option.value);
+      const groupIsSelected = groupValues.length > 0 && groupValues.every(value => selected.has(value));
+      groupValues.forEach(value => {
+        if (groupIsSelected) selected.delete(value);
+        else selected.add(value);
+      });
+    } else {
+      const value = button.dataset.mapADefaultCategory;
+      if (selected.has(value)) {
+        if (selected.size <= 1) return;
+        selected.delete(value);
+      } else {
+        selected.add(value);
+      }
+    }
+    storeDefaultCategorySelection(selected);
+    syncDefaultCategoryControls();
+  }
+
   function syncAdjustControls() {
     const sortInput = document.querySelector(`input[name="map-a-sort"][value="${state.sort}"]`);
     if (sortInput) sortInput.checked = true;
@@ -1522,12 +1916,32 @@
     setChecked('map-a-filter-open', !!showOpenOnly);
     setChecked('map-a-filter-want', !!advancedFilterSettings?.wantToGo);
     setChecked('map-a-filter-favorite', !!advancedFilterSettings?.favorite);
+    setChecked('map-a-filter-new', !!advancedFilterSettings?.newShop);
+    setChecked('map-a-filter-unvisited', !!advancedFilterSettings?.unvisited);
+    setChecked('map-a-filter-visited', !!advancedFilterSettings?.visited);
     const dayControl = document.getElementById('map-a-filter-day');
     const timeControl = document.getElementById('map-a-filter-time');
     if (dayControl) dayControl.value = String(advancedFilterSettings?.day ?? '');
     if (timeControl) timeControl.value = String(advancedFilterSettings?.time ?? '');
     syncAdjustCategoryControls();
+    syncDefaultCategoryControls();
     updateDraftCount();
+    syncAdjustCompletionState();
+  }
+
+  function syncDefaultCategoryControls() {
+    const selected = getEffectiveDefaultCategorySelection();
+    document.querySelectorAll('[data-map-a-default-category]').forEach(button => {
+      const active = selected.has(button.dataset.mapADefaultCategory);
+      button.classList.toggle('is-active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
+    document.querySelectorAll('[data-map-a-default-category-group]').forEach(button => {
+      const values = getAdjustCategoryOptions(button.dataset.mapADefaultCategoryGroup).map(option => option.value);
+      const active = values.length > 0 && values.every(value => selected.has(value));
+      button.classList.toggle('is-active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
   }
 
   function syncAdjustCategoryControls() {
@@ -1548,10 +1962,20 @@
     });
     const summary = document.getElementById('map-a-category-summary');
     if (summary) {
-      if (groupStates.iekei && groupStates.isse) summary.textContent = '家系・壱系';
+      if (IS_JIRO_MODE && groupStates.iekei) summary.textContent = '二郎系';
+      else if (groupStates.iekei && groupStates.isse) summary.textContent = '家系・壱系';
       else if (groupStates.iekei) summary.textContent = '家系';
       else if (groupStates.isse) summary.textContent = '壱系';
       else summary.textContent = `${selected.size}系統`;
+    }
+  }
+
+  function syncAdjustCompletionState() {
+    const categoryMissing = !!advancedFilterSettings?.noCategories;
+    const applyButton = document.getElementById('map-a-apply');
+    if (applyButton) {
+      applyButton.disabled = categoryMissing;
+      applyButton.setAttribute('aria-disabled', String(categoryMissing));
     }
   }
 
@@ -1561,10 +1985,17 @@
       setChecked('map-a-filter-open', true);
       setChecked('map-a-filter-want', false);
       setChecked('map-a-filter-favorite', false);
+      setChecked('map-a-filter-new', false);
+      setChecked('map-a-filter-unvisited', false);
+      setChecked('map-a-filter-visited', false);
       showOpenOnly = true;
-      advancedFilterSettings.categories = getAdjustCategoryOptions('iekei').map(option => option.value);
+      advancedFilterSettings.categories = readDefaultFilterCategories();
       advancedFilterSettings.wantToGo = false;
       advancedFilterSettings.favorite = false;
+      advancedFilterSettings.newShop = false;
+      advancedFilterSettings.noCategories = false;
+      advancedFilterSettings.unvisited = false;
+      advancedFilterSettings.visited = false;
       advancedFilterSettings.day = '';
       advancedFilterSettings.time = '';
       if (document.getElementById('map-a-filter-day')) document.getElementById('map-a-filter-day').value = '';
@@ -1574,11 +2005,15 @@
       syncAdjustCategoryControls();
       clearClassicSearchFilter();
     } else if (activeTab === 'sort') {
-      setRadio('map-a-sort', 'center');
-      state.sort = 'center';
+      setRadio('map-a-sort', IS_JIRO_MODE ? 'name' : 'center');
+      state.sort = IS_JIRO_MODE ? 'name' : 'center';
     } else {
       setRadio('map-a-card-map', 'zoomout');
       state.cardMapBehavior = 'zoomout';
+      state.defaultCategories = window.getFactoryDefaultFilterCategories?.()
+        ?? getAdjustCategoryOptions('iekei').map(option => option.value);
+      state.defaultCategories = window.saveDefaultFilterCategories?.(state.defaultCategories) ?? state.defaultCategories;
+      syncDefaultCategoryControls();
     }
     try {
       localStorage.setItem(SORT_KEY, state.sort);
@@ -1620,6 +2055,9 @@
     if (document.getElementById('filter-time')) document.getElementById('filter-time').value = advancedFilterSettings.time;
     advancedFilterSettings.wantToGo = !!document.getElementById('map-a-filter-want')?.checked;
     advancedFilterSettings.favorite = !!document.getElementById('map-a-filter-favorite')?.checked;
+    advancedFilterSettings.newShop = !!document.getElementById('map-a-filter-new')?.checked;
+    advancedFilterSettings.unvisited = !!document.getElementById('map-a-filter-unvisited')?.checked;
+    advancedFilterSettings.visited = !!document.getElementById('map-a-filter-visited')?.checked;
     releaseForcedShopMarker();
     try {
       localStorage.setItem(SORT_KEY, state.sort);
@@ -1642,10 +2080,14 @@
     const count = getFilteredShops({
       openOnly: !!document.getElementById('map-a-filter-open')?.checked,
       want: !!document.getElementById('map-a-filter-want')?.checked,
-      favorite: !!document.getElementById('map-a-filter-favorite')?.checked
+      favorite: !!document.getElementById('map-a-filter-favorite')?.checked,
+      newShop: !!document.getElementById('map-a-filter-new')?.checked,
+      unvisited: !!document.getElementById('map-a-filter-unvisited')?.checked,
+      visited: !!document.getElementById('map-a-filter-visited')?.checked
     }).length;
     const element = document.getElementById('map-a-draft-count');
     if (element) element.textContent = String(count);
+    syncAdjustCompletionState();
   }
 
   function toggleOpenOnlyImmediately() {
@@ -1696,6 +2138,7 @@
     syncCurrentLocationButton();
     syncFilterLabel();
     syncMapColorLegend();
+    syncMapLayerControls();
     syncMapUiSetting();
   }
 
@@ -1707,7 +2150,9 @@
     const options = ['iekei', 'isse']
       .flatMap(group => getAdjustCategoryOptions(group));
     items.innerHTML = options.map(option => {
-      const color = typeof getMapCategoryColor === 'function' ? getMapCategoryColor(option.value) : '#64748b';
+      const color = state.mapColorMode === 'visit'
+        ? '#25211f'
+        : (typeof getMapCategoryColor === 'function' ? getMapCategoryColor(option.value) : '#64748b');
       const shortLabel = typeof getShortCategoryName === 'function' ? getShortCategoryName(option.value) : option.label;
       const label = option.value === '王道家（との丸家）'
         ? 'との丸'
@@ -1718,6 +2163,76 @@
       return `<button class="map-a-color-legend-item${active ? ' is-active' : ''}" type="button" data-map-a-legend-category="${escapeMarkup(option.value)}" aria-pressed="${active}" aria-label="${escapeMarkup(label)}を${active ? '非表示' : '表示'}" style="--map-a-legend-color:${escapeMarkup(color)}"><span class="map-a-color-legend-dot" aria-hidden="true"></span>${escapeMarkup(label)}</button>`;
     }).join('');
     legend.hidden = options.length === 0;
+    legend.classList.toggle('is-visit-mode', state.mapColorMode === 'visit');
+    const visitLegend = document.getElementById('map-a-visit-legend');
+    if (visitLegend) visitLegend.hidden = state.mapColorMode !== 'visit';
+  }
+
+  function toggleMapLayerPanel(event) {
+    event?.stopPropagation();
+    const panel = document.getElementById('map-a-layer-panel');
+    const button = document.getElementById('map-a-layer-trigger');
+    if (!panel || !button) return;
+    const willOpen = panel.hidden;
+    panel.hidden = !willOpen;
+    button.classList.toggle('is-active', willOpen);
+    button.setAttribute('aria-expanded', String(willOpen));
+    if (willOpen) closeAdjustPanel();
+  }
+
+  function closeMapLayerPanel() {
+    const panel = document.getElementById('map-a-layer-panel');
+    const button = document.getElementById('map-a-layer-trigger');
+    if (panel) panel.hidden = true;
+    button?.classList.remove('is-active');
+    button?.setAttribute('aria-expanded', 'false');
+  }
+
+  function setMapColorMode(mode) {
+    if (mode !== 'lineage' && mode !== 'visit') return;
+    state.mapColorMode = mode;
+    applyMapLayerMarkerStyles();
+    syncMapColorLegend();
+    syncMapLayerControls();
+  }
+
+  function syncMapLayerControls() {
+    const root = document.getElementById('map-a-root');
+    if (root) root.dataset.mapColorMode = state.mapColorMode;
+    const toggle = document.getElementById('map-a-label-toggle');
+    if (toggle) toggle.checked = state.mapLabelsVisible;
+    document.querySelectorAll('[data-map-a-color-mode]').forEach(button => {
+      const active = button.dataset.mapAColorMode === state.mapColorMode;
+      button.classList.toggle('is-active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
+  }
+
+  function getMapLayerMarkerColor(shop) {
+    if (state.mapColorMode === 'visit') {
+      return visits?.[shop?.id]?.logs?.length ? MAP_VISITED_COLOR : '#ffffff';
+    }
+    return typeof getMapCategoryColor === 'function' ? getMapCategoryColor(shop?.category) : '#64748b';
+  }
+
+  function applyMapLayerMarkerStyles() {
+    if (!isMapUiA()) return;
+    Object.entries(markers || {}).forEach(([shopId, marker]) => {
+      const shop = findShop(shopId);
+      if (!shop || !marker?.setStyle) return;
+      marker.setStyle({
+        fillColor: getMapLayerMarkerColor(shop),
+        color: state.mapColorMode === 'visit' ? '#25211f' : '#ffffff',
+        weight: 2
+      });
+    });
+    Object.values(markerHalos || {}).flat().forEach(halo => {
+      halo?.setStyle?.({ opacity: state.mapColorMode === 'visit' ? 0 : 1 });
+    });
+    if (selectedShopIndicator && state.activeShopId) {
+      const activeShop = findShop(state.activeShopId);
+      if (activeShop) selectedShopIndicator.setStyle({ fillColor: getMapLayerMarkerColor(activeShop) });
+    }
   }
 
   function handleCurrentLocationClick() {
@@ -1734,13 +2249,18 @@
     if (!button) return;
     const active = !!userLocation;
     const loading = !!isRequestingLocation;
+    const following = active && !!followUserLocation;
     button.classList.toggle('is-active', active);
     button.classList.toggle('is-loading', loading);
+    button.classList.toggle('is-following', following);
     button.setAttribute('aria-pressed', String(active));
     button.setAttribute('aria-label', loading
       ? '現在地を取得中'
-      : active ? '現在地の指定を解除' : '現在地を表示');
+      : following ? '現在地を追従中' : active ? '現在地へ戻って追従' : '現在地を表示');
   }
+
+  window.syncMapDiscoveryLocationButton = syncCurrentLocationButton;
+  window.syncMapDiscoveryFilterControls = syncAllControls;
 
   function syncOpenToggle() {
     const button = document.getElementById('map-a-open-toggle');
@@ -1765,7 +2285,9 @@
     const isseValues = getAdjustCategoryOptions('isse').map(option => option.value);
     const hasIekei = iekeiValues.some(value => selected.has(value));
     const hasIsse = isseValues.some(value => selected.has(value));
-    const label = hasIekei && !hasIsse ? '家系' : hasIsse && !hasIekei ? '壱系' : '';
+    const label = IS_JIRO_MODE
+      ? (hasIekei ? '二郎系' : '')
+      : hasIekei && !hasIsse ? '家系' : hasIsse && !hasIekei ? '壱系' : '';
     const badge = document.getElementById('map-a-filter-label');
     if (!badge) return;
     badge.textContent = label;
@@ -1788,6 +2310,7 @@
         history.pushState({ ...currentState, [SEARCH_HISTORY_STATE]: true }, '', window.location.href);
       } catch (_) {}
     }
+    syncShopSearchCategoryControls();
     renderSearchResults();
     setTimeout(() => input.focus(), 40);
   }
@@ -1798,6 +2321,7 @@
     surface?.classList.remove('is-open');
     surface?.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('map-a-search-open');
+    closeSearchLineagePanel();
     document.getElementById('map-a-search-input')?.blur();
     cancelPlaceSearch(false);
     cancelGoogleSearch(false);
@@ -1817,14 +2341,21 @@
   }
 
   function setSearchTab(tab) {
-    if (tab !== 'shops' && tab !== 'places') return;
+    if (tab !== 'shops' && tab !== 'places' && tab !== 'photo') return;
+    closeSearchLineagePanel();
     state.searchTab = tab;
     document.querySelectorAll('[data-map-a-search-tab]').forEach(button => {
       const active = button.dataset.mapASearchTab === tab;
       button.classList.toggle('is-active', active);
       button.setAttribute('aria-selected', String(active));
     });
+    document.getElementById('map-a-search-surface')?.classList.toggle('is-photo-tab', tab === 'photo');
     if (tab === 'places') schedulePlaceSearch(true);
+    else if (tab === 'photo') {
+      cancelPlaceSearch(true);
+      cancelGoogleSearch(true);
+      renderSearchResults();
+    }
     else {
       cancelPlaceSearch(true);
       cancelGoogleSearch(true);
@@ -1838,43 +2369,402 @@
     const input = document.getElementById('map-a-search-input');
     if (!results || !input) return;
     if (state.searchTab === 'shops') renderShopSearchResults(results, input.value.trim());
-    else renderPlaceSearchResults(results, input.value.trim());
+    else if (state.searchTab === 'places') renderPlaceSearchResults(results, input.value.trim());
+    else renderPhotoLookup(results);
+  }
+
+  function renderPhotoLookup(container) {
+    const result = state.photoLookupResult;
+    const explanation = `<div class="map-a-photo-lookup-note">
+      <strong>写真の撮影場所からお店を探します</strong>
+      <span>写真に残っているEXIF情報を端末内で読み取り、撮影場所の近くにある店舗を逆引きします。</span>
+      <span>位置情報が残っている写真のみ利用できます。Androidでは「写真アプリ」または「ファイルから原本」を毎回選べます。位置情報を使う場合は、Googleフォトなどの写真を端末へダウンロードし、「ファイルから原本」を選んでください。</span>
+      <span class="map-a-photo-private">写真データは外部へ送信されません。</span>
+    </div>`;
+    if (state.photoLookupStatus === 'loading') {
+      container.innerHTML = `${explanation}<div class="map-a-search-state"><strong>写真を読み取り中…</strong><span>EXIF情報を確認しています。</span></div>`;
+      return;
+    }
+    if (state.photoLookupStatus === 'unsupported') {
+      container.innerHTML = `${explanation}<div class="map-a-photo-lookup-error"><strong>この環境では写真を読み取れません</strong><span>iPhoneまたはAndroidアプリからお試しください。</span></div>`;
+      return;
+    }
+    if (state.photoLookupStatus === 'no-location') {
+      container.innerHTML = `${explanation}${renderPhotoLookupPreview(result)}<div class="map-a-photo-lookup-error"><strong>位置情報が見つかりませんでした</strong><span>クラウド上の写真は、一度端末へダウンロードした原本でお試しください。</span></div>${renderPhotoLookupButton('別の写真を選ぶ')}`;
+      return;
+    }
+    if (state.photoLookupStatus === 'ready' && result) {
+      const candidates = getPhotoLookupCandidates(result.latitude, result.longitude);
+      container.innerHTML = `${explanation}${renderPhotoLookupPreview(result)}
+        <div class="map-a-search-summary">撮影場所に近いラーメン店</div>
+        <div class="map-a-result-list">${candidates.map(candidate => `<button class="map-a-result-row" type="button" data-map-a-shop-result="${escapeAttribute(candidate.shop.id)}">
+          <span class="map-a-result-icon">🍜</span>
+          <span class="map-a-result-copy"><strong>${escapeText(candidate.shop.name)}</strong><span>${escapeText(candidate.shop.area || '')}</span></span>
+          <span class="map-a-result-distance">${formatDistance(candidate.distance)}</span>
+        </button>`).join('')}</div>${renderPhotoLookupButton('別の写真を選ぶ')}`;
+      return;
+    }
+    container.innerHTML = `${explanation}${renderPhotoLookupButton('写真を選ぶ')}`;
+  }
+
+  function renderPhotoLookupButton(label) {
+    return `<button class="map-a-photo-lookup-button" type="button" data-map-a-photo-lookup>${escapeText(label)}</button>`;
+  }
+
+  function renderPhotoLookupPreview(result) {
+    if (!result) return '';
+    const date = result.capturedAt ? new Date(result.capturedAt) : null;
+    const dateLabel = date && !Number.isNaN(date.getTime())
+      ? `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+      : '撮影日時なし';
+    return `<div class="map-a-photo-lookup-preview">${result.previewUrl ? `<img src="${escapeAttribute(result.previewUrl)}" alt="選択した写真">` : '<span>写真</span>'}<div><strong>${dateLabel}</strong><span>${Number.isFinite(Number(result.latitude)) && Number.isFinite(Number(result.longitude)) ? '位置情報を読み取りました' : '位置情報なし'}</span></div></div>`;
+  }
+
+  function getPhotoLookupCandidates(latitude, longitude) {
+    const lat = Number(latitude);
+    const lng = Number(longitude);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat === 0 || lng === 0) return [];
+    return (Array.isArray(shops) ? shops : [])
+      .filter(shop => shop?.name !== 'ダミー' && Number.isFinite(Number(shop.lat)) && Number.isFinite(Number(shop.lng)) && Number(shop.lat) !== 0 && Number(shop.lng) !== 0)
+      .map(shop => ({ shop, distance: calculateDistance(lat, lng, Number(shop.lat), Number(shop.lng)) }))
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 5);
+  }
+
+  function startPhotoLookup() {
+    state.photoLookupStatus = 'loading';
+    state.photoLookupResult = null;
+    renderSearchResults();
+    if (window.webkit?.messageHandlers?.pickPhotos) {
+      window.webkit.messageHandlers.pickPhotos.postMessage(JSON.stringify({ mode: 'reverse', selectionLimit: 1 }));
+      return;
+    }
+    state.photoLookupStatus = 'unsupported';
+    renderSearchResults();
+  }
+
+  window.onPhotoReverseLookupSelected = payload => {
+    const latitude = Number(payload?.latitude);
+    const longitude = Number(payload?.longitude);
+    state.photoLookupResult = payload || null;
+    state.photoLookupStatus = Number.isFinite(latitude) && Number.isFinite(longitude) && latitude !== 0 && longitude !== 0
+      ? 'ready'
+      : 'no-location';
+    if (state.searchTab === 'photo') renderSearchResults();
+  };
+
+  window.onPhotoReverseLookupCancelled = () => {
+    const latitude = Number(state.photoLookupResult?.latitude);
+    const longitude = Number(state.photoLookupResult?.longitude);
+    state.photoLookupStatus = !state.photoLookupResult ? 'idle' :
+      (Number.isFinite(latitude) && Number.isFinite(longitude) && latitude !== 0 && longitude !== 0 ? 'ready' : 'no-location');
+    if (state.searchTab === 'photo') renderSearchResults();
+  };
+
+  function getShopSearchCategorySummary() {
+    const selected = getEffectiveShopSearchCategorySelection();
+    const allValues = getAllAdjustCategoryValues();
+    if (allValues.length > 0 && allValues.every(value => selected.has(value))) return 'すべて';
+    const iekeiValues = getAdjustCategoryOptions('iekei').map(option => option.value);
+    const isseValues = getAdjustCategoryOptions('isse').map(option => option.value);
+    const hasAllIekei = iekeiValues.length > 0 && iekeiValues.every(value => selected.has(value));
+    const hasAllIsse = isseValues.length > 0 && isseValues.every(value => selected.has(value));
+    if (hasAllIekei && isseValues.every(value => !selected.has(value))) return '家系全部';
+    if (hasAllIsse && iekeiValues.every(value => !selected.has(value))) return '壱系全部';
+    const selectedValues = allValues.filter(value => selected.has(value));
+    if (!selectedValues.length) return 'なし';
+    if (selectedValues.length === 1) return getShortCategoryName(selectedValues[0]);
+    return `${selectedValues.length}系統`;
+  }
+
+  function renderShopSearchToolbar(showSort) {
+    const categorySummary = getShopSearchCategorySummary();
+    return `<div class="map-a-shop-search-toolbar ${showSort && state.shopSearchNewOnly ? 'has-open-sort' : ''}">
+      ${showSort ? `<div class="map-a-shop-search-sort" role="group" aria-label="店舗検索の並び順">
+        <button class="${state.shopSearchSort === 'name' ? 'is-active' : ''}" type="button" data-map-a-shop-search-sort="name" aria-pressed="${state.shopSearchSort === 'name'}" aria-label="名前の一致順">名前順</button>
+        <button class="${state.shopSearchSort === 'distance' ? 'is-active' : ''}" type="button" data-map-a-shop-search-sort="distance" aria-pressed="${state.shopSearchSort === 'distance'}">距離順</button>
+        ${state.shopSearchNewOnly ? `<button class="${state.shopSearchSort === 'open' ? 'is-active' : ''}" type="button" data-map-a-shop-search-sort="open" aria-pressed="${state.shopSearchSort === 'open'}" aria-label="開店日の新しい順">Open順</button>` : ''}
+      </div>` : '<span class="map-a-shop-search-toolbar-label">店舗を探す</span>'}
+      <div class="map-a-shop-search-filter-actions">
+        <button class="map-a-shop-search-lineage-trigger ${state.shopSearchCategories !== null ? 'is-active' : ''}" type="button" data-map-a-search-lineage-open aria-expanded="false">系統：${escapeText(categorySummary)} <span aria-hidden="true">⌄</span></button>
+        <button class="map-a-shop-search-new-trigger ${state.shopSearchNewOnly ? 'is-active' : ''}" type="button" data-map-a-shop-search-new aria-pressed="${state.shopSearchNewOnly}">新店舗</button>
+      </div>
+    </div>`;
+  }
+
+  function renderShopSearchUpdatedAt() {
+    return `<div id="map-a-search-updated-at" class="map-a-search-updated-at">${getMapDiscoveryUpdatedAtText()}</div>`;
+  }
+
+  function renderShopSearchHistory() {
+    if (!state.shopSearchHistory.length) return '';
+    return `<section class="map-a-shop-search-history" aria-label="最近の検索">
+      <div class="map-a-shop-search-history-head">
+        <strong>最近の検索</strong>
+        <button type="button" data-map-a-search-history-clear>すべて削除</button>
+      </div>
+      <div class="map-a-shop-search-history-list">
+        ${state.shopSearchHistory.map((query, index) => `<div class="map-a-shop-search-history-row">
+          <button class="map-a-shop-search-history-query" type="button" data-map-a-search-history-use="${index}"><span aria-hidden="true">◷</span><strong>${escapeText(query)}</strong></button>
+          <button class="map-a-shop-search-history-delete" type="button" data-map-a-search-history-delete="${index}" aria-label="${escapeAttribute(query)}を履歴から削除">×</button>
+        </div>`).join('')}
+      </div>
+    </section>`;
+  }
+
+  function openSearchLineagePanel() {
+    document.getElementById('map-a-search-input')?.blur();
+    syncShopSearchCategoryControls();
+    document.getElementById('map-a-search-lineage-panel')?.classList.add('is-open');
+    document.getElementById('map-a-search-lineage-panel')?.setAttribute('aria-hidden', 'false');
+    document.getElementById('map-a-search-lineage-scrim')?.classList.add('is-open');
+    document.querySelector('[data-map-a-search-lineage-open]')?.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeSearchLineagePanel() {
+    document.getElementById('map-a-search-lineage-panel')?.classList.remove('is-open');
+    document.getElementById('map-a-search-lineage-panel')?.setAttribute('aria-hidden', 'true');
+    document.getElementById('map-a-search-lineage-scrim')?.classList.remove('is-open');
+    document.querySelector('[data-map-a-search-lineage-open]')?.setAttribute('aria-expanded', 'false');
+  }
+
+  function syncShopSearchCategoryControls() {
+    const selected = getEffectiveShopSearchCategorySelection();
+    const allValues = getAllAdjustCategoryValues();
+    document.querySelectorAll('[data-map-a-search-category]').forEach(button => {
+      const active = selected.has(button.dataset.mapASearchCategory);
+      button.classList.toggle('is-active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
+    document.querySelectorAll('[data-map-a-search-category-group]').forEach(button => {
+      const values = getAdjustCategoryOptions(button.dataset.mapASearchCategoryGroup).map(option => option.value);
+      const active = values.length > 0 && values.every(value => selected.has(value));
+      button.classList.toggle('is-active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
+    const allSelected = allValues.length > 0 && allValues.every(value => selected.has(value));
+    const allButton = document.querySelector('[data-map-a-search-category-all]');
+    allButton?.classList.toggle('is-active', allSelected);
+    allButton?.setAttribute('aria-pressed', String(allSelected));
+  }
+
+  function getEffectiveShopSearchCategorySelection() {
+    return new Set(state.shopSearchCategories === null
+      ? getAllAdjustCategoryValues()
+      : state.shopSearchCategories);
+  }
+
+  function storeShopSearchCategorySelection(selected) {
+    const allValues = getAllAdjustCategoryValues();
+    state.shopSearchCategories = allValues.length > 0 && allValues.every(value => selected.has(value))
+      ? null
+      : allValues.filter(value => selected.has(value));
+  }
+
+  function toggleShopSearchCategory(category) {
+    if (!category) return;
+    const selected = getEffectiveShopSearchCategorySelection();
+    if (selected.has(category)) selected.delete(category);
+    else selected.add(category);
+    storeShopSearchCategorySelection(selected);
+    syncShopSearchCategoryControls();
+    renderSearchResults();
+  }
+
+  function toggleShopSearchCategoryGroup(group) {
+    const values = getAdjustCategoryOptions(group).map(option => option.value);
+    if (!values.length) return;
+    const selected = getEffectiveShopSearchCategorySelection();
+    const groupSelected = values.every(value => selected.has(value));
+    values.forEach(value => {
+      if (groupSelected) selected.delete(value);
+      else selected.add(value);
+    });
+    storeShopSearchCategorySelection(selected);
+    syncShopSearchCategoryControls();
+    renderSearchResults();
+  }
+
+  function resetShopSearchCategories() {
+    state.shopSearchCategories = null;
+    syncShopSearchCategoryControls();
+    renderSearchResults();
+  }
+
+  function getShopSearchNameValues(shop) {
+    return [
+      shop?.mapLabel,
+      shop?.shortName,
+      shop?.['店舗名省略'],
+      shop?.['店舗名の省略'],
+      shop?.name
+    ].filter(value => String(value || '').trim());
+  }
+
+  function normalizeShopSearchName(value) {
+    return normalizeSearch(String(value || '').replace(/^\s*[【\[]\s*new\s*[】\]]\s*/i, ''));
+  }
+
+  function hasNewShopMarker(shop) {
+    const name = String(shop?.name || '');
+    const markers = name.matchAll(/【([^】]*)】|\[([^\]]*)\]/g);
+    for (const marker of markers) {
+      const label = String(marker[1] ?? marker[2] ?? '').normalize('NFKC').trim().toLocaleLowerCase('ja');
+      if (label === 'new' || label.includes('open')) return true;
+    }
+    return false;
+  }
+
+  window.isMapDiscoveryNewShop = hasNewShopMarker;
+
+  function parseJapaneseOpenDate(value, fallbackYear, requireStart = false) {
+    const text = String(value || '').normalize('NFKC');
+    const prefix = requireStart ? '^\\s*' : '';
+    const pattern = new RegExp(`${prefix}(?:(\\d{4})年\\s*)?(\\d{1,2})月\\s*(?:(\\d{1,2})日|(初旬|上旬|中旬|下旬)|(中)(?!旬))?`);
+    const match = text.match(pattern);
+    if (!match) return NaN;
+    const year = Number(match[1]) || fallbackYear;
+    const month = Number(match[2]);
+    if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) return NaN;
+    const period = match[4] || '';
+    const approximateDay = period === '初旬' || period === '上旬'
+      ? 5
+      : period === '下旬'
+        ? 25
+        : 15;
+    const day = match[3] ? Number(match[3]) : approximateDay;
+    const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+    if (!Number.isInteger(day) || day < 1 || day > daysInMonth) return NaN;
+    return Date.UTC(year, month - 1, day);
+  }
+
+  function getShopOpenSortValue(shop) {
+    const name = String(shop?.name || '');
+    const fallbackYear = new Date().getFullYear();
+    const dates = [];
+    let hasNewMarker = false;
+    for (const marker of name.matchAll(/【([^】]*)】|\[([^\]]*)\]/g)) {
+      const label = String(marker[1] ?? marker[2] ?? '').normalize('NFKC').trim();
+      const normalizedLabel = label.toLocaleLowerCase('ja');
+      if (normalizedLabel === 'new') hasNewMarker = true;
+      if (normalizedLabel.includes('open')) {
+        const markerDate = parseJapaneseOpenDate(label, fallbackYear);
+        if (Number.isFinite(markerDate)) dates.push(markerDate);
+      }
+    }
+    if (hasNewMarker) {
+      const descriptionDate = parseJapaneseOpenDate(shop?.description, fallbackYear, true);
+      if (Number.isFinite(descriptionDate)) dates.push(descriptionDate);
+    }
+    return dates.length ? Math.max(...dates) : NaN;
+  }
+
+  function getNewShopOpenLabel(shop) {
+    const name = String(shop?.name || '');
+    const hasNewMarker = Array.from(name.matchAll(/【([^】]*)】|\[([^\]]*)\]/g)).some(marker =>
+      String(marker[1] ?? marker[2] ?? '').normalize('NFKC').trim().toLocaleLowerCase('ja') === 'new'
+    );
+    if (!hasNewMarker) return '';
+    const description = String(shop?.description || '').normalize('NFKC');
+    const match = description.match(/^\s*((?:\d{4}年\s*)?\d{1,2}月\s*(?:(?:\d{1,2})日|初旬|上旬|中旬|下旬|中)?)/);
+    if (!match) return '';
+    return `${match[1].replace(/\s+/g, '')}open`;
+  }
+
+  function getShopSearchRank(shop, normalizedQuery) {
+    if (!normalizedQuery) return 0;
+    const names = getShopSearchNameValues(shop).map(normalizeShopSearchName).filter(Boolean);
+    const reading = normalizeSearch(shop?.nameHiragana);
+    const area = normalizeSearch(shop?.area);
+    if (names.some(value => value === normalizedQuery)) return 0;
+    if (names.some(value => value.startsWith(normalizedQuery))) return 1;
+    if (names.some(value => value.includes(normalizedQuery))) return 2;
+    if (reading === normalizedQuery) return 3;
+    if (reading.startsWith(normalizedQuery)) return 4;
+    if (reading.includes(normalizedQuery)) return 5;
+    if (area === normalizedQuery) return 6;
+    if (area.startsWith(normalizedQuery)) return 7;
+    if (area.includes(normalizedQuery)) return 8;
+    return Infinity;
+  }
+
+  function compareShopSearchNames(a, b) {
+    const aName = normalizeSearch(a.shop.nameHiragana) || normalizeShopSearchName(a.shop.name);
+    const bName = normalizeSearch(b.shop.nameHiragana) || normalizeShopSearchName(b.shop.name);
+    const nameDiff = String(aName).localeCompare(String(bName), 'ja', { sensitivity: 'base', numeric: true });
+    if (nameDiff) return nameDiff;
+    return String(a.shop.id).localeCompare(String(b.shop.id), 'ja', { sensitivity: 'base', numeric: true });
   }
 
   function renderShopSearchResults(container, query) {
     const normalized = normalizeSearch(query);
     const center = getMapFocusLatLng();
+    const distanceOrigin = userLocation || center;
+    const selectedCategories = Array.from(getEffectiveShopSearchCategorySelection());
+    const hasCategoryFilter = state.shopSearchCategories !== null;
+    const hasNewFilter = state.shopSearchNewOnly;
+    const hasSearchFilter = hasCategoryFilter || hasNewFilter;
+    const showSort = !!normalized || hasSearchFilter;
     let candidates = (Array.isArray(shops) ? shops : []).filter(shop =>
       shop.name !== 'ダミー' && Number.isFinite(Number(shop.lat)) && Number.isFinite(Number(shop.lng))
     );
-    if (normalized) {
-      candidates = candidates.filter(shop => [shop.name, shop.nameHiragana, shop.area, shop.category]
-        .some(value => normalizeSearch(value).includes(normalized)));
+    if (hasCategoryFilter) {
+      candidates = candidates.filter(shop => selectedCategories.includes(shop.category));
+    }
+    if (hasNewFilter) {
+      candidates = candidates.filter(hasNewShopMarker);
     }
     candidates = candidates.map(shop => ({
       shop,
-      distance: Number.isFinite(Number(shop.lat)) && Number.isFinite(Number(shop.lng))
-        ? calculateDistance(center.lat, center.lng, Number(shop.lat), Number(shop.lng))
-        : Infinity
-    })).sort((a, b) => a.distance - b.distance);
+      rank: getShopSearchRank(shop, normalized),
+      distance: calculateDistance(distanceOrigin.lat, distanceOrigin.lng, Number(shop.lat), Number(shop.lng)),
+      openDate: getShopOpenSortValue(shop)
+    })).filter(item => Number.isFinite(item.rank));
+    candidates.sort((a, b) => {
+      if (!showSort || state.shopSearchSort === 'distance') {
+        return (a.distance - b.distance) || (a.rank - b.rank) || compareShopSearchNames(a, b);
+      }
+      if (state.shopSearchSort === 'open') {
+        const aHasDate = Number.isFinite(a.openDate);
+        const bHasDate = Number.isFinite(b.openDate);
+        if (aHasDate !== bHasDate) return aHasDate ? -1 : 1;
+        if (aHasDate && a.openDate !== b.openDate) return b.openDate - a.openDate;
+        return (a.rank - b.rank) || compareShopSearchNames(a, b) || (a.distance - b.distance);
+      }
+      return (a.rank - b.rank) || compareShopSearchNames(a, b) || (a.distance - b.distance);
+    });
     const totalCount = candidates.length;
     candidates = candidates.slice(0, 60);
     const count = document.getElementById('map-a-shop-count');
     if (count) count.textContent = String(totalCount);
+    const categorySummary = getShopSearchCategorySummary();
+    const history = !normalized && !hasSearchFilter ? renderShopSearchHistory() : '';
+    const summaryConditions = [];
+    if (normalized) summaryConditions.push(`「${escapeText(query)}」`);
+    if (hasCategoryFilter) summaryConditions.push(escapeText(categorySummary));
+    if (hasNewFilter) summaryConditions.push('新店舗');
+    const summary = summaryConditions.length
+      ? `${summaryConditions.join('・')}の登録店舗`
+      : '地図の中心付近にある登録店舗';
     const localResults = candidates.length
-      ? `<div class="map-a-search-summary">${normalized ? `「${escapeText(query)}」の登録店舗` : '地図の中心付近にある登録店舗'}</div>
+      ? `${renderShopSearchToolbar(showSort)}
+        ${renderShopSearchUpdatedAt()}
+        ${history}
+        <div class="map-a-search-summary">${summary}</div>
         <div class="map-a-result-list">
           ${candidates.map(({ shop, distance }) => {
           const status = getOpenStatus(shop.openingHours);
           const statusLabel = status.state === 'open' ? '営業中' : status.state === 'soon' ? '閉店間近' : '時間外';
+          const isVisited = !!visits?.[shop.id]?.logs?.length;
+          const newShopOpenLabel = hasNewFilter ? getNewShopOpenLabel(shop) : '';
           const googleMapUrl = String(shop.googleMapUrl || '').trim()
             || (Number.isFinite(Number(shop.lat)) && Number.isFinite(Number(shop.lng))
               ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${shop.lat},${shop.lng}`)}`
               : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${shop.name} ${shop.area || ''}`.trim())}`);
           return `<div class="map-a-result-entry">
             <button class="map-a-result-row" type="button" data-map-a-shop-result="${escapeAttribute(shop.id)}">
-              <span class="map-a-result-icon">🍜</span>
-              <span class="map-a-result-copy"><strong>${escapeText(shop.name)}</strong><span>${escapeText(getShortCategoryName(shop.category))} · ${escapeText(shop.area || '')} · ${statusLabel}</span></span>
+              <span class="map-a-result-icon ${isVisited ? 'is-visited' : ''}" aria-hidden="true">${isVisited ? '✓' : '🍜'}</span>
+              <span class="map-a-result-copy"><strong>${escapeText(shop.name)}</strong><span>${escapeText(getShortCategoryName(shop.category))} · ${escapeText(shop.area || '')} · ${statusLabel}</span>${newShopOpenLabel ? `<span class="map-a-result-open-date">${escapeText(newShopOpenLabel)}</span>` : ''}</span>
               <span class="map-a-result-distance">${Number.isFinite(distance) ? formatDistance(distance) : ''}</span>
             </button>
             <div class="map-a-result-actions">
@@ -1890,9 +2780,11 @@
           </div>`;
         }).join('')}
         </div>`
-      : `<div class="map-a-search-state map-a-search-state-compact"><strong>登録店舗には見つかりませんでした</strong><span>Google Mapsの候補も確認できます。</span></div>`;
+      : `${renderShopSearchToolbar(showSort)}
+        ${renderShopSearchUpdatedAt()}
+        <div class="map-a-search-state map-a-search-state-compact"><strong>登録店舗には見つかりませんでした</strong><span>${hasSearchFilter ? '絞り込み条件を変えてお試しください。' : 'Google Mapsの候補も確認できます。'}</span></div>`;
 
-    container.innerHTML = `${localResults}${renderGoogleShopResults(query)}`;
+    container.innerHTML = `${localResults}${normalized ? renderGoogleShopResults(query) : ''}`;
   }
 
   function renderGoogleShopResults(query) {
@@ -1950,9 +2842,21 @@
     const input = document.getElementById('map-a-search-input');
     if (!input) return;
     input.blur();
+    if (state.searchTab === 'shops') saveShopSearchHistory(input.value);
     state.googleExpanded = false;
     cancelGoogleSearch(true);
     renderSearchResults();
+  }
+
+  function submitCurrentSearch() {
+    const input = document.getElementById('map-a-search-input');
+    if (!input) return;
+    if (state.searchTab === 'places') {
+      input.blur();
+      runPlaceSearch(input.value.trim());
+      return;
+    }
+    submitShopSearch();
   }
 
   function cancelGoogleSearch(clearResults) {
@@ -2013,8 +2917,6 @@
   }
 
   function renderPlaceSearchResults(container, query) {
-    const count = document.getElementById('map-a-place-count');
-    if (count) count.textContent = String(state.placeResults.length);
     if (query.length < 2) {
       container.innerHTML = '<div class="map-a-search-state"><strong>駅名・地名を2文字以上入力</strong><span>駅、住所、IC・JCTを国土地理院とHeartRailsから検索します。</span></div>';
       return;
@@ -2031,15 +2933,24 @@
       container.innerHTML = '<div class="map-a-search-state"><strong>地点が見つかりませんでした</strong><span>別の駅名・地名で試してください。</span></div>';
       return;
     }
-    container.innerHTML = `
-      <div class="map-a-search-summary">「${escapeText(query)}」の地名・駅検索結果</div>
-      <div class="map-a-result-list">
-        ${state.placeResults.map((place, index) => `<button class="map-a-result-row" type="button" data-map-a-place-result="${index}">
+    const renderGroup = (title, entries) => entries.length ? `
+      <section class="map-a-place-result-group" aria-label="${escapeAttribute(title)}">
+        <div class="map-a-place-result-group-title">${escapeText(title)}</div>
+        <div class="map-a-result-list">
+          ${entries.map(({ place, index }) => `<button class="map-a-result-row" type="button" data-map-a-place-result="${index}">
           <span class="map-a-result-icon">${place.type === 'station' ? '駅' : '⌖'}</span>
           <span class="map-a-result-copy"><strong>${escapeText(place.name)}</strong><span>${escapeText(place.meta || (place.type === 'station' ? '駅' : '地名・住所'))}</span></span>
           <span class="map-a-result-distance">${icons.chevron}</span>
-        </button>`).join('')}
-      </div>`;
+          </button>`).join('')}
+        </div>
+      </section>` : '';
+    const indexed = state.placeResults.map((place, index) => ({ place, index }));
+    const transport = indexed.filter(item => item.place.group === 'transport');
+    const addresses = indexed.filter(item => item.place.group !== 'transport');
+    container.innerHTML = `
+      <div class="map-a-search-summary">「${escapeText(query)}」の地名・駅検索結果</div>
+      ${renderGroup('駅・インター', transport)}
+      ${renderGroup('地名・住所', addresses)}`;
   }
 
   function schedulePlaceSearch(immediate = false) {
@@ -2066,6 +2977,22 @@
     if (clearResults) state.placeResults = [];
   }
 
+  function getGsiPrefecture(addressCode) {
+    const prefectures = [
+      '', '北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県',
+      '茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県',
+      '新潟県', '富山県', '石川県', '福井県', '山梨県', '長野県', '岐阜県',
+      '静岡県', '愛知県', '三重県', '滋賀県', '京都府', '大阪府', '兵庫県',
+      '奈良県', '和歌山県', '鳥取県', '島根県', '岡山県', '広島県', '山口県',
+      '徳島県', '香川県', '愛媛県', '高知県', '福岡県', '佐賀県', '長崎県',
+      '熊本県', '大分県', '宮崎県', '鹿児島県', '沖縄県'
+    ];
+    const raw = String(addressCode || '').replace(/^0+/, '');
+    if (!raw) return '';
+    const key = raw.length <= 4 ? raw.slice(0, 1) : raw.slice(0, 2);
+    return prefectures[Number(key)] || '';
+  }
+
   async function runPlaceSearch(query) {
     const querySnapshot = String(query || '').trim();
     if (querySnapshot.length < 2) return;
@@ -2085,42 +3012,60 @@
         fetch(`https://express.heartrails.com/api/json?method=getStations&name=${encodeURIComponent(querySnapshot.replace(/駅$/, ''))}`, { signal: controller.signal })
       ]);
       if (sequence !== state.placeSequence) return;
-      const results = [];
-      const seen = new Set();
+      const stationItems = [];
       if (stationResponse.status === 'fulfilled' && stationResponse.value.ok) {
         const stationData = await stationResponse.value.json().catch(() => ({}));
-        (stationData?.response?.station || []).slice(0, 8).forEach(station => {
+        const seenStations = new Set();
+        (stationData?.response?.station || []).forEach(station => {
           const key = `${station.name}_${station.prefecture}`;
-          if (seen.has(key)) return;
-          seen.add(key);
-          results.push({
+          if (seenStations.has(key) || stationItems.length >= 4) return;
+          seenStations.add(key);
+          stationItems.push({
             name: `${station.name}駅`,
-            meta: `${station.prefecture} · ${station.line}`,
-            lat: Number(station.y), lng: Number(station.x), type: 'station'
+            meta: `${station.prefecture}・${station.line}`,
+            lat: Number(station.y), lng: Number(station.x), type: 'station', group: 'transport'
           });
         });
       }
+
+      const gsiTransport = [];
+      const gsiAddresses = [];
       if (gsiResponse.status === 'fulfilled' && gsiResponse.value.ok) {
         const gsiData = await gsiResponse.value.json().catch(() => []);
-        (Array.isArray(gsiData) ? gsiData : []).slice(0, 16).forEach(item => {
+        const heartRailsStationNames = new Set(stationItems.map(station => station.name));
+        const seenGsiStations = new Set();
+        (Array.isArray(gsiData) ? gsiData : []).forEach(item => {
           const title = item?.properties?.title;
           const coordinates = item?.geometry?.coordinates;
           if (!title || !Array.isArray(coordinates)) return;
-          const key = `${title}_${coordinates.join('_')}`;
-          if (seen.has(key)) return;
-          seen.add(key);
-          const isStation = title.endsWith('駅');
-          const isInterchange = /(?:ＩＣ|IC|ＪＣＴ|JCT)$/.test(title);
-          results.push({
-            name: title,
-            meta: isStation ? '駅' : isInterchange ? 'IC・JCT' : '地名・住所',
-            lat: Number(coordinates[1]), lng: Number(coordinates[0]), type: isStation ? 'station' : 'place'
-          });
+          const dataSource = String(item?.properties?.dataSource ?? '');
+          if (dataSource === '1') {
+            const isStation = title.endsWith('駅');
+            const isInterchange = /(?:ＩＣ|IC|ＪＣＴ|JCT)$/.test(title);
+            if (!isStation && !isInterchange) return;
+            if (isStation && (heartRailsStationNames.has(title) || seenGsiStations.has(title))) return;
+            if (isStation) seenGsiStations.add(title);
+            const prefecture = getGsiPrefecture(item?.properties?.addressCode);
+            gsiTransport.push({
+              name: title,
+              meta: prefecture || (isStation ? '駅' : 'IC・JCT'),
+              lat: Number(coordinates[1]), lng: Number(coordinates[0]), type: 'place',
+              group: 'transport', isStation
+            });
+          } else if (dataSource === '' || dataSource === '3') {
+            gsiAddresses.push({
+              name: title,
+              meta: '地名・住所',
+              lat: Number(coordinates[1]), lng: Number(coordinates[0]), type: 'place', group: 'address'
+            });
+          }
         });
+        gsiTransport.sort((a, b) => Number(b.isStation) - Number(a.isStation));
       }
       const currentQuery = document.getElementById('map-a-search-input')?.value.trim() || '';
       if (sequence !== state.placeSequence || currentQuery !== querySnapshot || state.searchTab !== 'places') return;
-      state.placeResults = results.filter(place => Number.isFinite(place.lat) && Number.isFinite(place.lng)).slice(0, 20);
+      state.placeResults = [...stationItems, ...gsiTransport, ...gsiAddresses]
+        .filter(place => Number.isFinite(place.lat) && Number.isFinite(place.lng));
       state.placeLoading = false;
       state.placeController = null;
       const gsiFailed = gsiResponse.status === 'rejected' || !gsiResponse.value.ok;
@@ -2139,6 +3084,56 @@
   }
 
   function handleSearchResultClick(event) {
+    if (event.target.closest('[data-map-a-photo-lookup]')) {
+      startPhotoLookup();
+      return;
+    }
+    const historyButton = event.target.closest('[data-map-a-search-history-use]');
+    if (historyButton) {
+      const query = state.shopSearchHistory[Number(historyButton.dataset.mapASearchHistoryUse)];
+      const input = document.getElementById('map-a-search-input');
+      if (query && input) {
+        input.value = query;
+        input.blur();
+        renderSearchResults();
+      }
+      return;
+    }
+    const historyDeleteButton = event.target.closest('[data-map-a-search-history-delete]');
+    if (historyDeleteButton) {
+      const index = Number(historyDeleteButton.dataset.mapASearchHistoryDelete);
+      if (Number.isInteger(index) && index >= 0 && index < state.shopSearchHistory.length) {
+        state.shopSearchHistory.splice(index, 1);
+        persistShopSearchHistory();
+        renderSearchResults();
+      }
+      return;
+    }
+    if (event.target.closest('[data-map-a-search-history-clear]')) {
+      state.shopSearchHistory = [];
+      persistShopSearchHistory();
+      renderSearchResults();
+      return;
+    }
+    const sortButton = event.target.closest('[data-map-a-shop-search-sort]');
+    if (sortButton) {
+      const sort = sortButton.dataset.mapAShopSearchSort;
+      if (sort === 'name' || sort === 'distance' || (sort === 'open' && state.shopSearchNewOnly)) {
+        state.shopSearchSort = sort;
+        renderSearchResults();
+      }
+      return;
+    }
+    if (event.target.closest('[data-map-a-search-lineage-open]')) {
+      openSearchLineagePanel();
+      return;
+    }
+    if (event.target.closest('[data-map-a-shop-search-new]')) {
+      state.shopSearchNewOnly = !state.shopSearchNewOnly;
+      state.shopSearchSort = state.shopSearchNewOnly ? 'open' : 'name';
+      renderSearchResults();
+      return;
+    }
     if (event.target.closest('.map-a-result-more > summary')) return;
     if (event.target.closest('.map-a-result-menu a')) {
       closeSearchResultMenus();
@@ -2195,7 +3190,12 @@
       updateMarkers();
       if (map && Number.isFinite(Number(shop.lat)) && Number.isFinite(Number(shop.lng))) {
         markProgrammaticMapMove('shop-search');
-        map.setView([Number(shop.lat), Number(shop.lng)], Math.max(13, map.getZoom()), { animate: true });
+        // 店舗マーカーをカード領域で隠れない画面上の十字位置へ合わせる。
+        setMapViewAtFocus(
+          [Number(shop.lat), Number(shop.lng)],
+          Math.max(13, map.getZoom()),
+          { animate: true }
+        );
       }
       setTimeout(() => {
         renderRail({ preserveActive: true, scrollToShopId: shop.id });
@@ -2279,7 +3279,11 @@
   }
 
   function normalizeSearch(value) {
-    return String(value || '').normalize('NFKC').toLocaleLowerCase('ja').replace(/[\s　]+/g, '');
+    return String(value || '')
+      .normalize('NFKC')
+      .toLocaleLowerCase('ja')
+      .replace(/[ァ-ヶ]/g, character => String.fromCharCode(character.charCodeAt(0) - 0x60))
+      .replace(/[\s　・･_\-ー]+/g, '');
   }
 
   function formatDistance(distanceKm) {
@@ -2287,6 +3291,21 @@
     if (distanceKm < 1) return `${Math.max(10, Math.round(distanceKm * 1000 / 10) * 10)}m`;
     if (distanceKm < 10) return `${distanceKm.toFixed(1)}km`;
     return `${Math.round(distanceKm)}km`;
+  }
+
+  function getMapDiscoveryUpdatedAtText() {
+    const timestamp = window.dataUpdatedAt || '2026-07-19T00:00:00+09:00';
+    const date = new Date(timestamp);
+    return Number.isNaN(date.getTime())
+      ? '更新日：未取得'
+      : `更新日：${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
+  }
+
+  function syncMapDiscoveryUpdatedAt() {
+    const text = getMapDiscoveryUpdatedAtText();
+    document.querySelectorAll('#map-a-adjust-updated-at, #map-a-search-updated-at').forEach(element => {
+      element.textContent = text;
+    });
   }
 
   function escapeText(value) {
@@ -2305,4 +3324,6 @@
   window.setMapUiMode = setMapUiMode;
   window.getShopMapLabel = getShopMapLabel;
   window.syncMapShopLabels = syncMapShopLabels;
+  window.syncMapDiscoveryUpdatedAt = syncMapDiscoveryUpdatedAt;
+  syncMapDiscoveryUpdatedAt();
 })();
