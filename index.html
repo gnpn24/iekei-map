@@ -1480,6 +1480,8 @@
     .photo-preview img {
       width: 100%;
       border-radius: 12px;
+      background: #15110f;
+      object-fit: contain;
     }
     
     .photo-remove {
@@ -2968,11 +2970,11 @@
       width: 54px;
       height: 54px;
       border-radius: 12px;
-      background: #f3f4f6;
+      background: #15110f;
       border: 1px solid #e5e7eb;
       flex: 0 0 auto;
       overflow: hidden;
-      object-fit: cover;
+      object-fit: contain;
     }
     .stats-new-meta {
       flex: 1;
@@ -3234,7 +3236,8 @@
       width: 100%;
       height: 100%;
       display: block;
-      object-fit: cover;
+      object-fit: contain;
+      background: #15110f;
     }
     .mypage-photo-cell::after {
       content: "";
@@ -3913,6 +3916,21 @@
       height: 100%;
       display: block;
       object-fit: contain;
+    }
+    /* 一覧・投稿詳細内での写真拡大。通常時はスクロールを妨げず、
+       拡大後だけ1本指ドラッグで写真を動かせる。 */
+    .zoomable-photo {
+      transform-origin: center;
+      transition: transform 140ms ease;
+      cursor: zoom-in;
+    }
+    .zoomable-photo.is-zoomed {
+      cursor: grab;
+      touch-action: none !important;
+    }
+    .zoomable-photo.is-panning {
+      cursor: grabbing;
+      transition: none;
     }
     .photo-viewer-counter {
       position: absolute;
@@ -4950,9 +4968,9 @@
     .feed-photo {
       width: 100%;
       aspect-ratio: 4 / 3;
-      object-fit: cover;
+      object-fit: contain;
       display: block;
-      background: #f3f4f6;
+      background: #15110f;
     }
     .feed-photo-wrap.is-swipe .feed-photo-grid-view {
       display: none;
@@ -4978,9 +4996,10 @@
       width: 100%;
       height: 100%;
       flex: 0 0 100%;
-      object-fit: cover;
+      object-fit: contain;
       scroll-snap-align: start;
       display: block;
+      background: #15110f;
     }
     .feed-photo-toggle {
       position: absolute;
@@ -5046,9 +5065,9 @@
       width: 100%;
       height: 100%;
       min-height: 0;
-      object-fit: cover;
+      object-fit: contain;
       display: block;
-      background: #f3f4f6;
+      background: #15110f;
     }
     .feed-photo-grid.count-2 {
       grid-template-columns: repeat(2, 1fr);
@@ -5362,9 +5381,9 @@
       aspect-ratio: 1;
       border-radius: 10px;
       overflow: hidden;
-      background: #f3f4f6;
+      background: #15110f;
     }
-    .bulk-import-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .bulk-import-photo img { width: 100%; height: 100%; object-fit: contain; display: block; background: #15110f; }
     .bulk-import-photo-remove {
       position: absolute;
       top: 3px;
@@ -5490,11 +5509,11 @@
       aspect-ratio: 1;
       overflow: hidden;
       border-radius: 10px;
-      background: #e5e7eb;
+      background: #15110f;
     }
     .bulk-group-photos.is-single .bulk-group-photo-tile { aspect-ratio: 1; }
     .bulk-group-photo-open { width: 100%; height: 100%; padding: 0; border: 0; background: transparent; cursor: zoom-in; }
-    .bulk-group-photo-open img { width: 100%; height: 100%; display: block; object-fit: cover; }
+    .bulk-group-photo-open img { width: 100%; height: 100%; display: block; object-fit: contain; background: #15110f; }
     .bulk-group-photo-menu {
       position: absolute;
       top: 4px;
@@ -5551,8 +5570,8 @@
       width: 108px;
       height: 108px;
       border-radius: 12px;
-      object-fit: cover;
-      background: #e5e7eb;
+      object-fit: contain;
+      background: #15110f;
     }
     .bulk-photo-card-body { min-width: 0; }
     .bulk-photo-card-label { color: #6b7280; font-size: 10px; font-weight: 700; }
@@ -5650,10 +5669,10 @@
       border: 0;
       border-radius: 11px;
       padding: 0;
-      background: #e5e7eb;
+      background: #15110f;
       cursor: pointer;
     }
-    .bulk-pool-photo img { width: 100%; height: 100%; display: block; object-fit: cover; }
+    .bulk-pool-photo img { width: 100%; height: 100%; display: block; object-fit: contain; background: #15110f; }
     .bulk-pool-photo.is-selected { box-shadow: inset 0 0 0 3px #2563eb; }
     .bulk-pool-photo.is-selected::after {
       content: '';
@@ -6184,6 +6203,7 @@
             <span class="section-title">投稿写真</span>
             <span id="detail-photo-count" aria-live="polite"></span>
           </div>
+          <div id="detail-photo-sync-status" class="detail-photo-sync-status" aria-live="polite" hidden></div>
           <div id="detail-photo-gallery" class="map-a-detail-photo-gallery" aria-label="投稿写真。横にスクロールできます"></div>
         </div>
 
@@ -6682,7 +6702,19 @@
     let cloudRefreshPromise = null;
     let lastCloudRefreshAt = 0;
     let hasStartedCloudRefresh = false;
+    let automaticCloudSyncRetryCount = 0;
     const CLOUD_REFRESH_INTERVAL_MS = 60 * 1000;
+
+    window.getPendingPublicPhotoCount = function getPendingPublicPhotoCount(shopId) {
+      return (visits?.[shopId]?.logs || []).filter(log =>
+        log?.isPublic && Array.isArray(log.photos) && log.photos.length > 0 && !log._photosSynced
+      ).length;
+    };
+
+    window.retryPendingPhotoSync = function retryPendingPhotoSync() {
+      scheduleAutomaticCloudSync(0, true);
+      showToast('写真の同期を再試行しています');
+    };
 
     // 訪問記録は端末キャッシュを先に表示し、ログイン後にクラウドとの差分を反映する。
     // iOSではSwiftからのUserDefaults復元が非同期なので、初回同期前に完了を待つ。
@@ -7432,7 +7464,7 @@
     // 訪問記録の正方形サムネイル（写真があれば表示、無ければグレーのプレースホルダー）
     function postPhotoHtml(photoUrl, extraStyle) {
       if (photoUrl) {
-        return `<img src="${escapeHtml(photoUrl)}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;display:block;${extraStyle || ''}">`;
+        return `<img src="${escapeHtml(photoUrl)}" style="width:100%;aspect-ratio:1;object-fit:contain;background:#15110f;border-radius:8px;display:block;${extraStyle || ''}">`;
       }
       return `<div style="width:100%;aspect-ratio:1;background:#e5e7eb;border-radius:8px;${extraStyle || ''}"></div>`;
     }
@@ -7444,7 +7476,7 @@
       }
       const safeUrls = photoUrls.filter(Boolean);
       const slides = safeUrls.map((url, index) =>
-        `<div class="photo-viewer-slide"><img src="${escapeHtml(url)}" loading="${index === 0 ? 'eager' : 'lazy'}" alt="投稿写真 ${index + 1}"></div>`
+        `<div class="photo-viewer-slide"><img class="zoomable-photo" src="${escapeHtml(url)}" loading="${index === 0 ? 'eager' : 'lazy'}" alt="投稿写真 ${index + 1}"></div>`
       ).join('');
       const hasMultiple = safeUrls.length > 1;
       const dots = hasMultiple
@@ -7624,9 +7656,9 @@
       if (limited.length === 0) return '';
 
       const gridHtml = limited.length === 1
-        ? `<img src="${limited[0]}" loading="lazy" class="feed-photo">`
-        : `<div class="feed-photo-grid count-${limited.length}">${limited.map(url => `<img src="${url}" loading="lazy">`).join('')}</div>`;
-      const swipeHtml = `<div class="feed-photo-swipe-view" onscroll="updateFeedPhotoSwipeLabel(this)">${limited.map(url => `<img src="${url}" loading="lazy">`).join('')}</div>`;
+        ? `<img src="${limited[0]}" loading="lazy" class="feed-photo zoomable-photo">`
+        : `<div class="feed-photo-grid count-${limited.length}">${limited.map(url => `<img class="zoomable-photo" src="${url}" loading="lazy">`).join('')}</div>`;
+      const swipeHtml = `<div class="feed-photo-swipe-view" onscroll="updateFeedPhotoSwipeLabel(this)">${limited.map(url => `<img class="zoomable-photo" src="${url}" loading="lazy">`).join('')}</div>`;
       const dotsHtml = limited.length > 1
         ? `<div class="feed-photo-dots">${limited.map((_, i) => `<span class="feed-photo-dot ${i === 0 ? 'active' : ''}"></span>`).join('')}</div>`
         : '';
@@ -11224,7 +11256,10 @@
     }
 
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') refreshCloudIfNeeded();
+      if (document.visibilityState === 'visible') {
+        refreshCloudIfNeeded();
+        scheduleAutomaticCloudSync(0, false);
+      }
     });
     window.addEventListener('pageshow', refreshCloudIfNeeded);
 
@@ -11266,14 +11301,28 @@
       if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
     }
 
-    function scheduleAutomaticCloudSync(delay = 250) {
+    function scheduleAutomaticCloudSync(delay = 250, resetRetry = true) {
       if (!supabaseClient || !currentUser) return;
+      if (resetRetry) automaticCloudSyncRetryCount = 0;
       if (automaticCloudSyncTimer) clearTimeout(automaticCloudSyncTimer);
       automaticCloudSyncTimer = setTimeout(async () => {
         automaticCloudSyncTimer = null;
         const result = await syncVisitsToCloud();
-        if (result?.reason === 'busy') scheduleAutomaticCloudSync(500);
+        if (result?.reason === 'busy') {
+          scheduleAutomaticCloudSync(500, false);
+          return;
+        }
+        if (result?.ok === false) {
+          const retryDelays = [5000, 15000, 60000];
+          const retryDelay = retryDelays[automaticCloudSyncRetryCount++];
+          if (retryDelay) scheduleAutomaticCloudSync(retryDelay, false);
+          return;
+        }
+        automaticCloudSyncRetryCount = 0;
         if (result?.needsPull) restoreFromCloud({ silent: true });
+        if (document.getElementById('tab-feed')?.classList.contains('active')) {
+          void loadCommunityFeed();
+        }
       }, delay);
     }
 
@@ -11446,6 +11495,7 @@
                 if (touchResult.ok) {
                   log._photosSynced = true;
                   changed = true;
+                  window.refreshMapDiscoveryShopPhotos?.(shopId);
                 } else {
                   console.error('写真更新日時の同期エラー:', touchResult.error);
                   syncHadError = true;
@@ -12157,6 +12207,7 @@
 
     window.addEventListener('online', () => {
       if (!shops.length && !shopsLoadPromise) retryShopsDataLoad();
+      scheduleAutomaticCloudSync(0, false);
     });
 
     // フォールバックデータを使用
@@ -12192,6 +12243,162 @@
         setTimeout(() => toast.remove(), 300);
       }, 3000);
     }
+
+    let photoLightboxScale = 1;
+    let photoLightboxStartDistance = 0;
+    let photoLightboxStartScale = 1;
+    const photoLightboxPointers = new Map();
+
+    function setPhotoLightboxScale(scale) {
+      photoLightboxScale = Math.min(4, Math.max(1, scale));
+      const image = document.getElementById('photo-lightbox-image');
+      if (image) image.style.transform = `scale(${photoLightboxScale})`;
+    }
+
+    function photoLightboxDistance() {
+      const points = [...photoLightboxPointers.values()];
+      return points.length < 2 ? 0 : Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
+    }
+
+    window.openPhotoLightbox = function openPhotoLightbox(src, alt = '投稿写真') {
+      if (!src) return;
+      const lightbox = document.getElementById('photo-lightbox');
+      const image = document.getElementById('photo-lightbox-image');
+      if (!lightbox || !image) return;
+      photoLightboxPointers.clear();
+      setPhotoLightboxScale(1);
+      image.src = src;
+      image.alt = alt;
+      lightbox.classList.add('active');
+      lightbox.setAttribute('aria-hidden', 'false');
+    };
+
+    window.closePhotoLightbox = function closePhotoLightbox() {
+      const lightbox = document.getElementById('photo-lightbox');
+      if (!lightbox) return;
+      photoLightboxPointers.clear();
+      lightbox.classList.remove('active');
+      lightbox.setAttribute('aria-hidden', 'true');
+    };
+
+    function bindPhotoLightbox() {
+      const lightbox = document.getElementById('photo-lightbox');
+      const image = document.getElementById('photo-lightbox-image');
+      if (!lightbox || !image || lightbox.dataset.bound) return;
+      lightbox.dataset.bound = 'true';
+      image.addEventListener('dblclick', () => setPhotoLightboxScale(photoLightboxScale > 1 ? 1 : 2));
+      image.addEventListener('pointerdown', event => {
+        photoLightboxPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        image.setPointerCapture?.(event.pointerId);
+        if (photoLightboxPointers.size === 2) {
+          photoLightboxStartDistance = photoLightboxDistance();
+          photoLightboxStartScale = photoLightboxScale;
+        }
+      });
+      image.addEventListener('pointermove', event => {
+        if (!photoLightboxPointers.has(event.pointerId)) return;
+        photoLightboxPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        if (photoLightboxPointers.size === 2 && photoLightboxStartDistance > 0) {
+          setPhotoLightboxScale(photoLightboxStartScale * (photoLightboxDistance() / photoLightboxStartDistance));
+        }
+      });
+      const releasePointer = event => photoLightboxPointers.delete(event.pointerId);
+      image.addEventListener('pointerup', releasePointer);
+      image.addEventListener('pointercancel', releasePointer);
+    }
+
+    document.addEventListener('DOMContentLoaded', bindPhotoLightbox);
+
+    // フィードと投稿詳細の写真は、画面遷移せず表示枠の中で拡大する。
+    // 通常時はフィードのスクロール／複数写真の横スワイプを維持し、拡大後だけ写真をドラッグできる。
+    const inlinePhotoZoomStates = new WeakMap();
+    const inlinePhotoPointerOwners = new Map();
+
+    function getInlinePhotoZoomState(image) {
+      let state = inlinePhotoZoomStates.get(image);
+      if (!state) {
+        state = { scale: 1, x: 0, y: 0, pointers: new Map(), lastTapAt: 0, pan: null, pinchDistance: 0, pinchScale: 1 };
+        inlinePhotoZoomStates.set(image, state);
+      }
+      return state;
+    }
+
+    function setInlinePhotoZoom(image, state, scale = state.scale, x = state.x, y = state.y) {
+      state.scale = Math.max(1, Math.min(4, scale));
+      state.x = state.scale === 1 ? 0 : x;
+      state.y = state.scale === 1 ? 0 : y;
+      image.style.transform = `translate(${state.x}px, ${state.y}px) scale(${state.scale})`;
+      image.classList.toggle('is-zoomed', state.scale > 1);
+    }
+
+    function inlinePhotoPointerDistance(state) {
+      const points = [...state.pointers.values()];
+      return points.length < 2 ? 0 : Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
+    }
+
+    document.addEventListener('pointerdown', event => {
+      const image = event.target.closest?.('img.zoomable-photo');
+      if (!image) return;
+      const state = getInlinePhotoZoomState(image);
+      state.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      inlinePhotoPointerOwners.set(event.pointerId, image);
+      image.setPointerCapture?.(event.pointerId);
+      if (state.pointers.size === 2) {
+        state.pinchDistance = inlinePhotoPointerDistance(state);
+        state.pinchScale = state.scale;
+        state.pan = null;
+        event.preventDefault();
+      } else if (state.scale > 1) {
+        state.pan = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, x: state.x, y: state.y, moved: false };
+        image.classList.add('is-panning');
+        event.preventDefault();
+      }
+    }, { passive: false });
+
+    document.addEventListener('pointermove', event => {
+      const image = inlinePhotoPointerOwners.get(event.pointerId);
+      if (!image) return;
+      const state = getInlinePhotoZoomState(image);
+      state.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      if (state.pointers.size === 2 && state.pinchDistance > 0) {
+        setInlinePhotoZoom(image, state, state.pinchScale * (inlinePhotoPointerDistance(state) / state.pinchDistance));
+        event.preventDefault();
+      } else if (state.pan?.pointerId === event.pointerId) {
+        const x = state.pan.x + event.clientX - state.pan.startX;
+        const y = state.pan.y + event.clientY - state.pan.startY;
+        state.pan.moved ||= Math.abs(x - state.pan.x) > 3 || Math.abs(y - state.pan.y) > 3;
+        setInlinePhotoZoom(image, state, state.scale, x, y);
+        event.preventDefault();
+      }
+    }, { passive: false });
+
+    function finishInlinePhotoPointer(event) {
+      const image = inlinePhotoPointerOwners.get(event.pointerId);
+      if (!image) return;
+      const state = getInlinePhotoZoomState(image);
+      const wasPinching = state.pointers.size > 1;
+      const wasPanning = state.pan?.pointerId === event.pointerId && state.pan.moved;
+      state.pointers.delete(event.pointerId);
+      inlinePhotoPointerOwners.delete(event.pointerId);
+      image.classList.remove('is-panning');
+      if (state.pan?.pointerId === event.pointerId) state.pan = null;
+      if (state.pointers.size < 2) state.pinchDistance = 0;
+      if (!wasPinching && !wasPanning) {
+        const now = Date.now();
+        if (now - state.lastTapAt < 300) {
+          setInlinePhotoZoom(image, state, state.scale > 1 ? 1 : 2, state.x, state.y);
+          state.lastTapAt = 0;
+          event.preventDefault();
+        } else {
+          state.lastTapAt = now;
+        }
+      }
+    }
+    document.addEventListener('pointerup', finishInlinePhotoPointer, { passive: false });
+    document.addEventListener('pointercancel', finishInlinePhotoPointer, { passive: false });
+    document.addEventListener('click', event => {
+      if (event.target.closest?.('img.zoomable-photo')) event.stopPropagation();
+    });
     
     // アプリ初期化（データ読み込み後に実行）
     // グループ機能テスト用ダミーデータ注入
@@ -12323,6 +12530,7 @@
     let locationWatchId = null; // 継続測位のwatch ID
     let followUserLocation = false; // 現在地に地図カメラを追従させる
     let selectNearestOnNextLocationFix = false; // 明示的な現在地操作時だけカードも最寄りへ切り替える
+    let locationUpdatesPausedByMapInteraction = false;
     let lastLocationListRefresh = 0;
     const LOCATION_TRACKING_KEY = 'iekei-location-tracking-enabled';
     const LAST_LOCATION_KEY = 'iekei-last-user-location';
@@ -12923,16 +13131,9 @@
       const urlParams = new URLSearchParams(window.location.search);
       const shopParam = urlParams.get('shop');
       
-      setTimeout(() => {
-        const hasCompleted = localStorage.getItem('hasCompletedTutorial');
-        console.log('🔍 hasCompletedTutorial チェック:', hasCompleted);
-        if (!hasCompleted) {
-          console.log('❌ Tutorial未完了 → ウェルカムカード表示');
-          startTutorial();
-        } else {
-          console.log('✅ Tutorial完了済み → ウェルカムカードスキップ');
-        }
-      }, 1500);
+      // 初回時の自動チュートリアルは一時的に停止中。
+      // 設定画面の「チュートリアル」からは、引き続き手動で開始できる。
+      console.log('ℹ️ チュートリアルの自動起動は無効です');
       
       // チュートリアル完了後の誘導カード（Swift側のlocalStorage設定を待つため2秒後）
       setTimeout(() => {
@@ -13115,8 +13316,14 @@
           clearLocationMode();
           handleNearbyMode({ centerMap: true, selectNearest: true });
         } else if (nearbyMode || isRequestingLocation) {
-          // 「現在地」は現在地条件だけをオフにする。営業中条件は維持する。
-          disableCurrentLocation();
+          if (locationUpdatesPausedByMapInteraction) {
+            // 地図操作で一時停止していた場合は、現在地の更新を再開する。
+            locationUpdatesPausedByMapInteraction = false;
+            handleNearbyMode({ centerMap: true, selectNearest: true });
+          } else {
+            // 「現在地」は現在地条件だけをオフにする。営業中条件は維持する。
+            disableCurrentLocation();
+          }
         } else {
           // 「現在地」は営業中条件を変更しない。
           handleNearbyMode({ centerMap: true, selectNearest: true });
@@ -13413,9 +13620,12 @@
       // Google Mapsと同様に、手動で地図を動かしたらカメラ追従だけ解除する。
       // 測位と青い現在地マーカーの更新は続行する。
       map.on('dragstart', () => {
-        if (!nearbyMode || !followUserLocation) return;
-        followUserLocation = false;
-        window.syncMapDiscoveryLocationButton?.();
+        pauseLocationUpdatesForMapInteraction();
+      });
+      // 縮尺を手動で変えた場合も、カメラの現在地追従だけ解除する。
+      // 位置情報の取得と現在地マーカーの更新は継続する。
+      map.on('zoomstart', () => {
+        pauseLocationUpdatesForMapInteraction();
       });
       
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -14732,8 +14942,19 @@
       if (forgetPreference) localStorage.removeItem(LOCATION_TRACKING_KEY);
     }
 
+    function pauseLocationUpdatesForMapInteraction() {
+      if (!nearbyMode || locationWatchId === null) return;
+      locationUpdatesPausedByMapInteraction = true;
+      // 最後に取得した現在地とマーカーは残し、継続測位だけ停止する。
+      stopLocationTracking(false);
+      syncLocationAndNowButtons();
+    }
+
+    window.pauseLocationUpdatesForMapInteraction = pauseLocationUpdatesForMapInteraction;
+    window.isLocationUpdatesPaused = () => locationUpdatesPausedByMapInteraction;
+
     function syncLocationAndNowButtons() {
-      const locationActive = nearbyMode && !!userLocation;
+      const locationActive = nearbyMode && !!userLocation && !locationUpdatesPausedByMapInteraction;
       document.getElementById('btn-nearby')?.classList.toggle('active', locationActive);
       // 「今から」が有効なのは、現在地と営業中が両方オンの時だけ。
       document.getElementById('list-btn-nearby')?.classList.toggle('active', locationActive && showOpenOnly);
@@ -14745,6 +14966,7 @@
 
     function disableCurrentLocation() {
       stopLocationTracking(true);
+      locationUpdatesPausedByMapInteraction = false;
       nearbyMode = false;
       locationMode = false;
       userLocation = null;
@@ -14837,12 +15059,15 @@
     }
 
     async function handleNearbyMode({ centerMap = true, selectNearest = true } = {}) {
-      if (nearbyMode && userLocation) {
+      if (nearbyMode && userLocation && locationWatchId !== null) {
         followUserLocation = centerMap;
         if (centerMap) centerMapOnUserLocation(selectNearest);
         window.syncMapDiscoveryLocationButton?.();
         return;
       }
+
+      const hasStoredLocation = nearbyMode && !!userLocation;
+      locationUpdatesPausedByMapInteraction = false;
 
       if (!navigator.geolocation) {
         await showCustomAlert('お使いのブラウザは位置情報に対応していません。');
@@ -14852,6 +15077,9 @@
       isRequestingLocation = true;
       followUserLocation = centerMap;
       selectNearestOnNextLocationFix = centerMap && selectNearest;
+      if (hasStoredLocation && centerMap) {
+        centerMapOnUserLocation(selectNearest);
+      }
       localStorage.setItem(LOCATION_TRACKING_KEY, 'true');
       // すでに測位待ちならwatchを重複登録せず、次の位置更新へ指定だけ反映する。
       if (locationWatchId !== null) {
@@ -18639,8 +18867,8 @@
       const container = document.getElementById('photo-previews');
       container.innerHTML = currentPhotos.map((photo, index) => `
         <div style="min-width:0;">
-          <div style="position:relative;aspect-ratio:1;background:#f3f4f6;border-radius:8px;overflow:hidden;">
-            <img src="${photo}" style="width:100%;height:100%;object-fit:cover;" alt="Photo ${index + 1}">
+          <div style="position:relative;aspect-ratio:1;background:#15110f;border-radius:8px;overflow:hidden;">
+            <img src="${photo}" onclick="openPhotoLightbox(this.src, this.alt)" style="width:100%;height:100%;object-fit:contain;background:#15110f;cursor:zoom-in;" alt="Photo ${index + 1}">
             <button type="button" onclick="removePhotoAt(${index})" style="position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,0.6);color:white;border:none;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">×</button>
             <div class="photo-rotate-actions">
               <button type="button" class="photo-rotate-button" onclick="rotateCurrentPhoto(${index},-1)" aria-label="${index + 1}枚目を左へ90度回転" title="左へ90度回転">
@@ -19031,7 +19259,10 @@
       renderShopList();
       renderFeedTab();
       requestLineageRender();
-      if (!shouldReturnToBulk) showShopDetail(savedShopId);
+      if (!shouldReturnToBulk) {
+        showShopDetail(savedShopId);
+        showToast('訪問記録を保存しました');
+      }
       
       return false;
     }
@@ -19185,7 +19416,10 @@
       renderShopList();
       renderFeedTab();
       requestLineageRender();
-      if (!shouldReturnToBulk) showShopDetail(savedShopId);
+      if (!shouldReturnToBulk) {
+        showShopDetail(savedShopId);
+        showToast('訪問記録を保存しました');
+      }
       
       if (isNativeApp) {
         // iOSアプリの場合: location.hrefで開く（Xアプリに自動リダイレクト）
@@ -19746,6 +19980,12 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <div id="photo-lightbox" class="photo-lightbox" aria-hidden="true" onclick="if (event.target === this) closePhotoLightbox()">
+    <button type="button" class="photo-lightbox-close" onclick="closePhotoLightbox()" aria-label="写真を閉じる">×</button>
+    <img id="photo-lightbox-image" src="" alt="">
+    <div class="photo-lightbox-hint">ダブルタップ・ピンチで拡大</div>
   </div>
 
   <!-- Advanced Filter Modal -->
