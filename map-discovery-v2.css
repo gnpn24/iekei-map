@@ -419,6 +419,14 @@ html[data-map-ui="a"] .leaflet-control-attribution {
   -webkit-overflow-scrolling: touch;
 }
 
+@media (pointer: fine) {
+  .map-a-card-rail {
+    cursor: grab;
+    user-select: none;
+  }
+  .map-a-card-rail.is-dragging { cursor: grabbing; }
+}
+
 .map-a-card-rail::-webkit-scrollbar {
   display: none;
 }
@@ -607,7 +615,7 @@ html[data-map-ui="a"] .leaflet-control-attribution {
   overflow: hidden;
   border: 1px solid rgba(41, 35, 31, 0.1);
   border-radius: 11px;
-  background: #ece7e1;
+  background: #15110f;
   cursor: pointer;
 }
 
@@ -635,7 +643,8 @@ html[data-map-ui="a"] .leaflet-control-attribution {
   width: 100%;
   height: 100%;
   display: block;
-  object-fit: cover;
+  object-fit: contain;
+  background: #15110f;
 }
 
 .map-a-card-hours {
@@ -771,8 +780,8 @@ html[data-map-ui="a"] .leaflet-control-attribution {
 }
 
 .map-a-location-trigger.is-active {
-  border-color: var(--map-a-brand);
-  background: var(--map-a-brand);
+  border-color: #2563eb;
+  background: #2563eb;
   color: white;
 }
 
@@ -791,6 +800,92 @@ html[data-map-ui="a"] .leaflet-control-attribution {
   font-weight: 780;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.map-a-search-empty-prompt {
+  min-height: 150px;
+  margin: 12px 0 4px;
+  padding: 22px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--map-a-line);
+  border-radius: 18px;
+  background: rgba(255, 253, 250, 0.9);
+  color: var(--map-a-muted);
+  text-align: center;
+}
+
+.map-a-search-empty-prompt strong {
+  color: var(--map-a-ink);
+  font-size: 15px;
+}
+
+.map-a-search-empty-prompt > span:last-child {
+  max-width: 260px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.map-a-search-empty-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(229, 70, 60, 0.1);
+  color: var(--map-a-brand);
+  font-size: 25px;
+  line-height: 1;
+}
+
+.map-a-search-place-icon svg,
+.map-a-search-photo-icon svg {
+  width: 25px;
+  height: 25px;
+  display: block;
+}
+
+.map-a-search-trigger.is-search-result-mode {
+  position: relative;
+  border-color: rgba(229, 70, 60, 0.34);
+  background: rgba(255, 248, 246, 0.98);
+  color: var(--map-a-brand-deep);
+}
+
+.map-a-search-trigger.is-search-result-mode .map-a-search-copy {
+  display: block;
+  width: 100%;
+  padding-right: 34px;
+}
+
+.map-a-search-result-query {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.map-a-search-result-clear {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  z-index: 1;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(229, 70, 60, 0.12);
+  color: var(--map-a-brand-deep);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .map-a-adjust-trigger {
@@ -815,6 +910,7 @@ html[data-map-ui="a"] .leaflet-control-attribution {
   border-radius: 999px;
   background: #302c29;
   color: white;
+  max-width: 52px;
   font-size: 9px;
   font-weight: 850;
   line-height: 1;
@@ -1461,7 +1557,7 @@ html[data-map-ui="a"] .nav-item.nearby-btn .nav-circle {
 }
 
 .map-a-search-surface.is-photo-tab .map-a-search-row::after {
-  content: "写真の位置情報から検索";
+  content: "写真から逆引き";
   flex: 1;
   color: #201d1b;
   font-size: 16px;
@@ -1469,21 +1565,12 @@ html[data-map-ui="a"] .nav-item.nearby-btn .nav-circle {
 }
 
 .map-a-photo-lookup-note {
-  margin: 4px 0 14px;
-  padding: 15px;
-  display: grid;
-  gap: 7px;
-  border: 1px solid #cfe0f5;
-  border-radius: 16px;
-  background: #f3f8ff;
-  color: #475569;
-  font-size: 12px;
-  line-height: 1.55;
+  margin: 12px 0 4px;
 }
 
-.map-a-photo-lookup-note strong { color: #172033; font-size: 14px; }
-.map-a-photo-lookup-note span { display: block; }
-.map-a-photo-private { color: #0f766e; font-weight: 750; }
+.map-a-photo-lookup-note > span:not(.map-a-search-empty-icon) { max-width: 300px; font-size: 12px; line-height: 1.6; }
+.map-a-photo-caution { color: var(--map-a-muted); }
+.map-a-photo-private { color: #397466; font-weight: 750; }
 
 .map-a-photo-lookup-button {
   width: 100%;
@@ -1543,6 +1630,16 @@ html[data-map-ui="a"] .nav-item.nearby-btn .nav-circle {
   font-size: 13px;
   font-weight: 760;
   cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Do not flash a platform-default gray button while changing tabs. */
+.map-a-search-tab:hover,
+.map-a-search-tab:active {
+  background: transparent !important;
+  box-shadow: none;
 }
 
 .map-a-search-tab.is-active { color: #201d1b; }
@@ -2241,7 +2338,7 @@ html[data-map-ui="a"] .nav-item.nearby-btn .nav-circle {
 
 body.map-a-search-open { overflow: hidden; }
 
-/* Every visible shop: spreadsheet `mapLabel` first, name fallback, max four graphemes, zoom >= 12. */
+/* Explicit spreadsheet `mapLabel` is shown as entered; automatic name fallback is four graphemes. */
 .map-shop-label {
   padding: 3px 6px !important;
   border: 0 !important;
@@ -2368,6 +2465,76 @@ html[data-map-ui="a"] #shop-detail-modal .detail-lineage-bar {
   font-weight: 720;
 }
 
+.detail-photo-sync-status {
+  margin-top: 8px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  color: #8a5a00;
+  background: #fff7dd;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.detail-photo-sync-status button {
+  margin-left: 6px;
+  padding: 3px 7px;
+  border: 1px solid #e8c574;
+  border-radius: 7px;
+  color: #795000;
+  background: #fffdf7;
+  font: inherit;
+  font-weight: 750;
+}
+
+.photo-lightbox {
+  position: fixed;
+  z-index: 8000;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: max(18px, env(safe-area-inset-top)) 18px max(18px, env(safe-area-inset-bottom));
+  background: #000;
+  touch-action: none;
+}
+
+.photo-lightbox.active { display: flex; }
+
+.photo-lightbox img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  transform-origin: center;
+  transition: transform 160ms ease;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.photo-lightbox-close {
+  position: absolute;
+  z-index: 1;
+  top: max(16px, env(safe-area-inset-top));
+  right: 16px;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(255,255,255,.18);
+  font-size: 30px;
+  line-height: 1;
+}
+
+.photo-lightbox-hint {
+  position: absolute;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  color: rgba(255,255,255,.76);
+  font-size: 12px;
+}
+
 .map-a-detail-photo-gallery {
   margin-top: 9px;
   padding: 1px 0 5px;
@@ -2406,6 +2573,8 @@ html[data-map-ui="a"] #shop-detail-modal .detail-lineage-bar {
 @media (max-width: 350px) {
   .map-a-search-copy { font-size: 0; }
   .map-a-search-copy::after { content: "検索"; font-size: 12px; }
+  .map-a-search-trigger.is-search-result-mode .map-a-search-copy { font-size: 12px; }
+  .map-a-search-trigger.is-search-result-mode .map-a-search-copy::after { content: none; }
   .map-a-card-action:not(.is-detail) { display: none; }
 }
 
