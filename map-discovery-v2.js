@@ -3,8 +3,11 @@
 
   const MODE_KEY = 'iekei-map-ui';
   const IS_JIRO_MODE = window.JIRO_INTEGRATED_MODE === true;
+  const UNIFIED_MODE = window.ANDROID_UNIFIED_MODE || (IS_JIRO_MODE ? 'jiro' : 'iekei');
+  const IS_JIRO_ONLY_MODE = UNIFIED_MODE === 'jiro';
+  const IS_MIXED_MODE = UNIFIED_MODE === 'mixed';
   const JIRO_CATEGORY_COLORS = {
-    '直系': '#d9a800',
+    '二郎': '#d9a800',
     '富士丸系': '#e0433e',
     '二郎出身': '#f07c1f',
     'インスパイア': '#2b7de0',
@@ -12,7 +15,9 @@
     '不明': '#909090'
   };
   const JIRO_CATEGORY_OPTIONS = Object.keys(JIRO_CATEGORY_COLORS).map(value => ({ value, label: value }));
-  const SORT_KEY = IS_JIRO_MODE ? 'jiro-map-a-sort' : 'iekei-map-a-sort';
+  const SORT_KEY = IS_JIRO_ONLY_MODE
+    ? 'jiro-map-a-sort-v2'
+    : IS_MIXED_MODE ? 'mixed-map-a-sort-v2' : 'iekei-map-a-sort';
   const JIRO_DEFAULT_CATEGORIES_KEY = 'jiro-map-a-default-categories';
   const CARD_MAP_BEHAVIOR_KEY = 'iekei-map-a-card-map-behavior';
   const SHOP_SEARCH_HISTORY_KEY = 'iekei-map-a-shop-search-history';
@@ -47,7 +52,7 @@
   };
 
   const state = {
-    sort: readStoredValue(SORT_KEY, ['center', 'current', 'open', 'name'], IS_JIRO_MODE ? 'name' : 'center'),
+    sort: readStoredValue(SORT_KEY, ['center', 'current', 'open', 'name'], 'center'),
     defaultCategories: readDefaultFilterCategories(),
     shopSearchSort: 'name',
     // 検索画面の系統絞り込みは、マップの初期表示設定と分ける。
@@ -57,7 +62,7 @@
     shopSearchHistory: readShopSearchHistory(),
     cardMapBehavior: readStoredValue(CARD_MAP_BEHAVIOR_KEY, ['keep', 'zoomout'], 'zoomout'),
     adjustTab: 'filter',
-    activeShopId: null,
+    activeShopId: resumePreviousMap ? readStoredJson(MAP_VIEW_KEY)?.shopId || null : null,
     visibleShops: [],
     totalShopCount: 0,
     placeResults: [],
@@ -75,9 +80,19 @@
     googleSequence: 0,
     googleController: null,
     googleTimer: 0,
+    searchResultMode: {
+      active: false,
+      query: '',
+      shopIds: [],
+      totalCount: 0,
+      openOnly: false,
+      sort: 'name',
+      previous: null
+    },
     googleExpanded: false,
     mapMoveTimer: 0,
     refreshFrame: 0,
+    searchResultRenderToken: 0,
     programmaticMapMove: '',
     programmaticClearTimer: 0,
     mapHooksTarget: null,
@@ -86,7 +101,10 @@
     mapGestureStartZoom: null,
     zoomMoveEndPending: false,
     railGestureStartIndex: null,
+    railGestureStartShopId: null,
     railGestureStartX: 0,
+    railGestureStartScrollLeft: 0,
+    railDragPointerId: null,
     railSettleTimer: 0,
     suppressRailUntil: 0,
     suppressCardClickUntil: 0,
@@ -95,12 +113,14 @@
     cardPhotos: new Map(),
     cardPhotoLoading: new Set(),
     cardPhotoHydrated: new Set(),
+    detailPhotos: new Map(),
     detailPhotoLoading: new Map(),
     detailPhotoHydrated: new Set(),
     mapLabelsVisible: true,
     mapColorMode: 'lineage'
   };
 
+  window.getDiscoverySelectedShopId = () => state.activeShopId;
   let mapShopLabels = {};
   let selectedShopIndicator = null;
   let labelSegmenter = null;
@@ -257,12 +277,13 @@
             <button id="map-a-search-submit" class="map-a-search-submit" type="button">検索</button>
           </div>
           <div class="map-a-search-tabs" role="tablist" aria-label="検索対象">
-            <button class="map-a-search-tab is-active" type="button" role="tab" data-map-a-search-tab="shops" aria-selected="true">ラーメン店 <span id="map-a-shop-count">0</span></button>
+            <button class="map-a-search-tab is-active" type="button" role="tab" data-map-a-search-tab="shops" aria-selected="true">ラーメン店 <span id="map-a-shop-count" hidden></span></button>
             <button class="map-a-search-tab" type="button" role="tab" data-map-a-search-tab="places" aria-selected="false">地名・駅</button>
             <button class="map-a-search-tab" type="button" role="tab" data-map-a-search-tab="photo" aria-selected="false">写真から逆引き</button>
           </div>
         </div>
         <div id="map-a-search-results" class="map-a-search-results"></div>
+        <input id="map-a-photo-lookup-input" type="file" accept="image/*,.heic,.heif" hidden>
         ${renderSearchLineagePanelMarkup()}
       `;
       document.body.appendChild(searchSurface);
@@ -302,11 +323,12 @@
             <div class="map-a-control-group">
               <div class="map-a-control-title-row">
                 <h2 class="map-a-control-title">系統</h2>
-                <span id="map-a-category-summary" class="map-a-control-summary">${IS_JIRO_MODE ? '二郎系' : '家系'}</span>
+                <span id="map-a-category-summary" class="map-a-control-summary">${IS_JIRO_ONLY_MODE ? '二郎系' : IS_MIXED_MODE ? '家系・二郎系' : '家系'}</span>
               </div>
               <div class="map-a-category-groups">
-                ${renderAdjustCategoryGroup('iekei', IS_JIRO_MODE ? '二郎系' : '家系')}
-                ${IS_JIRO_MODE ? '' : renderAdjustCategoryGroup('isse', '壱系')}
+                ${renderAdjustCategoryGroup('iekei', IS_JIRO_ONLY_MODE ? '二郎系' : '家系')}
+                ${IS_JIRO_ONLY_MODE ? '' : renderAdjustCategoryGroup('isse', '壱系')}
+                ${IS_MIXED_MODE ? renderAdjustCategoryGroup('jiro', '二郎系') : ''}
               </div>
             </div>
             <div class="map-a-control-group">
@@ -340,7 +362,7 @@
               ${radioRow('map-a-sort', 'center', '地図の中心に近い順', '地図を動かした後に近い順へ更新')}
               ${radioRow('map-a-sort', 'current', '現在地・指定地点に近い順', '位置を指定している時に利用できます')}
               ${radioRow('map-a-sort', 'open', '営業中を優先', '営業中の店を距離順で先に表示')}
-              ${radioRow('map-a-sort', 'name', IS_JIRO_MODE ? 'カテゴリ・店名順' : '店名 あ→ん', IS_JIRO_MODE ? '元の二郎マップと同じ並び順' : '店舗名の五十音順')}
+              ${radioRow('map-a-sort', 'name', IS_JIRO_ONLY_MODE ? 'カテゴリ・店名順' : '店名 あ→ん', IS_JIRO_ONLY_MODE ? '二郎系のカテゴリ順で表示' : '店舗名の五十音順')}
             </div>
             </div>
           </section>
@@ -349,8 +371,9 @@
               <h2 class="map-a-control-title">マップに表示する系統の初期設定</h2>
               <p class="map-a-schedule-help">マップの次回起動時と「リセット」時に使います。</p>
               <div class="map-a-category-groups map-a-default-category-groups">
-                ${renderDefaultCategoryGroup('iekei', IS_JIRO_MODE ? '二郎系' : '家系')}
-                ${IS_JIRO_MODE ? '' : renderDefaultCategoryGroup('isse', '壱系')}
+                ${renderDefaultCategoryGroup('iekei', IS_JIRO_ONLY_MODE ? '二郎系' : '家系')}
+                ${IS_JIRO_ONLY_MODE ? '' : renderDefaultCategoryGroup('isse', '壱系')}
+                ${IS_MIXED_MODE ? renderDefaultCategoryGroup('jiro', '二郎系') : ''}
               </div>
             </div>
             <div class="map-a-control-group">
@@ -378,17 +401,19 @@
   }
 
   function getAdjustCategoryOptions(group) {
-    if (IS_JIRO_MODE) return group === 'iekei' ? JIRO_CATEGORY_OPTIONS : [];
+    if (IS_JIRO_ONLY_MODE) return group === 'iekei' ? JIRO_CATEGORY_OPTIONS.map(option => ({ ...option, group: 'jiro' })) : [];
+    if (IS_MIXED_MODE && group === 'jiro') return JIRO_CATEGORY_OPTIONS.map(option => ({ ...option, group: 'jiro' }));
     return Array.from(document.querySelectorAll(`#advanced-filter-modal input.category-${group}`)).map(input => ({
       value: String(input.value || '').trim(),
-      label: input.closest('label')?.querySelector('span')?.textContent?.trim() || String(input.value || '').trim()
+      label: input.closest('label')?.querySelector('span')?.textContent?.trim() || String(input.value || '').trim(),
+      group
     })).filter(option => option.value);
   }
 
   function renderAdjustCategoryGroup(group, title) {
     const options = getAdjustCategoryOptions(group);
     const buttons = options.map(option => {
-      const color = getCategoryUiColor(option.value);
+      const color = getCategoryUiColor(option.value, option.group || group);
       return `<button class="map-a-category-chip" type="button" data-map-a-category="${escapeMarkup(option.value)}" aria-pressed="false" style="--map-a-category-color:${escapeMarkup(color)}"><span class="map-a-category-dot" aria-hidden="true"></span><span>${escapeMarkup(option.label)}</span></button>`;
     }).join('');
     return `<section class="map-a-category-group" aria-label="${escapeMarkup(title)}">
@@ -403,7 +428,7 @@
   function renderDefaultCategoryGroup(group, title) {
     const options = getAdjustCategoryOptions(group);
     const buttons = options.map(option => {
-      const color = getCategoryUiColor(option.value);
+      const color = getCategoryUiColor(option.value, option.group || group);
       return `<button class="map-a-category-chip" type="button" data-map-a-default-category="${escapeMarkup(option.value)}" aria-pressed="false" style="--map-a-category-color:${escapeMarkup(color)}"><span class="map-a-category-dot" aria-hidden="true"></span><span>${escapeMarkup(option.label)}</span></button>`;
     }).join('');
     return `<section class="map-a-category-group" aria-label="${escapeMarkup(title)}の初期設定">
@@ -416,10 +441,12 @@
   }
 
   function readDefaultFilterCategories() {
-    if (IS_JIRO_MODE) {
+    if (IS_JIRO_ONLY_MODE) {
       try {
         const stored = JSON.parse(localStorage.getItem(JIRO_DEFAULT_CATEGORIES_KEY) || '[]');
-        return Array.isArray(stored) ? stored.filter(value => JIRO_CATEGORY_COLORS[value]) : [];
+        return Array.isArray(stored)
+          ? stored.map(value => value === '直系' ? '二郎' : value).filter(value => JIRO_CATEGORY_COLORS[value])
+          : [];
       } catch (_) {
         return [];
       }
@@ -431,7 +458,7 @@
   function renderSearchLineagePanelMarkup() {
     const renderGroup = (group, title) => {
       const buttons = getAdjustCategoryOptions(group).map(option => {
-        const color = getCategoryUiColor(option.value);
+        const color = getCategoryUiColor(option.value, option.group || group);
         return `<button class="map-a-category-chip" type="button" data-map-a-search-category="${escapeMarkup(option.value)}" aria-pressed="false" style="--map-a-category-color:${escapeMarkup(color)}"><span class="map-a-category-dot" aria-hidden="true"></span><span>${escapeMarkup(option.label)}</span></button>`;
       }).join('');
       return `<section class="map-a-search-lineage-group" aria-label="${escapeMarkup(title)}">
@@ -451,8 +478,9 @@
         </div>
         <div class="map-a-search-lineage-body">
           <button class="map-a-search-lineage-all is-active" type="button" data-map-a-search-category-all aria-pressed="true">すべての系統</button>
-          ${renderGroup('iekei', IS_JIRO_MODE ? '二郎系' : '家系')}
-          ${IS_JIRO_MODE ? '' : renderGroup('isse', '壱系')}
+          ${renderGroup('iekei', IS_JIRO_ONLY_MODE ? '二郎系' : '家系')}
+          ${IS_JIRO_ONLY_MODE ? '' : renderGroup('isse', '壱系')}
+          ${IS_MIXED_MODE ? renderGroup('jiro', '二郎系') : ''}
         </div>
         <div class="map-a-search-lineage-footer">
           <button id="map-a-search-lineage-reset" class="map-a-reset-button" type="button">すべて表示</button>
@@ -462,12 +490,16 @@
   }
 
   function getAllAdjustCategoryValues() {
-    return ['iekei', 'isse'].flatMap(group => getAdjustCategoryOptions(group).map(option => option.value));
+    return getCategoryGroups().flatMap(group => getAdjustCategoryOptions(group).map(option => option.value));
   }
 
-  function getCategoryUiColor(category) {
-    if (IS_JIRO_MODE) return JIRO_CATEGORY_COLORS[category] || JIRO_CATEGORY_COLORS['不明'];
-    return typeof getMapCategoryColor === 'function' ? getMapCategoryColor(category) : '#64748b';
+  function getCategoryGroups() {
+    return IS_JIRO_ONLY_MODE ? ['iekei'] : IS_MIXED_MODE ? ['iekei', 'isse', 'jiro'] : ['iekei', 'isse'];
+  }
+
+  function getCategoryUiColor(category, group = '') {
+    if (IS_JIRO_ONLY_MODE || group === 'jiro') return JIRO_CATEGORY_COLORS[category] || JIRO_CATEGORY_COLORS['不明'];
+    return typeof getMapCategoryColor === 'function' ? getMapCategoryColor(category, 'iekei') : '#64748b';
   }
 
   function getEffectiveAdjustCategorySelection() {
@@ -517,7 +549,13 @@
     if (!root || root.dataset.bound === 'true') return;
     root.dataset.bound = 'true';
 
-    document.getElementById('map-a-search-trigger')?.addEventListener('click', openSearchSurface);
+    document.getElementById('map-a-search-trigger')?.addEventListener('click', event => {
+      if (event.target.closest('[data-map-a-search-result-clear]')) {
+        clearSearchResultMode();
+        return;
+      }
+      openSearchSurface();
+    });
     document.getElementById('map-a-open-toggle')?.addEventListener('click', toggleOpenOnlyImmediately);
     document.getElementById('map-a-location-trigger')?.addEventListener('click', handleCurrentLocationClick);
     document.getElementById('map-a-adjust-trigger')?.addEventListener('click', openAdjustPanel);
@@ -550,8 +588,10 @@
 
     const rail = document.getElementById('map-a-card-rail');
     rail?.addEventListener('pointerdown', beginRailGesture, { passive: true });
+    rail?.addEventListener('pointermove', moveRailGesture, { passive: false });
     rail?.addEventListener('pointerup', finishRailGesture, { passive: true });
     rail?.addEventListener('pointercancel', cancelRailGesture, { passive: true });
+    rail?.addEventListener('lostpointercapture', cancelRailGesture, { passive: true });
     rail?.addEventListener('scroll', handleRailScroll, { passive: true });
     rail?.addEventListener('scrollend', handleRailScrollEnd, { passive: true });
     rail?.addEventListener('click', handleRailClick);
@@ -566,6 +606,7 @@
     document.getElementById('map-a-search-back')?.addEventListener('click', closeSearchSurface);
     const searchInput = document.getElementById('map-a-search-input');
     searchInput?.addEventListener('input', () => {
+      if (state.searchResultMode?.active && !searchInput.value.trim()) clearSearchResultMode();
       if (state.searchTab === 'places') schedulePlaceSearch();
       else {
         cancelPlaceSearch(false);
@@ -587,6 +628,7 @@
     document.getElementById('map-a-search-clear')?.addEventListener('click', () => {
       if (!searchInput) return;
       searchInput.value = '';
+      if (state.searchResultMode?.active) clearSearchResultMode();
       cancelPlaceSearch(true);
       cancelGoogleSearch(true);
       state.googleExpanded = false;
@@ -599,6 +641,7 @@
       button.addEventListener('click', () => setSearchTab(button.dataset.mapASearchTab));
     });
     document.getElementById('map-a-search-results')?.addEventListener('click', handleSearchResultClick);
+    document.getElementById('map-a-photo-lookup-input')?.addEventListener('change', handleBrowserPhotoLookup);
     document.getElementById('map-a-search-lineage-scrim')?.addEventListener('click', closeSearchLineagePanel);
     document.getElementById('map-a-search-lineage-close')?.addEventListener('click', closeSearchLineagePanel);
     document.getElementById('map-a-search-lineage-done')?.addEventListener('click', closeSearchLineagePanel);
@@ -666,7 +709,7 @@
         }
         const result = classicInitMap.apply(this, args);
         installMapHooks();
-        scheduleRailRefresh({ selectFirst: true, resetScroll: true });
+        scheduleRailRefresh(resumePreviousMap ? { preserveActive: true, scrollToShopId: state.activeShopId } : { selectFirst: true, resetScroll: true });
         return result;
       };
     }
@@ -675,7 +718,14 @@
       const classicUpdateMarkers = updateMarkers;
       updateMarkers = function mapDiscoveryUpdateMarkers(...args) {
         clearMapShopLabels();
-        const result = classicUpdateMarkers.apply(this, args);
+        let result;
+        let markerError = null;
+        try {
+          result = classicUpdateMarkers.apply(this, args);
+        } catch (error) {
+          markerError = error;
+        }
+        ensureSearchResultMarkers();
         ensureForcedMarker();
         installMapHooks();
         decorateCurrentMarkers();
@@ -683,6 +733,8 @@
         rebuildMapShopLabels();
         syncMapShopLabels();
         scheduleRailRefresh({ preserveActive: true });
+        if (markerError && !isSearchResultMode()) throw markerError;
+        if (markerError) console.warn('検索結果の店舗ピンを補完しました:', markerError);
         return result;
       };
     }
@@ -738,11 +790,15 @@
   }
 
   function handleMapZoomStart() {
+    if (locationCameraMoveInProgress) return;
     window.clearTimeout(state.mapMoveTimer);
     state.mapGestureSource = 'zoom';
     state.mapGestureStartCenter = null;
     state.mapGestureStartZoom = null;
     state.zoomMoveEndPending = true;
+    // ユーザーが縮尺を操作したら、位置情報の取得は続けたまま
+    // カメラの自動追従だけを解除する。
+    window.pauseLocationUpdatesForMapInteraction?.();
   }
 
   function handleMapZoomEnd() {
@@ -756,6 +812,7 @@
     state.mapGestureStartCenter = map?.getCenter?.() || null;
     state.mapGestureStartZoom = map?.getZoom?.() ?? null;
     if (isMapUiA()) map.closePopup();
+    window.pauseLocationUpdatesForMapInteraction?.();
   }
 
   function handleMapMoveEnd() {
@@ -819,6 +876,25 @@
     marker.__mapDiscoveryForced = true;
     markers[shop.id] = marker;
     markerHalos[shop.id] = [];
+  }
+
+  function ensureSearchResultMarkers() {
+    if (!isSearchResultMode() || !map || typeof L === 'undefined') return;
+    getFilteredShops().forEach(shop => {
+      if (markers?.[shop.id]) return;
+      const position = [Number(shop.lat), Number(shop.lng)];
+      if (!position.every(Number.isFinite)) return;
+      const marker = L.circleMarker(position, {
+        radius: String(state.activeShopId) === String(shop.id) ? 11 : 9,
+        color: state.mapColorMode === 'visit' ? '#25211f' : '#ffffff',
+        weight: String(state.activeShopId) === String(shop.id) ? 4 : 2,
+        opacity: 1,
+        fillColor: getMapLayerMarkerColor(shop),
+        fillOpacity: 1
+      }).addTo(map);
+      markers[shop.id] = marker;
+      markerHalos[shop.id] = [];
+    });
   }
 
   function releaseForcedShopMarker() {
@@ -929,7 +1005,7 @@
   }
 
   function getMapLabelMinZoom(shop) {
-    if (shop?.category === '直系') return MAP_LABEL_CHOKUSEI_MIN_ZOOM;
+    if (shop?.category === '直系' || shop?.category === '二郎') return MAP_LABEL_CHOKUSEI_MIN_ZOOM;
     if (isCapitalRegionShop(shop)) return MAP_LABEL_CAPITAL_REGION_MIN_ZOOM;
     if (isTokaiKansaiShop(shop)) return MAP_LABEL_TOKAI_KANSAI_MIN_ZOOM;
     return MAP_LABEL_OTHER_REGION_MIN_ZOOM;
@@ -996,7 +1072,11 @@
   }
 
   function getShopMapLabel(shop) {
-    const raw = [shop?.mapLabel, shop?.shortName, shop?.['店舗名省略'], shop?.['店舗名の省略']]
+    const explicitMapLabel = String(shop?.mapLabel ?? '').normalize('NFC').trim();
+    // mapLabelを明示した店舗は、入力値をそのまま表示する。
+    if (explicitMapLabel) return explicitMapLabel;
+
+    const raw = [shop?.shortName, shop?.['店舗名省略'], shop?.['店舗名の省略']]
       .find(value => String(value ?? '').trim()) ?? shop?.name ?? '';
     const labelWithoutBoilerplate = String(raw)
       .replace(/【[^】]*】/gu, '')
@@ -1021,7 +1101,177 @@
     });
   }
 
+  function isSearchResultMode() {
+    return state.searchResultMode?.active === true;
+  }
+
+  function hasValidMapCoordinates(shop) {
+    return shop?.lat != null && shop?.lng != null &&
+      String(shop.lat).trim() !== '' && String(shop.lng).trim() !== '' &&
+      Number.isFinite(Number(shop.lat)) && Number.isFinite(Number(shop.lng)) &&
+      Math.abs(Number(shop.lat)) <= 90 && Math.abs(Number(shop.lng)) <= 180;
+  }
+
+  window.getMapDiscoverySearchResultIds = () => isSearchResultMode()
+    ? [...state.searchResultMode.shopIds]
+    : null;
+  window.getMapDiscoverySearchResultOpenOnly = () => isSearchResultMode()
+    ? !!state.searchResultMode.openOnly
+    : false;
+
+  function getSearchResultShopIds(query) {
+    const normalized = normalizeSearch(query);
+    const selectedCategories = Array.from(getEffectiveShopSearchCategorySelection());
+    const hasCategoryFilter = state.shopSearchCategories !== null;
+    const hasNewFilter = state.shopSearchNewOnly;
+    const center = getMapFocusLatLng();
+    const distanceOrigin = userLocation || center;
+    let candidates = (Array.isArray(shops) ? shops : []).filter(shop =>
+      shop.name !== 'ダミー' && hasValidMapCoordinates(shop)
+    );
+    if (hasCategoryFilter) candidates = candidates.filter(shop => selectedCategories.includes(shop.category));
+    if (hasNewFilter) candidates = candidates.filter(hasNewShopMarker);
+    candidates = candidates.map(shop => ({
+      shop,
+      rank: getShopSearchRank(shop, normalized),
+      distance: calculateDistance(distanceOrigin.lat, distanceOrigin.lng, Number(shop.lat), Number(shop.lng)),
+      openDate: getShopOpenSortValue(shop)
+    })).filter(item => Number.isFinite(item.rank));
+    candidates.sort((a, b) => {
+      if (state.shopSearchSort === 'distance') {
+        return (a.distance - b.distance) || (a.rank - b.rank) || compareShopSearchNames(a, b);
+      }
+      if (state.shopSearchSort === 'open') {
+        const aHasDate = Number.isFinite(a.openDate);
+        const bHasDate = Number.isFinite(b.openDate);
+        if (aHasDate !== bHasDate) return aHasDate ? -1 : 1;
+        if (aHasDate && a.openDate !== b.openDate) return b.openDate - a.openDate;
+      }
+      return (a.rank - b.rank) || compareShopSearchNames(a, b) || (a.distance - b.distance);
+    });
+    return candidates.map(item => item.shop.id);
+  }
+
+  function syncSearchResultModeControls() {
+    const mode = state.searchResultMode;
+    const trigger = document.getElementById('map-a-search-trigger');
+    const copy = trigger?.querySelector('.map-a-search-copy');
+    const filterLabel = document.getElementById('map-a-filter-label');
+    if (trigger) {
+      trigger.classList.toggle('is-search-result-mode', !!mode?.active);
+      const resultLabel = getSearchResultModeLabel(mode);
+      trigger.setAttribute('aria-label', mode?.active
+        ? `${resultLabel}の検索結果。検索結果を解除`
+        : '店舗名、駅名、地名を検索');
+      trigger.querySelector('.map-a-search-result-clear')?.remove();
+      if (mode?.active) {
+        trigger.insertAdjacentHTML('beforeend', '<span class="map-a-search-result-clear" data-map-a-search-result-clear aria-label="検索結果を解除">×</span>');
+      }
+    }
+    if (copy) {
+      copy.innerHTML = mode?.active
+        ? `<span class="map-a-search-result-query">${escapeText(getSearchResultModeLabel(mode))}</span>`
+        : '店名・駅・地名を検索';
+    }
+    if (filterLabel) {
+      filterLabel.textContent = mode?.active
+        ? (mode.sort === 'distance' ? '距離順' : '名前順')
+        : '';
+      filterLabel.classList.toggle('is-visible', !!mode?.active);
+      filterLabel.setAttribute('aria-hidden', String(!mode?.active));
+    }
+  }
+
+  function getSearchResultModeLabel(mode = state.searchResultMode) {
+    const query = String(mode?.query || '').trim();
+    if (query) return `「${query}」 ${mode.totalCount}件`;
+    const hasCategoryFilter = state.shopSearchCategories !== null;
+    const hasNewFilter = state.shopSearchNewOnly;
+    if (hasCategoryFilter || hasNewFilter) {
+      const conditions = [];
+      if (hasCategoryFilter) conditions.push(getShopSearchCategorySummary());
+      if (hasNewFilter) conditions.push('新店舗');
+      return `${conditions.join('・')} ${mode.totalCount}件`;
+    }
+    return '店名・駅・地名を検索';
+  }
+
+  function refreshSearchResultMap(options = {}) {
+    const token = ++state.searchResultRenderToken;
+    window.clearTimeout(state.railSettleTimer);
+    window.clearTimeout(state.mapMoveTimer);
+    renderShopList();
+    renderRail(options);
+    updateMarkers();
+
+    // Leaflet の描画と重なっても、検索対象のピン・店舗名を確実に再同期する。
+    const resync = () => {
+      if (token !== state.searchResultRenderToken || !map) return;
+      map.invalidateSize({ pan: false, animate: false });
+      syncMapShopLabels();
+      applyMapLayerMarkerStyles();
+    };
+    requestAnimationFrame(resync);
+    window.setTimeout(resync, 160);
+  }
+
+  function enterSearchResultMode(shop, query) {
+    if (!shop) return;
+    const normalizedQuery = String(query || '').trim();
+    const hasSearchFilter = state.shopSearchCategories !== null || state.shopSearchNewOnly;
+    if (!normalizedQuery && !hasSearchFilter) return;
+    const mode = state.searchResultMode;
+    if (!mode.active) {
+      mode.previous = {
+        sort: state.sort,
+        showOpenOnly: !!showOpenOnly,
+        nearbyMode: !!nearbyMode
+      };
+    }
+    mode.active = true;
+    mode.query = normalizedQuery;
+    mode.shopIds = getSearchResultShopIds(mode.query);
+    if (!mode.shopIds.includes(shop.id)) mode.shopIds.push(shop.id);
+    mode.totalCount = mode.shopIds.length;
+    mode.openOnly = false;
+    mode.sort = state.shopSearchSort === 'distance' ? 'distance' : 'name';
+    state.forceShopId = null;
+    state.activeShopId = shop.id;
+    syncSearchResultModeControls();
+    syncAllControls();
+    refreshSearchResultMap({ preserveActive: true, scrollToShopId: shop.id });
+  }
+
+  function clearSearchResultMode() {
+    const mode = state.searchResultMode;
+    if (!mode.active) return;
+    const previous = mode.previous;
+    mode.active = false;
+    mode.query = '';
+    mode.shopIds = [];
+    mode.totalCount = 0;
+    mode.openOnly = false;
+    mode.previous = null;
+    state.forceShopId = null;
+    if (previous) {
+      state.sort = previous.sort;
+      showOpenOnly = previous.showOpenOnly;
+    }
+    syncSearchResultModeControls();
+    syncAllControls();
+    refreshSearchResultMap({ selectFirst: true, resetScroll: true });
+  }
+
   function getFilteredShops(overrides = {}) {
+    const searchMode = state.searchResultMode;
+    if (searchMode?.active) {
+      const ids = new Set(searchMode.shopIds.map(id => String(id)));
+      let result = (Array.isArray(shops) ? shops : []).filter(shop =>
+        ids.has(String(shop.id)) && hasValidMapCoordinates(shop) && shop.name !== 'ダミー'
+      );
+      if (searchMode.openOnly) result = result.filter(shop => isOpenNow(shop.openingHours));
+      return result;
+    }
     const filter = {
       openOnly: overrides.openOnly ?? !!showOpenOnly,
       want: overrides.want ?? !!advancedFilterSettings?.wantToGo,
@@ -1031,7 +1281,7 @@
       visited: overrides.visited ?? !!advancedFilterSettings?.visited
     };
     let result = (Array.isArray(shops) ? shops : []).filter(shop =>
-      Number.isFinite(Number(shop.lat)) && Number.isFinite(Number(shop.lng)) && shop.name !== 'ダミー'
+      hasValidMapCoordinates(shop) && shop.name !== 'ダミー'
     );
     const settings = advancedFilterSettings || { categories: [], day: '', time: '' };
     if (settings.noCategories) return [];
@@ -1096,6 +1346,8 @@
 
   function sortRailShops(list, sortMode = state.sort) {
     const center = getMapFocusLatLng();
+    const searchMode = state.searchResultMode;
+    if (searchMode?.active) sortMode = searchMode.sort === 'distance' ? 'center' : 'name';
     const distanceFrom = sortMode === 'current' && userLocation ? userLocation : center;
     const withDistance = list.map(shop => ({
       shop,
@@ -1103,8 +1355,8 @@
     }));
     withDistance.sort((a, b) => {
       if (sortMode === 'name') {
-        if (IS_JIRO_MODE) {
-          const categories = ['直系', '富士丸系', '二郎出身', 'インスパイア', '資本系', '不明'];
+        if (IS_JIRO_ONLY_MODE) {
+          const categories = ['二郎', '富士丸系', '二郎出身', 'インスパイア', '資本系', '不明'];
           const categoryDiff = categories.indexOf(a.shop.category) - categories.indexOf(b.shop.category);
           if (categoryDiff) return categoryDiff;
         }
@@ -1125,10 +1377,11 @@
   function renderRail(options = {}) {
     const rail = document.getElementById('map-a-card-rail');
     if (!rail || !map) return;
+    const renderToken = state.railRenderToken = (state.railRenderToken || 0) + 1;
     if (state.sort === 'current' && !userLocation) state.sort = 'center';
     const allSorted = sortRailShops(getFilteredShops());
     state.totalShopCount = allSorted.length;
-    let sorted = allSorted.slice(0, MAX_RAIL_SHOPS);
+    let sorted = state.searchResultMode?.active ? allSorted : allSorted.slice(0, MAX_RAIL_SHOPS);
 
     if (state.forceShopId && !sorted.some(item => String(item.shop.id) === String(state.forceShopId))) {
       const forced = findShop(state.forceShopId);
@@ -1144,7 +1397,7 @@
     state.visibleShops = sorted;
     let selectedNearestJiroShop = false;
     if (options.selectFirst || !sorted.some(item => String(item.shop.id) === String(state.activeShopId))) {
-      if (IS_JIRO_MODE && state.sort === 'name' && sorted.length) {
+      if (IS_JIRO_ONLY_MODE && state.sort === 'name' && sorted.length) {
         const nearest = sorted.reduce((best, item) => item.distance < best.distance ? item : best, sorted[0]);
         state.activeShopId = nearest.shop.id;
         selectedNearestJiroShop = true;
@@ -1163,6 +1416,7 @@
     void hydrateRailCardPhotos(sorted.map(item => item.shop.id));
 
     requestAnimationFrame(() => {
+      if (renderToken !== state.railRenderToken) return;
       if (selectedNearestJiroShop) {
         scrollRailToShop(state.activeShopId, false, false);
       } else if (options.resetScroll || options.selectFirst) {
@@ -1176,16 +1430,18 @@
   function renderRailCard(item, index) {
     const shop = item.shop;
     const status = getOpenStatus(shop.openingHours);
+    const hasOpeningHours = !!shop.openingHours;
     const hasScheduledTime = advancedFilterSettings.day !== '' && advancedFilterSettings.time !== '';
     const statusState = hasScheduledTime ? 'open' : status.state;
     const statusLabel = hasScheduledTime
       ? '営業予定'
+      : !hasOpeningHours ? (shop.closed ? '閉店' : '営業時間不明')
       : status.state === 'open' ? '営業中' : status.state === 'soon' ? '閉店間近' : '時間外';
     const origin = getOriginShop(shop);
     const xURL = typeof getShopXURL === 'function' ? getShopXURL(shop) : String(shop.xURL || '');
     const googleURL = String(shop.googleMapUrl || '');
     const active = String(shop.id) === String(state.activeShopId);
-    const color = typeof getMapCategoryColor === 'function' ? getMapCategoryColor(shop.category) : '#64748b';
+    const color = typeof getMapCategoryColor === 'function' ? getMapCategoryColor(shop.category, shop.sourceType) : '#64748b';
     const photoURLs = getCachedRailCardPhotos(shop.id);
     const todayHours = typeof getTodayHours === 'function' ? getTodayHours(shop.openingHours) : '';
     const cardHours = hasScheduledTime
@@ -1201,7 +1457,7 @@
           <span class="map-a-card-distance">${formatDistance(item.distance)}</span>
         </button>
         <div class="map-a-card-meta">
-          <span class="map-a-chip is-category">${escapeText(getShortCategoryName(shop.category))}</span>
+          <span class="map-a-chip is-category">${escapeText(getShortCategoryName(shop.category, shop.sourceType))}</span>
           ${origin ? `<button class="map-a-chip is-origin" type="button" data-card-action="origin" data-origin-id="${escapeAttribute(origin.id)}" aria-label="出身店 ${escapeAttribute(originLabel)}を家系図で表示">${escapeText(originLabel)}</button>` : ''}
           <span class="map-a-card-area-inline">${icons.pin}<span>${escapeText(shop.area || 'エリア情報なし')}</span></span>
           <span class="map-a-chip is-status is-${statusState}">${statusLabel}</span>
@@ -1313,8 +1569,8 @@
   function getCachedRailCardPhotos(shopId) {
     const key = String(shopId);
     if (state.cardPhotos.has(key)) return normalizeRailCardPhotos(state.cardPhotos.get(key));
-    const localPhotos = normalizeRailCardPhotos(getLatestLocalPhotoReferences(key));
-    const photos = mergeRailCardPhotos(localPhotos, getCachedCommunityPhotos(key));
+    // 「投稿写真」は公開済みのクラウド写真のみ。端末内の写真は混ぜない。
+    const photos = getCachedCommunityPhotos(key);
     if (photos.length) state.cardPhotos.set(key, photos);
     return photos;
   }
@@ -1352,17 +1608,6 @@
       const remoteShopIds = [];
       for (const shopId of pending) {
         let photos = mergeRailCardPhotos(getCachedRailCardPhotos(shopId), getCachedCommunityPhotos(shopId));
-        const localReferences = getLatestLocalPhotoReferences(shopId);
-        if (localReferences.length && typeof loadPhotoFromFile === 'function') {
-          const loadedLocalPhotos = await Promise.all(localReferences.map(async reference => {
-            try {
-              return normalizeRailCardPhoto(await loadPhotoFromFile(reference));
-            } catch (_) {
-              return '';
-            }
-          }));
-          photos = mergeRailCardPhotos(loadedLocalPhotos, photos);
-        }
         if (photos.length) applyRailCardPhotos(shopId, photos);
         remoteShopIds.push(shopId);
       }
@@ -1408,24 +1653,11 @@
 
   async function hydrateDetailShopPhotos(shopId) {
     const key = String(shopId);
-    if (state.detailPhotoHydrated.has(key)) return getCachedRailCardPhotos(key);
+    if (state.detailPhotoHydrated.has(key)) return normalizeRailCardPhotos(state.detailPhotos.get(key));
     if (state.detailPhotoLoading.has(key)) return state.detailPhotoLoading.get(key);
 
     const request = (async () => {
-      let localPhotos = normalizeRailCardPhotos(getLatestLocalPhotoReferences(key));
-      let photos = mergeRailCardPhotos(localPhotos, getCachedRailCardPhotos(key), getCachedCommunityPhotos(key));
-      const localReferences = getLatestLocalPhotoReferences(key);
-      if (localReferences.length && typeof loadPhotoFromFile === 'function') {
-        const loadedLocalPhotos = await Promise.all(localReferences.map(async reference => {
-          try {
-            return normalizeRailCardPhoto(await loadPhotoFromFile(reference));
-          } catch (_) {
-            return '';
-          }
-        }));
-        localPhotos = mergeRailCardPhotos(loadedLocalPhotos, localPhotos);
-        photos = mergeRailCardPhotos(localPhotos, photos);
-      }
+      let photos = getCachedCommunityPhotos(key);
 
       if (typeof supabaseClient !== 'undefined' && supabaseClient && typeof fetchPhotoListMapForVisits === 'function') {
         const { data: visitRows, error } = await supabaseClient
@@ -1445,10 +1677,10 @@
         visibleVisits.forEach(visit => {
           remotePhotos = mergeRailCardPhotos(remotePhotos, photoMap.get(visit.id));
         });
-        photos = mergeRailCardPhotos(localPhotos, remotePhotos, photos);
+        photos = mergeRailCardPhotos(remotePhotos, photos);
       }
 
-      applyRailCardPhotos(key, photos);
+      state.detailPhotos.set(key, photos);
       state.detailPhotoHydrated.add(key);
       return photos;
     })().catch(error => {
@@ -1467,16 +1699,27 @@
     const section = document.getElementById('detail-photo-section');
     const gallery = document.getElementById('detail-photo-gallery');
     const count = document.getElementById('detail-photo-count');
+    const syncStatus = document.getElementById('detail-photo-sync-status');
     if (!section || !gallery || !count || section.dataset.shopId !== key) return;
     const photos = normalizeRailCardPhotos(values);
-    section.hidden = photos.length === 0;
+    const pendingPhotoCount = Number(window.getPendingPublicPhotoCount?.(key) || 0);
+    section.hidden = photos.length === 0 && pendingPhotoCount === 0;
     count.textContent = photos.length ? `${photos.length}枚` : '';
+    gallery.hidden = photos.length === 0;
+    if (syncStatus) {
+      syncStatus.hidden = pendingPhotoCount === 0;
+      syncStatus.innerHTML = pendingPhotoCount > 0
+        ? `写真をアップロード中です… <button type="button" data-retry-photo-sync>今すぐ再試行</button>`
+        : '';
+      syncStatus.querySelector('[data-retry-photo-sync]')?.addEventListener('click', () => window.retryPendingPhotoSync?.());
+    }
     gallery.innerHTML = photos.map((photo, index) => `
       <figure class="map-a-detail-photo">
         <img src="${escapeAttribute(photo)}" loading="lazy" alt="${escapeAttribute(findShop(key)?.name || '店舗')}の投稿写真 ${index + 1}枚目">
       </figure>`).join('');
     gallery.querySelectorAll('img').forEach(image => {
       image.addEventListener('error', () => image.closest('.map-a-detail-photo')?.remove(), { once: true });
+      image.addEventListener('click', () => window.openPhotoLightbox?.(image.currentSrc || image.src, image.alt));
     });
   }
 
@@ -1485,12 +1728,29 @@
     const section = document.getElementById('detail-photo-section');
     if (!section) return;
     section.dataset.shopId = key;
-    updateDetailPhotoGallery(key, getCachedRailCardPhotos(key));
+    updateDetailPhotoGallery(key, normalizeRailCardPhotos(state.detailPhotos.get(key) || getCachedCommunityPhotos(key)));
     const photos = await hydrateDetailShopPhotos(key);
     updateDetailPhotoGallery(key, photos);
   }
 
   window.renderMapDiscoveryDetailPhotos = renderMapDiscoveryDetailPhotos;
+
+  // 写真同期完了後に公開写真を再取得する。
+  window.refreshMapDiscoveryShopPhotos = function refreshMapDiscoveryShopPhotos(shopId) {
+    const key = String(shopId || '');
+    if (!key) return;
+    state.cardPhotos.delete(key);
+    state.cardPhotoHydrated.delete(key);
+    state.detailPhotos.delete(key);
+    state.detailPhotoHydrated.delete(key);
+    state.detailPhotoLoading.delete(key);
+    void hydrateRailCardPhotos([key]);
+    const modal = document.getElementById('shop-detail-modal');
+    const section = document.getElementById('detail-photo-section');
+    if (modal?.classList.contains('active') && section?.dataset.shopId === key) {
+      void renderMapDiscoveryDetailPhotos(key);
+    }
+  };
 
   function getOriginShop(shop) {
     if (!shop?.parent) return null;
@@ -1505,9 +1765,13 @@
       center: '地図中心から近い順',
       current: '現在地・指定地点から近い順',
       open: '営業中を優先',
-      name: IS_JIRO_MODE ? 'カテゴリ・店名順' : '店名 あ→ん'
+      name: IS_JIRO_ONLY_MODE ? 'カテゴリ・店名順' : '店名 あ→ん'
     };
-    if (heading) heading.textContent = state.sort === 'center' ? '中心から近いお店' : labels[state.sort];
+    if (heading) {
+      heading.textContent = state.searchResultMode?.active
+        ? `「${state.searchResultMode.query}」の検索結果`
+        : state.sort === 'center' ? '中心から近いお店' : labels[state.sort];
+    }
     const index = Math.max(0, state.visibleShops.findIndex(item => String(item.shop.id) === String(state.activeShopId)));
     const total = Math.max(state.totalShopCount, state.visibleShops.length);
     if (position) position.textContent = state.visibleShops.length ? `${index + 1} / ${total}` : '0 / 0';
@@ -1515,16 +1779,59 @@
 
   function beginRailGesture(event) {
     const rail = event.currentTarget;
+    // カード内のボタン／リンクはドラッグ対象にせず、それぞれの操作を優先する。
+    if (event.target.closest('[data-card-action]')) return;
+    const card = event.target.closest('.map-a-card');
     state.railGestureStartIndex = getNearestRailIndex(rail);
+    state.railGestureStartShopId = card?.dataset.shopId || null;
     state.railGestureStartX = event.clientX;
+    state.railGestureStartScrollLeft = rail.scrollLeft;
+
+    // PCでは、カードを左クリックして左右へドラッグできるようにする。
+    if (event.pointerType === 'mouse' && event.button === 0) {
+      state.railDragPointerId = event.pointerId;
+      rail.classList.add('is-dragging');
+      rail.setPointerCapture?.(event.pointerId);
+    }
+  }
+
+  function moveRailGesture(event) {
+    if (state.railDragPointerId !== event.pointerId) return;
+    const rail = event.currentTarget;
+    const deltaX = event.clientX - state.railGestureStartX;
+    // クリック時のわずかな手ぶれはドラッグとして扱わない。
+    if (Math.abs(deltaX) <= 6) return;
+
+    event.preventDefault();
+    rail.scrollLeft = state.railGestureStartScrollLeft - deltaX;
+    state.suppressCardClickUntil = Date.now() + 450;
   }
 
   function finishRailGesture(event) {
     if (state.railGestureStartIndex === null) return;
     const deltaX = event.clientX - state.railGestureStartX;
+    const wasMouseDrag = state.railDragPointerId === event.pointerId;
+    const startShopId = state.railGestureStartShopId;
+    // releasePointerCapture による lostpointercapture を通常クリックの
+    // キャンセルとして扱わないよう、先にジェスチャーを終了させる。
     state.railGestureStartIndex = null;
-    if (Math.abs(deltaX) <= 6) return;
+    state.railGestureStartShopId = null;
+    if (wasMouseDrag) {
+      clearRailDrag(event.currentTarget, event.pointerId);
+    }
+    if (Math.abs(deltaX) <= 6) {
+      // Pointer Capture 中は click の対象がカード列へ変わることがあるため、
+      // カード本体のタップはここで確実に地図へ反映する。
+      if (startShopId) activateShopFromCard(startShopId);
+      return;
+    }
     if (Math.abs(deltaX) > 6) state.suppressCardClickUntil = Date.now() + 450;
+    if (wasMouseDrag) {
+      // ドラッグ後にカード列を強制的に動かし直すと、手を離した位置から
+      // 別のカードへ跳んだように見える。現在位置のカードだけを選択する。
+      selectRailAt(getNearestRailIndex(event.currentTarget), true);
+      return;
+    }
     // Native momentum may continue after pointerup. Do not force the rail back
     // to the adjacent card here; scrollend/debounced scroll selects the card
     // where the swipe actually settles.
@@ -1532,13 +1839,24 @@
 
   function cancelRailGesture(event) {
     const startIndex = state.railGestureStartIndex;
+    if (state.railDragPointerId === event.pointerId) {
+      clearRailDrag(event.currentTarget, event.pointerId);
+    }
     state.railGestureStartIndex = null;
+    state.railGestureStartShopId = null;
     if (startIndex === null) return;
     state.suppressCardClickUntil = Date.now() + 450;
   }
 
+  function clearRailDrag(rail, pointerId) {
+    state.railDragPointerId = null;
+    rail.classList.remove('is-dragging');
+    if (rail.hasPointerCapture?.(pointerId)) rail.releasePointerCapture(pointerId);
+  }
+
   function handleRailScroll(event) {
     const rail = event.currentTarget;
+    if (state.railDragPointerId !== null) return;
     window.clearTimeout(state.railSettleTimer);
     if (Date.now() < state.suppressRailUntil) return;
     state.railSettleTimer = window.setTimeout(() => {
@@ -1549,7 +1867,7 @@
         state.suppressCardClickUntil = Date.now() + 300;
       }
       const nearest = getNearestRailIndex(rail);
-      settleRailAt(nearest, true, true);
+      selectRailAt(nearest, true);
     }, 180);
   }
 
@@ -1560,7 +1878,7 @@
     if (nearest === activeIndex) return;
     state.railGestureStartIndex = null;
     state.suppressCardClickUntil = Date.now() + 300;
-    settleRailAt(nearest, false, true);
+    selectRailAt(nearest, true);
   }
 
   function getNearestRailIndex(rail) {
@@ -1587,12 +1905,18 @@
     if (!rail || !card || !item) return;
     state.suppressRailUntil = Date.now() + 430;
     rail.scrollTo({ left: Math.max(0, card.offsetLeft - 14), behavior: smooth ? 'smooth' : 'auto' });
+    selectRailAt(index, fromUser, smooth ? 240 : 0);
+  }
+
+  function selectRailAt(index, fromUser, delay = 0) {
+    const item = state.visibleShops[index];
+    if (!item) return;
     window.clearTimeout(state.railSettleTimer);
     state.railSettleTimer = window.setTimeout(() => {
       selectMapShop(item.shop.id);
       updateRailCardSelection();
       if (fromUser) maybeZoomOutForCard(item.shop);
-    }, smooth ? 240 : 0);
+    }, delay);
   }
 
   function handleRailClick(event) {
@@ -1755,7 +2079,7 @@
   function openAdjustPanel() {
     closeSearchSurface();
     syncAdjustControls();
-    switchAdjustTab(state.adjustTab);
+    switchAdjustTab(state.searchResultMode?.active ? 'sort' : state.adjustTab);
     document.getElementById('map-a-adjust-panel')?.classList.add('is-open');
     document.getElementById('map-a-adjust-panel')?.setAttribute('aria-hidden', 'false');
     document.getElementById('map-a-scrim')?.classList.add('is-open');
@@ -1807,6 +2131,16 @@
   }
 
   function handleAdjustInputChange(event) {
+    if (state.searchResultMode?.active) {
+      if (event.target?.name === 'map-a-sort') {
+        const selectedSort = event.target.value;
+        state.searchResultMode.sort = selectedSort === 'name' ? 'name' : 'distance';
+        state.shopSearchSort = state.searchResultMode.sort;
+        syncSearchResultModeControls();
+        renderRail({ preserveActive: true });
+      }
+      return;
+    }
     if (event.target?.id === 'map-a-filter-unvisited' && event.target.checked) setChecked('map-a-filter-visited', false);
     if (event.target?.id === 'map-a-filter-visited' && event.target.checked) setChecked('map-a-filter-unvisited', false);
     if (event.target?.id === 'map-a-filter-day' || event.target?.id === 'map-a-filter-time') {
@@ -1872,7 +2206,7 @@
     state.defaultCategories = allValues.length > 0 && allValues.every(value => selected.has(value))
       ? []
       : allValues.filter(value => selected.has(value));
-    if (IS_JIRO_MODE) {
+    if (IS_JIRO_ONLY_MODE) {
       try {
         localStorage.setItem(JIRO_DEFAULT_CATEGORIES_KEY, JSON.stringify(state.defaultCategories));
       } catch (_) {}
@@ -1907,7 +2241,10 @@
   }
 
   function syncAdjustControls() {
-    const sortInput = document.querySelector(`input[name="map-a-sort"][value="${state.sort}"]`);
+    const selectedSort = state.searchResultMode?.active
+      ? (state.searchResultMode.sort === 'name' ? 'name' : 'center')
+      : state.sort;
+    const sortInput = document.querySelector(`input[name="map-a-sort"][value="${selectedSort}"]`);
     if (sortInput) sortInput.checked = true;
     const behaviorInput = document.querySelector(`input[name="map-a-card-map"][value="${state.cardMapBehavior}"]`);
     if (behaviorInput) behaviorInput.checked = true;
@@ -1962,7 +2299,8 @@
     });
     const summary = document.getElementById('map-a-category-summary');
     if (summary) {
-      if (IS_JIRO_MODE && groupStates.iekei) summary.textContent = '二郎系';
+      if (IS_JIRO_ONLY_MODE && groupStates.iekei) summary.textContent = '二郎系';
+      else if (IS_MIXED_MODE && groupStates.iekei && groupStates.isse && groupStates.jiro) summary.textContent = '家系・二郎系';
       else if (groupStates.iekei && groupStates.isse) summary.textContent = '家系・壱系';
       else if (groupStates.iekei) summary.textContent = '家系';
       else if (groupStates.isse) summary.textContent = '壱系';
@@ -2005,8 +2343,8 @@
       syncAdjustCategoryControls();
       clearClassicSearchFilter();
     } else if (activeTab === 'sort') {
-      setRadio('map-a-sort', IS_JIRO_MODE ? 'name' : 'center');
-      state.sort = IS_JIRO_MODE ? 'name' : 'center';
+      setRadio('map-a-sort', 'center');
+      state.sort = 'center';
     } else {
       setRadio('map-a-card-map', 'zoomout');
       state.cardMapBehavior = 'zoomout';
@@ -2091,6 +2429,14 @@
   }
 
   function toggleOpenOnlyImmediately() {
+    if (state.searchResultMode?.active) {
+      state.searchResultMode.openOnly = !state.searchResultMode.openOnly;
+      syncOpenToggle();
+      updateMarkers();
+      renderShopList();
+      renderRail({ preserveActive: true });
+      return;
+    }
     const hasScheduledTime = advancedFilterSettings.day !== '' || advancedFilterSettings.time !== '';
     if (hasScheduledTime) {
       advancedFilterSettings.day = '';
@@ -2135,6 +2481,7 @@
     syncLegacyFilterControls();
     syncAdjustControls();
     syncOpenToggle();
+    syncSearchResultModeControls();
     syncCurrentLocationButton();
     syncFilterLabel();
     syncMapColorLegend();
@@ -2146,13 +2493,17 @@
     const legend = document.getElementById('map-a-color-legend');
     const items = document.getElementById('map-a-color-legend-items');
     if (!legend || !items) return;
+    if (state.searchResultMode?.active) {
+      legend.hidden = true;
+      return;
+    }
     const selected = getEffectiveAdjustCategorySelection();
-    const options = ['iekei', 'isse']
+    const options = getCategoryGroups()
       .flatMap(group => getAdjustCategoryOptions(group));
     items.innerHTML = options.map(option => {
       const color = state.mapColorMode === 'visit'
         ? '#25211f'
-        : (typeof getMapCategoryColor === 'function' ? getMapCategoryColor(option.value) : '#64748b');
+        : getCategoryUiColor(option.value, option.group);
       const shortLabel = typeof getShortCategoryName === 'function' ? getShortCategoryName(option.value) : option.label;
       const label = option.value === '王道家（との丸家）'
         ? 'との丸'
@@ -2212,7 +2563,7 @@
     if (state.mapColorMode === 'visit') {
       return visits?.[shop?.id]?.logs?.length ? MAP_VISITED_COLOR : '#ffffff';
     }
-    return typeof getMapCategoryColor === 'function' ? getMapCategoryColor(shop?.category) : '#64748b';
+    return typeof getMapCategoryColor === 'function' ? getMapCategoryColor(shop?.category, shop?.sourceType) : '#64748b';
   }
 
   function applyMapLayerMarkerStyles() {
@@ -2247,8 +2598,9 @@
   function syncCurrentLocationButton() {
     const button = document.getElementById('map-a-location-trigger');
     if (!button) return;
-    const active = !!userLocation;
+    const paused = window.isLocationUpdatesPaused?.() === true;
     const loading = !!isRequestingLocation;
+    const active = !!userLocation && !!locationMapCentered && !loading;
     const following = active && !!followUserLocation;
     button.classList.toggle('is-active', active);
     button.classList.toggle('is-loading', loading);
@@ -2256,7 +2608,8 @@
     button.setAttribute('aria-pressed', String(active));
     button.setAttribute('aria-label', loading
       ? '現在地を取得中'
-      : following ? '現在地を追従中' : active ? '現在地へ戻って追従' : '現在地を表示');
+      : paused ? '現在地の更新を再開'
+      : following ? '現在地を追従中' : active ? '現在地を表示中' : '現在地を表示');
   }
 
   window.syncMapDiscoveryLocationButton = syncCurrentLocationButton;
@@ -2265,6 +2618,19 @@
   function syncOpenToggle() {
     const button = document.getElementById('map-a-open-toggle');
     if (!button) return;
+    const searchMode = state.searchResultMode;
+    if (searchMode?.active) {
+      const openOnly = !!searchMode.openOnly;
+      button.classList.toggle('is-active', openOnly);
+      button.classList.remove('is-scheduled');
+      button.setAttribute('aria-pressed', String(openOnly));
+      button.setAttribute('aria-label', openOnly
+        ? '検索結果を営業中の店舗だけ表示中。全店舗表示に戻す'
+        : '検索結果を全店舗表示中。営業中のみに絞る');
+      const label = document.getElementById('map-a-open-label');
+      if (label) label.textContent = openOnly ? '営業中' : '全店舗';
+      return;
+    }
     const hasScheduledTime = advancedFilterSettings.day !== '' && advancedFilterSettings.time !== '';
     const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
     button.classList.toggle('is-active', !!showOpenOnly || hasScheduledTime);
@@ -2280,14 +2646,21 @@
   }
 
   function syncFilterLabel() {
+    if (state.searchResultMode?.active) {
+      syncSearchResultModeControls();
+      return;
+    }
     const selected = getEffectiveAdjustCategorySelection();
     const iekeiValues = getAdjustCategoryOptions('iekei').map(option => option.value);
     const isseValues = getAdjustCategoryOptions('isse').map(option => option.value);
     const hasIekei = iekeiValues.some(value => selected.has(value));
     const hasIsse = isseValues.some(value => selected.has(value));
-    const label = IS_JIRO_MODE
+    const hasJiro = getAdjustCategoryOptions('jiro').some(option => selected.has(option.value));
+    const label = IS_JIRO_ONLY_MODE
       ? (hasIekei ? '二郎系' : '')
-      : hasIekei && !hasIsse ? '家系' : hasIsse && !hasIekei ? '壱系' : '';
+      : IS_MIXED_MODE
+        ? (hasJiro && (hasIekei || hasIsse) ? '両方' : hasJiro ? '二郎系' : (hasIekei || hasIsse) ? '家系' : '')
+        : hasIekei && !hasIsse ? '家系' : hasIsse && !hasIekei ? '壱系' : '';
     const badge = document.getElementById('map-a-filter-label');
     if (!badge) return;
     badge.textContent = label;
@@ -2304,6 +2677,9 @@
     surface.classList.add('is-open');
     surface.setAttribute('aria-hidden', 'false');
     document.body.classList.add('map-a-search-open');
+    if (!wasOpen && state.searchResultMode?.active) {
+      input.value = state.searchResultMode.query;
+    }
     if (!wasOpen && !options.fromHistory) {
       try {
         const currentState = history.state && typeof history.state === 'object' ? history.state : {};
@@ -2312,7 +2688,23 @@
     }
     syncShopSearchCategoryControls();
     renderSearchResults();
-    setTimeout(() => input.focus(), 40);
+    // Keep the search action feeling immediate on mobile.  The surface fades in,
+    // so focus once synchronously (to stay inside the tap gesture) and retry
+    // after the first paint for WebKit/Android WebView keyboards.
+    const focusSearchInput = () => {
+      try {
+        input.focus({ preventScroll: true });
+      } catch (_) {
+        input.focus();
+      }
+      if (typeof input.setSelectionRange === 'function') {
+        const end = input.value.length;
+        try { input.setSelectionRange(end, end); } catch (_) {}
+      }
+    };
+    focusSearchInput();
+    requestAnimationFrame(focusSearchInput);
+    setTimeout(focusSearchInput, 120);
   }
 
   function closeSearchSurface(options = {}) {
@@ -2373,20 +2765,30 @@
     else renderPhotoLookup(results);
   }
 
+  function setShopSearchTabCount(count = null) {
+    const target = document.getElementById('map-a-shop-count');
+    if (!target) return;
+    const visible = typeof count === 'number' && Number.isFinite(count);
+    target.hidden = !visible;
+    target.textContent = visible ? String(count) : '';
+  }
+
   function renderPhotoLookup(container) {
     const result = state.photoLookupResult;
-    const explanation = `<div class="map-a-photo-lookup-note">
-      <strong>写真の撮影場所からお店を探します</strong>
-      <span>写真に残っているEXIF情報を端末内で読み取り、撮影場所の近くにある店舗を逆引きします。</span>
-      <span>位置情報が残っている写真のみ利用できます。Androidでは「写真アプリ」または「ファイルから原本」を毎回選べます。位置情報を使う場合は、Googleフォトなどの写真を端末へダウンロードし、「ファイルから原本」を選んでください。</span>
-      <span class="map-a-photo-private">写真データは外部へ送信されません。</span>
+    setShopSearchTabCount();
+    const explanation = `<div class="map-a-search-empty-prompt map-a-photo-lookup-note">
+      <span class="map-a-search-empty-icon map-a-search-photo-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="13" height="15" rx="2"></rect><circle cx="7" cy="9.5" r="1.5"></circle><path d="m4.5 17 3.5-3.5 2.2 2.2 2-2 1.3 1.3"></path><path d="M18.5 3.5a3 3 0 0 0-3 3c0 2.3 3 5.4 3 5.4s3-3.1 3-5.4a3 3 0 0 0-3-3Z"></path><circle cx="18.5" cy="6.5" r=".8" fill="currentColor" stroke="none"></circle></svg></span>
+      <strong>写真の撮影場所からお店を探す</strong>
+      <span>写真に保存された位置情報を読み取り、撮影場所の近くにあるラーメン店を表示します。</span>
+      <span class="map-a-photo-caution">位置情報がない写真では検索できません。</span>
+      <span class="map-a-photo-private">写真は端末内で処理され、外部へ送信されません。</span>
     </div>`;
     if (state.photoLookupStatus === 'loading') {
       container.innerHTML = `${explanation}<div class="map-a-search-state"><strong>写真を読み取り中…</strong><span>EXIF情報を確認しています。</span></div>`;
       return;
     }
     if (state.photoLookupStatus === 'unsupported') {
-      container.innerHTML = `${explanation}<div class="map-a-photo-lookup-error"><strong>この環境では写真を読み取れません</strong><span>iPhoneまたはAndroidアプリからお試しください。</span></div>`;
+      container.innerHTML = `${explanation}<div class="map-a-photo-lookup-error"><strong>この写真を読み取れませんでした</strong><span>別の写真を選ぶか、iPhone・Androidアプリからお試しください。</span></div>${renderPhotoLookupButton('別の写真を選ぶ')}`;
       return;
     }
     if (state.photoLookupStatus === 'no-location') {
@@ -2432,15 +2834,196 @@
   }
 
   function startPhotoLookup() {
-    state.photoLookupStatus = 'loading';
-    state.photoLookupResult = null;
-    renderSearchResults();
     if (window.webkit?.messageHandlers?.pickPhotos) {
+      state.photoLookupStatus = 'loading';
+      state.photoLookupResult = null;
+      renderSearchResults();
       window.webkit.messageHandlers.pickPhotos.postMessage(JSON.stringify({ mode: 'reverse', selectionLimit: 1 }));
+      return;
+    }
+    const input = document.getElementById('map-a-photo-lookup-input');
+    if (input && typeof FileReader !== 'undefined') {
+      input.value = '';
+      input.click();
       return;
     }
     state.photoLookupStatus = 'unsupported';
     renderSearchResults();
+  }
+
+  async function handleBrowserPhotoLookup(event) {
+    const file = event.target?.files?.[0];
+    if (!file) return;
+    state.photoLookupStatus = 'loading';
+    state.photoLookupResult = null;
+    renderSearchResults();
+    try {
+      const [buffer, previewUrl] = await Promise.all([
+        file.arrayBuffer(),
+        readBrowserPhotoPreview(file)
+      ]);
+      const metadata = readBrowserPhotoMetadata(buffer);
+      const capturedAt = metadata.capturedAt
+        || (Number.isFinite(file.lastModified) && file.lastModified > 0 ? new Date(file.lastModified).toISOString() : null);
+      window.onPhotoReverseLookupSelected({
+        previewUrl,
+        capturedAt,
+        latitude: metadata.latitude,
+        longitude: metadata.longitude
+      });
+    } catch (_) {
+      state.photoLookupStatus = 'unsupported';
+      state.photoLookupResult = null;
+      renderSearchResults();
+    }
+  }
+
+  function readBrowserPhotoPreview(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+      reader.onerror = () => reject(reader.error || new Error('写真を読み取れませんでした'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function readBrowserPhotoMetadata(buffer) {
+    const view = new DataView(buffer);
+    const bytes = new Uint8Array(buffer);
+    const tiffOffset = findBrowserExifTiffOffset(view, bytes);
+    if (tiffOffset < 0) return {};
+    return readBrowserTiffMetadata(view, tiffOffset);
+  }
+
+  function findBrowserExifTiffOffset(view, bytes) {
+    const length = view.byteLength;
+    if (length >= 8 && ((view.getUint16(0, false) === 0x4949 && view.getUint16(2, true) === 42)
+      || (view.getUint16(0, false) === 0x4d4d && view.getUint16(2, false) === 42))) return 0;
+
+    // JPEG APP1 (Exif)
+    if (length >= 4 && view.getUint16(0, false) === 0xffd8) {
+      let offset = 2;
+      while (offset + 4 <= length) {
+        if (bytes[offset] !== 0xff) break;
+        const marker = bytes[offset + 1];
+        if (marker === 0xd9 || marker === 0xda) break;
+        const segmentLength = view.getUint16(offset + 2, false);
+        if (segmentLength < 2 || offset + 2 + segmentLength > length) break;
+        if (marker === 0xe1 && segmentLength >= 8
+          && bytes[offset + 4] === 0x45 && bytes[offset + 5] === 0x78
+          && bytes[offset + 6] === 0x69 && bytes[offset + 7] === 0x66
+          && bytes[offset + 8] === 0 && bytes[offset + 9] === 0) return offset + 10;
+        offset += 2 + segmentLength;
+      }
+    }
+
+    // PNG eXIf chunk
+    if (length >= 12 && view.getUint32(0, false) === 0x89504e47 && view.getUint32(4, false) === 0x0d0a1a0a) {
+      let offset = 8;
+      while (offset + 12 <= length) {
+        const chunkLength = view.getUint32(offset, false);
+        if (offset + 12 + chunkLength > length) break;
+        const type = String.fromCharCode(bytes[offset + 4], bytes[offset + 5], bytes[offset + 6], bytes[offset + 7]);
+        if (type === 'eXIf') return offset + 8;
+        offset += 12 + chunkLength;
+      }
+    }
+
+    // WebP EXIF chunk
+    if (length >= 16 && asciiAt(bytes, 0, 4) === 'RIFF' && asciiAt(bytes, 8, 4) === 'WEBP') {
+      let offset = 12;
+      while (offset + 8 <= length) {
+        const type = asciiAt(bytes, offset, 4);
+        const chunkLength = view.getUint32(offset + 4, true);
+        const dataOffset = offset + 8;
+        if (dataOffset + chunkLength > length) break;
+        if (type === 'EXIF') {
+          return asciiAt(bytes, dataOffset, 6) === 'Exif\0\0' ? dataOffset + 6 : dataOffset;
+        }
+        offset = dataOffset + chunkLength + (chunkLength % 2);
+      }
+    }
+    return -1;
+  }
+
+  function asciiAt(bytes, offset, length) {
+    if (offset < 0 || offset + length > bytes.length) return '';
+    let value = '';
+    for (let index = 0; index < length; index += 1) value += String.fromCharCode(bytes[offset + index]);
+    return value;
+  }
+
+  function readBrowserTiffMetadata(view, tiffOffset) {
+    const length = view.byteLength;
+    if (tiffOffset < 0 || tiffOffset + 8 > length) return {};
+    const byteOrder = view.getUint16(tiffOffset, false);
+    const little = byteOrder === 0x4949;
+    if (!little && byteOrder !== 0x4d4d) return {};
+    if (view.getUint16(tiffOffset + 2, little) !== 42) return {};
+    const inRange = (offset, size = 1) => offset >= 0 && offset + size <= length;
+    const typeSize = type => ({ 1: 1, 2: 1, 3: 2, 4: 4, 5: 8, 7: 1, 9: 4, 10: 8 }[type] || 0);
+    const readEntries = relativeOffset => {
+      const ifdOffset = tiffOffset + Number(relativeOffset || 0);
+      if (!inRange(ifdOffset, 2)) return new Map();
+      const count = Math.min(view.getUint16(ifdOffset, little), 512);
+      const entries = new Map();
+      for (let index = 0; index < count; index += 1) {
+        const entryOffset = ifdOffset + 2 + index * 12;
+        if (!inRange(entryOffset, 12)) break;
+        const tag = view.getUint16(entryOffset, little);
+        const type = view.getUint16(entryOffset + 2, little);
+        const itemCount = view.getUint32(entryOffset + 4, little);
+        const size = typeSize(type) * itemCount;
+        if (!size || size > length) continue;
+        const valueOffset = size <= 4 ? entryOffset + 8 : tiffOffset + view.getUint32(entryOffset + 8, little);
+        if (inRange(valueOffset, size)) entries.set(tag, { type, count: itemCount, offset: valueOffset });
+      }
+      return entries;
+    };
+    const scalar = entry => {
+      if (!entry || !inRange(entry.offset, 1)) return null;
+      if (entry.type === 1 || entry.type === 7) return view.getUint8(entry.offset);
+      if (entry.type === 3 && inRange(entry.offset, 2)) return view.getUint16(entry.offset, little);
+      if (entry.type === 4 && inRange(entry.offset, 4)) return view.getUint32(entry.offset, little);
+      return null;
+    };
+    const ascii = entry => {
+      if (!entry) return '';
+      const bytes = new Uint8Array(view.buffer, view.byteOffset + entry.offset, entry.count);
+      return Array.from(bytes, value => value ? String.fromCharCode(value) : '').join('').trim();
+    };
+    const rationals = entry => {
+      if (!entry || (entry.type !== 5 && entry.type !== 10)) return [];
+      const signed = entry.type === 10;
+      const values = [];
+      for (let index = 0; index < entry.count; index += 1) {
+        const offset = entry.offset + index * 8;
+        if (!inRange(offset, 8)) break;
+        const numerator = signed ? view.getInt32(offset, little) : view.getUint32(offset, little);
+        const denominator = signed ? view.getInt32(offset + 4, little) : view.getUint32(offset + 4, little);
+        values.push(denominator ? numerator / denominator : 0);
+      }
+      return values;
+    };
+    const ifd0 = readEntries(view.getUint32(tiffOffset + 4, little));
+    const gpsPointer = scalar(ifd0.get(0x8825));
+    const gps = gpsPointer !== null ? readEntries(gpsPointer) : new Map();
+    const coordinate = values => values.length >= 3 ? values[0] + values[1] / 60 + values[2] / 3600 : null;
+    let latitude = coordinate(rationals(gps.get(0x0002)));
+    let longitude = coordinate(rationals(gps.get(0x0004)));
+    const latitudeRef = ascii(gps.get(0x0001)).toUpperCase();
+    const longitudeRef = ascii(gps.get(0x0003)).toUpperCase();
+    if (latitude !== null && latitudeRef === 'S') latitude *= -1;
+    if (longitude !== null && longitudeRef === 'W') longitude *= -1;
+
+    const exifPointer = scalar(ifd0.get(0x8769));
+    const exif = exifPointer !== null ? readEntries(exifPointer) : new Map();
+    const rawDate = ascii(exif.get(0x9003)) || ascii(exif.get(0x9004)) || ascii(ifd0.get(0x0132));
+    const match = rawDate.match(/^(\d{4}):(\d{2}):(\d{2})[ T](\d{2}):(\d{2}):(\d{2})/);
+    const capturedAt = match
+      ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]), Number(match[4]), Number(match[5]), Number(match[6])).toISOString()
+      : null;
+    return { latitude, longitude, capturedAt };
   }
 
   window.onPhotoReverseLookupSelected = payload => {
@@ -2705,8 +3288,20 @@
     const hasNewFilter = state.shopSearchNewOnly;
     const hasSearchFilter = hasCategoryFilter || hasNewFilter;
     const showSort = !!normalized || hasSearchFilter;
+    if (!normalized && !hasSearchFilter) {
+      setShopSearchTabCount();
+      container.innerHTML = `${renderShopSearchToolbar(false)}
+        ${renderShopSearchUpdatedAt()}
+        ${renderShopSearchHistory()}
+        <div class="map-a-search-empty-prompt">
+          <span class="map-a-search-empty-icon" aria-hidden="true">⌕</span>
+          <strong>お店を検索</strong>
+          <span>店名はひらがなでも検索できます。店名・駅名・地名を入力して、マップで探しましょう。</span>
+        </div>`;
+      return;
+    }
     let candidates = (Array.isArray(shops) ? shops : []).filter(shop =>
-      shop.name !== 'ダミー' && Number.isFinite(Number(shop.lat)) && Number.isFinite(Number(shop.lng))
+      shop.name !== 'ダミー' && hasValidMapCoordinates(shop)
     );
     if (hasCategoryFilter) {
       candidates = candidates.filter(shop => selectedCategories.includes(shop.category));
@@ -2735,8 +3330,7 @@
     });
     const totalCount = candidates.length;
     candidates = candidates.slice(0, 60);
-    const count = document.getElementById('map-a-shop-count');
-    if (count) count.textContent = String(totalCount);
+    setShopSearchTabCount(totalCount);
     const categorySummary = getShopSearchCategorySummary();
     const history = !normalized && !hasSearchFilter ? renderShopSearchHistory() : '';
     const summaryConditions = [];
@@ -2754,7 +3348,9 @@
         <div class="map-a-result-list">
           ${candidates.map(({ shop, distance }) => {
           const status = getOpenStatus(shop.openingHours);
-          const statusLabel = status.state === 'open' ? '営業中' : status.state === 'soon' ? '閉店間近' : '時間外';
+          const statusLabel = !shop.openingHours
+            ? (shop.closed ? '閉店' : '営業時間不明')
+            : status.state === 'open' ? '営業中' : status.state === 'soon' ? '閉店間近' : '時間外';
           const isVisited = !!visits?.[shop.id]?.logs?.length;
           const newShopOpenLabel = hasNewFilter ? getNewShopOpenLabel(shop) : '';
           const googleMapUrl = String(shop.googleMapUrl || '').trim()
@@ -2764,7 +3360,7 @@
           return `<div class="map-a-result-entry">
             <button class="map-a-result-row" type="button" data-map-a-shop-result="${escapeAttribute(shop.id)}">
               <span class="map-a-result-icon ${isVisited ? 'is-visited' : ''}" aria-hidden="true">${isVisited ? '✓' : '🍜'}</span>
-              <span class="map-a-result-copy"><strong>${escapeText(shop.name)}</strong><span>${escapeText(getShortCategoryName(shop.category))} · ${escapeText(shop.area || '')} · ${statusLabel}</span>${newShopOpenLabel ? `<span class="map-a-result-open-date">${escapeText(newShopOpenLabel)}</span>` : ''}</span>
+              <span class="map-a-result-copy"><strong>${escapeText(shop.name)}</strong><span>${escapeText(getShortCategoryName(shop.category, shop.sourceType))} · ${escapeText(shop.area || '')} · ${statusLabel}</span>${newShopOpenLabel ? `<span class="map-a-result-open-date">${escapeText(newShopOpenLabel)}</span>` : ''}</span>
               <span class="map-a-result-distance">${Number.isFinite(distance) ? formatDistance(distance) : ''}</span>
             </button>
             <div class="map-a-result-actions">
@@ -2917,8 +3513,9 @@
   }
 
   function renderPlaceSearchResults(container, query) {
+    setShopSearchTabCount();
     if (query.length < 2) {
-      container.innerHTML = '<div class="map-a-search-state"><strong>駅名・地名を2文字以上入力</strong><span>駅、住所、IC・JCTを国土地理院とHeartRailsから検索します。</span></div>';
+      container.innerHTML = '<div class="map-a-search-empty-prompt"><span class="map-a-search-empty-icon map-a-search-place-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="5.5"></circle><path d="M12 2v4M12 18v4M2 12h4M18 12h4"></path></svg></span><strong>地名・駅を検索</strong><span>駅名や地名を2文字以上入力してください。</span></div>';
       return;
     }
     if (state.placeLoading) {
@@ -3120,6 +3717,10 @@
       const sort = sortButton.dataset.mapAShopSearchSort;
       if (sort === 'name' || sort === 'distance' || (sort === 'open' && state.shopSearchNewOnly)) {
         state.shopSearchSort = sort;
+        if (state.searchResultMode?.active) {
+          state.searchResultMode.sort = sort === 'distance' ? 'distance' : 'name';
+          renderRail({ preserveActive: true });
+        }
         renderSearchResults();
       }
       return;
@@ -3184,10 +3785,11 @@
     if (shopRow) {
       const shop = findShop(shopRow.dataset.mapAShopResult);
       if (!shop) return;
+      const query = document.getElementById('map-a-search-input')?.value.trim() || '';
+      if (!query && state.shopSearchCategories === null && !state.shopSearchNewOnly) return;
       closeSearchSurface();
-      state.forceShopId = shop.id;
-      state.activeShopId = shop.id;
-      updateMarkers();
+      enterSearchResultMode(shop, query);
+      const selectionToken = state.searchResultRenderToken;
       if (map && Number.isFinite(Number(shop.lat)) && Number.isFinite(Number(shop.lng))) {
         markProgrammaticMapMove('shop-search');
         // 店舗マーカーをカード領域で隠れない画面上の十字位置へ合わせる。
@@ -3198,6 +3800,9 @@
         );
       }
       setTimeout(() => {
+        if (selectionToken !== state.searchResultRenderToken
+          || !state.searchResultMode?.active
+          || !state.searchResultMode.shopIds.some(id => String(id) === String(shop.id))) return;
         renderRail({ preserveActive: true, scrollToShopId: shop.id });
         selectMapShop(shop.id);
       }, 260);
