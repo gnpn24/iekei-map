@@ -26,6 +26,8 @@
           postMessage(value) {
             if (typeof window.AndroidNative[name] === 'function') {
               window.AndroidNative[name](String(value ?? ''));
+            } else {
+              console.warn('未実装のネイティブハンドラ:', name);
             }
           }
         };
@@ -153,9 +155,9 @@
   }
   </script>
   
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
-  <link rel="stylesheet" href="map-discovery-v2.css?v=20260811-3" />
-  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="map-discovery-v2.css?v=4.3.1" />
+  <script src="https://unpkg.com/vis-network@10.1.2/standalone/umd/vis-network.min.js" integrity="sha384-RDdG1CLOxjNlTHh4JYx/rnAueaMHbkBHmeHwrEyljMQw3LF0it4SkuNotIY/FPxD" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <style>
     * {
       margin: 0;
@@ -193,7 +195,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      
+
       position: relative;
       background: #B22222;
       color: #000000;
@@ -220,7 +222,7 @@
     .header-btn {
       width: 32px;
       height: 32px;
-      
+
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -1368,6 +1370,15 @@
     }
     .record-modal #record-form {
       background: #fff;
+    }
+    /* 訪問記録のタイトル行は右側に追加要素がないため、
+       共通モーダルの余白を使わず閉じるボタンを右端に配置する。 */
+    .record-modal .modal-title-row {
+      padding-right: 0;
+      align-items: center;
+    }
+    .record-modal .close-btn {
+      margin-left: auto;
     }
     .record-modal-footer {
       padding: 12px 16px;
@@ -3045,10 +3056,11 @@
       box-shadow: 0 8px 24px rgba(84, 51, 37, .07);
     }
     .mypage-own-profile {
-      margin: -12px -16px 14px;
-      padding: 0 16px 14px;
+      margin: -12px -16px 5px;
+      padding: 0 16px 5px;
       background: #f7f3f0;
     }
+    .mypage-own-profile + .profile-view-tabs { margin-top: 0; }
     .mypage-own-profile .public-profile-page-heading {
       margin: 0 -16px;
     }
@@ -3064,14 +3076,14 @@
       background: linear-gradient(145deg, #c62828, #ef5350) !important;
       font-size: 38px;
     }
-    #mypage-profile-name {
-      overflow: hidden;
+#mypage-profile-name {
+      min-width: 0;
       color: #28221f;
       font-size: 22px;
       font-weight: 900;
       letter-spacing: -.03em;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
     }
     #mypage-profile-bio {
       min-height: 20px;
@@ -3081,10 +3093,12 @@
       line-height: 1.55;
     }
     #mypage-profile-actions {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 58px;
-      gap: 9px;
-      margin-top: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 7px;
+      min-width: 0;
+      margin: 0;
     }
     .mypage-own-profile .public-profile-page-heading {
       padding: 13px 16px 12px;
@@ -3107,8 +3121,21 @@
     .mypage-own-profile .public-profile-metric { padding: 10px 6px 9px; }
     .mypage-own-profile .public-profile-metric strong { font-size: 17px; }
     .mypage-own-profile .public-profile-metric span { margin-top: 4px; }
-    .mypage-own-profile .public-profile-main-action,
-    .mypage-own-profile .public-profile-share-action { min-height: 42px; }
+    .mypage-own-profile .public-profile-main-action {
+      min-height: 40px;
+      padding: 0 11px;
+      border-radius: 12px;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .mypage-own-profile .public-profile-share-action {
+      width: 40px;
+      min-height: 40px;
+      padding: 0;
+      border-radius: 12px;
+      font-size: 0;
+    }
+    .mypage-own-profile .public-profile-share-action svg { width: 19px; height: 19px; }
     .mypage-public-status {
       border: 0;
       cursor: pointer;
@@ -4123,7 +4150,7 @@
       border: 0;
       color: #2d2723 !important;
       background: transparent;
-      cursor: pointer;
+      cursor: default;
       font-size: 15px !important;
       font-weight: 850 !important;
       text-align: left;
@@ -4222,13 +4249,13 @@
       margin-top: 14px;
     }
     #user-profile-name {
-      overflow: hidden;
+      min-width: 0;
       color: #28221f !important;
       font-size: 19px !important;
       font-weight: 900 !important;
       letter-spacing: -.03em;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      line-height: 1.3;
+      overflow-wrap: anywhere;
     }
 
     /* 公開プロフィールは投稿詳細モーダルと分離した独立ページとして表示する。 */
@@ -4269,6 +4296,11 @@
     }
     .android-native #public-profile-page .public-profile-page-heading {
       padding-top: max(32px, env(safe-area-inset-top));
+    }
+    #public-profile-page .public-profile-avatar-slot {
+      width: 68px;
+      height: 68px;
+      flex-shrink: 0;
     }
     #public-profile-page #user-profile-avatar-img,
     #public-profile-page #user-profile-avatar-emoji {
@@ -4382,26 +4414,61 @@
       font-size: 18px;
       font-weight: 850;
     }
+    .photo-post-title {
+      color: #2d2723;
+      font-size: 15px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
     .profile-list-modal { z-index: 3600 !important; align-items:flex-end !important; padding:0 !important; }
     .profile-list-sheet {
-      width:min(100%, 560px); max-height:min(76vh, 680px); margin:0 auto;
-      overflow:hidden; border-radius:24px 24px 0 0; background:#f8f5f2;
+      width:min(100%, 560px); height:min(60dvh, 620px); min-height:420px; margin:0 auto;
+      overflow:hidden; border-radius:24px 24px 0 0; background:#fff;
       box-shadow:0 -16px 48px rgba(34,25,20,.18); display:flex; flex-direction:column;
     }
-    .profile-list-header { display:flex; align-items:center; justify-content:space-between; padding:16px 18px 13px; border-bottom:1px solid #e9e1dc; background:#fff; }
-    .profile-list-header h2 { margin:0; color:#2d2723; font-size:18px; font-weight:900; }
-    .profile-list-close { width:38px; height:38px; border:0; border-radius:50%; color:#5e5550; background:#f2eeeb; font-size:22px; cursor:pointer; }
-    .profile-list-body { overflow:auto; padding:10px 14px calc(22px + env(safe-area-inset-bottom, 0px)); }
-    .profile-list-row { width:100%; display:grid; grid-template-columns:44px minmax(0,1fr) auto; align-items:center; gap:11px; padding:11px 8px; border:0; border-bottom:1px solid #ebe4df; color:#342d29; background:transparent; cursor:pointer; text-align:left; }
+    .profile-list-handle { width:36px; height:4px; margin:8px auto 0; border-radius:999px; background:#ded8d4; flex:0 0 auto; }
+    .profile-list-header { display:flex; align-items:center; justify-content:space-between; padding:8px 18px 10px; background:#fff; }
+    .profile-list-header h2 { margin:0; color:#2d2723; font-size:17px; font-weight:900; }
+    .profile-list-close { width:40px; height:40px; border:0; border-radius:50%; color:#6d625c; background:#f5f2f0; font-size:21px; cursor:pointer; }
+    .profile-list-tabs { display:none; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0; margin:0; padding:0 18px; border-bottom:1px solid #eee8e4; background:#fff; flex:0 0 auto; }
+    .profile-list-sheet.is-connections .profile-list-tabs { display:grid; }
+    .profile-list-tab { position:relative; min-height:46px; padding:0 8px; border:0; border-radius:0; color:#948881; background:transparent; font-size:12px; font-weight:850; cursor:pointer; }
+    .profile-list-tab::after { content:""; position:absolute; right:22px; bottom:-1px; left:22px; height:3px; border-radius:3px 3px 0 0; background:transparent; }
+    .profile-list-tab[aria-selected="true"] { color:#2e2723; background:transparent; box-shadow:none; }
+    .profile-list-tab[aria-selected="true"]::after { background:#d44940; }
+    .profile-list-body { flex:1 1 auto; min-height:0; overflow:auto; overscroll-behavior:contain; padding:4px 18px calc(22px + env(safe-area-inset-bottom, 0px)); background:#fff; -webkit-overflow-scrolling:touch; }
+    .profile-list-row { width:100%; display:grid; grid-template-columns:48px minmax(0,1fr) auto; align-items:center; gap:12px; margin:0; padding:13px 2px; border:0; border-bottom:1px solid #f0ebe8; border-radius:0; color:#342d29; background:transparent; cursor:pointer; text-align:left; box-shadow:none; }
     .profile-list-row:last-child { border-bottom:0; }
-    .profile-list-avatar { width:44px; height:44px; overflow:hidden; border-radius:14px; background:#efe9e5; display:flex; align-items:center; justify-content:center; font-size:23px; }
+    .profile-list-avatar { width:46px; height:46px; overflow:hidden; border-radius:50%; background:#f2eeeb; display:flex; align-items:center; justify-content:center; font-size:23px; }
     .profile-list-avatar img { width:100%; height:100%; object-fit:cover; }
     .profile-list-row strong { display:block; overflow:hidden; font-size:14px; font-weight:900; text-overflow:ellipsis; white-space:nowrap; }
     .profile-list-row small { display:block; margin-top:3px; overflow:hidden; color:#948881; font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
-    .profile-list-side { color:#766b65; font-size:11px; font-weight:800; text-align:right; }
+    .profile-list-side { color:#b1a7a1; font-size:16px; font-weight:700; text-align:right; }
     .profile-lineage-label { display:flex; align-items:center; justify-content:flex-end; gap:5px; margin-bottom:3px; }
     .profile-lineage-dot { width:8px; height:8px; border-radius:50%; flex:0 0 auto; }
-    .profile-list-empty { padding:30px 14px; color:#8d817a; font-size:13px; line-height:1.7; text-align:center; }
+    .profile-list-empty { min-height:210px; display:flex; align-items:center; justify-content:center; padding:30px 14px; color:#8d817a; font-size:13px; line-height:1.7; text-align:center; }
+    .profile-list-tab,
+    .profile-list-row,
+    .profile-list-close {
+      -webkit-appearance: none;
+      appearance: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .profile-list-tab:active,
+    .profile-list-row:active,
+    .profile-list-close:active { background-color:#f7f1ee; }
+    .profile-list-tab:focus,
+    .profile-list-row:focus,
+    .profile-list-close:focus { outline:none; }
+    .profile-list-tab:focus-visible,
+    .profile-list-row:focus-visible,
+    .profile-list-close:focus-visible { outline:2px solid rgba(212,73,64,.38); outline-offset:-2px; }
+    @media (max-height:700px) {
+      .profile-list-sheet { height:64dvh; min-height:360px; }
+    }
 
     /* アカウント設定：機能を用途別にまとめたコンパクトな一覧 */
     .account-settings-profile {
@@ -4834,7 +4901,7 @@
     }
     .feed-post-top {
       display: grid;
-      grid-template-columns: 44px minmax(0, 1fr) auto;
+      grid-template-columns: 44px minmax(0, 1fr);
       gap: 10px;
       align-items: center;
       margin-bottom: 16px;
@@ -4853,8 +4920,68 @@
       display: flex;
       justify-content: flex-end;
       align-items: center;
-      min-width: 92px;
       flex-shrink: 0;
+    }
+    .feed-user-heading {
+      display:flex;
+      align-items:center;
+      gap:8px;
+      min-width:0;
+    }
+    .feed-user-heading .feed-user-name { flex:1; min-width:0; }
+    .feed-inline-follow.feed-card-follow {
+      margin-left:auto;
+      position:relative;
+      min-height:0;
+      padding:0 8px;
+      border:0;
+      background:transparent;
+      font-size:12px;
+      line-height:1.25;
+    }
+    /* 名前の行を押し広げず、上側にタップ範囲を確保する。 */
+    .feed-card-follow::before {
+      content:'';
+      position:absolute;
+      top:-14px;
+      right:0;
+      bottom:0;
+      left:0;
+    }
+    .feed-card-follow[data-following="1"] { display:none; }
+    .feed-post-top .feed-user-meta {
+      white-space:normal;
+      overflow:visible;
+      text-overflow:clip;
+      overflow-wrap:anywhere;
+      line-height:1.5;
+    }
+    .feed-inline-follow {
+      flex:0 0 auto;
+      min-height:32px;
+      padding:5px 11px;
+      border:1.5px solid #dc3345;
+      border-radius:10px;
+      background:#fff;
+      color:#c92232;
+      font-size:12px;
+      font-weight:800;
+      line-height:1;
+      cursor:pointer;
+      white-space:nowrap;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .feed-inline-follow[data-following="1"] {
+      border-color:#ddd4cf;
+      background:#f5f1ee;
+      color:#756b65;
+    }
+    .feed-shop-actions {
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:7px;
+      flex:0 0 auto;
     }
     .feed-shop-row {
       display: grid;
@@ -4899,9 +5026,8 @@
       font-weight: 800;
       color: #111827;
       line-height: 1.25;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      min-width: 0;
+      overflow-wrap: anywhere;
     }
     .feed-user-meta {
       font-size: 12px;
@@ -5194,6 +5320,21 @@
       border-top: 1px solid rgba(120, 72, 56, 0.14);
       color: #8b6f66;
     }
+    .feed-like-summary {
+      display:block;
+      width:100%;
+      padding:0 18px 13px;
+      border:0;
+      background:transparent;
+      color:#625650;
+      font-size:12px;
+      font-weight:650;
+      line-height:1.45;
+      text-align:left;
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .feed-like-summary:active { opacity:.62; }
     /* ⋯メニュー（通報・ブロック）ボタン。幅を詰めて右端に置く */
     .feed-more-btn {
       padding: 8px 4px !important;
@@ -5784,7 +5925,7 @@
         right: 14px;
         bottom: calc(104px + env(safe-area-inset-bottom, 0px));
       }
-      .feed-post-top { grid-template-columns: 42px minmax(0, 1fr) auto; gap: 9px; }
+      .feed-post-top { grid-template-columns: 42px minmax(0, 1fr); gap: 9px; }
       .feed-post-map-area { min-width: 82px; }
       .feed-map-btn { font-size: 12px; padding: 7px 9px; }
       .feed-rating-pill { font-size: 14px; padding: 6px 9px; }
@@ -5928,12 +6069,18 @@
       
       <!-- List Tab -->
       <div id="tab-feed" class="tab-content">
-        <div style="padding:12px 16px 10px;background:white;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center;">
-          <div style="font-size:18px;font-weight:700;color:#111827;">みんなの投稿</div>
+        <div style="padding:8px 16px 0;background:white;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:stretch;gap:10px;">
+          <div id="feed-scope-tabs" role="tablist" aria-label="投稿の表示範囲" style="display:flex;align-items:stretch;gap:18px;">
+            <button id="feed-scope-all" type="button" role="tab" aria-selected="true" onclick="setFeedScope('all')" style="border:0;border-bottom:3px solid #ef4444;background:transparent;color:#111827;font-weight:800;padding:8px 4px;cursor:pointer;">みんな</button>
+            <button id="feed-scope-following" type="button" role="tab" aria-selected="false" onclick="setFeedScope('following')" style="border:0;border-bottom:3px solid transparent;background:transparent;color:#9ca3af;font-weight:800;padding:8px 4px;cursor:pointer;">フォロー中</button>
+          </div>
+          <div style="display:flex;align-items:center;align-self:center;gap:6px;transform:translateY(-4px);">
+          <button type="button" onclick="openNotifications()" style="padding:6px 10px;border:1.5px solid #e5e7eb;border-radius:9px;background:white;font-size:13px;font-weight:600;color:#374151;cursor:pointer;">通知</button>
           <button onclick="refreshCommunityFeed(this)" style="display:flex;align-items:center;gap:4px;padding:6px 12px;border:1.5px solid #e5e7eb;border-radius:9px;background:white;font-size:13px;font-weight:600;color:#374151;cursor:pointer;">
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
             更新
           </button>
+          </div>
         </div>
 
         <!-- 期間別ランキングカード -->
@@ -6056,6 +6203,12 @@
               <div style="min-width:0;">
                 <div id="mypage-profile-name"></div>
               </div>
+              <div id="mypage-profile-actions">
+                <button type="button" class="public-profile-main-action" onclick="openProfileEditModal('mypage')">編集</button>
+                <button type="button" class="public-profile-share-action" onclick="shareOwnPublicProfile()" aria-label="プロフィールを共有">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="18" cy="5" r="2.2" stroke="currentColor" stroke-width="1.8"/><circle cx="6" cy="12" r="2.2" stroke="currentColor" stroke-width="1.8"/><circle cx="18" cy="19" r="2.2" stroke="currentColor" stroke-width="1.8"/><path d="m8 11 7.8-4.4M8 13l7.8 4.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                </button>
+              </div>
             </div>
 
             <div id="mypage-profile-bio"></div>
@@ -6071,10 +6224,6 @@
               <span>よく行くお店</span><strong id="mypage-first-shop-name">まだありません</strong>
             </button>
 
-            <div id="mypage-profile-actions">
-              <button type="button" class="public-profile-main-action" onclick="openProfileEditModal('mypage')">プロフィールを編集</button>
-              <button type="button" class="public-profile-share-action" onclick="shareOwnPublicProfile()" aria-label="プロフィールを共有">↗</button>
-            </div>
           </div>
 
           <div class="profile-view-tabs" role="tablist" aria-label="マイページ表示">
@@ -6575,8 +6724,8 @@
     </div>
   </div>
   
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.js" integrity="sha384-ysv13JVP3fufiEXfjML9OdCa/rRbMJvUBOWyor82wfuK8INNZAvmbxHgKIHi+oqz" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script>
     // ===== Android PWA高さ対策：実際の表示領域をCSS変数にセット =====
     // standaloneモードでdvhがずれて下部ナビが隠れる問題を防ぐため、
@@ -6630,7 +6779,7 @@
     })();
 
     // App Version (手動で更新)
-    const APP_VERSION = "1.24.6";
+    const APP_VERSION = "4.3.1";
 
     // 更新ボタンでは、再読み込み前に開いていたタブへ戻す
     const RELOAD_TAB_STORAGE_KEY = 'iekei-reload-tab';
@@ -7617,7 +7766,7 @@
         if (v.date_precision === 'unknown') parts.push('時期不明');
         else if (v.date_precision === 'year') parts.push(`${year}年`);
         else if (v.date_precision === 'month') parts.push(`${year}年${month}月`);
-        else parts.push(isSmallScreen ? `${month}/${day} ${hours}:${minutes}` : `${year}/${month}/${day} ${hours}:${minutes}`);
+        else parts.push(`${year}/${month}/${day} ${hours}:${minutes}`);
       }
       if (v.wait_minutes || v.wait_minutes === 0) parts.push(`待ち${v.wait_minutes}分`);
       const weatherTemp = `${v.weather ? escapeHtml(shortWeather(v.weather)) : ''}${v.temperature || v.temperature === 0 ? escapeHtml(formatTemperatureValue(v.temperature)) + '℃' : ''}`;
@@ -7652,13 +7801,13 @@
 
     function feedPhotosHtml(v) {
       const urls = Array.isArray(v.photo_urls) && v.photo_urls.length ? v.photo_urls : (v.photo_url ? [v.photo_url] : []);
-      const limited = urls.filter(Boolean).slice(0, 4);
+      const limited = urls.map(safeExternalUrl).filter(Boolean).slice(0, 4);
       if (limited.length === 0) return '';
 
       const gridHtml = limited.length === 1
-        ? `<img src="${limited[0]}" loading="lazy" class="feed-photo zoomable-photo">`
-        : `<div class="feed-photo-grid count-${limited.length}">${limited.map(url => `<img class="zoomable-photo" src="${url}" loading="lazy">`).join('')}</div>`;
-      const swipeHtml = `<div class="feed-photo-swipe-view" onscroll="updateFeedPhotoSwipeLabel(this)">${limited.map(url => `<img class="zoomable-photo" src="${url}" loading="lazy">`).join('')}</div>`;
+        ? `<img src="${escapeHtml(limited[0])}" loading="lazy" class="feed-photo zoomable-photo">`
+        : `<div class="feed-photo-grid count-${limited.length}">${limited.map(url => `<img class="zoomable-photo" src="${escapeHtml(url)}" loading="lazy">`).join('')}</div>`;
+      const swipeHtml = `<div class="feed-photo-swipe-view" onscroll="updateFeedPhotoSwipeLabel(this)">${limited.map(url => `<img class="zoomable-photo" src="${escapeHtml(url)}" loading="lazy">`).join('')}</div>`;
       const dotsHtml = limited.length > 1
         ? `<div class="feed-photo-dots">${limited.map((_, i) => `<span class="feed-photo-dot ${i === 0 ? 'active' : ''}"></span>`).join('')}</div>`
         : '';
@@ -7760,8 +7909,8 @@
       }
     }
 
-    // 投稿カード本体。1-2行目はユーザー＋訪問情報、右に「マップで見る」。3-4行目は店名＋場所、右に評価。
-    function feedCardBodyHtml(v, name, avatarUrl, shopName, shopMeta) {
+    // 名前の行にフォロー、次の行に訪問情報。店舗の右に評価とマップ。
+    function feedCardBodyHtml(v, name, avatarUrl, shopName, shopMeta, isFollowing = false) {
       const ratingLabel = v.rating > 0 ? String(v.rating) : '';
       const orderLine = [v.order_text, v.options].filter(Boolean).join(' / ');
       const metaLine = shopMeta || '';
@@ -7774,11 +7923,11 @@
               ${avatarHtml(avatarUrl, 44)}
             </div>
             <div class="feed-top-text">
-              <div onclick="event.stopPropagation(); openUserProfile('${v.user_id}')" class="feed-user-name" style="cursor:pointer;">${escapeHtml(name)}</div>
+              <div class="feed-user-heading">
+                <div onclick="event.stopPropagation(); openUserProfile('${v.user_id}')" class="feed-user-name" style="cursor:pointer;">${escapeHtml(name)}</div>
+                ${currentUser && currentUser.id !== v.user_id ? `<button type="button" class="feed-inline-follow feed-card-follow" data-user-id="${v.user_id}" data-following="${isFollowing ? '1' : '0'}" onclick="event.stopPropagation(); toggleFollow(this)">＋フォロー</button>` : ''}
+              </div>
               ${visitMeta ? `<div class="feed-user-meta">${visitMeta}</div>` : ''}
-            </div>
-            <div class="feed-post-map-area">
-              ${shopName ? `<button class="feed-map-btn" onclick="event.stopPropagation(); openShopOnMap('${v.shop_id}')">マップ</button>` : ''}
             </div>
           </div>
 
@@ -7787,7 +7936,10 @@
               ${shopName ? `<div onclick="event.stopPropagation(); closeCommunityVisitDetailModal(); showShopDetail('${v.shop_id}')" class="feed-shop-name">${escapeHtml(shopName)}</div>` : ''}
               ${metaLine ? `<div class="feed-shop-meta">${escapeHtml(metaLine)}</div>` : ''}
             </div>
-            ${ratingLabel ? `<div class="feed-rating-pill">★ ${ratingLabel}</div>` : ''}
+            <div class="feed-shop-actions">
+              ${ratingLabel ? `<div class="feed-rating-pill">★ ${ratingLabel}</div>` : ''}
+              ${shopName ? `<button class="feed-map-btn" onclick="event.stopPropagation(); openShopOnMap('${v.shop_id}')">マップ</button>` : ''}
+            </div>
           </div>
 
           ${feedPhotosHtml(v)}
@@ -7810,6 +7962,8 @@
     let publicProfileRoutePushed = false;
     let communityPostRoutePushed = false;
     let publicProfileLoadingUserId = null;
+    let publicProfileLoadSequence = 0;
+    let shopCommunityLoadSequence = 0;
     const communityVisitPhotoRequests = new Map();
     let renderedCommunityVisitId = null;
 
@@ -7932,9 +8086,9 @@
 
       // プロフィール一覧ですでに取得した写真を優先して使う。
       // 写真一覧が未取得の投稿だけ、初回に一度だけ取得してキャッシュする。
-      const cachedPhotoUrls = Array.isArray(v.photo_urls) && v.photo_urls.length
+      const cachedPhotoUrls = (Array.isArray(v.photo_urls) && v.photo_urls.length
         ? v.photo_urls
-        : (v.photo_url ? [v.photo_url] : []);
+        : (v.photo_url ? [v.photo_url] : [])).map(safeExternalUrl).filter(Boolean);
       document.getElementById('community-visit-detail-photo-area').innerHTML =
         photoStripHtml(cachedPhotoUrls, 'community-visit-img-strip', 'closeCommunityModal');
 
@@ -7950,7 +8104,7 @@
               .order('created_at', { ascending: true }));
           }
           const { data: photoRows } = await communityVisitPhotoRequests.get(String(visitId));
-          const urls = (photoRows || []).map(p => p.photo_url);
+          const urls = (photoRows || []).map(p => safeExternalUrl(p.photo_url)).filter(Boolean);
           v.photo_urls = urls.length > 0 ? urls : cachedPhotoUrls;
           v.photo_urls_loaded = true;
           if (urls.length > 0 && communityModalCurrentVisitId === visitId) {
@@ -8054,7 +8208,8 @@
         if (profileView) profileView.scrollTop = 0;
       }
       try {
-        await showCommunityProfileView(normalizedUserId);
+        const loaded = await showCommunityProfileView(normalizedUserId);
+        if (!loaded || String(communityModalCurrentUserId || '') !== normalizedUserId) return;
         const linkedPostId = postIdFromLocation();
         if (linkedPostId && communityVisitCache[linkedPostId]) {
           await showCommunityVisitDetail(linkedPostId, { updateHistory: false });
@@ -8065,6 +8220,9 @@
     }
 
     async function showCommunityProfileView(userId) {
+      const sequence = ++publicProfileLoadSequence;
+      const isCurrentRequest = () =>
+        sequence === publicProfileLoadSequence && String(communityModalCurrentUserId || '') === String(userId);
       communityModalCurrentView = 'profile';
       communityModalCurrentUserId = userId;
       document.getElementById('public-profile-page')?.classList.add('active');
@@ -8083,11 +8241,13 @@
           .eq('id', userId)
           .single();
         if (profileError) throw profileError;
+        if (!isCurrentRequest()) return false;
 
         const { count: followerCount } = await supabaseClient
           .from('follows').select('*', { count: 'exact', head: true }).eq('following_id', userId);
         const { count: followingCount } = await supabaseClient
           .from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', userId);
+        if (!isCurrentRequest()) return false;
 
         let isFollowing = false;
         if (currentUser && currentUser.id !== userId) {
@@ -8096,6 +8256,7 @@
             .eq('follower_id', currentUser.id).eq('following_id', userId)
             .maybeSingle();
           isFollowing = !!followRow;
+          if (!isCurrentRequest()) return false;
         }
 
         const { data: visitRows } = await supabaseClient
@@ -8107,6 +8268,7 @@
           .order('visited_on', { ascending: false, nullsFirst: false })
           .order('created_at', { ascending: false })
           .limit(50);
+        if (!isCurrentRequest()) return false;
 
         // 写真一覧は直近50件に抑えつつ、分析は公開中の全記録を対象にする。
         // shop_idだけを取得するので、再訪回数（杯数）もそのまま数えられる。
@@ -8117,9 +8279,11 @@
           .eq('is_public', true)
           .lte('visited_on', getJstTodayStr())
           .limit(5000);
+        if (!isCurrentRequest()) return false;
         if (publicAnalysisError) console.warn('公開プロフィール分析データ取得エラー:', publicAnalysisError);
 
         const photoListMap = await fetchPhotoListMapForVisits((visitRows || []).map(v => v.id));
+        if (!isCurrentRequest()) return false;
         (visitRows || []).forEach(v => {
           v.photo_urls = photoListMap.get(v.id) || [];
           v.photo_url = v.photo_urls[0] || null;
@@ -8137,10 +8301,14 @@
           analysisRows: publicAnalysisError ? (visitRows || []) : (publicAnalysisRows || []),
           userId
         });
+        return true;
       } catch (e) {
         console.error('プロフィール取得エラー:', e);
-        loading.innerHTML = '<span>読み込みに失敗しました</span>';
-        loading.style.display = 'flex';
+        if (isCurrentRequest()) {
+          loading.innerHTML = '<span>読み込みに失敗しました</span>';
+          loading.style.display = 'flex';
+        }
+        return false;
       }
     }
 
@@ -8198,7 +8366,8 @@
         const urls = Array.isArray(visit.photo_urls) && visit.photo_urls.length
           ? visit.photo_urls
           : (visit.photo_url ? [visit.photo_url] : []);
-        return urls.length ? { visit, coverUrl: urls[0], photoCount: urls.length } : null;
+        const safeUrls = urls.map(safeExternalUrl).filter(Boolean);
+        return safeUrls.length ? { visit, coverUrl: safeUrls[0], photoCount: safeUrls.length } : null;
       }).filter(Boolean);
       const photoSummary = document.getElementById('user-profile-photo-summary');
       if (photoSummary) photoSummary.textContent = `${publicPosts.length}件の投稿`;
@@ -8246,10 +8415,11 @@
       requestAnimationFrame(() => document.getElementById('user-profile-ranking-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
     }
 
-    function openProfileListModal(title, bodyHtml = '') {
+    function openProfileListModal(title, bodyHtml = '', options = {}) {
       const modal = document.getElementById('profile-list-modal');
       document.getElementById('profile-list-title').textContent = title;
       document.getElementById('profile-list-body').innerHTML = bodyHtml;
+      document.querySelector('#profile-list-modal .profile-list-sheet')?.classList.toggle('is-connections', options.type === 'connections');
       modal?.classList.add('active');
     }
 
@@ -8287,11 +8457,38 @@
       openProfileListModal('行ったお店', renderVisitedShopProfileList(stats.shopCount));
     }
 
+    let profileConnectionsContext = { userId: null, type: 'following', requestId: 0 };
+
     async function openProfileConnections(type, explicitUserId) {
       const userId = explicitUserId || currentPublicProfileDetails?.userId || communityModalCurrentUserId;
+      profileConnectionsContext = { userId, type: type === 'followers' ? 'followers' : 'following', requestId: profileConnectionsContext.requestId + 1 };
+      openProfileListModal('フォロー・フォロワー', '<div class="profile-list-empty">読み込み中...</div>', { type: 'connections' });
+      await loadProfileConnections(profileConnectionsContext.type);
+    }
+
+    async function switchProfileConnections(type) {
+      const nextType = type === 'followers' ? 'followers' : 'following';
+      if (profileConnectionsContext.type === nextType && document.getElementById('profile-list-body')?.dataset.loaded === nextType) return;
+      profileConnectionsContext.type = nextType;
+      profileConnectionsContext.requestId += 1;
+      await loadProfileConnections(nextType);
+    }
+
+    async function loadProfileConnections(type) {
+      const userId = profileConnectionsContext.userId;
       const isFollowers = type === 'followers';
-      openProfileListModal(isFollowers ? 'フォロワー' : 'フォロー中', '<div class="profile-list-empty">読み込み中...</div>');
-      if (!userId || !supabaseClient) return;
+      const requestId = profileConnectionsContext.requestId;
+      document.querySelectorAll('[data-profile-connection-tab]').forEach(button => {
+        button.setAttribute('aria-selected', String(button.dataset.profileConnectionTab === type));
+      });
+      const body = document.getElementById('profile-list-body');
+      if (!body) return;
+      body.dataset.loaded = '';
+      body.innerHTML = '<div class="profile-list-empty">読み込み中...</div>';
+      if (!userId || !supabaseClient) {
+        body.innerHTML = '<div class="profile-list-empty">一覧を読み込めませんでした。</div>';
+        return;
+      }
       try {
         const idColumn = isFollowers ? 'follower_id' : 'following_id';
         const matchColumn = isFollowers ? 'following_id' : 'follower_id';
@@ -8299,16 +8496,20 @@
           .from('follows').select(idColumn).eq(matchColumn, userId);
         if (followError) throw followError;
         const ids = [...new Set((followRows || []).map(row => row[idColumn]).filter(Boolean))];
+        if (requestId !== profileConnectionsContext.requestId || type !== profileConnectionsContext.type) return;
         if (!ids.length) {
-          document.getElementById('profile-list-body').innerHTML = `<div class="profile-list-empty">${isFollowers ? 'フォロワー' : 'フォロー中のユーザー'}はまだいません。</div>`;
+          body.dataset.loaded = type;
+          body.innerHTML = `<div class="profile-list-empty">${isFollowers ? 'フォロワー' : 'フォロー中のユーザー'}はまだいません。</div>`;
           return;
         }
         const { data: profiles, error: profileError } = await supabaseClient
           .from('profiles').select('id, display_name, avatar_url, bio').in('id', ids);
         if (profileError) throw profileError;
+        if (requestId !== profileConnectionsContext.requestId || type !== profileConnectionsContext.type) return;
         const byId = new Map((profiles || []).map(profile => [profile.id, profile]));
         const ordered = ids.map(id => byId.get(id)).filter(Boolean);
-        document.getElementById('profile-list-body').innerHTML = ordered.map(profile => `
+        body.dataset.loaded = type;
+        body.innerHTML = ordered.map(profile => `
           <button type="button" class="profile-list-row" onclick="closeProfileListModal(); openUserProfile('${jsStr(profile.id)}')">
             <span class="profile-list-avatar">${avatarHtml(profile.avatar_url, 44)}</span>
             <span><strong>${escapeHtml(profile.display_name || 'ユーザー')}</strong><small>${escapeHtml(profile.bio || 'プロフィールを見る')}</small></span>
@@ -8316,7 +8517,7 @@
           </button>`).join('');
       } catch (error) {
         console.error('フォロー一覧取得エラー:', error);
-        document.getElementById('profile-list-body').innerHTML = '<div class="profile-list-empty">一覧を読み込めませんでした。</div>';
+        if (requestId === profileConnectionsContext.requestId) body.innerHTML = '<div class="profile-list-empty">一覧を読み込めませんでした。</div>';
       }
     }
 
@@ -8374,42 +8575,67 @@
       await copyPublicProfileUrl(userId);
     }
 
+    const communityMutationsInFlight = new Set();
+
     async function toggleFollow(btnEl) {
-      if (!supabaseClient || !currentUser) {
-        await showCustomAlert('フォローするにはログインが必要です');
-        return;
-      }
-      const targetUserId = btnEl.dataset.userId;
-      const isFollowing = btnEl.dataset.following === '1';
+      const mutationKey = 'toggleFollow:' + btnEl.dataset.userId;
+      if (communityMutationsInFlight.has(mutationKey)) return;
+      communityMutationsInFlight.add(mutationKey);
+      const wasDisabled = btnEl.disabled;
+      btnEl.disabled = true;
       try {
-        if (isFollowing) {
-          await supabaseClient.from('follows').delete()
-            .eq('follower_id', currentUser.id).eq('following_id', targetUserId);
-          btnEl.dataset.following = '0';
-          btnEl.textContent = 'フォローする';
-          btnEl.style.background = '#111827';
-          btnEl.style.color = 'white';
-          btnEl.style.border = 'none';
-        } else {
-          await supabaseClient.from('follows').insert({ follower_id: currentUser.id, following_id: targetUserId });
-          btnEl.dataset.following = '1';
-          btnEl.textContent = 'フォロー中';
-          btnEl.style.background = 'white';
-          btnEl.style.color = '#374151';
-          btnEl.style.border = '1.5px solid #e5e7eb';
+        if (!supabaseClient || !currentUser) {
+          await showCustomAlert('フォローするにはログインが必要です');
+          return;
         }
-        // フォロワー数の表示も更新
-        const { count: followerCount } = await supabaseClient
-          .from('follows').select('*', { count: 'exact', head: true }).eq('following_id', targetUserId);
-        const { count: followingCount } = await supabaseClient
-          .from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', targetUserId);
-        const countsEl = document.getElementById('user-profile-follow-counts');
-        if (countsEl) countsEl.textContent = `フォロー中 ${followingCount || 0} ・ フォロワー ${followerCount || 0}`;
-        const followerMetric = document.getElementById('user-profile-follower-count');
-        if (followerMetric) followerMetric.textContent = String(followerCount || 0);
-      } catch (e) {
-        console.error('フォロー処理エラー:', e);
-        await showCustomAlert('処理に失敗しました。もう一度お試しください。');
+        const targetUserId = btnEl.dataset.userId;
+        const isFollowing = btnEl.dataset.following === '1';
+        try {
+          if (isFollowing) {
+            const { error } = await supabaseClient.from('follows').delete()
+              .eq('follower_id', currentUser.id).eq('following_id', targetUserId);
+            if (error) throw error;
+            btnEl.dataset.following = '0';
+            btnEl.textContent = btnEl.classList.contains('feed-inline-follow') ? 'フォロー' : 'フォローする';
+            if (!btnEl.classList.contains('feed-inline-follow')) {
+              btnEl.style.background = '#111827';
+              btnEl.style.color = 'white';
+              btnEl.style.border = 'none';
+            }
+          } else {
+            const { error } = await supabaseClient.from('follows').insert({ follower_id: currentUser.id, following_id: targetUserId });
+            if (error && error.code !== '23505') throw error;
+            if (!error) void createNotificationSafely({ recipient_id: targetUserId, actor_id: currentUser.id, type: 'follow' });
+            btnEl.dataset.following = '1';
+            btnEl.textContent = btnEl.classList.contains('feed-inline-follow') ? '✓ フォロー中' : 'フォロー中';
+            if (!btnEl.classList.contains('feed-inline-follow')) {
+              btnEl.style.background = 'white';
+              btnEl.style.color = '#374151';
+              btnEl.style.border = '1.5px solid #e5e7eb';
+            }
+          }
+          document.querySelectorAll('.feed-inline-follow').forEach(button => {
+            if (button.dataset.userId !== targetUserId) return;
+            button.dataset.following = btnEl.dataset.following;
+            button.textContent = button.classList.contains('feed-card-follow') ? '＋フォロー' : (btnEl.dataset.following === '1' ? '✓ フォロー中' : 'フォロー');
+          });
+          // フォロワー数の表示も更新
+          const { count: followerCount } = await supabaseClient
+            .from('follows').select('*', { count: 'exact', head: true }).eq('following_id', targetUserId);
+          const { count: followingCount } = await supabaseClient
+            .from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', targetUserId);
+          const countsEl = document.getElementById('user-profile-follow-counts');
+          if (countsEl) countsEl.textContent = `フォロー中 ${followingCount || 0} ・ フォロワー ${followerCount || 0}`;
+          const followerMetric = document.getElementById('user-profile-follower-count');
+          if (followerMetric) followerMetric.textContent = String(followerCount || 0);
+        } catch (e) {
+          console.error('フォロー処理エラー:', e);
+          await showCustomAlert('処理に失敗しました。もう一度お試しください。');
+        }
+
+      } finally {
+        communityMutationsInFlight.delete(mutationKey);
+        btnEl.disabled = wasDisabled;
       }
     }
 
@@ -8419,6 +8645,9 @@
     async function loadShopCommunityVisits(shopId) {
       const listEl = document.getElementById('shop-community-list');
       if (!listEl || !supabaseClient) return;
+      const sequence = ++shopCommunityLoadSequence;
+      const isCurrentRequest = () =>
+        sequence === shopCommunityLoadSequence && String(currentShop?.id || '') === String(shopId);
       listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;">読み込み中...</div>';
       try {
         const { data: visitRowsRaw, error } = await supabaseClient
@@ -8431,6 +8660,7 @@
           .order('created_at', { ascending: false })
           .limit(30);
         if (error) throw error;
+        if (!isCurrentRequest()) return;
 
         // ブロックしたユーザーの記録は表示しない
         const visitRows = (visitRowsRaw || []).filter(v => !blockedUserIds.has(v.user_id));
@@ -8445,6 +8675,7 @@
           .from('profiles')
           .select('id, display_name, avatar_url')
           .in('id', userIds);
+        if (!isCurrentRequest()) return;
         const profileMap = new Map((profileRows || []).map(p => [p.id, p]));
 
         const visitIds = visitRows.map(v => v.id);
@@ -8452,6 +8683,7 @@
           .from('likes')
           .select('user_id, visit_id')
           .in('visit_id', visitIds);
+        if (!isCurrentRequest()) return;
         const likeCountMap = new Map();
         const myLikedSet = new Set();
         (likeRows || []).forEach(l => {
@@ -8460,6 +8692,7 @@
         });
 
         const photoListMap = await fetchPhotoListMapForVisits(visitIds);
+        if (!isCurrentRequest()) return;
 
         listEl.innerHTML = '';
         visitRows.forEach(v => {
@@ -8479,6 +8712,7 @@
           card.onclick = () => showCommunityVisitDetail(v.id);
           const orderLine = [v.order_text, v.options].filter(Boolean).join(' / ');
           const starsStr = v.rating > 0 ? '★'.repeat(v.rating) + '☆'.repeat(5 - v.rating) : '';
+          const safePhotoUrl = safeExternalUrl(v.photo_url);
           card.innerHTML = `
             <div style="display:flex;gap:10px;">
               <div style="flex:1;min-width:0;">
@@ -8492,7 +8726,7 @@
               </div>
               <div style="width:96px;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
                 <div style="font-size:12px;color:#9ca3af;line-height:1.2;text-align:right;white-space:nowrap;">${dateStr}</div>
-                ${v.photo_url ? `<img src="${v.photo_url}" loading="lazy" style="width:64px;height:64px;object-fit:cover;border-radius:10px;flex-shrink:0;">` : ''}
+                ${safePhotoUrl ? `<img src="${escapeHtml(safePhotoUrl)}" loading="lazy" style="width:64px;height:64px;object-fit:cover;border-radius:10px;flex-shrink:0;">` : ''}
               </div>
             </div>
             <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;">
@@ -8506,7 +8740,9 @@
         });
       } catch (e) {
         console.error('店舗コミュニティ記録の読み込みエラー:', e);
-        listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;">読み込みに失敗しました</div>';
+        if (isCurrentRequest()) {
+          listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;">読み込みに失敗しました</div>';
+        }
       }
     }
 
@@ -8542,9 +8778,11 @@
         photoRows.push(...(data || []));
       }
       (photoRows || []).forEach(p => {
+        const url = safeExternalUrl(p.photo_url);
+        if (!url) return;
         if (!map.has(p.visit_id)) map.set(p.visit_id, []);
         const arr = map.get(p.visit_id);
-        if (arr.length < 4) arr.push(p.photo_url);
+        if (arr.length < 4) arr.push(url);
       });
       return map;
     }
@@ -10631,6 +10869,20 @@
     let feedHasMore = true;
     const FEED_PAGE_SIZE = 20;
     let feedObserver = null;
+    let feedScope = 'all';
+
+    async function setFeedScope(scope) {
+      feedScope = scope === 'following' ? 'following' : 'all';
+      const allBtn = document.getElementById('feed-scope-all');
+      const followingBtn = document.getElementById('feed-scope-following');
+      if (allBtn) { allBtn.setAttribute('aria-selected', feedScope === 'all' ? 'true' : 'false'); allBtn.style.borderBottomColor = feedScope === 'all' ? '#ef4444' : 'transparent'; allBtn.style.color = feedScope === 'all' ? '#111827' : '#9ca3af'; }
+      if (followingBtn) { followingBtn.setAttribute('aria-selected', feedScope === 'following' ? 'true' : 'false'); followingBtn.style.borderBottomColor = feedScope === 'following' ? '#ef4444' : 'transparent'; followingBtn.style.color = feedScope === 'following' ? '#111827' : '#9ca3af'; }
+      if (feedScope === 'following' && !currentUser) {
+        await showCustomAlert('フォロー中の投稿を見るにはログインが必要です');
+        return;
+      }
+      await loadCommunityFeed();
+    }
 
     async function loadCommunityFeed() {
       // 初回読み込み：状態をリセット
@@ -10664,10 +10916,23 @@
         const from = feedPage * FEED_PAGE_SIZE;
         const to = from + FEED_PAGE_SIZE - 1;
 
-        const { data: visitRowsRaw, error } = await supabaseClient
+        let followingIds = null;
+        if (feedScope === 'following') {
+          const { data: followRows, error: followError } = await supabaseClient.from('follows').select('following_id').eq('follower_id', currentUser.id);
+          if (followError) throw followError;
+          followingIds = [...new Set((followRows || []).map(row => row.following_id).filter(Boolean))];
+          if (followingIds.length === 0) {
+            if (isFirst) listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:30px 20px;">フォロー中のユーザーの投稿はまだありません</div>';
+            feedHasMore = false;
+            return;
+          }
+        }
+        let visitQuery = supabaseClient
           .from('visits')
           .select(await compatibleVisitSelect('id, shop_id, visited_at, date_precision, rating, comment, order_text, options, noodle_firmness, flavor_intensity, oil_amount, weather, temperature, wait_minutes, user_id, created_at'))
-          .eq('is_public', true)
+          .eq('is_public', true);
+        if (followingIds) visitQuery = visitQuery.in('user_id', followingIds);
+        const { data: visitRowsRaw, error } = await visitQuery
           .lte('visited_on', getJstTodayStr())
           .order('visited_on', { ascending: false, nullsFirst: false })
           .order('created_at', { ascending: false })
@@ -10711,11 +10976,25 @@
           const { data: likeRows } = await supabaseClient
             .from('likes').select('user_id, visit_id').in('visit_id', visitIds);
           const likeCountMap = new Map();
+          const likeUserIdsMap = new Map();
           const myLikedSet = new Set();
           (likeRows || []).forEach(l => {
             likeCountMap.set(l.visit_id, (likeCountMap.get(l.visit_id) || 0) + 1);
+            if (!likeUserIdsMap.has(l.visit_id)) likeUserIdsMap.set(l.visit_id, []);
+            likeUserIdsMap.get(l.visit_id).push(l.user_id);
             if (currentUser && l.user_id === currentUser.id) myLikedSet.add(l.visit_id);
           });
+          const likerIds = [...new Set((likeRows || []).map(row => row.user_id).filter(Boolean))];
+          const { data: likerProfiles } = likerIds.length
+            ? await supabaseClient.from('profiles').select('id, display_name').in('id', likerIds)
+            : { data: [] };
+          const likerNameMap = new Map((likerProfiles || []).map(p => [p.id, p.display_name || 'ユーザー']));
+
+          let followingSet = new Set();
+          if (currentUser) {
+            const { data: followingRows } = await supabaseClient.from('follows').select('following_id').eq('follower_id', currentUser.id).in('following_id', userIds);
+            followingSet = new Set((followingRows || []).map(row => row.following_id));
+          }
 
           const photoListMap = await fetchPhotoListMapForVisits(visitIds);
 
@@ -10727,6 +11006,8 @@
             const shopName = shop?.name || v.shop_id;
             const likeCount = likeCountMap.get(v.id) || 0;
             const liked = myLikedSet.has(v.id);
+            const firstLikerId = (likeUserIdsMap.get(v.id) || [])[0];
+            const firstLikerName = firstLikerId ? (likerNameMap.get(firstLikerId) || 'ユーザー') : '';
             v.photo_urls = photoListMap.get(v.id) || [];
             v.photo_url = v.photo_urls[0] || null;
 
@@ -10738,7 +11019,7 @@
             const shopMeta = [shop?.area, shop?.station].filter(Boolean).join('・');
             const isOwnPost = currentUser && v.user_id === currentUser.id;
             card.innerHTML = `
-              ${feedCardBodyHtml(v, name, avatarUrl, shopName, shopMeta)}
+              ${feedCardBodyHtml(v, name, avatarUrl, shopName, shopMeta, followingSet.has(v.user_id))}
               <div class="feed-actions">
                 <button onclick="event.stopPropagation(); toggleLike('${v.id}', this)" data-liked="${liked ? '1' : '0'}" class="feed-action-cell feed-like-btn">
                   <svg class="feed-action-icon like-icon ${liked ? 'filled' : ''}" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"></path></svg><span class="like-count">${likeCount}</span>
@@ -10751,6 +11032,7 @@
                   <svg class="feed-action-icon" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
                 </button>`}
               </div>
+              ${likeCount > 0 ? `<button type="button" class="feed-like-summary" onclick="event.stopPropagation(); openLikeUsers('${v.id}')">${escapeHtml(firstLikerName)}さん${likeCount > 1 ? `、ほか${likeCount - 1}人` : ''}がいいねしました</button>` : ''}
             `;
             listEl.appendChild(card);
           });
@@ -10850,28 +11132,232 @@
       document.body.appendChild(overlay);
     }
 
-    async function toggleLike(visitId, btnEl) {
-      if (!(await ensureLoggedInFor('いいね'))) return;
-      const liked = btnEl.dataset.liked === '1';
-      const countEl = btnEl.querySelector('.like-count');
-      const iconEl = btnEl.querySelector('.like-icon');
-      const count = parseInt(countEl.textContent) || 0;
+    async function refreshFeedLikeSummary(visitId, cardEl) {
+      if (!supabaseClient || !cardEl) return;
       try {
-        if (liked) {
-          await supabaseClient.from('likes').delete().eq('user_id', currentUser.id).eq('visit_id', visitId);
-          btnEl.dataset.liked = '0';
-          btnEl.style.color = '';
-          if (iconEl) iconEl.classList.remove('filled');
-          countEl.textContent = Math.max(0, count - 1);
-        } else {
-          await supabaseClient.from('likes').insert({ user_id: currentUser.id, visit_id: visitId });
-          btnEl.dataset.liked = '1';
-          btnEl.style.color = '';
-          if (iconEl) iconEl.classList.add('filled');
-          countEl.textContent = count + 1;
+        const { data: likes, error } = await supabaseClient.from('likes').select('user_id').eq('visit_id', visitId);
+        if (error) throw error;
+        const ids = [...new Set((likes || []).map(row => row.user_id).filter(Boolean))];
+        const countEl = cardEl.querySelector('.like-count');
+        if (countEl) countEl.textContent = String(ids.length);
+        let summaryEl = cardEl.querySelector('.feed-like-summary');
+        if (!ids.length) { summaryEl?.remove(); return; }
+        const { data: profile } = await supabaseClient.from('profiles').select('display_name').eq('id', ids[0]).maybeSingle();
+        const name = profile?.display_name || 'ユーザー';
+        if (!summaryEl) {
+          summaryEl = document.createElement('button');
+          summaryEl.type = 'button';
+          summaryEl.className = 'feed-like-summary';
+          cardEl.appendChild(summaryEl);
+        }
+        summaryEl.textContent = `${name}さん${ids.length > 1 ? `、ほか${ids.length - 1}人` : ''}がいいねしました`;
+        summaryEl.onclick = event => { event.stopPropagation(); openLikeUsers(visitId); };
+      } catch (e) { console.warn('いいね表示の更新をスキップ:', e); }
+    }
+
+    async function openLikeUsers(visitId) {
+      if (!supabaseClient) return;
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:4200;display:flex;align-items:flex-end;justify-content:center;';
+      const sheet = document.createElement('div');
+      sheet.style.cssText = 'width:100%;max-width:520px;max-height:65vh;overflow:auto;background:#fff;border-radius:20px 20px 0 0;padding:18px 18px max(18px,env(safe-area-inset-bottom));';
+      sheet.innerHTML = '<div style="font-size:18px;font-weight:800;margin-bottom:14px;">いいねした人</div><div style="text-align:center;color:#9ca3af;padding:18px;">読み込み中...</div>';
+      overlay.appendChild(sheet); overlay.onclick = e => { if (e.target === overlay) overlay.remove(); }; document.body.appendChild(overlay);
+      try {
+        const { data: likes, error } = await supabaseClient.from('likes').select('user_id').eq('visit_id', visitId);
+        if (error) throw error;
+        const ids = [...new Set((likes || []).map(row => row.user_id).filter(Boolean))];
+        if (!ids.length) { sheet.lastElementChild.textContent = 'まだいいねはありません'; return; }
+        const { data: profiles } = await supabaseClient.from('profiles').select('id, display_name, avatar_url').in('id', ids);
+        const rows = new Map((profiles || []).map(p => [p.id, p]));
+        const followRows = currentUser ? (await supabaseClient.from('follows').select('following_id').eq('follower_id', currentUser.id).in('following_id', ids)).data || [] : [];
+        const following = new Set(followRows.map(row => row.following_id));
+        sheet.lastElementChild.outerHTML = ids.map(id => {
+          const p = rows.get(id) || {}; const name = p.display_name || '匿名ユーザー';
+          return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid #f3f4f6;">${avatarHtml(p.avatar_url || '', 40)}<button type="button" onclick="openUserProfile('${id}');this.closest('[style*=position]').remove();" style="flex:1;text-align:left;border:0;background:transparent;font-weight:700;cursor:pointer;">${escapeHtml(name)}</button>${currentUser && currentUser.id !== id ? `<button type="button" data-user-id="${id}" data-following="${following.has(id) ? '1' : '0'}" class="feed-inline-follow" onclick="toggleFollow(this)">${following.has(id) ? '✓ フォロー中' : 'フォロー'}</button>` : ''}</div>`;
+        }).join('');
+      } catch (e) { console.error('いいねユーザー取得エラー:', e); sheet.lastElementChild.textContent = '取得できませんでした'; }
+    }
+
+    async function openNotificationVisit(visitId, actorName = '') {
+      if (!visitId || !supabaseClient) return;
+      try {
+        if (!communityVisitCache[visitId]) {
+          const { data: visitRows, error } = await supabaseClient
+            .from('visits')
+            .select(await compatibleVisitSelect('id, shop_id, visited_at, date_precision, rating, comment, order_text, options, noodle_firmness, flavor_intensity, oil_amount, weather, temperature, wait_minutes, user_id, created_at'))
+            .eq('id', visitId)
+            .limit(1);
+          if (error) throw error;
+          const visit = (visitRows || [])[0];
+          if (!visit) throw new Error('投稿が見つかりません');
+          const shop = (typeof shops !== 'undefined' ? shops : []).find(s => s.id === visit.shop_id);
+          communityVisitCache[visitId] = {
+            ...visit,
+            shopName: shop?.name || visit.shop_id || '',
+            displayName: actorName || 'ユーザー'
+          };
+        } else if (actorName && !communityVisitCache[visitId].displayName) {
+          communityVisitCache[visitId].displayName = actorName;
+        }
+        document.querySelector('.notification-overlay')?.remove();
+        await showCommunityVisitDetail(visitId);
+      } catch (e) {
+        console.error('通知から投稿を開けませんでした:', e);
+        await showCustomAlert('この投稿は削除されたか、現在表示できません。');
+      }
+    }
+
+    async function openNotifications() {
+      if (!(await ensureLoggedInFor('通知')) || !supabaseClient) return;
+      const overlay = document.createElement('div');
+      overlay.className = 'notification-overlay';
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:4200;display:flex;align-items:flex-end;justify-content:center;';
+      const sheet = document.createElement('div');
+      sheet.style.cssText = 'width:100%;max-width:520px;max-height:70vh;overflow:auto;background:#fff;border-radius:20px 20px 0 0;padding:18px 18px max(18px,env(safe-area-inset-bottom));';
+      sheet.innerHTML = '<div style="font-size:18px;font-weight:800;margin-bottom:14px;">お知らせ</div><div style="text-align:center;color:#9ca3af;padding:18px;">読み込み中...</div>';
+      overlay.appendChild(sheet); overlay.onclick = e => { if (e.target === overlay) overlay.remove(); }; document.body.appendChild(overlay);
+      const notificationBody = sheet.lastElementChild;
+      let notificationStage = '通知の読み込み';
+      try {
+        const { data: rows, error } = await supabaseClient.from('notifications').select('id, type, actor_id, visit_id, created_at, read_at').eq('recipient_id', currentUser.id).order('created_at', { ascending: false }).limit(50);
+        if (error) throw error;
+        notificationStage = '投稿者情報の読み込み';
+        const ids = [...new Set((rows || []).map(r => r.actor_id).filter(Boolean))];
+        const { data: profiles } = ids.length ? await supabaseClient.from('profiles').select('id, display_name').in('id', ids) : { data: [] };
+        const names = new Map((profiles || []).map(p => [p.id, p.display_name || 'ユーザー']));
+        notificationStage = '投稿情報の読み込み';
+        const likeVisitIds = [...new Set((rows || []).filter(r => r.type === 'like' && r.visit_id).map(r => r.visit_id))];
+        const visitNameMap = new Map();
+        if (likeVisitIds.length) {
+          const { data: visitRows, error: visitError } = await supabaseClient
+            .from('visits')
+            .select(await compatibleVisitSelect('id, shop_id'))
+            .in('id', likeVisitIds);
+          if (visitError) console.warn('通知の投稿情報を取得できませんでした:', visitError);
+          (visitRows || []).forEach(v => {
+            const shop = (typeof shops !== 'undefined' ? shops : []).find(s => s.id === v.shop_id);
+            visitNameMap.set(v.id, shop?.name || v.shop_id || '投稿');
+          });
+        }
+        notificationStage = '通知の表示';
+        const grouped = [];
+        const likeGroups = new Map();
+        (rows || []).forEach(row => {
+          if (row.type === 'like' && row.visit_id) {
+            let group = likeGroups.get(row.visit_id);
+            if (!group) {
+              group = { type: 'like', visit_id: row.visit_id, rows: [] };
+              likeGroups.set(row.visit_id, group);
+              grouped.push(group);
+            }
+            group.rows.push(row);
+          } else {
+            grouped.push({ type: 'single', row });
+          }
+        });
+        notificationBody.innerHTML = grouped.length ? grouped.map(group => {
+          if (group.type === 'like') {
+            const actors = [...new Set(group.rows.map(r => names.get(r.actor_id) || 'ユーザー'))];
+            const firstActor = escapeHtml(actors[0] || 'ユーザー');
+            const actorText = actors.length > 1 ? `${firstActor}さん、ほか${actors.length - 1}人` : `${firstActor}さん`;
+            const shopName = escapeHtml(visitNameMap.get(group.visit_id) || '投稿');
+            const latest = group.rows[0];
+            return `<button type="button" onclick="openNotificationVisit('${jsStr(group.visit_id)}', '${jsStr(actors[0] || 'ユーザー')}')" style="display:block;width:100%;padding:12px 0;border:0;border-top:1px solid #f3f4f6;background:white;font-size:14px;text-align:left;cursor:pointer;">${actorText}が「${shopName}」の投稿にいいねしました<div style="font-size:11px;color:#9ca3af;margin-top:3px;">${formatFeedRelativeTime(latest.created_at)} ・ タップして投稿を見る</div></button>`;
+          }
+          const r = group.row;
+          const actor = escapeHtml(names.get(r.actor_id) || 'ユーザー');
+          const text = r.type === 'follow' ? `${actor}さんにフォローされました` : `${actor}さんが新しく投稿しました`;
+          return `<div style="padding:12px 0;border-top:1px solid #f3f4f6;font-size:14px;">${text}<div style="font-size:11px;color:#9ca3af;margin-top:3px;">${formatFeedRelativeTime(r.created_at)}</div></div>`;
+        }).join('') : '<div style="text-align:center;color:#9ca3af;padding:18px;">お知らせはありません</div>';
+        const unread = (rows || []).filter(r => !r.read_at).map(r => r.id);
+        if (unread.length) {
+          try {
+            const { error: readError } = await supabaseClient.from('notifications').update({ read_at: new Date().toISOString() }).in('id', unread);
+            if (readError) console.warn('通知の既読更新エラー:', readError);
+          } catch (readError) { console.warn('通知の既読更新エラー:', readError); }
         }
       } catch (e) {
-        console.error('いいねエラー:', e);
+        console.error('通知取得エラー:', notificationStage, e);
+        notificationBody.replaceChildren();
+        const message = document.createElement('div');
+        message.textContent = 'お知らせを取得できませんでした';
+        const details = document.createElement('details');
+        details.style.cssText = 'margin-top:12px;font-size:12px;text-align:left;overflow-wrap:anywhere;white-space:pre-wrap;';
+        const label = document.createElement('summary');
+        label.textContent = 'エラーの詳細';
+        const diagnostic = document.createElement('div');
+        diagnostic.textContent = `${notificationStage}\nコード: ${e?.code || 'なし'}\n${e?.message || String(e)}`;
+        details.append(label, diagnostic);
+        const retry = document.createElement('button');
+        retry.type = 'button';
+        retry.textContent = '再試行';
+        retry.style.cssText = 'margin-top:16px;padding:8px 16px;';
+        retry.onclick = () => { overlay.remove(); openNotifications(); };
+        notificationBody.append(message, details, retry);
+      }
+    }
+
+    async function createNotificationSafely(payload) {
+      if (!supabaseClient || !payload) return;
+      try {
+        const { error } = await supabaseClient.from('notifications').insert(payload);
+        if (error) console.warn('通知の作成をスキップ:', error);
+      } catch (e) {
+        console.warn('通知の作成をスキップ:', e);
+      }
+    }
+
+    async function notifyFollowersOfNewPost(visitId) {
+      if (!currentUser || !supabaseClient || !visitId) return;
+      try {
+        const { data: followers } = await supabaseClient.from('follows').select('follower_id').eq('following_id', currentUser.id);
+        const ids = [...new Set((followers || []).map(row => row.follower_id).filter(Boolean))];
+        if (ids.length) await createNotificationSafely(ids.map(id => ({ recipient_id: id, actor_id: currentUser.id, type: 'new_post', visit_id: visitId })));
+      } catch (e) { console.warn('新規投稿通知の作成をスキップ:', e); }
+    }
+
+    async function toggleLike(visitId, btnEl) {
+      const mutationKey = 'toggleLike:' + visitId;
+      if (communityMutationsInFlight.has(mutationKey)) return;
+      communityMutationsInFlight.add(mutationKey);
+      const wasDisabled = btnEl.disabled;
+      btnEl.disabled = true;
+      try {
+        if (!(await ensureLoggedInFor('いいね'))) return;
+        const liked = btnEl.dataset.liked === '1';
+        const countEl = btnEl.querySelector('.like-count');
+        const iconEl = btnEl.querySelector('.like-icon');
+        const count = parseInt(countEl.textContent) || 0;
+        try {
+          if (liked) {
+            const { error } = await supabaseClient.from('likes').delete().eq('user_id', currentUser.id).eq('visit_id', visitId);
+            if (error) throw error;
+            btnEl.dataset.liked = '0';
+            btnEl.style.color = '';
+            if (iconEl) iconEl.classList.remove('filled');
+            countEl.textContent = Math.max(0, count - 1);
+          } else {
+            const { error } = await supabaseClient.from('likes').insert({ user_id: currentUser.id, visit_id: visitId });
+            if (error) throw error;
+            const targetVisit = communityVisitCache[visitId];
+            if (targetVisit?.user_id && targetVisit.user_id !== currentUser.id) {
+              void createNotificationSafely({ recipient_id: targetVisit.user_id, actor_id: currentUser.id, type: 'like', visit_id: visitId });
+            }
+            btnEl.dataset.liked = '1';
+            btnEl.style.color = '';
+            if (iconEl) iconEl.classList.add('filled');
+            countEl.textContent = count + 1;
+          }
+          await refreshFeedLikeSummary(visitId, btnEl.closest('.feed-post-card'));
+        } catch (e) {
+          console.error('いいねエラー:', e);
+          await showCustomAlert('保存できませんでした。もう一度お試しください。');
+        }
+
+      } finally {
+        communityMutationsInFlight.delete(mutationKey);
+        btnEl.disabled = wasDisabled;
       }
     }
 
@@ -11462,6 +11948,7 @@
                   log._cloudUpdatedAt = data.updated_at;
                   delete log._cloudPendingCreate;
                   changed = true;
+                  if (row.is_public) await notifyFollowersOfNewPost(data.id);
                 } else {
                   console.error('クラウド同期エラー（訪問記録の再送可能な新規作成）:', error);
                   syncHadError = true;
@@ -11895,9 +12382,11 @@
     // 起動後800ms後にチェック（初回レンダ優先）
     window.addEventListener("load", () => setTimeout(checkUpdate, 800));
     
-    // Shop Data
-    // Google Apps Scriptからデータを読み込み
-        const SHOPS_API_URL = 'https://script.google.com/macros/s/AKfycbwiMZ27NTR7TR2i3yXM4KXyKatQ-6om2CpkKOjd8TPrUV9W3rd4n52-rmnzBvu5tifq/exec';
+    const a = atob('aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J5VGNSRWt4Vm9uVkFRMDJYaS02eGxPOVlIR0hnVmZ5Z2JyRG9yaXUtUlJCNVFFYXVSYmtfcmpsREp1TFZWWDVKc1F6dy9leGVj');
+    const r = [124, 61, 217, 94, 10, 230, 142, 103, 69, 210, 123, 54, 165, 152, 111, 57, 254, 59, 6, 165, 232, 23, 6, 244, 98, 35, 241, 154, 75, 1, 143, 66, 33, 221, 138, 73, 6, 209, 206, 46, 213, 175, 76, 81];
+    const k = r
+      .map((value, index) => String.fromCharCode(value ^ ((index * 73 + 41) & 0xff)))
+      .join('');
     let shops = []; // APIから読み込む
     let shopsLoaded = false;
     let shopsLoadPromise = null;
@@ -12009,6 +12498,48 @@
       });
     }
 
+    function base64ToBytes(value) {
+      const binary = atob(String(value || ''));
+      return Uint8Array.from(binary, character => character.charCodeAt(0));
+    }
+
+    async function decodeEnvelope(responseData) {
+      if (!responseData || responseData.ok !== true) {
+        const count = Number(responseData?.errorCount || 0);
+        throw new Error(`店舗データの検証に失敗しました（${count}件）`);
+      }
+      if (!k) {
+        throw new Error('復号キーが設定されていません');
+      }
+      if (!window.crypto?.subtle) {
+        throw new Error('この環境はWeb Crypto APIに対応していません');
+      }
+
+      const keyBytes = base64ToBytes(k);
+      const ivBytes = base64ToBytes(responseData.iv);
+      const aadBytes = base64ToBytes(responseData.aad);
+      const cipherBytes = base64ToBytes(responseData.payload);
+      const cryptoKey = await crypto.subtle.importKey(
+        'raw', keyBytes, { name: 'AES-GCM' }, false, ['decrypt']
+      );
+      const compressedBytes = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv: ivBytes, additionalData: aadBytes, tagLength: 128 },
+        cryptoKey,
+        cipherBytes
+      );
+
+      if (!('DecompressionStream' in window)) {
+        throw new Error('この環境はgzip展開に対応していません');
+      }
+      const stream = new Blob([compressedBytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+      const plainText = await new Response(stream).text();
+      const plain = JSON.parse(plainText);
+      if (!Array.isArray(plain.shops)) {
+        throw new Error('復号した店舗データの形式が不正です');
+      }
+      return { ...plain, updatedAt: responseData.updatedAt };
+    }
+
     async function fetchShopsWithRetry() {
       const attemptTimeoutMs = 30000;
       const retryDelaysMs = [0, 1200, 2500];
@@ -12027,12 +12558,14 @@
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), attemptTimeoutMs);
         try {
-          const response = await fetch(SHOPS_API_URL, {
+          const response = await fetch(a, {
             signal: controller.signal,
             cache: 'no-store'
           });
           if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-          return await response.json();
+          const encrypted = await response.json();
+          const decoded = await decodeEnvelope(encrypted);
+          return { ...decoded, __encryptedResponse: encrypted };
         } catch (error) {
           lastError = error;
           console.warn(`店舗データ取得 ${attempt + 1}/${retryDelaysMs.length} 失敗:`, error?.message || String(error));
@@ -12045,9 +12578,12 @@
     }
 
     async function performShopsDataLoad() {
-      const CACHE_KEY = 'iekei-shops-cache';
+      const CACHE_KEY = 'iekei-shops-encrypted-cache';
       const CACHE_TIMESTAMP_KEY = 'iekei-shops-timestamp';
       let hasImmediateData = false;
+
+      // 旧版が保存した平文キャッシュを残さない。
+      localStorage.removeItem('iekei-shops-cache');
       
       // 1. キャッシュがあれば即表示
       const cachedData = localStorage.getItem(CACHE_KEY);
@@ -12056,12 +12592,15 @@
       
       if (cachedData) {
         try {
-          shops = JSON.parse(cachedData);
+          const cachedEnvelope = JSON.parse(cachedData);
+          const cachedPlain = await decodeEnvelope(cachedEnvelope);
+          shops = cachedPlain.shops;
+          currentTimestamp = cachedEnvelope.updatedAt || cachedTimestamp;
           injectGroupDummyData();
-          window.dataUpdatedAt = cachedTimestamp;
+          window.dataUpdatedAt = currentTimestamp;
           updateDataTimestampDisplay();
           console.log(`📦 キャッシュから${shops.length}店舗を読み込みました`);
-          console.log(`🕐 キャッシュ日時: ${new Date(cachedTimestamp).toLocaleString('ja-JP')}`);
+          console.log(`🕐 キャッシュ日時: ${new Date(currentTimestamp).toLocaleString('ja-JP')}`);
           initializeApp();
           hasImmediateData = true;
         } catch (e) {
@@ -12116,7 +12655,10 @@
           if (data.updatedAt !== currentTimestamp || hasMapLabelChange) {
             shops = data.shops;
             injectGroupDummyData();
-            localStorage.setItem(CACHE_KEY, JSON.stringify(shops));
+            // 平文の店舗配列ではなく、暗号化レスポンスだけを保存する。
+            if (data.__encryptedResponse) {
+              localStorage.setItem(CACHE_KEY, JSON.stringify(data.__encryptedResponse));
+            }
             localStorage.setItem(CACHE_TIMESTAMP_KEY, data.updatedAt);
             
             console.log(`✅ ${shops.length}店舗のデータを更新しました`);
@@ -12450,13 +12992,43 @@
     }
     
     // State
-    let visits = JSON.parse(localStorage.getItem('iekei-visits') || '{}');
+    const VISITS_STORAGE_KEY = 'iekei-visits';
+    const VISITS_CORRUPT_BACKUP_KEY = 'iekei-visits-corrupt-backup';
+
+    function isVisitStore(value) {
+      return value !== null && typeof value === 'object' && !Array.isArray(value);
+    }
+
+    function loadVisitsFromStorage() {
+      let raw = null;
+      try {
+        raw = localStorage.getItem(VISITS_STORAGE_KEY);
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        if (!isVisitStore(parsed)) throw new Error('訪問記録の形式が不正です');
+        return parsed;
+      } catch (error) {
+        console.error('訪問記録の読み込みに失敗しました。空の状態で起動します:', error);
+        // 次回以降も同じ壊れた値で起動を妨げないよう、原文を別キーへ退避してから消す。
+        try {
+          if (raw) localStorage.setItem(VISITS_CORRUPT_BACKUP_KEY, raw);
+          localStorage.removeItem(VISITS_STORAGE_KEY);
+        } catch (storageError) {
+          console.error('壊れた訪問記録の退避に失敗しました:', storageError);
+        }
+        return {};
+      }
+    }
+
+    let visits = loadVisitsFromStorage();
     
     // 既存データを新形式に変換（photo → photos）
     function migratePhotoData(visits) {
       Object.values(visits).forEach(visit => {
-        if (visit.logs && visit.logs.length > 0) {
+        if (!visit || typeof visit !== 'object' || Array.isArray(visit)) return;
+        if (Array.isArray(visit.logs) && visit.logs.length > 0) {
           visit.logs.forEach(log => {
+            if (!log || typeof log !== 'object' || Array.isArray(log)) return;
             // 古い形式（photo）を新形式（photos）に変換
             if (log.photo && !log.photos) {
               log.photos = [log.photo];
@@ -12486,6 +13058,7 @@
         }
         console.log('📖 Swift側からデータを受信:', jsonString.substring(0, 100));
         const data = JSON.parse(jsonString);
+        if (!isVisitStore(data)) throw new Error('ネイティブから受け取った訪問記録の形式が不正です');
         visits = migratePhotoData(data); // 変換を実行
         window._nativeVisitsRestored = true;
         markLocalVisitsReady();
@@ -12493,7 +13066,7 @@
         
         // UIを更新（モーダルが開いている場合）
         if (currentShop && visits[currentShop.id]) {
-          renderVisitHistory();
+          renderVisitHistory(visits[currentShop.id].logs);
         }
       } catch (error) {
         console.error('❌ データ復元エラー:', error.message || String(error));
@@ -12531,10 +13104,43 @@
     let followUserLocation = false; // 現在地に地図カメラを追従させる
     let selectNearestOnNextLocationFix = false; // 明示的な現在地操作時だけカードも最寄りへ切り替える
     let locationUpdatesPausedByMapInteraction = false;
+    let startupLocationRequestInProgress = false;
+    let locationCameraMoveInProgress = false;
+    let locationCameraMoveTimer = null;
+    let locationMapCentered = false;
     let lastLocationListRefresh = 0;
     const LOCATION_TRACKING_KEY = 'iekei-location-tracking-enabled';
     const LAST_LOCATION_KEY = 'iekei-last-user-location';
     const MAP_VIEW_KEY = 'iekei-last-map-view';
+    const MAP_SESSION_KEY = 'iekei-map-session';
+    const MAP_RESUME_INTERVAL = 60 * 60 * 1000;
+    const previousMapSession = readStoredJson(MAP_SESSION_KEY);
+    const resumePreviousMap = !!previousMapSession && Date.now() >= previousMapSession.lastActiveAt && Date.now() - previousMapSession.lastActiveAt < MAP_RESUME_INTERVAL;
+    let mapAwaySince = null;
+    function saveMapSession() {
+      localStorage.setItem(MAP_SESSION_KEY, JSON.stringify({ lastActiveAt: Date.now() }));
+      saveMapViewNow();
+    }
+    function leaveMapSession() {
+      if (mapAwaySince !== null) return;
+      mapAwaySince = Date.now();
+      saveMapSession();
+      suspendMapCamera();
+    }
+    function resumeMapSession() {
+      const elapsed = mapAwaySince === null ? 0 : Date.now() - mapAwaySince;
+      mapAwaySince = null;
+      if (isNativeApp && elapsed >= MAP_RESUME_INTERVAL) {
+        stopLocationTracking(false);
+        userLocation = null;
+        startupLocationRequestInProgress = true;
+        handleNearbyMode({ centerMap: true, selectNearest: true, automatic: true });
+      }
+      saveMapSession();
+    }
+    window.setInterval(() => {
+      if (document.visibilityState !== 'hidden') saveMapSession();
+    }, 15000);
     let startupLocationRestoreStarted = false;
     let launchScreenFinished = false;
     const launchScreenMinimumUntil = Date.now() + 700;
@@ -12567,13 +13173,14 @@
         lat: center.lat,
         lng: center.lng,
         zoom,
+        shopId: window.getDiscoverySelectedShopId?.() || selectedMapShopId,
         savedAt: Date.now()
       }));
     }
 
     function suspendMapCamera() {
       // 測位と青いマーカーは維持し、非表示中のカメラ移動だけ止める。
-      followUserLocation = false;
+      if (!isRequestingLocation) followUserLocation = false;
       // タブを離れた後も進むsetViewのアニメーションをこの位置で止める。
       map?.stop?.();
       saveMapViewNow();
@@ -12583,12 +13190,16 @@
 
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
-        suspendMapCamera();
-      } else if (document.getElementById('tab-map')?.classList.contains('active') && map) {
+        leaveMapSession();
+      } else {
+        resumeMapSession();
+        if (!document.getElementById('tab-map')?.classList.contains('active') || !map) return;
         window.setTimeout(() => map.invalidateSize({ pan: false, animate: false }), 100);
+        if (followUserLocation && userLocation) centerMapOnUserLocation(selectNearestOnNextLocationFix);
       }
     });
-    window.addEventListener('pagehide', suspendMapCamera);
+    window.addEventListener('pagehide', leaveMapSession);
+    window.addEventListener('pageshow', () => { if (mapAwaySince !== null) resumeMapSession(); });
 
     function finishLaunchScreen() {
       if (launchScreenFinished) return;
@@ -12609,19 +13220,21 @@
     function restoreStartupLocationMode() {
       if (startupLocationRestoreStarted) return;
       startupLocationRestoreStarted = true;
-      const shouldRestoreLocation = localStorage.getItem(LOCATION_TRACKING_KEY) === 'true';
       const status = document.getElementById('loading-status');
-      if (!shouldRestoreLocation) {
-        if (status) status.textContent = '';
-        window.setTimeout(finishLaunchScreen, 450);
-        return;
-      }
+      // 前回のGPS座標は復元しない。1時間以内なら閲覧していた地図を維持する。
+      // 測位中も地図は表示し、現在地ボタンの既存の回転表示を使う。
+      localStorage.removeItem(LAST_LOCATION_KEY);
+      if (status) status.textContent = '';
+      window.setTimeout(finishLaunchScreen, 450);
 
-      if (status) status.textContent = '現在地を確認中...';
-      // 測位が遅くても起動画面は最大4秒で閉じる。測位自体は裏で続行する。
-      window.setTimeout(finishLaunchScreen, 4000);
-      // 測位は再開するが、前回見ていた地図位置とカードは動かさない。
-      handleNearbyMode({ centerMap: false, selectNearest: false });
+      // 公開Webでは従来どおり手動。iOS／Androidアプリだけ、
+      // 現在地ボタンを押したときと同じ処理を起動時に開始する。
+      if (isNativeApp && !resumePreviousMap) {
+        startupLocationRequestInProgress = true;
+        window.setTimeout(() => {
+          handleNearbyMode({ centerMap: true, selectNearest: true, automatic: true });
+        }, 0);
+      }
     }
 
     function getShopXURL(shop) {
@@ -13407,6 +14020,18 @@
     });
     
     // Tab Navigation
+    function resetFeedScrollPosition() {
+      const feedTab = document.getElementById('tab-feed');
+      if (!feedTab) return;
+      const reset = () => {
+        feedTab.scrollTop = 0;
+        feedTab.scrollLeft = 0;
+      };
+      reset();
+      // display:none から表示された直後にも適用し、iOSの復元スクロールを上書きする。
+      requestAnimationFrame(reset);
+    }
+
     function initTabs() {
       document.querySelectorAll('.nav-item').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -13457,6 +14082,7 @@
           if (!tab) return;
 
           const currentTab = document.querySelector('.tab-content.active');
+          const isEnteringFeed = tab === 'feed' && currentTab?.id !== 'tab-feed';
           if (currentTab?.id === 'tab-map' && tab !== 'map') {
             suspendMapCamera();
           }
@@ -13466,6 +14092,7 @@
           
           btn.classList.add('active');
           document.getElementById(`tab-${tab}`).classList.add('active');
+          if (isEnteringFeed) resetFeedScrollPosition();
           
           // SEO: タブに応じてページタイトルを変更
           if (tab === 'lineage') {
@@ -13491,6 +14118,10 @@
           
           if (tab === 'map' && map) {
             setTimeout(() => map.invalidateSize({ pan: false, animate: false }), 100);
+            if (followUserLocation && userLocation) {
+              centerMapOnUserLocation(selectNearestOnNextLocationFix);
+              selectNearestOnNextLocationFix = false;
+            }
           }
           
           if (tab === 'mypage') {
@@ -13603,7 +14234,8 @@
         : 11;
 
       map = L.map('map', {
-        preferCanvas: true,
+        // Keep each shop pin as an SVG element across search and camera changes.
+        preferCanvas: false,
         touchZoom: 'center',
         doubleClickZoom: 'center',
         scrollWheelZoom: 'center',
@@ -13625,7 +14257,7 @@
       // 縮尺を手動で変えた場合も、カメラの現在地追従だけ解除する。
       // 位置情報の取得と現在地マーカーの更新は継続する。
       map.on('zoomstart', () => {
-        pauseLocationUpdatesForMapInteraction();
+        if (!locationCameraMoveInProgress) pauseLocationUpdatesForMapInteraction();
       });
       
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -13836,6 +14468,14 @@
       markerHalos = {};
       
       let filteredShops = [...shops];
+      const searchResultIds = window.getMapDiscoverySearchResultIds?.();
+      if (Array.isArray(searchResultIds)) {
+        const resultIdSet = new Set(searchResultIds.map(id => String(id)));
+        filteredShops = filteredShops.filter(shop => resultIdSet.has(String(shop.id)));
+        if (window.getMapDiscoverySearchResultOpenOnly?.()) {
+          filteredShops = filteredShops.filter(shop => isOpenNow(shop.openingHours));
+        }
+      } else {
       
       // 詳細検索フィルターが設定されている場合
       if (advancedFilterSettings.categories.length > 0 ||
@@ -13902,6 +14542,17 @@
       if (showOpenOnly) {
         filteredShops = filteredShops.filter(shop => isOpenNow(shop.openingHours));
       }
+      }
+
+      // Search results must pass the same coordinate validation as normal pins.
+      // Number(null) is 0, but a null coordinate creates an invalid Leaflet layer.
+      filteredShops = filteredShops.filter(shop =>
+        shop.lat != null && shop.lng != null &&
+        String(shop.lat).trim() !== '' && String(shop.lng).trim() !== '' &&
+        Number.isFinite(Number(shop.lat)) && Number.isFinite(Number(shop.lng)) &&
+        Math.abs(Number(shop.lat)) <= 90 && Math.abs(Number(shop.lng)) <= 180 &&
+        shop.name !== 'ダミー'
+      );
 
       // Canvasは後から描いたドットが上に来るため、取得JSONの逆順で描画する
       filteredShops.reverse();
@@ -13954,8 +14605,9 @@
         }
         
         const popupId = `popup-${shop.id}`;
-        const googleMapLink = shop.googleMapUrl ?
-          `<a href="${shop.googleMapUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" style="width:40px;height:40px;background:#34a853;color:white;border:none;border-radius:12px;cursor:pointer;text-decoration:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="Googleマップで開く">
+        const safeGoogleMapUrl = safeExternalUrl(shop.googleMapUrl);
+        const googleMapLink = safeGoogleMapUrl ?
+          `<a href="${escapeHtml(safeGoogleMapUrl)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" style="width:40px;height:40px;background:#34a853;color:white;border:none;border-radius:12px;cursor:pointer;text-decoration:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="Googleマップで開く">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
             </svg>
@@ -13976,14 +14628,14 @@
         const hasXAccount = !!getXUsername(getShopXURL(shop));
         const popup = `<div style="padding:8px;min-width:180px;max-width:240px;">
           <div style="position:relative;">
-            <button onclick="markers['${shop.id}'].closePopup(); event.stopPropagation();" style="position:absolute;top:4px;right:4px;width:20px;height:20px;border:none;background:#f3f4f6;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:#6b7280;padding:0;">×</button>
-            <div style="${nameStyle}">${shop.name}</div>
+            <button onclick="markers['${jsStr(shop.id)}'].closePopup(); event.stopPropagation();" style="position:absolute;top:4px;right:4px;width:20px;height:20px;border:none;background:#f3f4f6;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:#6b7280;padding:0;">×</button>
+            <div style="${nameStyle}">${escapeHtml(shop.name)}</div>
             <div style="font-size:11px;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
-              <span style="background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:8px;font-size:10px">${getShortCategoryName(shop.category)}</span>
+              <span style="background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:8px;font-size:10px">${escapeHtml(getShortCategoryName(shop.category))}</span>
               ${statusBadge}
             </div>
             <div style="font-size:11px;color:#6b7280;margin-bottom:8px">
-              ${todayHours}
+              ${escapeHtml(todayHours)}
             </div>
             ${hasXAccount ? `
               <a class="shop-x-embed-trigger" href="${escapeHtml(getShopXURL(shop))}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" aria-label="${escapeHtml(shop.name)}の公式Xを開く">
@@ -13993,8 +14645,8 @@
               </a>
             ` : ''}
             <div style="display:flex;gap:6px;align-items:stretch;">
-              <button onclick="showShopDetail('${shop.id}')" style="flex:1;background:#3b82f6;color:white;padding:6px 8px;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:12px;height:32px;display:flex;align-items:center;justify-content:center;">詳細・訪問</button>
-              ${googleMapLink ? `<a href="${shop.googleMapUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" style="width:32px;height:32px;background:#34a853;color:white;border:none;border-radius:8px;cursor:pointer;text-decoration:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="Googleマップで開く">
+              <button onclick="showShopDetail('${jsStr(shop.id)}')" style="flex:1;background:#3b82f6;color:white;padding:6px 8px;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:12px;height:32px;display:flex;align-items:center;justify-content:center;">詳細・訪問</button>
+              ${googleMapLink ? `<a href="${escapeHtml(safeGoogleMapUrl)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" style="width:32px;height:32px;background:#34a853;color:white;border:none;border-radius:8px;cursor:pointer;text-decoration:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="Googleマップで開く">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
                 </svg>
@@ -14487,27 +15139,27 @@
         const statusBadge = hasTimeFilter ? '' : (isSoon ? '<span class="badge-soon">閉店間近</span>' : (isOpen ? '<span class="badge-open">営業中</span>' : '<span class="badge-closed">時間外</span>'));
         
         return `
-          <div class="shop-list-item" onclick="showShopDetail('${shop.id}')">
+          <div class="shop-list-item" onclick="showShopDetail('${jsStr(shop.id)}')">
             <div class="shop-icon ${isVisited ? 'visited' : 'unvisited'}">
               ${isVisited ? '✓' : '🍜'}
             </div>
             <div class="shop-info">
               <div class="shop-name">
-                <span class="shop-name-text">${shop.name}</span>
+                <span class="shop-name-text">${escapeHtml(shop.name)}</span>
                 <div class="shop-name-badges">
                   ${wantToGo ? '<svg style="width:16px;height:16px;color:#eab308;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' : ''}
                   ${favorite ? '<svg style="width:16px;height:16px;color:#ec4899;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>' : ''}
                 </div>
               </div>
               <div class="shop-meta">
-                <span class="badge badge-category">${getShortCategoryName(shop.category)}</span>
+                <span class="badge badge-category">${escapeHtml(getShortCategoryName(shop.category))}</span>
                 <svg style="width:14px;height:14px;color:#6b7280;margin-left:4px;margin-right:-2px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                 </svg>
-                <span style="color:#6b7280;font-size:13px;">${shop.area}</span>
+                <span style="color:#6b7280;font-size:13px;">${escapeHtml(shop.area)}</span>
                 ${statusBadge}
               </div>
-              <div style="color:#6b7280;font-size:12px;margin-top:4px;">${hoursText}</div>
+              <div style="color:#6b7280;font-size:12px;margin-top:4px;">${escapeHtml(hoursText)}</div>
             </div>
             <svg style="width:20px;height:20px;color:#9ca3af;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -14627,13 +15279,13 @@
         const statusBadge = hasTimeFilter ? '' : (isSoon ? '<span class="badge-soon">閉店間近</span>' : (isOpen ? '<span class="badge-open">営業中</span>' : '<span class="badge-closed">時間外</span>'));
         
         return `
-          <div class="shop-list-item" onclick="focusShop('${shop.id}')">
+          <div class="shop-list-item" onclick="focusShop('${jsStr(shop.id)}')">
             <div class="shop-icon ${isVisited ? 'visited' : 'unvisited'}">
               ${isVisited ? '✓' : '🍜'}
             </div>
             <div class="shop-info">
               <div class="shop-name">
-                <span class="shop-name-text">${shop.name}</span>
+                <span class="shop-name-text">${escapeHtml(shop.name)}</span>
                 <div class="shop-name-badges">
                   ${wantToGo ? '<svg style="width:16px;height:16px;color:#eab308;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' : ''}
                   ${favorite ? '<svg style="width:16px;height:16px;color:#ec4899;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>' : ''}
@@ -14641,12 +15293,12 @@
                 </div>
               </div>
               <div class="shop-meta">
-                <span class="badge badge-category">${getShortCategoryName(shop.category)}</span>
+                <span class="badge badge-category">${escapeHtml(getShortCategoryName(shop.category))}</span>
                 <span style="display:inline-flex;align-items:center;justify-content:center;gap:2px;color:#6b7280;border:1px solid #d1d5db;padding:2px 8px;border-radius:12px;font-size:11px;">
                   <svg style="width:12px;height:12px;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                   </svg>
-                  ${shop.area}
+                  ${escapeHtml(shop.area)}
                 </span>
                 ${statusBadge}
               </div>
@@ -14758,9 +15410,9 @@
     }
 
     function clearLocationMode() {
+      stopLocationTracking(true);
       locationMode = false;
       nearbyMode = false;
-      localStorage.removeItem(LOCATION_TRACKING_KEY);
       userLocation = null;
       if (userMarker) { userMarker.remove(); userMarker = null; }
 
@@ -14883,31 +15535,66 @@
           return;
         }
 
-        const stationIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="#3b82f6" style="flex-shrink:0;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>`;
-        const addressIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="#9ca3af" style="flex-shrink:0;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>`;
+        const createLocationIcon = (type) => {
+          const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+          icon.setAttribute("width", "14");
+          icon.setAttribute("height", "14");
+          icon.setAttribute("viewBox", "0 0 24 24");
+          icon.setAttribute("fill", type === "station" ? "#3b82f6" : "#9ca3af");
+          icon.style.flexShrink = "0";
+          const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          path.setAttribute("d", type === "station"
+            ? "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"
+            : "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z");
+          icon.appendChild(path);
+          return icon;
+        };
 
-        const renderItem = (item, isLast) => `<div onclick="applyLocationPoint(${item.lat}, ${item.lng}, '${item.name.replace(/'/g, "&#39;")}')"
-            style="padding:12px 14px;cursor:pointer;${isLast ? '' : 'border-bottom:1px solid #f3f4f6;'}display:flex;align-items:center;gap:10px;background:white;"
-            onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">
-            ${item.type === "station" ? stationIcon : addressIcon}
-            <div style="font-size:14px;font-weight:500;color:#111827;">${item.name}</div>
-          </div>`;
+        const renderItem = (item, isLast) => {
+          const lat = Number(item.lat);
+          const lng = Number(item.lng);
+          if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+          const row = document.createElement("button");
+          row.type = "button";
+          Object.assign(row.style, {
+            width: "100%", padding: "12px 14px", cursor: "pointer", border: "0",
+            borderBottom: isLast ? "0" : "1px solid #f3f4f6", display: "flex",
+            alignItems: "center", gap: "10px", background: "white", textAlign: "left"
+          });
+          row.addEventListener("mouseenter", () => { row.style.background = "#f9fafb"; });
+          row.addEventListener("mouseleave", () => { row.style.background = "white"; });
+          row.addEventListener("click", () => applyLocationPoint(lat, lng, String(item.name || "")));
+          row.appendChild(createLocationIcon(item.type));
+          const label = document.createElement("span");
+          Object.assign(label.style, { fontSize: "14px", fontWeight: "500", color: "#111827" });
+          label.textContent = String(item.name || "");
+          row.appendChild(label);
+          return row;
+        };
 
         candidates.style.display = "block";
+        const fragment = document.createDocumentFragment();
+        const appendSection = (title, items, withTopBorder = false) => {
+          if (!items.length) return;
+          const heading = document.createElement("div");
+          Object.assign(heading.style, {
+            padding: "6px 14px", fontSize: "11px", color: "#9ca3af", background: "#f9fafb",
+            borderBottom: "1px solid #f3f4f6", borderTop: withTopBorder ? "1px solid #e5e7eb" : "0"
+          });
+          heading.textContent = title;
+          fragment.appendChild(heading);
+          items.forEach((item, index) => {
+            const row = renderItem(item, index === items.length - 1);
+            if (row) fragment.appendChild(row);
+          });
+        };
 
-        let html = "";
         // 駅・インターセクション（HeartRails + GSI dataSource:1）
         const transportItems = [...stationItems, ...gsiTransport];
-        if (transportItems.length) {
-          html += `<div style="padding:6px 14px;font-size:11px;color:#9ca3af;background:#f9fafb;border-bottom:1px solid #f3f4f6;">駅・インター</div>`;
-          html += transportItems.map((item, i) => renderItem(item, false)).join("");
-        }
+        appendSection("駅・インター", transportItems);
         // 地名・住所セクション（GSI dataSource:"" + "3"）
-        if (gsiAddress.length) {
-          html += `<div style="padding:6px 14px;font-size:11px;color:#9ca3af;background:#f9fafb;border-bottom:1px solid #f3f4f6;${transportItems.length ? 'border-top:1px solid #e5e7eb;' : ''}">地名・住所</div>`;
-          html += gsiAddress.map((item, i) => renderItem(item, i === gsiAddress.length - 1)).join("");
-        }
-        candidates.innerHTML = html;
+        appendSection("地名・住所", gsiAddress, transportItems.length > 0);
+        candidates.replaceChildren(fragment);
       } catch(e) {
         err.textContent = "通信エラーが発生しました。";
         err.style.display = "block";
@@ -14920,6 +15607,17 @@
     function centerMapOnUserLocation(selectNearest = false) {
       if (!map || !userLocation || !followUserLocation || !isMapCameraVisible()) return;
       const locationZoom = Math.max(map.getZoom(), 13);
+      window.clearTimeout(locationCameraMoveTimer);
+      locationCameraMoveInProgress = true;
+      const finishLocationCameraMove = () => {
+        locationCameraMoveInProgress = false;
+        window.clearTimeout(locationCameraMoveTimer);
+        map.off?.('moveend', finishLocationCameraMove);
+        window.syncMapDiscoveryLocationButton?.();
+      };
+      map.once?.('moveend', finishLocationCameraMove);
+      // 同じ位置・縮尺でmoveendが発生しない場合もガードを解除する。
+      locationCameraMoveTimer = window.setTimeout(finishLocationCameraMove, 1800);
       if (typeof window.setMapViewAtDiscoveryFocus === 'function') {
         window.setMapViewAtDiscoveryFocus([userLocation.lat, userLocation.lng], locationZoom, {
           animate: true,
@@ -14929,6 +15627,8 @@
       } else {
         map.setView([userLocation.lat, userLocation.lng], locationZoom, { animate: true, duration: 0.6 });
       }
+      locationMapCentered = true;
+      window.syncMapDiscoveryLocationButton?.();
     }
 
     function stopLocationTracking(forgetPreference = false) {
@@ -14936,14 +15636,24 @@
         navigator.geolocation.clearWatch(locationWatchId);
       }
       locationWatchId = null;
+      locationMapCentered = false;
+      startupLocationRequestInProgress = false;
       followUserLocation = false;
       isRequestingLocation = false;
       selectNearestOnNextLocationFix = false;
-      if (forgetPreference) localStorage.removeItem(LOCATION_TRACKING_KEY);
+      if (forgetPreference) {
+        // 現在地を明示的にオフにしたら、再起動時に正確な最終位置を復元しない。
+        localStorage.removeItem(LOCATION_TRACKING_KEY);
+        localStorage.removeItem(LAST_LOCATION_KEY);
+        localStorage.removeItem(MAP_VIEW_KEY);
+      }
     }
 
     function pauseLocationUpdatesForMapInteraction() {
-      if (!nearbyMode || locationWatchId === null) return;
+      locationCameraMoveInProgress = false;
+      locationMapCentered = false;
+      window.syncMapDiscoveryLocationButton?.();
+      if ((!nearbyMode && !isRequestingLocation) || locationWatchId === null) return;
       locationUpdatesPausedByMapInteraction = true;
       // 最後に取得した現在地とマーカーは残し、継続測位だけ停止する。
       stopLocationTracking(false);
@@ -15001,6 +15711,7 @@
     function updateUserLocation(position) {
       if (!position?.coords) return;
       const firstFix = !nearbyMode || !userLocation;
+      startupLocationRequestInProgress = false;
       isRequestingLocation = false;
       userLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
       localStorage.setItem(LOCATION_TRACKING_KEY, 'true');
@@ -15029,7 +15740,7 @@
       if (followUserLocation) {
         centerMapOnUserLocation(firstFix && selectNearestOnNextLocationFix);
       }
-      if (firstFix) selectNearestOnNextLocationFix = false;
+      if (firstFix && isMapCameraVisible()) selectNearestOnNextLocationFix = false;
       finishLaunchScreen();
       window.syncMapDiscoveryLocationButton?.();
 
@@ -15043,7 +15754,18 @@
     }
 
     async function handleLocationError(error) {
+      const wasStartupRequest = startupLocationRequestInProgress;
+      // 起動・長時間経過後の自動測位は、失敗しても閲覧を妨げない。
+      // iOSの許可待ちと一時的な測位不能はネイティブ側で継続待機する。
+      // 手動で現在地を押した場合は、従来どおりアプリ側の案内を表示する。
+      if (wasStartupRequest && [1, 2, 3].includes(Number(error?.code))) {
+        stopLocationTracking(false);
+        window.syncMapDiscoveryLocationButton?.();
+        console.warn('起動時の位置情報を取得できなかったため、アプリ側のエラー表示を抑制しました', error);
+        return;
+      }
       // 失敗したwatchを残すと、次回タップ時にネイティブ測位を再開できない。
+      startupLocationRequestInProgress = false;
       stopLocationTracking(false);
       window.syncMapDiscoveryLocationButton?.();
       let errorMessage = '位置情報の取得に失敗しました。\n\n';
@@ -15058,7 +15780,8 @@
       console.error('Geolocation error:', error.message || String(error));
     }
 
-    async function handleNearbyMode({ centerMap = true, selectNearest = true } = {}) {
+    async function handleNearbyMode({ centerMap = true, selectNearest = true, automatic = false } = {}) {
+      startupLocationRequestInProgress = automatic;
       if (nearbyMode && userLocation && locationWatchId !== null) {
         followUserLocation = centerMap;
         if (centerMap) centerMapOnUserLocation(selectNearest);
@@ -15867,6 +16590,16 @@
         .replace(/"/g, "&quot;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
+    }
+
+    // 外部データのURLは、リンクとして安全なHTTP(S)のみ許可する。
+    function safeExternalUrl(value) {
+      try {
+        const url = new URL(String(value || '').trim());
+        return ['https:', 'http:'].includes(url.protocol) ? url.href : '';
+      } catch (_) {
+        return '';
+      }
     }
     
     function jumpToLineageSection(chip) {
@@ -17070,6 +17803,38 @@
       }
     }
     
+    function scrollLineageNodeIntoView(node) {
+      if (!node) return;
+
+      // scrollIntoView は入れ子のスクロール領域をすべて動かすため、
+      // マップからの遷移時にページ全体までわずかにずれることがある。
+      // 家系図タブの縦位置と、対象セクション内の横位置だけを動かす。
+      const tab = document.getElementById('tab-lineage');
+      const sectionBox = node.closest('.lineage-section-box');
+      const nodeRect = node.getBoundingClientRect();
+
+      if (sectionBox) {
+        const boxRect = sectionBox.getBoundingClientRect();
+        const scale = sectionBox.offsetWidth > 0 ? boxRect.width / sectionBox.offsetWidth : 1;
+        const horizontalDelta = (nodeRect.left + nodeRect.width / 2) - (boxRect.left + boxRect.width / 2);
+        sectionBox.scrollBy({
+          left: horizontalDelta / (scale || 1),
+          behavior: 'smooth'
+        });
+      }
+
+      if (tab) {
+        const tabRect = tab.getBoundingClientRect();
+        const toolbarRect = document.getElementById('lineage-toolbar-fixed')?.getBoundingClientRect();
+        const infoRect = document.getElementById('lineage-info')?.getBoundingClientRect();
+        const visibleTop = Math.max(tabRect.top, toolbarRect?.bottom || tabRect.top) + 12;
+        const visibleBottom = Math.min(tabRect.bottom, infoRect?.top || tabRect.bottom) - 12;
+        const visibleCenter = (visibleTop + visibleBottom) / 2;
+        const nodeCenter = nodeRect.top + nodeRect.height / 2;
+        tab.scrollBy({ top: nodeCenter - visibleCenter, behavior: 'smooth' });
+      }
+    }
+
     function jumpToLineageTabAndSelect(shopId) {
       const shop = shops.find(s => s.id === shopId);
       if (!shop) return;
@@ -17093,7 +17858,7 @@
         // ノードまでスクロール
         const node = document.querySelector(`.lineage-node[data-id="${shopId}"], .lineage-node-group[data-id="${shopId}"]`);
         if (node) {
-          node.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+          scrollLineageNodeIntoView(node);
         }
       };
       
@@ -17587,7 +18352,7 @@
       if (window.webkit?.messageHandlers?.openURL) {
         window.webkit.messageHandlers.openURL.postMessage(shareUrl);
       } else {
-        window.open(shareUrl, '_blank', 'width=550,height=420');
+        window.open(shareUrl, '_blank', 'noopener,noreferrer,width=550,height=420');
       }
       closeShareModal();
     }
@@ -17601,7 +18366,7 @@
       if (window.webkit?.messageHandlers?.openURL) {
         window.webkit.messageHandlers.openURL.postMessage(shareUrl);
       } else {
-        window.open(shareUrl, '_blank');
+        window.open(shareUrl, '_blank', 'noopener,noreferrer');
       }
       closeShareModal();
     }
@@ -17635,9 +18400,7 @@
       // ヘッダーにユーザー名をセット（バウンス時に白余白を隠す役割も兼ねる）
       const usernameEl = document.getElementById('photo-modal-username');
       if (usernameEl) {
-        // プロフィール取得前でも、認証用メールアドレスは投稿表示に使わない。
-        const displayName = currentProfile?.display_name || '自分の記録';
-        usernameEl.innerHTML = `${escapeHtml(displayName)}<span class="photo-post-header-label">▶ プロフィール</span>`;
+        usernameEl.textContent = '記録の詳細';
       }
 
       document.getElementById('photo-modal').classList.add('active');
@@ -17892,9 +18655,12 @@
     
     window.toggleHours = toggleHours;
     
-    function renderVisitHistory(logs) {
-      const historyHTML = logs.slice().reverse().map((log, idx) => {
-        const originalIdx = logs.length - 1 - idx; // 元の配列でのインデックス
+    function renderVisitHistory(logs = []) {
+      const safeLogs = Array.isArray(logs) ? logs : [];
+      const historyHTML = safeLogs.slice().reverse().map((log, idx) => {
+        const originalIdx = safeLogs.length - 1 - idx; // 元の配列でのインデックス
+        const orderText = [log.order, log.options].filter(Boolean).join(' + ');
+        const memoText = String(log.memo || '');
         
         // カスタマイズ情報を1行にまとめる
         const customize = [log.noodleFirmness, log.flavorIntensity, log.oilAmount]
@@ -17919,7 +18685,7 @@
               <!-- 注文内容 -->
               ${log.order ? `
                 <div style="font-size:14px;color:#1f2937;margin-bottom:4px;">
-                  ${log.order}${log.options ? ' + ' + log.options : ''}
+                  ${escapeHtml(orderText)}
                 </div>
               ` : ''}
               
@@ -17931,14 +18697,14 @@
               <!-- メモ -->
               ${log.memo ? `
                 <div class="visit-memo" style="margin:0;font-size:13px;color:#4b5563;line-height:1.4;">
-                  ${log.memo.substring(0, 40)}${log.memo.length > 40 ? '...' : ''}
+                  ${escapeHtml(memoText.slice(0, 40))}${memoText.length > 40 ? '...' : ''}
                 </div>
               ` : ''}
             </div>
             
             <!-- 右側: 写真サムネイル -->
             ${log.photos && log.photos.length > 0 ? `
-              <img data-photo="${log.photos[0]}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;flex-shrink:0;background:#f3f4f6;" alt="Visit photo">
+              <img data-photo="${escapeHtml(log.photos[0])}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;flex-shrink:0;background:#f3f4f6;" alt="Visit photo">
             ` : ''}
           </div>
         </div>
@@ -18052,7 +18818,7 @@
             <div style="margin-bottom:16px;">
               <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">訪問時の情報</div>
               <div style="font-size:14px;">
-                ${log.weather ? `${log.weather}` : ''}
+                ${log.weather ? escapeHtml(log.weather) : ''}
                 ${log.temperature || log.temperature === 0 ? ` ${formatTemperatureValue(log.temperature)}°C` : ''}
                 ${log.waitMinutes ? ` • 待ち時間: ${log.waitMinutes}分` : ''}
               </div>
@@ -18062,14 +18828,14 @@
           ${log.order ? `
             <div style="margin-bottom:16px;">
               <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">注文内容</div>
-              <div style="font-size:14px;background:#f3f4f6;padding:12px;border-radius:8px;">${log.order}</div>
+              <div style="font-size:14px;background:#f3f4f6;padding:12px;border-radius:8px;">${escapeHtml(log.order)}</div>
             </div>
           ` : ''}
           
           ${log.options ? `
             <div style="margin-bottom:16px;">
               <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">オプション</div>
-              <div style="font-size:14px;background:#f3f4f6;padding:12px;border-radius:8px;">${log.options}</div>
+              <div style="font-size:14px;background:#f3f4f6;padding:12px;border-radius:8px;">${escapeHtml(log.options)}</div>
             </div>
           ` : ''}
           
@@ -18077,9 +18843,9 @@
             <div style="margin-bottom:16px;">
               <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">カスタマイズ</div>
               <div style="font-size:14px;display:flex;gap:12px;">
-                ${log.noodleFirmness ? `<span>麺: ${log.noodleFirmness}</span>` : ''}
-                ${log.flavorIntensity ? `<span>味: ${log.flavorIntensity}</span>` : ''}
-                ${log.oilAmount ? `<span>油: ${log.oilAmount}</span>` : ''}
+                ${log.noodleFirmness ? `<span>麺: ${escapeHtml(log.noodleFirmness)}</span>` : ''}
+                ${log.flavorIntensity ? `<span>味: ${escapeHtml(log.flavorIntensity)}</span>` : ''}
+                ${log.oilAmount ? `<span>油: ${escapeHtml(log.oilAmount)}</span>` : ''}
               </div>
             </div>
           ` : ''}
@@ -18087,7 +18853,7 @@
           ${log.memo ? `
             <div style="margin-bottom:16px;">
               <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">メモ</div>
-              <div style="font-size:14px;line-height:1.6;">${log.memo}</div>
+              <div style="font-size:14px;line-height:1.6;">${escapeHtml(log.memo)}</div>
             </div>
           ` : ''}
           
@@ -18096,7 +18862,7 @@
               <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">写真 (${log.photos.length}枚)</div>
               <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px;">
                 ${log.photos.map(photo => `
-                  <img data-photo="${photo}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;background:#f3f4f6;" alt="Visit photo">
+                  <img data-photo="${escapeHtml(photo)}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;background:#f3f4f6;" alt="Visit photo">
                 `).join('')}
               </div>
             </div>
@@ -18512,58 +19278,51 @@
       return true;
     }
     
-    // カスタム確認ダイアログ（iOS対応）
-    function showCustomConfirm(message) {
-      return new Promise((resolve) => {
+    // カスタムダイアログは1件ずつ表示し、後から呼ばれたダイアログが
+    // 先のPromiseを待つボタンを差し替えないようにする。
+    let customDialogQueue = Promise.resolve();
+
+    function enqueueCustomDialog(message, alertOnly) {
+      const task = customDialogQueue.then(() => new Promise((resolve) => {
         const dialog = document.getElementById('custom-confirm-dialog');
         const messageEl = document.getElementById('custom-confirm-message');
         const okBtn = document.getElementById('custom-confirm-ok');
         const cancelBtn = document.getElementById('custom-confirm-cancel');
-        
+        if (!dialog || !messageEl || !okBtn || !cancelBtn) {
+          resolve(alertOnly ? undefined : false);
+          return;
+        }
+
         messageEl.textContent = message;
-        cancelBtn.style.display = ''; // alert呼び出しで隠れている場合に備え再表示
+        cancelBtn.style.display = alertOnly ? 'none' : '';
         dialog.style.display = 'flex';
-        
-        // 一度だけ実行されるようにリスナーをクローン
-        const newOkBtn = okBtn.cloneNode(true);
-        const newCancelBtn = cancelBtn.cloneNode(true);
-        okBtn.parentNode.replaceChild(newOkBtn, okBtn);
-        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
-        
-        newOkBtn.addEventListener('click', () => {
+
+        const finish = value => {
+          okBtn.removeEventListener('click', handleOk);
+          cancelBtn.removeEventListener('click', handleCancel);
           dialog.style.display = 'none';
-          resolve(true);
-        });
-        
-        newCancelBtn.addEventListener('click', () => {
-          dialog.style.display = 'none';
-          resolve(false);
-        });
+          cancelBtn.style.display = '';
+          resolve(value);
+        };
+        const handleOk = () => finish(alertOnly ? undefined : true);
+        const handleCancel = () => finish(false);
+        okBtn.addEventListener('click', handleOk);
+        if (!alertOnly) cancelBtn.addEventListener('click', handleCancel);
+      }));
+      customDialogQueue = task.catch(error => {
+        console.error('カスタムダイアログの表示に失敗しました:', error);
       });
+      return task;
+    }
+
+    // カスタム確認ダイアログ（iOS対応）
+    function showCustomConfirm(message) {
+      return enqueueCustomDialog(message, false);
     }
     
     // カスタムアラートダイアログ（iOS対応）
     function showCustomAlert(message) {
-      return new Promise((resolve) => {
-        const dialog = document.getElementById('custom-confirm-dialog');
-        const messageEl = document.getElementById('custom-confirm-message');
-        const okBtn = document.getElementById('custom-confirm-ok');
-        const cancelBtn = document.getElementById('custom-confirm-cancel');
-        
-        messageEl.textContent = message;
-        cancelBtn.style.display = 'none'; // キャンセルボタンを非表示
-        dialog.style.display = 'flex';
-        
-        // 一度だけ実行されるようにリスナーをクローン
-        const newOkBtn = okBtn.cloneNode(true);
-        okBtn.parentNode.replaceChild(newOkBtn, okBtn);
-        
-        newOkBtn.addEventListener('click', () => {
-          dialog.style.display = 'none';
-          cancelBtn.style.display = 'block'; // 次回のために戻す
-          resolve();
-        });
-      });
+      return enqueueCustomDialog(message, true);
     }
     
     async function closeRecordModal({ bulkSaved = false, force = false } = {}) {
@@ -19220,6 +19979,8 @@
         _cloudSynced: false,
         _photosSynced: false
       };
+      // 保存に失敗した場合は、画面上の記録だけが増えた状態を残さない。
+      const visitsBeforeSave = JSON.parse(JSON.stringify(visits));
       
       if (!visits[currentShop.id]) {
         visits[currentShop.id] = { logs: [], wantToGo: false };
@@ -19240,7 +20001,10 @@
         visits[currentShop.id].logs.push(visitRecord);
       }
       
-      await saveVisits();
+      if (!(await saveVisits())) {
+        visits = visitsBeforeSave;
+        return false;
+      }
       if (bulkRecordSession && currentUser) {
         const syncResult = await syncVisitsToCloud();
         if (!syncResult?.ok) {
@@ -19342,6 +20106,8 @@
         _cloudSynced: false,
         _photosSynced: false
       };
+      // 保存に失敗した場合は、画面上の記録だけが増えた状態を残さない。
+      const visitsBeforeSave = JSON.parse(JSON.stringify(visits));
       
       if (!visits[currentShop.id]) {
         visits[currentShop.id] = { logs: [], wantToGo: false };
@@ -19360,7 +20126,10 @@
         visits[currentShop.id].logs.push(visitRecord);
       }
       
-      await saveVisits();
+      if (!(await saveVisits())) {
+        visits = visitsBeforeSave;
+        return false;
+      }
       if (bulkRecordSession && currentUser) {
         const syncResult = await syncVisitsToCloud();
         if (!syncResult?.ok) {
@@ -19426,7 +20195,7 @@
         location.href = tweetUrl;
       } else {
         // Web版の場合: 新しいタブで開く
-        window.open(tweetUrl, '_blank');
+        window.open(tweetUrl, '_blank', 'noopener,noreferrer');
       }
       
       return false;
@@ -19616,9 +20385,11 @@
           localStorage.setItem('iekei-visits', jsonString);
           console.log('💾 localStorageに保存:', Object.keys(visits).length, '店舗');
         }
+        return true;
       } catch (e) {
         console.error('❌ 保存エラー:', e);
         await showCustomAlert('データの保存に失敗しました');
+        return false;
       }
     }
     
@@ -19960,7 +20731,7 @@
   <div id="photo-modal" class="modal photo-post-modal" onclick="closePhotoModal()">
     <div class="modal-content photo-post-content" onclick="event.stopPropagation()">
       <div id="photo-modal-header" class="photo-post-header">
-        <button id="photo-modal-username" type="button" onclick="openOwnProfileFromPhotoModal()"></button>
+        <div id="photo-modal-username" class="photo-post-title" role="heading" aria-level="2"></div>
         <div class="photo-post-header-actions">
           <button type="button" class="photo-post-more" onclick="openOwnPhotoPostMenu()" aria-label="投稿のその他の操作">⋯</button>
           <button type="button" class="photo-post-close" onclick="closePhotoModal()" aria-label="閉じる">×</button>
@@ -20396,8 +21167,10 @@
             </div>
 
             <div class="public-profile-identity">
-              <img id="user-profile-avatar-img" src="" style="display:none;object-fit:cover;flex-shrink:0;" />
-              <div id="user-profile-avatar-emoji" style="display:none;align-items:center;justify-content:center;flex-shrink:0;"></div>
+              <div class="public-profile-avatar-slot" aria-hidden="true">
+                <img id="user-profile-avatar-img" src="" style="display:none;object-fit:cover;flex-shrink:0;" />
+                <div id="user-profile-avatar-emoji" style="display:none;align-items:center;justify-content:center;flex-shrink:0;"></div>
+              </div>
               <div style="min-width:0;">
                 <div id="user-profile-name"></div>
               </div>
@@ -20457,9 +21230,14 @@
 
   <div id="profile-list-modal" class="modal profile-list-modal" onclick="closeProfileListModal()">
     <div class="profile-list-sheet" onclick="event.stopPropagation()">
+      <div class="profile-list-handle" aria-hidden="true"></div>
       <div class="profile-list-header">
         <h2 id="profile-list-title">一覧</h2>
         <button type="button" class="profile-list-close" onclick="closeProfileListModal()" aria-label="一覧を閉じる">×</button>
+      </div>
+      <div class="profile-list-tabs" role="tablist" aria-label="フォローとフォロワー">
+        <button type="button" class="profile-list-tab" role="tab" data-profile-connection-tab="following" aria-selected="true" onclick="switchProfileConnections('following')">フォロー中</button>
+        <button type="button" class="profile-list-tab" role="tab" data-profile-connection-tab="followers" aria-selected="false" onclick="switchProfileConnections('followers')">フォロワー</button>
       </div>
       <div id="profile-list-body" class="profile-list-body"></div>
     </div>
@@ -20826,11 +21604,86 @@
           <div style="background: white; padding: 20px;">
             <div class="stats-title">📝 変更履歴</div>
             <div class="version-info">
-              <div class="version-current">現在のバージョン: <strong>v3.0.1</strong></div>
-              <div class="version-date">最終更新: 2026/06/27</div>
+              <div class="version-current">現在のバージョン: <strong>v4.3.1</strong></div>
+              <div class="version-date">2026/09/19 更新</div>
             </div>
             
             <div class="changelog">
+              <!-- v4.3.1: 2026/09/19 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v4.3.1</span>
+                  <span class="version-date-small">2026/09/19</span>
+                </div>
+                <ul class="version-list">
+                  <li>【改善】初回起動時や、1時間以上経ってアプリに戻ったときに、現在地を取得して地図を表示するようにしました。1時間未満なら、見ていた地図と選択したお店を引き継ぎます。</li>
+                  <li>【改善】現在地へ移動すると現在地ボタンが青くなり、表示状態が分かりやすくなりました。</li>
+                  <li>【不具合修正】初回の位置情報許可後に地図が移動しない問題や、一時的な測位エラーが表示される問題を修正しました。</li>
+                  <li>【追加】「みんなの投稿」で、いいねした人の名前を投稿の下に表示できるようになりました。</li>
+                  <li>【改善】投稿画面のフォローボタンとタブの表示を見やすくしました。</li>
+                  <li>【改善】マイページの編集・共有ボタンと余白を整理し、長いユーザー名も折り返して表示するようにしました。</li>
+                  <li>【改善】地図から検索画面を開いたとき、すぐに文字を入力できるようにしました。</li>
+                  <li>【改善】通知から対象の投稿を確認でき、同じ投稿への複数のいいねをまとめて表示するようにしました。</li>
+                  <li>【不具合修正】店舗検索や検索解除のあと、店舗カードと地図の表示が一致しない問題を修正しました。</li>
+                </ul>
+              </div>
+
+              <!-- v4.3.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v4.3.0</span>
+                  <span class="version-date-small">2026/08/13</span>
+                </div>
+                <ul class="version-list">
+                  <li>👤 マイページを大幅にリニューアル（訪問記録・杯数・訪問店舗を見やすく整理）</li>
+                  <li>📊 よく行くお店や訪問店舗数を確認できる分析機能を追加</li>
+                  <li>📸 投稿写真や過去の記録を振り返りやすく改善</li>
+                  <li>🎨 プロフィール画面の表示と操作性を改善</li>
+                  <li>📍 マップ画面と現在地表示の動作を改善</li>
+                </ul>
+              </div>
+
+              <!-- v4.2.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v4.2.0</span>
+                  <span class="version-date-small">2026/08/05</span>
+                </div>
+                <ul class="version-list">
+                  <li>🏷️ 地図上の店名表示を切り替えられるレイヤー機能を追加</li>
+                  <li>📍 地図上で訪問有無を切り替えられるレイヤー機能を追加</li>
+                </ul>
+              </div>
+
+              <!-- v4.1.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v4.1.0</span>
+                  <span class="version-date-small">2026/08/04</span>
+                </div>
+                <ul class="version-list">
+                  <li>📸 写真から過去の訪問記録をまとめて登録できる機能を追加</li>
+                  <li>📍 写真の位置情報を使った店舗検索と記録入力に対応</li>
+                  <li>🆕 検索画面に新店舗情報を追加</li>
+                  <li>🖼️ 複数写真の表示と操作性を改善</li>
+                  <li>🔧 店舗検索・ログイン・画面表示の安定性を向上</li>
+                </ul>
+              </div>
+
+              <!-- v4.0.0 -->
+              <div class="version-section">
+                <div class="version-header">
+                  <span class="version-number">v4.0.0</span>
+                  <span class="version-date-small">2026/08/01</span>
+                </div>
+                <ul class="version-list">
+                  <li>🗺️ 地図の中心付近にある店舗をカード形式で表示</li>
+                  <li>🔍 検索画面を見やすく改善</li>
+                  <li>⚡ 地図と家系図の表示を軽量化</li>
+                  <li>🎨 各画面のレイアウトと操作性を改善</li>
+                </ul>
+              </div>
+
               <!-- v3.0.0 -->
               <div class="version-section">
                 <div class="version-header">
@@ -21925,7 +22778,7 @@
     </div>
   </div>
 
-  <script src="map-discovery-v2.js?v=20260811-3"></script>
+  <script src="map-discovery-v2.js?v=4.3.1"></script>
 
 </body>
 </html>
