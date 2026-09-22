@@ -912,6 +912,42 @@
       white-space: nowrap;
     }
 
+    #shop-detail-modal .modal-title-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      column-gap: 8px;
+      padding-right: 0;
+    }
+    #shop-detail-modal .modal-title { display: contents; }
+    #shop-detail-modal .modal-title h2 { grid-column: 1; grid-row: 1; }
+    #detail-name-hiragana { grid-column: 1; grid-row: 2; }
+    #shop-detail-modal .modal-badges { grid-column: 1 / -1; grid-row: 3; width: 100%; }
+    #shop-detail-modal .detail-area-row { grid-column: 1 / -1; grid-row: 4; }
+    #shop-detail-modal .modal-title-row > .detail-heading-actions {
+      position: static;
+      grid-column: 2;
+      grid-row: 1 / 3;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+    .detail-heading-icons { display: flex; gap: 8px; }
+    #detail-page-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      min-height: 44px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: #6b7280;
+      font: inherit;
+      font-size: 12px;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    #detail-page-btn:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; border-radius: 4px; }
+
     #detail-map-btn {
       flex: 0 0 auto;
       white-space: nowrap;
@@ -5938,6 +5974,186 @@
         display: none !important;
       }
     </style>
+    <style>
+      /* /shops/<id> 用の公開店舗ページ */
+      #public-shop-page { display: none; }
+      body.shop-public-page-open {
+        height: auto;
+        min-height: 100vh;
+        min-height: 100dvh;
+        overflow: auto;
+        background: #f7f3f0;
+        color: #111827;
+      }
+      body.shop-public-page-open .app-container { display: none; }
+      body.shop-public-page-open #public-shop-page { display: block; }
+      .psp-header {
+        position: sticky;
+        top: 0;
+        z-index: 80;
+        border-bottom: 1px solid #e5e7eb;
+        background: rgba(255,255,255,.96);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+      }
+      .psp-header-inner {
+        max-width: 1080px;
+        min-height: 58px;
+        margin: 0 auto;
+        padding: max(10px, env(safe-area-inset-top)) 24px 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      .psp-header-left { min-width:0;display:flex;align-items:center;gap:10px; }
+      .psp-header .psp-back { display:none; }
+      .psp-back { width:34px;height:34px;flex:0 0 auto;border:0;border-radius:8px;background:#f3f4f6;color:#374151;font-size:22px;line-height:1;cursor:pointer; }
+      .psp-brand { display:flex;align-items:center;gap:8px;font-size:14px;font-weight:750;color:#111827;text-decoration:none; }
+      .psp-logo { width:28px;height:28px;border-radius:7px;background:#d92745;color:white;display:grid;place-items:center;font-family:serif;font-size:19px;font-weight:900;line-height:1;text-shadow:-.5px -.5px 0 #111,.5px -.5px 0 #111,-.5px .5px 0 #111,.5px .5px 0 #111; }
+      .psp-map-back { border:0;background:transparent;color:#2563eb;font-size:12px;font-weight:700;cursor:pointer; }
+      .psp-shell { max-width:980px;margin:0 auto;min-height:100dvh;padding:26px 32px 48px;background:#f7f3f0; }
+      .psp-heading { display:flex;align-items:flex-start;justify-content:space-between;gap:18px;position:relative;padding-right:84px; }
+      .psp-heading-copy { flex:1;min-width:0; }
+      .psp-heading-back { position:absolute;right:0;top:0; }
+      .psp-heading-badges { display:flex;align-items:center;flex-wrap:wrap;gap:6px;width:calc(100% + 84px);margin:0; }
+      .psp-eyebrow { display:inline-flex;border-radius:999px;background:var(--psp-category-soft,#fef2f2);color:var(--psp-category-text-color,var(--psp-category-color,#b91c1c));padding:3px 8px;font-size:10px;font-weight:750;letter-spacing:0; }
+      .psp-heading h1 { margin:0 0 8px;font-size:24px;font-weight:700;color:#1f2937;line-height:1.35;overflow-wrap:anywhere; }
+      .psp-reading { color:#9ca3af;font-size:13px;margin-bottom:8px; }
+      .psp-area { margin-top:0;color:#6b7280;font-size:13px; }
+      .psp-area[hidden] { display:none; }
+      .psp-origin { display:inline-flex;align-items:center;max-width:100%;border:1px solid #e5e7eb;border-radius:12px;background:white;padding:4px 12px;color:#1e40af;font-size:12px;text-decoration:underline;cursor:pointer; }
+      .psp-origin[hidden] { display:none; }
+      .psp-area { display:flex;align-items:center;gap:4px; }
+      .psp-area svg { width:14px;height:14px;flex:0 0 auto; }
+      .psp-share { position:absolute;right:40px;top:0; }
+      .psp-heading .psp-share,.psp-heading .psp-heading-back { box-sizing:border-box;width:32px;height:32px;padding:0;border:0;border-radius:50%;background:#f3f4f6;color:#6b7280;display:flex;align-items:center;justify-content:center;cursor:pointer; }
+      .psp-heading .psp-share svg,.psp-heading .psp-heading-back svg { display:block;width:20px;height:20px;flex:0 0 20px; }
+      .psp-gallery { display:flex;gap:8px;margin-top:12px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:thin; }
+      .psp-gallery[hidden] { display:none; }
+      .psp-photo { position:relative;flex:0 0 74%;height:280px;overflow:hidden;border:0;border-radius:12px;background:#f3f4f6;scroll-snap-align:start;cursor:pointer; }
+      .psp-photo img { width:100%;height:100%;display:block;object-fit:cover; }
+      .psp-photo-placeholder { height:100%;display:grid;place-items:center;color:#8c7f74;font-size:12px;letter-spacing:.05em; }
+      .psp-photo-credit { position:absolute;left:10px;bottom:10px;max-width:calc(100% - 20px);padding:5px 8px;border-radius:6px;background:rgba(255,255,255,.94);font-size:10px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+      .psp-grid { display:flex;flex-direction:column;gap:0;margin-top:12px; }
+      .psp-main,.psp-side { display:contents; }
+      #psp-mobile-personal { display:none !important; }
+      #psp-about-section,#psp-hours-section,#psp-personal,#psp-community-section { order:initial; }
+      .psp-section { padding:12px 0;border-top:1px solid #e5e7eb; }
+      #psp-about-section { padding:12px 0;border-top:1px solid #e5e7eb; }
+      #psp-about-section > h2 { margin-bottom:12px; }
+      #psp-description { margin-top:0; }
+      #psp-description[hidden] { display:none; }
+      .psp-main .psp-section:first-child,.psp-side .psp-section:first-child { padding-top:0;border-top:0; }
+      .psp-section h2 { margin:0 0 12px;font-size:17px;letter-spacing:-.01em; }
+      .psp-section p { margin:0;color:#4b5563;font-size:14px;line-height:1.75;white-space:pre-wrap; }
+      .psp-now { display:grid;grid-template-columns:minmax(125px,.8fr) minmax(170px,1.2fr);gap:13px;align-items:start; }
+      .psp-now.no-map { grid-template-columns:1fr; }
+      .psp-now.has-multiple-hours { grid-template-columns:minmax(125px,.8fr) minmax(170px,1.2fr); }
+      .psp-now.no-map.has-multiple-hours { grid-template-columns:1fr; }
+      .psp-kicker { color:#6b7280;font-size:11px;font-weight:650; }
+      .psp-status { margin-top:6px;font-size:21px;font-weight:800;letter-spacing:-.02em; }
+      .psp-status.is-open { color:#047857; }
+      .psp-status.is-soon { color:#c36b11; }
+      .psp-status.is-closed { color:#9a4747; }
+      .psp-today-hours { margin-top:3px;font-size:16px;font-weight:700;line-height:1.45; }
+      .psp-today-hours.is-multiple { font-size:15px; }
+      .psp-map-tile { position:relative;width:100%;max-width:240px;height:180px;justify-self:end;overflow:hidden;border:1px solid #d1d5db;border-radius:12px;background:#e5e7eb;cursor:pointer; }
+      .psp-map-tile[hidden],.psp-route-actions[hidden],.psp-map-back[hidden] { display:none; }
+      .psp-mini-map { position:absolute;inset:0;z-index:0;background:#e7eadf; }
+      .psp-mini-map .leaflet-control-attribution { max-width:100%;padding:1px 3px;font-size:7px;line-height:1.2;white-space:nowrap; }
+      .psp-hours-details { margin-top:12px;padding:0;border:0; }
+      .psp-hours-details summary { font-size:12px;font-weight:750;cursor:pointer; }
+      .psp-hours-title { font-size:12px;font-weight:750; }
+      .psp-hours-list { margin-top:10px; }
+      .psp-hours-row { display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid #eee7e1;color:#5e554f;font-size:12px; }
+      .psp-note { margin-top:10px;color:#857970;font-size:11px;line-height:1.65; }
+      .psp-route-actions,.psp-actions { display:flex;gap:8px; }
+      .psp-route-actions { margin-top:12px; }
+      .psp-route-actions a,.psp-links a { flex:1;min-height:48px;border:1px solid rgba(55,65,81,.12);border-radius:14px;background:rgba(255,255,255,.68);box-shadow:0 2px 7px rgba(58,45,36,.06);padding:12px;color:#374151;font-size:14px;font-weight:500;line-height:1;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px; }
+      .psp-lineage { margin-top:12px;padding:13px 14px;border:1px solid #e5e7eb;border-left:3px solid var(--psp-category-color,#ef4444);border-radius:8px;background:#f9fafb; }
+      .psp-lineage-head { display:flex;align-items:center;justify-content:space-between;gap:12px; }
+      .psp-lineage-meta { display:flex;align-items:center;gap:10px;min-width:0; }
+      .psp-lineage-category { color:#374151;font-size:12px;font-weight:750; }
+      .psp-lineage-tree-link { flex:0 0 auto;padding:0;border:0;background:none;color:var(--psp-category-color,#2563eb);font-size:11px;font-weight:700;cursor:pointer; }
+      .psp-lineage-path { display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-top:10px; }
+      .psp-lineage-path button { padding:0;border:0;background:none;color:var(--psp-category-color,#333);font-size:13px;font-weight:800;text-decoration:underline;text-underline-offset:3px;cursor:pointer; }
+      .psp-lineage-path strong { font-size:13px; }
+      .psp-lineage-arrow { color:#a19388;font-size:12px; }
+      .psp-links { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px; }
+      .psp-links a { display:flex;align-items:center;justify-content:center;gap:6px; }
+      .psp-links svg,.psp-route-actions svg { width:18px;height:18px;flex:0 0 auto; }
+      .psp-links a[hidden] { display:none; }
+      .psp-actions button { flex:1;border:1px solid #d1d5db;border-radius:9px;background:white;padding:10px 5px;color:#374151;font-size:12px;font-weight:700;cursor:pointer; }
+      .psp-actions button.active { border-color:#fca5a5;background:#fef2f2;color:#b91c1c; }
+      .psp-record { width:100%;margin-top:9px;border:0;border-radius:9px;background:#3b82f6;color:white;padding:11px;font-size:13px;font-weight:750;cursor:pointer; }
+      .psp-own { margin-top:14px;border:1px solid #e5e7eb;border-radius:9px;background:#f9fafb;padding:12px 13px; }
+      .psp-own summary { font-size:12px;font-weight:800;cursor:pointer; }
+      .psp-stats { display:grid;grid-template-columns:repeat(3,1fr);margin-top:15px; }
+      .psp-stat { text-align:center;border-right:1px solid #ded1c6; }
+      .psp-stat:last-child { border-right:0; }
+      .psp-stat strong { display:block;font-size:17px; }
+      .psp-stat span { display:block;margin-top:2px;color:#80736a;font-size:9px; }
+      .psp-history { margin-top:12px;display:grid;gap:7px; }
+      .psp-history-row { padding-top:8px;border-top:1px solid #e0d4c9;color:#655a53;font-size:11px; }
+      #psp-community-list .feed-post-card { margin-bottom:16px; }
+      .psp-report { width:100%;border:1px solid #d1d5db;border-radius:9px;background:white;padding:10px;color:#6b7280;font-size:11px;font-weight:650;cursor:pointer; }
+      .psp-empty { display:grid;place-items:center;height:230px;border-radius:17px;background:#e9e0d6;color:#8c7f74;font-size:12px; }
+      /* iPad（縦向き 768px）からは店舗詳細の2カラムを使う。 */
+      @media (max-width: 767px) {
+        .psp-header .psp-back { display:none; }
+        .psp-heading { align-items:flex-start;gap:8px; }
+        .psp-header-inner { min-height:52px;padding:calc(8px + env(safe-area-inset-top)) 16px 8px; }
+        .psp-brand { font-size:13px; }
+        .psp-shell { padding:20px 16px calc(126px + env(safe-area-inset-bottom)); }
+        .psp-heading h1 { font-size:24px; }
+        .psp-gallery { margin-top:12px;gap:8px; }
+        .psp-photo { flex-basis:90%;height:235px;border-radius:14px; }
+        .psp-grid { display:flex;flex-direction:column;gap:0;margin-top:12px; }
+        .psp-side { order:0; }
+        .psp-main { order:1; }
+        .psp-main .psp-section:first-child { padding-top:12px;border-top:1px solid #e9e1da; }
+        .psp-now { grid-template-columns:minmax(125px,.8fr) minmax(170px,1.2fr); }
+        .psp-now.has-multiple-hours { grid-template-columns:minmax(125px,.8fr) minmax(170px,1.2fr); }
+        .psp-section { padding:12px 0; }
+        .psp-side .psp-personal { display:none; }
+        .psp-mobile-personal { display:block !important; }
+      }
+      @media (max-width: 360px) {
+        .psp-now,.psp-now.has-multiple-hours { grid-template-columns:125px minmax(0,1fr);gap:10px; }
+        .psp-now.no-map,.psp-now.no-map.has-multiple-hours { grid-template-columns:1fr; }
+        .psp-map-tile { height:150px;min-width:0; }
+      }
+      @media (min-width: 768px) { .psp-mobile-personal { display:none !important; } }
+      @media (min-width: 768px) {
+        .psp-shell { max-width:1100px;padding-bottom:100px; }
+        .psp-grid { display:block; }
+        .psp-top-grid { display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:20px;align-items:start; }
+        .psp-main,.psp-side { display:block;min-width:0; }
+        /* 左の営業時間は上段だけを追従し、投稿の直前で止まる。 */
+        .psp-side { position:sticky;top:72px;align-self:start;grid-column:1;grid-row:1; }
+        .psp-main { grid-column:2;grid-row:1; }
+        .psp-now,.psp-now.has-multiple-hours { grid-template-columns:1fr;gap:12px; }
+        #psp-desktop-map .psp-map-tile { max-width:none;height:240px; }
+        .psp-grid > #psp-community-section { min-width:0; }
+        #psp-community-list { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start; }
+        #psp-community-list .feed-post-card { min-width:0;margin-bottom:0; }
+        #psp-community-list > :not(.feed-post-card) { grid-column:1 / -1; }
+        .psp-now.no-map,.psp-now.no-map.has-multiple-hours { grid-template-columns:1fr; }
+        .psp-route-actions a { font-size:12px;padding:10px 6px;gap:4px; }
+        .psp-route-actions svg { width:16px;height:16px; }
+        .psp-photo { flex-basis:74%;height:340px; }
+      }
+      @media (min-width: 900px) {
+        .psp-top-grid { gap:24px; }
+      }
+      /* iPad縦向きでは投稿カードを読みやすい1列に保つ。 */
+      @media (min-width: 768px) and (max-width: 959px) {
+        #psp-community-list { grid-template-columns:1fr; }
+      }
+      /* 各タブの底色はマイページと同じ、薄い生成りに統一。 */
+      #tab-feed, #tab-mypage, .feed-list-wrap { background:#f7f3f0 !important; }
+    </style>
 </head>
 <body>
   <!-- ローディング画面 -->
@@ -5969,6 +6185,114 @@
     </div>
   </div>
   
+  <div id="public-shop-page" aria-hidden="true">
+    <header class="psp-header">
+      <div class="psp-header-inner">
+        <div class="psp-header-left">
+          <button type="button" class="psp-back" onclick="backFromPublicShopPage()" aria-label="前の画面に戻る">←</button>
+          <div class="psp-brand">
+            <span class="psp-logo" aria-hidden="true">家</span>
+            <span>家系ラーメンmap</span>
+          </div>
+        </div>
+        <button id="psp-map-back" type="button" class="psp-map-back" onclick="openCurrentPublicShopOnMap()">地図で見る ↗</button>
+      </div>
+    </header>
+    <main class="psp-shell">
+      <div class="psp-heading">
+        <button type="button" class="psp-heading-back" onclick="backFromPublicShopPage()" aria-label="前の画面に戻る"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5m7-7-7 7 7 7"/></svg></button>
+        <div class="psp-heading-copy">
+          <h1 id="psp-name"></h1>
+          <div id="psp-reading" class="psp-reading"></div>
+          <div class="psp-heading-badges">
+            <div id="psp-eyebrow" class="psp-eyebrow"></div>
+            <button type="button" id="psp-origin" class="psp-origin" hidden></button>
+          <div id="psp-area" class="psp-area"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg><span></span></div>
+          </div>
+        </div>
+        <button type="button" class="psp-share" onclick="shareShop()" aria-label="共有"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg></button>
+      </div>
+      <div id="psp-gallery" class="psp-gallery" aria-label="みんなの投稿写真">
+        <div class="psp-photo"><div class="psp-photo-placeholder">投稿写真を読み込み中…</div></div>
+      </div>
+      <div class="psp-grid">
+        <div class="psp-main">
+          <section id="psp-about-section" class="psp-section">
+            <h2>お店について</h2>
+            <p id="psp-description"></p>
+          <div id="psp-lineage-section" hidden>
+            <div id="psp-lineage" class="psp-lineage" hidden>
+              <div class="psp-lineage-head">
+                <div class="psp-lineage-meta"><span class="psp-kicker">系譜・出身店</span><strong id="psp-lineage-category" class="psp-lineage-category"></strong></div>
+                <button id="psp-lineage-tree-link" type="button" class="psp-lineage-tree-link">家系図で見る</button>
+              </div>
+              <div id="psp-lineage-path" class="psp-lineage-path"></div>
+            </div>
+          </div>
+          <div id="psp-links-section" hidden>
+            <div class="psp-links">
+              <a id="psp-google-map" href="#" target="_blank" rel="noopener noreferrer" hidden><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13 6-3M9 7l6-3m0 13 4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4"/></svg><span>Googleマップ</span></a>
+              <a id="psp-website" href="#" target="_blank" rel="noopener noreferrer" hidden><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.2 2.5 3.3 5.5 3.3 9S14.2 18.5 12 21M12 3C9.8 5.5 8.7 8.5 8.7 12S9.8 18.5 12 21"/></svg><span>ホームページ</span></a>
+              <a id="psp-x" href="#" target="_blank" rel="noopener noreferrer" hidden><svg fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg><span>X (Twitter)</span></a>
+            </div>
+          </div>
+          </section>
+          <section id="psp-all-hours-section" class="psp-section">
+            <h2>すべての曜日・営業時間</h2>
+            <div id="psp-all-hours-list" class="psp-hours-list"></div>
+            <div id="psp-all-note" class="psp-note"></div>
+          </section>
+          <div id="psp-mobile-personal" class="psp-mobile-personal"></div>
+          <section id="psp-community-section" class="psp-section">
+            <h2>みんなの投稿</h2>
+            <div id="psp-community-list"><div style="text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;">読み込み中...</div></div>
+          </section>
+          <section class="psp-section"><button type="button" class="psp-report" onclick="reportCurrentShopInformation()">✎ 店舗情報の修正を報告</button></section>
+        </div>
+        <aside class="psp-side">
+          <section id="psp-hours-section" class="psp-section">
+            <div id="psp-now" class="psp-now">
+              <div>
+                <div class="psp-kicker">今日の営業情報</div>
+                <div id="psp-status" class="psp-status"></div>
+                <div id="psp-today-hours" class="psp-today-hours"></div>
+                <div class="psp-hours-details">
+                  <div class="psp-hours-title">営業時間の補足</div>
+                  <div id="psp-hours-list" class="psp-hours-list"></div>
+                  <div id="psp-note" class="psp-note"></div>
+                </div>
+              </div>
+              <div id="psp-map-tile" class="psp-map-tile" role="button" tabindex="0" aria-label="この店を地図で見る" onclick="openCurrentPublicShopOnMap()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openCurrentPublicShopOnMap();}">
+                <div id="psp-mini-map" class="psp-mini-map"></div>
+              </div>
+            </div>
+            <div id="psp-route-actions" class="psp-route-actions">
+              <a id="psp-apple-route" href="#" target="_blank" rel="noopener noreferrer"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><circle cx="12" cy="11" r="3"/></svg><span>Appleマップ</span></a>
+              <a id="psp-google-route" href="#" target="_blank" rel="noopener noreferrer"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><circle cx="12" cy="11" r="3"/></svg><span>Google経路案内</span></a>
+            </div>
+          </section>
+          <section id="psp-personal" class="psp-section psp-personal">
+            <h2>このお店を記録する</h2>
+            <div class="psp-actions">
+              <button id="psp-want" type="button" onclick="togglePublicShopWant()">☆ 行きたい</button>
+              <button id="psp-favorite" type="button" onclick="togglePublicShopFavorite()">♡ お気に入り</button>
+            </div>
+            <button type="button" class="psp-record" onclick="openRecordModal()">＋ 訪問を記録する</button>
+            <details class="psp-own">
+              <summary>自分の記録を見る</summary>
+              <div class="psp-stats">
+                <div class="psp-stat"><strong id="psp-visit-count">0</strong><span>来店回数</span></div>
+                <div class="psp-stat"><strong id="psp-last-visit">-</strong><span>最終来店</span></div>
+                <div class="psp-stat"><strong id="psp-avg-rating">-</strong><span>自分の平均評価</span></div>
+              </div>
+              <div id="psp-history" class="psp-history"></div>
+            </details>
+          </section>
+        </aside>
+      </div>
+    </main>
+  </div>
+
   <div class="app-container">
     <div class="header">
       <h1>🍜 家系ラーメンmap</h1>
@@ -6329,20 +6653,23 @@
               <button id="detail-map-btn" type="button" class="badge" style="display:none;align-items:center;justify-content:center;background:#ffffff;color:#1e40af;text-decoration:underline;cursor:pointer;border:1px solid #e5e7eb;">マップ表示</button>
               <span id="detail-status-badge"></span>
             </div>
-            <div style="display:flex;align-items:center;gap:4px;color:#6b7280;font-size:13px;margin-top:4px;">
+            <div class="detail-area-row" style="display:flex;align-items:center;gap:4px;color:#6b7280;font-size:13px;margin-top:4px;">
               <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
               </svg>
               <span id="detail-area"></span>
             </div>
           </div>
-          <div style="display:flex;gap:8px;align-items:flex-start;">
+          <div class="detail-heading-actions">
+            <div class="detail-heading-icons">
             <button class="share-btn" id="share-shop-btn" title="共有">
               <svg style="width:20px;height:20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
               </svg>
             </button>
             <button class="close-btn" id="close-shop-detail-btn">✕</button>
+            </div>
+            <button id="detail-page-btn" type="button">店舗詳細を見る ›</button>
           </div>
         </div>
       </div>
@@ -7979,6 +8306,12 @@
       if (communityPostRoutePushed && postIdFromLocation()) {
         communityPostRoutePushed = false;
         window.history.back();
+      } else if (postIdFromLocation() && communityModalCurrentUserId) {
+        window.history.replaceState(
+          { publicProfileUserId: String(communityModalCurrentUserId) },
+          '',
+          publicProfileRoute(communityModalCurrentUserId)
+        );
       }
     }
 
@@ -8024,7 +8357,7 @@
         window.history.pushState(
           { publicProfileUserId: String(profileId || ''), communityPostId: String(visitId) },
           '',
-          publicProfileHash(profileId, visitId)
+          publicPostRoute(visitId, profileId)
         );
         communityPostRoutePushed = true;
       }
@@ -8052,11 +8385,10 @@
       const shop = (typeof shops !== 'undefined' ? shops : []).find(s => s.id === v.shop_id);
       const shopName = v.shopName || shop?.name || currentShop?.name || v.shop_id || '';
 
-      const isOwnPost = currentUser && v.user_id === currentUser.id;
       const moreButton = document.getElementById('community-visit-more-btn');
       if (moreButton) {
-        moreButton.style.display = isOwnPost ? 'none' : 'grid';
-        moreButton.onclick = isOwnPost ? null : () => openFeedPostMenu(v.id, v.user_id, moreButton);
+        moreButton.style.display = 'grid';
+        moreButton.onclick = () => openFeedPostMenu(v.id, v.user_id, moreButton);
       }
 
       const infoHTML = `
@@ -8117,21 +8449,81 @@
       }
     }
 
-    function publicProfileHash(userId, visitId = '') {
+    function legacyPublicProfileHash(userId, visitId = '') {
       const params = new URLSearchParams();
       params.set('profile', String(userId || ''));
       if (visitId) params.set('post', String(visitId));
       return `#${params.toString()}`;
     }
 
+    function supportsPublicPathRoutes() {
+      return window.location.protocol === 'https:' || window.location.protocol === 'http:';
+    }
+
+    function decodedPublicRoute() {
+      if (!supportsPublicPathRoutes()) return { type: '', id: '' };
+      const parts = String(window.location.pathname || '/')
+        .split('/')
+        .filter(Boolean);
+      if (parts.length !== 2 || !['users', 'posts', 'shops'].includes(parts[0])) {
+        return { type: '', id: '' };
+      }
+      try {
+        const id = decodeURIComponent(parts[1]);
+        return id && id.length <= 160 ? { type: parts[0], id } : { type: '', id: '' };
+      } catch (_) {
+        return { type: '', id: '' };
+      }
+    }
+
+    function publicProfileRoute(userId) {
+      const id = String(userId || '');
+      return supportsPublicPathRoutes()
+        ? `/users/${encodeURIComponent(id)}`
+        : legacyPublicProfileHash(id);
+    }
+
+    function publicPostRoute(visitId, userId = '') {
+      const id = String(visitId || '');
+      return supportsPublicPathRoutes()
+        ? `/posts/${encodeURIComponent(id)}`
+        : legacyPublicProfileHash(userId, id);
+    }
+
+    function publicShopRoute(shopId) {
+      return `/shops/${encodeURIComponent(String(shopId || ''))}`;
+    }
+
+    function appBaseLocation() {
+      if (!supportsPublicPathRoutes()) return `${window.location.pathname}${window.location.search}`;
+      const params = new URLSearchParams(window.location.search);
+      params.delete('profile');
+      params.delete('post');
+      params.delete('shop');
+      const search = params.toString();
+      return `/${search ? `?${search}` : ''}`;
+    }
+
     function profileIdFromLocation() {
+      const route = decodedPublicRoute();
+      if (route.type === 'users') return route.id;
       const hashParams = new URLSearchParams(String(window.location.hash || '').replace(/^#/, ''));
-      return hashParams.get('profile');
+      const queryParams = new URLSearchParams(window.location.search);
+      return hashParams.get('profile') || queryParams.get('profile');
     }
 
     function postIdFromLocation() {
+      const route = decodedPublicRoute();
+      if (route.type === 'posts') return route.id;
       const hashParams = new URLSearchParams(String(window.location.hash || '').replace(/^#/, ''));
-      return hashParams.get('post');
+      const queryParams = new URLSearchParams(window.location.search);
+      return hashParams.get('post') || queryParams.get('post');
+    }
+
+    function shopIdFromLocation() {
+      const route = decodedPublicRoute();
+      if (route.type === 'shops') return route.id;
+      return new URLSearchParams(window.location.search).get('shop');
     }
 
     function applyPublicProfilePageState(userId, updateHistory) {
@@ -8139,7 +8531,7 @@
       page?.classList.add('active');
       document.body.classList.add('public-profile-page-open');
       if (updateHistory && profileIdFromLocation() !== String(userId)) {
-        window.history.pushState({ publicProfileUserId: String(userId) }, '', publicProfileHash(userId));
+        window.history.pushState({ publicProfileUserId: String(userId) }, '', publicProfileRoute(userId));
         publicProfileRoutePushed = true;
       }
     }
@@ -8159,16 +8551,16 @@
       // 現在のURLから外し、戻る操作による再表示も防ぐ。
       if (options.clearHistory) {
         publicProfileRoutePushed = false;
-        if (profileIdFromLocation()) {
-          window.history.replaceState({}, '', `${window.location.pathname}${window.location.search}`);
+        if (profileIdFromLocation() || postIdFromLocation()) {
+          window.history.replaceState({}, '', appBaseLocation());
         }
         return;
       }
       if (publicProfileRoutePushed && window.history.state?.publicProfileUserId) {
         publicProfileRoutePushed = false;
         window.history.back();
-      } else if (profileIdFromLocation()) {
-        window.history.replaceState({}, '', `${window.location.pathname}${window.location.search}`);
+      } else if (profileIdFromLocation() || postIdFromLocation()) {
+        window.history.replaceState({}, '', appBaseLocation());
       }
     }
 
@@ -8176,6 +8568,10 @@
       const profileId = profileIdFromLocation();
       const postId = postIdFromLocation();
       const profilePage = document.getElementById('public-profile-page');
+      if (postId && !profileId) {
+        await openPublicPostFromRoute(postId);
+        return;
+      }
       if (profileId) {
         const profileAlreadyOpen = profilePage?.classList.contains('active') &&
           String(communityModalCurrentUserId || '') === String(profileId);
@@ -8192,6 +8588,41 @@
         closePublicProfilePage({ fromHistory: true });
       }
     });
+
+    let publicPostLoadingId = null;
+
+    async function openPublicPostFromRoute(visitId) {
+      const normalizedVisitId = String(visitId || '');
+      if (!normalizedVisitId || !supabaseClient || publicPostLoadingId === normalizedVisitId) return;
+      publicPostLoadingId = normalizedVisitId;
+      try {
+        let visit = communityVisitCache[normalizedVisitId];
+        if (!visit?.user_id) {
+          const { data: rows, error } = await supabaseClient
+            .from('visits')
+            .select(await compatibleVisitSelect('id, shop_id, visited_at, date_precision, rating, comment, order_text, options, noodle_firmness, flavor_intensity, oil_amount, weather, temperature, wait_minutes, user_id, created_at'))
+            .eq('id', normalizedVisitId)
+            .eq('is_public', true)
+            .lte('visited_on', getJstTodayStr())
+            .limit(1);
+          if (error) throw error;
+          visit = (rows || [])[0];
+          if (!visit) throw new Error('公開投稿が見つかりません');
+          const shop = (typeof shops !== 'undefined' ? shops : []).find(s => String(s.id) === String(visit.shop_id));
+          communityVisitCache[normalizedVisitId] = {
+            ...visit,
+            shopName: shop?.name || visit.shop_id || '',
+            displayName: ''
+          };
+        }
+        await openUserProfile(visit.user_id, { updateHistory: false });
+      } catch (error) {
+        console.error('公開投稿URLの読み込みエラー:', error);
+        await showCustomAlert('この投稿は削除されたか、現在公開されていません。');
+      } finally {
+        if (publicPostLoadingId === normalizedVisitId) publicPostLoadingId = null;
+      }
+    }
 
     // 公開プロフィールはURL履歴を持つ全画面ページとして表示する。
     async function openUserProfile(userId, options = {}) {
@@ -8549,7 +8980,11 @@
     }
 
     function getPublicProfileShareUrl(userId) {
-      return `https://iekei-map.com/#profile=${encodeURIComponent(String(userId || ''))}`;
+      return `https://iekei-map.com/users/${encodeURIComponent(String(userId || ''))}`;
+    }
+
+    function getPublicPostShareUrl(visitId) {
+      return `https://iekei-map.com/posts/${encodeURIComponent(String(visitId || ''))}`;
     }
 
     async function copyPublicProfileUrl(userId) {
@@ -8573,6 +9008,31 @@
         }
       }
       await copyPublicProfileUrl(userId);
+    }
+
+    async function shareCommunityPost(visitId) {
+      const visit = communityVisitCache[visitId] || {};
+      const name = visit.displayName || 'ユーザー';
+      const shopName = visit.shopName || '';
+      const url = getPublicPostShareUrl(visitId);
+      const title = shopName
+        ? `${name}さんの「${shopName}」訪問記録`
+        : `${name}さんの家系ラーメン投稿`;
+      if (navigator.share) {
+        try {
+          await navigator.share({ title, url });
+          return;
+        } catch (error) {
+          if (error?.name === 'AbortError') return;
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(url);
+        await showCustomAlert('投稿のリンクをコピーしました');
+      } catch (error) {
+        console.error('投稿URLのコピーに失敗:', error);
+        await showCustomAlert('リンクをコピーできませんでした');
+      }
     }
 
     const communityMutationsInFlight = new Set();
@@ -8642,9 +9102,14 @@
     // クラウド同期：訪問記録（テキスト情報）と行きたい/お気に入りをSupabaseに反映
     // ※ 写真のクラウド同期は今後対応予定。今はテキスト情報のみ同期します。
     // 店舗詳細：その店の「みんなの記録」（公開されている他ユーザーの訪問記録）
-    async function loadShopCommunityVisits(shopId) {
-      const listEl = document.getElementById('shop-community-list');
-      if (!listEl || !supabaseClient) return;
+    async function loadShopCommunityVisits(shopId, targetId = 'shop-community-list') {
+      const listEl = document.getElementById(targetId);
+      if (!listEl) return;
+      if (!supabaseClient) {
+        listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;">投稿を読み込めませんでした</div>';
+        if (targetId === 'psp-community-list') renderPublicShopGallery();
+        return;
+      }
       const sequence = ++shopCommunityLoadSequence;
       const isCurrentRequest = () =>
         sequence === shopCommunityLoadSequence && String(currentShop?.id || '') === String(shopId);
@@ -8667,6 +9132,7 @@
 
         if (!visitRows || visitRows.length === 0) {
           listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;">まだ公開されている記録がありません</div>';
+          if (targetId === 'psp-community-list') renderPublicShopGallery();
           return;
         }
 
@@ -8685,14 +9151,37 @@
           .in('visit_id', visitIds);
         if (!isCurrentRequest()) return;
         const likeCountMap = new Map();
+        const likeUserIdsMap = new Map();
         const myLikedSet = new Set();
         (likeRows || []).forEach(l => {
           likeCountMap.set(l.visit_id, (likeCountMap.get(l.visit_id) || 0) + 1);
+          if (!likeUserIdsMap.has(l.visit_id)) likeUserIdsMap.set(l.visit_id, []);
+          likeUserIdsMap.get(l.visit_id).push(l.user_id);
           if (currentUser && l.user_id === currentUser.id) myLikedSet.add(l.visit_id);
         });
 
+        const likerIds = [...new Set((likeRows || []).map(row => row.user_id).filter(Boolean))];
+        const { data: likerProfiles } = likerIds.length
+          ? await supabaseClient.from('profiles').select('id, display_name').in('id', likerIds)
+          : { data: [] };
+        if (!isCurrentRequest()) return;
+        const likerNameMap = new Map((likerProfiles || []).map(p => [p.id, p.display_name || 'ユーザー']));
+
+        let followingSet = new Set();
+        if (currentUser) {
+          const { data: followingRows } = await supabaseClient
+            .from('follows').select('following_id')
+            .eq('follower_id', currentUser.id).in('following_id', userIds);
+          if (!isCurrentRequest()) return;
+          followingSet = new Set((followingRows || []).map(row => row.following_id));
+        }
+
         const photoListMap = await fetchPhotoListMapForVisits(visitIds);
         if (!isCurrentRequest()) return;
+
+        if (targetId === 'psp-community-list') {
+          renderPublicShopGallery(visitRows, profileMap, photoListMap);
+        }
 
         listEl.innerHTML = '';
         visitRows.forEach(v => {
@@ -8701,43 +9190,36 @@
           const avatarUrl = profile?.avatar_url || '';
           const likeCount = likeCountMap.get(v.id) || 0;
           const liked = myLikedSet.has(v.id);
-          const dateStr = v.visited_at ? formatDateDetail(v.visited_at, v.date_precision) : '';
+          const firstLikerId = (likeUserIdsMap.get(v.id) || [])[0];
+          const firstLikerName = firstLikerId ? (likerNameMap.get(firstLikerId) || 'ユーザー') : '';
 
           const card = document.createElement('div');
-          card.style.cssText = 'background:#f9fafb;border-radius:12px;padding:10px 12px;margin-bottom:8px;cursor:pointer;';
+          card.className = 'feed-post-card';
+          card.dataset.userId = v.user_id;
           v.photo_urls = photoListMap.get(v.id) || [];
           v.photo_url = v.photo_urls[0] || null;
           const shopNameForCache = currentShop?.name || shops?.find(s => s.id === shopId)?.name || shopId;
           communityVisitCache[v.id] = { ...v, shopName: shopNameForCache, displayName: name || '' };
-          card.onclick = () => showCommunityVisitDetail(v.id);
-          const orderLine = [v.order_text, v.options].filter(Boolean).join(' / ');
-          const starsStr = v.rating > 0 ? '★'.repeat(v.rating) + '☆'.repeat(5 - v.rating) : '';
-          const safePhotoUrl = safeExternalUrl(v.photo_url);
+          const shopMeta = [currentShop?.area, currentShop?.station].filter(Boolean).join('・');
           card.innerHTML = `
-            <div style="display:flex;gap:10px;">
-              <div style="flex:1;min-width:0;">
-                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-                  ${avatarHtml(avatarUrl, 22)}
-                  <span onclick="event.stopPropagation(); openUserProfile('${v.user_id}')" style="font-size:12px;font-weight:600;color:#374151;cursor:pointer;">${escapeHtml(name)}</span>
-                </div>
-                ${starsStr ? `<div style="font-size:12px;color:#f59e0b;margin-bottom:2px;">${starsStr}</div>` : ''}
-                ${orderLine ? `<div style="font-size:12px;color:#374151;line-height:1.4;">${escapeHtml(orderLine)}</div>` : ''}
-                ${v.comment ? `<div style="font-size:13px;color:#4b5563;line-height:1.45;margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(v.comment)}</div>` : ''}
-              </div>
-              <div style="width:96px;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-                <div style="font-size:12px;color:#9ca3af;line-height:1.2;text-align:right;white-space:nowrap;">${dateStr}</div>
-                ${safePhotoUrl ? `<img src="${escapeHtml(safePhotoUrl)}" loading="lazy" style="width:64px;height:64px;object-fit:cover;border-radius:10px;flex-shrink:0;">` : ''}
-              </div>
-            </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;">
-              <button onclick="event.stopPropagation(); toggleLike('${v.id}', this)" data-liked="${liked ? '1' : '0'}" class="feed-action-cell feed-like-btn" style="padding:4px 8px;font-size:12px;">
-                <svg class="feed-action-icon like-icon ${liked ? 'filled' : ''}" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"></path></svg><span class="like-count">${likeCount}</span>
+            ${feedCardBodyHtml(v, name, avatarUrl, shopNameForCache, shopMeta, followingSet.has(v.user_id))}
+            <div class="feed-actions">
+              <button onclick="event.stopPropagation(); toggleLike('${v.id}', this)" data-liked="${liked ? '1' : '0'}" class="feed-action-cell feed-like-btn">
+                <svg class="feed-action-icon like-icon ${liked ? 'filled' : ''}" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"></path></svg><span class="like-count">${likeCount}</span>
               </button>
-              <button onclick="event.stopPropagation(); showCommunityVisitDetail('${v.id}')" style="border:none;background:none;cursor:pointer;font-size:12px;color:#6b7280;font-weight:700;padding:4px 8px;">詳細 ›</button>
+              <button onclick="event.stopPropagation(); toggleFeedBookmarkUI(this, '${v.id}')" data-saved="${bookmarkedVisitIds.has(v.id) ? '1' : '0'}" class="feed-action-cell feed-bookmark-btn" title="保存">
+                <svg class="feed-action-icon bookmark-icon ${bookmarkedVisitIds.has(v.id) ? 'filled' : ''}" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg><span>保存</span>
+              </button>
+              <div class="feed-action-cell feed-relative-time">${formatFeedRelativeVisit(v)}</div>
+              <button onclick="event.stopPropagation(); openFeedPostMenu('${v.id}', '${v.user_id}', this)" class="feed-action-cell feed-more-btn" title="その他" aria-label="その他の操作">
+                <svg class="feed-action-icon" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+              </button>
             </div>
+            ${likeCount > 0 ? `<button type="button" class="feed-like-summary" onclick="event.stopPropagation(); openLikeUsers('${v.id}')">${escapeHtml(firstLikerName)}さん${likeCount > 1 ? `、ほか${likeCount - 1}人` : ''}がいいねしました</button>` : ''}
           `;
           listEl.appendChild(card);
         });
+        updateFeedMemoMoreButtons(listEl);
       } catch (e) {
         console.error('店舗コミュニティ記録の読み込みエラー:', e);
         if (isCurrentRequest()) {
@@ -11017,7 +11499,6 @@
             communityVisitCache[v.id] = { ...v, shopName, displayName: name || '' };
             // カード全体のクリック反応は無し（店名タップでのみ店舗詳細を開く）
             const shopMeta = [shop?.area, shop?.station].filter(Boolean).join('・');
-            const isOwnPost = currentUser && v.user_id === currentUser.id;
             card.innerHTML = `
               ${feedCardBodyHtml(v, name, avatarUrl, shopName, shopMeta, followingSet.has(v.user_id))}
               <div class="feed-actions">
@@ -11028,9 +11509,9 @@
                   <svg class="feed-action-icon bookmark-icon ${bookmarkedVisitIds.has(v.id) ? 'filled' : ''}" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg><span>保存</span>
                 </button>
                 <div class="feed-action-cell feed-relative-time">${formatFeedRelativeVisit(v)}</div>
-                ${isOwnPost ? '' : `<button onclick="event.stopPropagation(); openFeedPostMenu('${v.id}', '${v.user_id}', this)" class="feed-action-cell feed-more-btn" title="その他" aria-label="その他の操作">
+                <button onclick="event.stopPropagation(); openFeedPostMenu('${v.id}', '${v.user_id}', this)" class="feed-action-cell feed-more-btn" title="その他" aria-label="その他の操作">
                   <svg class="feed-action-icon" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
-                </button>`}
+                </button>
               </div>
               ${likeCount > 0 ? `<button type="button" class="feed-like-summary" onclick="event.stopPropagation(); openLikeUsers('${v.id}')">${escapeHtml(firstLikerName)}さん${likeCount > 1 ? `、ほか${likeCount - 1}人` : ''}がいいねしました</button>` : ''}
             `;
@@ -11077,11 +11558,18 @@
       feedObserver.observe(sentinel);
     }
 
-    // 投稿カードの「⋯」メニュー（通報・ブロック）を表示する
+    // 投稿カードの「⋯」メニュー（共有・通報・ブロック）を表示する
     function openFeedPostMenu(visitId, userId, btnEl) {
       const cached = communityVisitCache[visitId] || {};
       const name = cached.displayName || '';
-      showFeedActionSheet([
+      const items = [
+        {
+          label: 'この投稿を共有',
+          danger: false,
+          onSelect: () => shareCommunityPost(visitId)
+        }
+      ];
+      if (!currentUser || String(currentUser.id) !== String(userId)) items.push(
         {
           label: 'この投稿を通報する',
           danger: true,
@@ -11092,7 +11580,8 @@
           danger: true,
           onSelect: () => blockUser(userId, name)
         }
-      ]);
+      );
+      showFeedActionSheet(items);
     }
 
     // 汎用アクションシート（ボトムシート型）。項目 [{label, danger, onSelect}] を受け取る。
@@ -13726,7 +14215,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       // Service Worker登録（PWA対応、ネイティブアプリではスキップ）
       if ('serviceWorker' in navigator && !isNativeApp) {
-        navigator.serviceWorker.register('service-worker.js')
+        navigator.serviceWorker.register('/service-worker.js?v=4.3.1')
           .then((registration) => {
             console.log('✅ Service Worker登録成功');
           })
@@ -14035,6 +14524,11 @@
     function initTabs() {
       document.querySelectorAll('.nav-item').forEach(btn => {
         btn.addEventListener('click', () => {
+          // 公開店舗ページ上で下部ナビを押した場合は、
+          // 背景タブだけを切り替えず、店舗ページも確実に閉じる。
+          if (document.body.classList.contains('shop-public-page-open')) {
+            closePublicShopPage({ clearHistory: true });
+          }
           if (document.getElementById('public-profile-page')?.classList.contains('active')) {
             closePublicProfilePage();
           }
@@ -14626,7 +15120,7 @@
           : 'font-weight:bold;font-size:16px;margin-bottom:8px;padding-right:28px;';
         
         const hasXAccount = !!getXUsername(getShopXURL(shop));
-        const popup = `<div style="padding:8px;min-width:180px;max-width:240px;">
+        const popup = `<div onclick="markers['${jsStr(shop.id)}'].closePopup(); showShopDetail('${jsStr(shop.id)}')" style="padding:8px;min-width:180px;max-width:240px;cursor:pointer;">
           <div style="position:relative;">
             <button onclick="markers['${jsStr(shop.id)}'].closePopup(); event.stopPropagation();" style="position:absolute;top:4px;right:4px;width:20px;height:20px;border:none;background:#f3f4f6;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:#6b7280;padding:0;">×</button>
             <div style="${nameStyle}">${escapeHtml(shop.name)}</div>
@@ -14645,7 +15139,7 @@
               </a>
             ` : ''}
             <div style="display:flex;gap:6px;align-items:stretch;">
-              <button onclick="showShopDetail('${jsStr(shop.id)}')" style="flex:1;background:#3b82f6;color:white;padding:6px 8px;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:12px;height:32px;display:flex;align-items:center;justify-content:center;">詳細・訪問</button>
+              <button onclick="event.stopPropagation(); markers['${jsStr(shop.id)}'].closePopup(); navigateToPublicShop('${jsStr(shop.id)}')" style="flex:1;background:#3b82f6;color:white;padding:6px 8px;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:12px;height:32px;display:flex;align-items:center;justify-content:center;">詳細</button>
               ${googleMapLink ? `<a href="${escapeHtml(safeGoogleMapUrl)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" style="width:32px;height:32px;background:#34a853;color:white;border:none;border-radius:8px;cursor:pointer;text-decoration:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="Googleマップで開く">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
@@ -15279,7 +15773,7 @@
         const statusBadge = hasTimeFilter ? '' : (isSoon ? '<span class="badge-soon">閉店間近</span>' : (isOpen ? '<span class="badge-open">営業中</span>' : '<span class="badge-closed">時間外</span>'));
         
         return `
-          <div class="shop-list-item" onclick="focusShop('${jsStr(shop.id)}')">
+          <div class="shop-list-item" onclick="showShopDetail('${jsStr(shop.id)}')">
             <div class="shop-icon ${isVisited ? 'visited' : 'unvisited'}">
               ${isVisited ? '✓' : '🍜'}
             </div>
@@ -16629,7 +17123,7 @@
         // 0になってしまい、線やノードの位置が崩れる。非表示の時は描画をスキップし、
         // 次回タブを開いた時に正しい状態で描き直されるようにする。
         const tabEl = document.getElementById('tab-lineage');
-        if (!tabEl || !tabEl.classList.contains('active')) {
+        if (!tabEl || !tabEl.classList.contains('active') || document.body.classList.contains('shop-public-page-open')) {
           window.lineageRendered = false;
           return;
         }
@@ -17926,6 +18420,450 @@
       }
     }
     
+    function publicShopHoursData(shop) {
+      const dayKeys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+      const dayNames = { mon: '月曜日', tue: '火曜日', wed: '水曜日', thu: '木曜日', fri: '金曜日', sat: '土曜日', sun: '日曜日' };
+      const todayIndex = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+      const todayKey = dayKeys[todayIndex];
+      const timesFor = day => {
+        const times = shop?.openingHours?.[day]?.times || [];
+        return times.map(time => `${time.start}-${time.end}`);
+      };
+      const formatTimes = day => {
+        const times = timesFor(day);
+        return times.length ? times.join('、') : '定休日';
+      };
+      return { dayKeys, dayNames, todayKey, timesFor, formatTimes };
+    }
+
+    function colorWithAlpha(hex, alpha) {
+      const value = String(hex || '').replace('#', '');
+      if (!/^[0-9a-f]{6}$/i.test(value)) return `rgba(239, 68, 68, ${alpha})`;
+      const red = Number.parseInt(value.slice(0, 2), 16);
+      const green = Number.parseInt(value.slice(2, 4), 16);
+      const blue = Number.parseInt(value.slice(4, 6), 16);
+      return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+    }
+
+    function syncPublicShopPersonal(shop) {
+      const visitData = visits[shop.id] || { logs: [], wantToGo: false, favorite: false };
+      const logs = Array.isArray(visitData.logs) ? visitData.logs : [];
+      const ratings = logs.map(log => Number(log.rating)).filter(rating => rating > 0);
+      const wantButton = document.getElementById('psp-want');
+      const favoriteButton = document.getElementById('psp-favorite');
+      wantButton?.classList.toggle('active', !!visitData.wantToGo);
+      favoriteButton?.classList.toggle('active', !!visitData.favorite);
+      if (wantButton) wantButton.textContent = `${visitData.wantToGo ? '★' : '☆'} 行きたい`;
+      if (favoriteButton) favoriteButton.textContent = `${visitData.favorite ? '♥' : '♡'} お気に入り`;
+      document.getElementById('psp-visit-count').textContent = String(logs.length);
+      document.getElementById('psp-last-visit').textContent = logs.length
+        ? formatDateDetail(logs[logs.length - 1].visitedAt, logs[logs.length - 1].datePrecision)
+        : '-';
+      document.getElementById('psp-avg-rating').textContent = ratings.length
+        ? (ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length).toFixed(1)
+        : '-';
+      const history = document.getElementById('psp-history');
+      if (history) {
+        history.innerHTML = logs.length
+          ? logs.slice().reverse().slice(0, 5).map(log => {
+              const date = formatDateDetail(log.visitedAt, log.datePrecision);
+              const order = [log.order, log.options].filter(Boolean).join(' ・ ');
+              return `<div class="psp-history-row">${escapeHtml(date)}${order ? `　${escapeHtml(order)}` : ''}</div>`;
+            }).join('')
+          : '<div class="psp-history-row">まだ訪問記録がありません</div>';
+      }
+    }
+
+    function renderPublicShopGallery(visitRows = [], profileMap = new Map(), photoListMap = new Map()) {
+      const gallery = document.getElementById('psp-gallery');
+      if (!gallery) return;
+      const photos = [];
+      visitRows.forEach(visit => {
+        const profile = profileMap.get(visit.user_id);
+        (photoListMap.get(visit.id) || []).forEach(url => {
+          if (photos.length < 12) photos.push({ url, visitId: visit.id, name: profile?.display_name || '匿名ユーザー' });
+        });
+      });
+      if (!photos.length) {
+        gallery.hidden = true;
+        gallery.replaceChildren();
+        return;
+      }
+      gallery.hidden = false;
+      gallery.innerHTML = photos.map(photo => `
+        <button type="button" class="psp-photo" onclick="showCommunityVisitDetail('${jsStr(photo.visitId)}')">
+          <img src="${escapeHtml(photo.url)}" loading="lazy" alt="${escapeHtml(photo.name)}さんの投稿写真">
+          <span class="psp-photo-credit">投稿写真　${escapeHtml(photo.name)}さんの記録を見る ↗</span>
+        </button>`).join('');
+    }
+
+    function publicShopLineageChain(shop) {
+      const chain = [];
+      const seen = new Set();
+      let cursor = shop;
+      while (cursor && !seen.has(String(cursor.id))) {
+        seen.add(String(cursor.id));
+        chain.unshift(cursor);
+        if (!cursor.parent) break;
+        cursor = shops.find(item => String(item.id) === String(cursor.parent));
+      }
+      const visibleChain = chain.filter(item => String(item?.name || '').trim() !== 'ダミー');
+      const familyLabel = getShortCategoryName(shop.category || '');
+      const familyRootName = familyLabel.replace(/系$/, '');
+      const familyRootIndex = visibleChain.findIndex(item =>
+        item.name === familyRootName ||
+        item.mapLabel === familyRootName ||
+        item.name?.includes(familyRootName)
+      );
+      return familyRootIndex > 0 ? visibleChain.slice(familyRootIndex) : visibleChain;
+    }
+
+    function openPublicShopLineage() {
+      const shopId = currentShop?.id;
+      if (!shopId) return;
+      // /shops/<id> を残したまま家系図へ切り替えると、戻る・再描画時に
+      // 店舗ページが再度開くため、先に公開店舗ルートを確実に外す。
+      closePublicShopPage({ clearHistory: true });
+      jumpToLineageTabAndSelect(shopId);
+    }
+
+    function placePublicShopPersonalSection() {
+      const section = document.getElementById('psp-personal');
+      const side = document.querySelector('#public-shop-page .psp-side');
+      const mobileSlot = document.getElementById('psp-mobile-personal');
+      if (!section || !side || !mobileSlot) return;
+      if (window.matchMedia('(max-width: 767px)').matches) mobileSlot.appendChild(section);
+      else side.appendChild(section);
+    }
+
+    function arrangePublicShopSections() {
+      const main = document.querySelector('#public-shop-page .psp-main');
+      const side = document.querySelector('#public-shop-page .psp-side');
+      const personalSlot = document.getElementById('psp-mobile-personal');
+      if (!main) return;
+      const allHours = document.getElementById('psp-all-hours-section');
+      const hoursList = document.getElementById('psp-hours-list');
+      if (allHours && hoursList) allHours.querySelector('#psp-all-hours-list')?.appendChild(hoursList);
+      const sections = ['psp-hours-section', 'psp-about-section', 'psp-all-hours-section', 'psp-personal', 'psp-community-section']
+        .map(id => document.getElementById(id)).filter(Boolean);
+      const grid = document.querySelector('#public-shop-page .psp-grid');
+      const report = document.querySelector('#public-shop-page .psp-report')?.closest('.psp-section');
+      report?.classList.add('psp-report-section');
+      const desktop = window.matchMedia('(min-width: 768px)').matches;
+      const sidebarIds = ['psp-hours-section', 'psp-all-hours-section'];
+      const mapTile = document.getElementById('psp-map-tile');
+      const routes = document.getElementById('psp-route-actions');
+      let mapSection = document.getElementById('psp-desktop-map');
+      if (!mapSection) {
+        mapSection = document.createElement('section');
+        mapSection.id = 'psp-desktop-map';
+        mapSection.className = 'psp-section';
+      }
+      if (desktop) {
+        mapSection.replaceChildren(mapTile, routes);
+      } else {
+        document.getElementById('psp-now').appendChild(mapTile);
+        document.getElementById('psp-hours-section').appendChild(routes);
+        mapSection.remove();
+      }
+
+      // 上段の2カラムを投稿欄から分離する。これにより左列は上段の範囲でだけ
+      // sticky になり、全幅の「みんなの投稿」と重ならず直前で止まる。
+      let topGrid = grid?.querySelector(':scope > .psp-top-grid');
+      if (desktop && grid) {
+        if (!topGrid) {
+          topGrid = document.createElement('div');
+          topGrid.className = 'psp-top-grid';
+          grid.prepend(topGrid);
+        }
+        topGrid.append(main, side);
+      } else if (topGrid && grid) {
+        grid.prepend(main, side);
+        topGrid.remove();
+      }
+
+      main.replaceChildren(...(desktop ? [mapSection] : []), ...sections.filter(section => !desktop || (!sidebarIds.includes(section.id) && section.id !== 'psp-community-section')), ...(!desktop && report ? [report] : []));
+      if (side) side.replaceChildren(...(desktop ? sections.filter(section => sidebarIds.includes(section.id)) : []));
+      if (desktop && grid) {
+        grid.appendChild(document.getElementById('psp-community-section') || sections.find(section => section.id === 'psp-community-section'));
+        if (report) grid.appendChild(report);
+      }
+      if (personalSlot) personalSlot.hidden = true;
+    }
+
+    window.matchMedia('(min-width: 768px)').addEventListener('change', () => {
+      if (!document.body.classList.contains('shop-public-page-open')) return;
+      arrangePublicShopSections();
+      requestAnimationFrame(() => publicShopMiniMap?.invalidateSize(false));
+    });
+
+    let publicShopMiniMap = null;
+    function renderPublicShopMiniMap(shop) {
+      const container = document.getElementById('psp-mini-map');
+      if (!container) return;
+      if (publicShopMiniMap) {
+        publicShopMiniMap.remove();
+        publicShopMiniMap = null;
+      }
+      container.replaceChildren();
+      const lat = Number(shop?.lat);
+      const lng = Number(shop?.lng);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        container.innerHTML = '<div style="height:100%;display:grid;place-items:center;color:#7c726b;font-size:11px;">地図情報がありません</div>';
+        return;
+      }
+      if (typeof L === 'undefined') {
+        container.innerHTML = '<div style="height:100%;display:grid;place-items:center;color:#7c726b;font-size:11px;">地図を読み込めませんでした</div>';
+        return;
+      }
+      publicShopMiniMap = L.map(container, {
+        zoomControl: false,
+        attributionControl: true,
+        dragging: false,
+        touchZoom: false,
+        doubleClickZoom: false,
+        scrollWheelZoom: false,
+        boxZoom: false,
+        keyboard: false,
+        tap: false
+      }).setView([lat, lng], 14);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap',
+        maxZoom: 19
+      }).addTo(publicShopMiniMap);
+      L.circleMarker([lat, lng], {
+        radius: 8,
+        color: '#ffffff',
+        weight: 3,
+        fillColor: getMapCategoryColor(shop.category),
+        fillOpacity: 1
+      }).addTo(publicShopMiniMap);
+      requestAnimationFrame(() => publicShopMiniMap?.invalidateSize(false));
+    }
+
+    function openPublicShopPage(shopId, options = {}) {
+      const shop = shops.find(item => String(item.id) === String(shopId));
+      if (!shop) return false;
+      currentShop = shop;
+      arrangePublicShopSections();
+      const page = document.getElementById('public-shop-page');
+      const app = document.querySelector('.app-container');
+      document.body.classList.add('shop-public-page-open');
+      // 家系図を背景にしたまま店舗ページを開いた場合、
+      // 非表示中の幅0で再描画されないよう復帰時の再構築を予約する。
+      if (document.getElementById('tab-lineage')?.classList.contains('active')) {
+        window.lineageRendered = false;
+      }
+      page?.setAttribute('aria-hidden', 'false');
+      app?.setAttribute('aria-hidden', 'true');
+      document.title = `${shop.name}｜営業時間・来店記録 - 家系ラーメンMAP`;
+      const categoryColor = getMapCategoryColor(shop.category);
+      page?.style.setProperty('--psp-category-color', categoryColor);
+      page?.style.setProperty('--psp-category-soft', colorWithAlpha(categoryColor, 0.12));
+      page?.style.setProperty(
+        '--psp-category-text-color',
+        shop.category === '王道家（王道乃印）' ? '#1f2937' : categoryColor
+      );
+
+      document.getElementById('psp-name').textContent = shop.name || '';
+      document.getElementById('psp-reading').textContent = shop.nameHiragana || '';
+      document.getElementById('psp-reading').hidden = !shop.nameHiragana;
+      document.querySelector('#psp-area span').textContent = shop.area || '';
+      document.getElementById('psp-area').hidden = !String(shop.area || '').trim();
+      document.getElementById('psp-eyebrow').textContent = getShortCategoryName(shop.category);
+      const description = String(shop.description || '').trim();
+      document.getElementById('psp-description').textContent = description;
+      document.getElementById('psp-description').hidden = !description;
+
+      const openStatus = getOpenStatus(shop.openingHours);
+      const status = document.getElementById('psp-status');
+      const statusMap = { open: '営業中', soon: '閉店間近', closed: '営業時間外' };
+      status.textContent = statusMap[openStatus.state] || '営業時間外';
+      status.className = `psp-status is-${openStatus.state}`;
+      const hours = publicShopHoursData(shop);
+      const todayTimes = hours.timesFor(hours.todayKey);
+      const todayHours = document.getElementById('psp-today-hours');
+      todayHours.innerHTML = todayTimes.length
+        ? todayTimes.map(time => escapeHtml(time)).join('<br>')
+        : '定休日';
+      todayHours.classList.toggle('is-multiple', todayTimes.length > 1);
+      document.getElementById('psp-now').classList.toggle('has-multiple-hours', todayTimes.length > 1);
+      document.getElementById('psp-hours-list').innerHTML = hours.dayKeys.map(day =>
+        `<div class="psp-hours-row"><span>${hours.dayNames[day]}</span><strong>${escapeHtml(hours.formatTimes(day))}</strong></div>`
+      ).join('');
+      const note = document.getElementById('psp-note');
+      const noteText = String(shop.note || '').trim();
+      note.textContent = noteText;
+      note.hidden = !noteText;
+      note.closest('.psp-hours-details').hidden = !noteText;
+      const allNote = document.getElementById('psp-all-note');
+      allNote.textContent = noteText;
+      allNote.hidden = !noteText;
+
+      const lineage = document.getElementById('psp-lineage');
+      const chain = publicShopLineageChain(shop);
+      lineage.hidden = chain.length < 2;
+      document.getElementById('psp-lineage-section').hidden = chain.length < 2;
+      const origin = document.getElementById('psp-origin');
+      const originItem = chain.length > 1 ? chain[chain.length - 2] : null;
+      origin.textContent = originItem ? `出身: ${originItem.mapLabel || originItem.name}` : '';
+      origin.hidden = !originItem;
+      origin.onclick = originItem ? () => navigateToPublicShop(originItem.id) : null;
+      if (chain.length >= 2) {
+        const categoryLabel = getShortCategoryName(shop.category || '');
+        document.getElementById('psp-lineage-category').textContent = categoryLabel;
+        document.getElementById('psp-lineage-tree-link').onclick = openPublicShopLineage;
+        document.getElementById('psp-lineage-path').innerHTML = chain.map((item, index) => {
+          const isCurrent = String(item.id) === String(shop.id);
+          const label = escapeHtml(String(item.mapLabel || item.name || '').split('※')[0].trim());
+          const node = isCurrent
+            ? `<strong>${label}</strong>`
+            : `<button type="button" onclick="navigateToPublicShop('${jsStr(item.id)}')">${label}</button>`;
+          return `${index ? '<span class="psp-lineage-arrow">→</span>' : ''}${node}`;
+        }).join('');
+      }
+
+      const setExternalLink = (id, url) => {
+        const link = document.getElementById(id);
+        const safeUrl = safeExternalUrl(url);
+        link.hidden = !safeUrl;
+        if (safeUrl) link.href = safeUrl;
+      };
+      setExternalLink('psp-website', shop.websiteUrl);
+      setExternalLink('psp-x', getShopXURL(shop));
+      setExternalLink('psp-google-map', shop.googleMapUrl);
+      document.getElementById('psp-links-section').hidden = !['psp-google-map', 'psp-website', 'psp-x']
+        .some(id => !document.getElementById(id).hidden);
+      document.getElementById('psp-about-section').hidden = !description && chain.length < 2 && document.getElementById('psp-links-section').hidden;
+      const hasCoordinates = Number.isFinite(Number(shop.lat)) && Number.isFinite(Number(shop.lng));
+      document.getElementById('psp-map-back').hidden = !hasCoordinates;
+      document.getElementById('psp-map-tile').hidden = !hasCoordinates;
+      document.getElementById('psp-now').classList.toggle('no-map', !hasCoordinates);
+      document.getElementById('psp-route-actions').hidden = !hasCoordinates;
+      if (hasCoordinates) {
+        document.getElementById('psp-apple-route').href = `https://maps.apple.com/?daddr=${shop.lat},${shop.lng}`;
+        document.getElementById('psp-google-route').href = `https://www.google.com/maps/dir/?api=1&destination=${shop.lat},${shop.lng}`;
+      }
+      renderPublicShopMiniMap(shop);
+
+      syncPublicShopPersonal(shop);
+      const gallery = document.getElementById('psp-gallery');
+      gallery.hidden = true;
+      gallery.replaceChildren();
+      document.getElementById('psp-community-list').innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;">読み込み中...</div>';
+      loadShopCommunityVisits(shop.id, 'psp-community-list');
+      window.scrollTo({ top: 0, behavior: options.smooth ? 'smooth' : 'auto' });
+      return true;
+    }
+
+    let publicShopRoutePushed = false;
+    let publicShopReturnState = null;
+
+    function capturePublicShopReturnState() {
+      const activeTab = document.querySelector('.tab-content.active');
+      publicShopReturnState = {
+        tabId: activeTab?.id || '',
+        scrollTop: activeTab?.scrollTop || 0,
+        pageScrollY: window.scrollY || 0
+      };
+    }
+
+    function restorePublicShopReturnState() {
+      const state = publicShopReturnState;
+      if (!state) return;
+      requestAnimationFrame(() => {
+        const tab = state.tabId ? document.getElementById(state.tabId) : null;
+        if (tab) tab.scrollTop = state.scrollTop;
+        window.scrollTo({ top: state.pageScrollY, behavior: 'auto' });
+      });
+      publicShopReturnState = null;
+    }
+
+    function navigateToPublicShop(shopId) {
+      if (!document.body.classList.contains('shop-public-page-open')) capturePublicShopReturnState();
+      if (supportsPublicPathRoutes() && shopIdFromLocation() !== String(shopId)) {
+        history.pushState({ publicShopId: String(shopId) }, '', publicShopRoute(shopId));
+        publicShopRoutePushed = true;
+      }
+      openPublicShopPage(shopId, { smooth: true });
+    }
+
+    function closePublicShopPage(options = {}) {
+      document.body.classList.remove('shop-public-page-open');
+      document.getElementById('public-shop-page')?.setAttribute('aria-hidden', 'true');
+      document.querySelector('.app-container')?.setAttribute('aria-hidden', 'false');
+      const activeTabId = document.querySelector('.tab-content.active')?.id;
+      const titleByTab = {
+        'tab-lineage': '家系ラーメン家系図｜吉村家から広がる系譜',
+        'tab-feed': 'みんなの投稿 - 家系ラーメンMAP',
+        'tab-mypage': 'マイページ - 家系ラーメンMAP'
+      };
+      document.title = titleByTab[activeTabId] || '家系ラーメンMAP｜全国の家系ラーメンを探して記録できる地図アプリ';
+      if (publicShopMiniMap) {
+        publicShopMiniMap.remove();
+        publicShopMiniMap = null;
+      }
+      requestAnimationFrame(() => {
+        if (activeTabId === 'tab-lineage') renderLineageTab({ force: true });
+        if (activeTabId === 'tab-map' && map) map.invalidateSize({ pan: false, animate: false });
+      });
+      restorePublicShopReturnState();
+      if (options.fromHistory) return;
+      if (options.clearHistory && shopIdFromLocation()) {
+        publicShopRoutePushed = false;
+        if (supportsPublicPathRoutes()) {
+          history.replaceState({}, '', appBaseLocation());
+        } else {
+          const params = new URLSearchParams(window.location.search);
+          params.delete('shop');
+          const search = params.toString();
+          history.replaceState({}, '', `${window.location.pathname}${search ? `?${search}` : ''}${window.location.hash}`);
+        }
+      }
+    }
+
+    function backFromPublicShopPage() {
+      if (publicShopRoutePushed && history.state?.publicShopId) {
+        publicShopRoutePushed = false;
+        history.back();
+      } else {
+        closePublicShopPage({ clearHistory: true });
+      }
+    }
+
+    function openCurrentPublicShopOnMap() {
+      const shopId = currentShop?.id;
+      if (!shopId) return;
+      closePublicShopPage({ clearHistory: true });
+      openShopOnMap(shopId);
+    }
+
+    function togglePublicShopWant() {
+      toggleWantToGo();
+      if (currentShop) syncPublicShopPersonal(currentShop);
+    }
+
+    function togglePublicShopFavorite() {
+      toggleFavorite();
+      if (currentShop) syncPublicShopPersonal(currentShop);
+    }
+
+    window.addEventListener('popstate', () => {
+      const shopId = shopIdFromLocation();
+      if (shopId) {
+        publicShopRoutePushed = !!history.state?.publicShopId;
+        openPublicShopPage(shopId);
+      }
+      else if (document.body.classList.contains('shop-public-page-open')) closePublicShopPage({ fromHistory: true });
+    });
+    window.openPublicShopPage = openPublicShopPage;
+    window.closePublicShopPage = closePublicShopPage;
+    window.backFromPublicShopPage = backFromPublicShopPage;
+    window.openCurrentPublicShopOnMap = openCurrentPublicShopOnMap;
+    window.openPublicShopLineage = openPublicShopLineage;
+    window.togglePublicShopWant = togglePublicShopWant;
+    window.togglePublicShopFavorite = togglePublicShopFavorite;
+
     // Shop Detail Modal
     function showShopDetail(shopId) {
       currentShop = shops.find(s => s.id === shopId);
@@ -17997,6 +18935,13 @@
         detailMapBtn.onclick = () => {
           closeShopDetail();
           openShopOnMap(shopId);
+        };
+      }
+      const detailPageBtn = document.getElementById('detail-page-btn');
+      if (detailPageBtn) {
+        detailPageBtn.onclick = () => {
+          closeShopDetail();
+          navigateToPublicShop(shopId);
         };
       }
       document.getElementById('detail-area').textContent = currentShop.area;
@@ -18226,10 +19171,8 @@
     }
     
     function getShareUrl() {
-      // 共有元にかかわらず正規ドメインへ統一する。
-      if (window.webkit?.messageHandlers) return `https://iekei-map.com/?shop=${currentShop.id}`;
-      const baseUrl = window.location.href.split('?')[0];
-      return `${baseUrl}?shop=${currentShop.id}`;
+      // 共有元にかかわらず正規ドメインの公開店舗URLへ統一する。
+      return `https://iekei-map.com${publicShopRoute(currentShop.id)}`;
     }
 
     function reportShopInformation(shopId) {
@@ -18465,7 +19408,24 @@
 
     function openOwnPhotoPostMenu() {
       if (photoModalLogIndex === null || photoModalLogIndex === undefined) return;
-      showFeedActionSheet([
+      const log = currentShop?.id ? visits[currentShop.id]?.logs?.[photoModalLogIndex] : null;
+      const items = [];
+      if (log?.isPublic && log?._cloudId) {
+        communityVisitCache[log._cloudId] = {
+          ...(communityVisitCache[log._cloudId] || {}),
+          id: log._cloudId,
+          user_id: currentUser?.id || '',
+          shop_id: currentShop.id,
+          shopName: currentShop.name || '',
+          displayName: currentProfile?.display_name || 'ユーザー'
+        };
+        items.push({
+          label: 'この投稿を共有',
+          danger: false,
+          onSelect: () => shareCommunityPost(log._cloudId)
+        });
+      }
+      items.push(
         {
           label: '記録を編集',
           danger: false,
@@ -18476,7 +19436,8 @@
           danger: true,
           onSelect: () => document.getElementById('photo-modal-delete-btn')?.click()
         }
-      ]);
+      );
+      showFeedActionSheet(items);
     }
     
     // URLパラメータから初期表示を制御
@@ -18522,9 +19483,16 @@
 
     function checkUrlParams() {
       const urlParams = new URLSearchParams(window.location.search);
-      const shopId = urlParams.get('shop');
-      const profileId = profileIdFromLocation() || urlParams.get('profile');
+      const shopId = shopIdFromLocation();
+      const profileId = profileIdFromLocation();
+      const postId = postIdFromLocation();
       const requestedTab = String(urlParams.get('tab') || '').toLowerCase();
+
+      // 公開投稿は投稿IDから投稿者の公開プロフィールと詳細を開く。
+      if (postId && !profileId) {
+        setTimeout(() => openPublicPostFromRoute(postId), 0);
+        return;
+      }
 
       // 公開プロフィールは共有URLから直接、全画面ページとして開ける。
       if (profileId) {
@@ -18534,11 +19502,11 @@
         return;
       }
 
-      // 店舗指定がある場合は、従来通り店舗詳細を優先
+      // 公開店舗URLは、モーダルではなく独立した店舗ページで表示する。
       if (shopId) {
-        const shop = shops.find(s => s.id === shopId);
+        const shop = shops.find(s => String(s.id) === String(shopId));
         if (shop) {
-          showShopDetail(shopId);
+          openPublicShopPage(shop.id);
           return;
         }
       }
@@ -22778,7 +23746,7 @@
     </div>
   </div>
 
-  <script src="map-discovery-v2.js?v=4.3.1"></script>
+  <script src="map-discovery-v2.js?v=4.3.2"></script>
 
 </body>
 </html>

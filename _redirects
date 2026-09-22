@@ -4,3 +4,6 @@
 /tutorial.html /tutorial 301
 /iekei-ramen-app / 301
 /iekei-ramen-app.html / 301
+/users/* /index.html 200
+/posts/* /index.html 200
+/shops/* /index.html 200

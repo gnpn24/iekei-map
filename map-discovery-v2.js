@@ -1464,7 +1464,7 @@
         </div>
         ${cardHours ? `<span class="map-a-card-hours" title="${escapeAttribute(cardHours)}">${escapeText(cardHours)}</span>` : ''}
         <div class="map-a-card-bottom">
-          <button class="map-a-card-photo-slot${photoURLs.length ? ' has-photo' : ''}${photoURLs.length > 1 ? ' has-multiple' : ''}" type="button" data-card-action="detail" data-card-photo-slot aria-label="${escapeAttribute(shop.name)}の投稿写真${photoURLs.length ? `${photoURLs.length}枚` : ''}を詳細で見る" aria-hidden="${photoURLs.length ? 'false' : 'true'}" tabindex="${photoURLs.length ? '0' : '-1'}">${renderRailCardPhotoPreview(photoURLs)}</button>
+          <button class="map-a-card-photo-slot${photoURLs.length ? ' has-photo' : ''}${photoURLs.length > 1 ? ' has-multiple' : ''}" type="button" data-card-action="photo" data-card-photo-slot aria-label="${escapeAttribute(shop.name)}の投稿写真${photoURLs.length ? `${photoURLs.length}枚` : ''}を詳細で見る" aria-hidden="${photoURLs.length ? 'false' : 'true'}" tabindex="${photoURLs.length ? '0' : '-1'}">${renderRailCardPhotoPreview(photoURLs)}</button>
           <span class="map-a-card-bottom-spacer"></span>
           ${xURL ? `<a class="map-a-card-action" href="${escapeAttribute(xURL)}" target="_blank" rel="noopener noreferrer" data-card-action="x" aria-label="公式Xを開く">${icons.xmark}</a>` : ''}
           <button class="map-a-card-action is-detail" type="button" data-card-action="detail">詳細</button>
@@ -1934,16 +1934,20 @@
       if (type === 'focus') {
         event.preventDefault();
         activateShopFromCard(shopId);
+        if (typeof showShopDetail === 'function') showShopDetail(shopId);
       } else if (type === 'origin') {
         event.preventDefault();
         if (typeof jumpToLineageTabAndSelect === 'function') jumpToLineageTabAndSelect(action.dataset.originId);
-      } else if (type === 'detail') {
+      } else if (type === 'photo') {
         if (typeof showShopDetail === 'function') showShopDetail(shopId);
+      } else if (type === 'detail') {
+        if (typeof navigateToPublicShop === 'function') navigateToPublicShop(shopId);
       }
       return;
     }
     if (Date.now() < state.suppressCardClickUntil) return;
     activateShopFromCard(shopId);
+    if (typeof showShopDetail === 'function') showShopDetail(shopId);
   }
 
   function activateShopFromCard(shopId) {
