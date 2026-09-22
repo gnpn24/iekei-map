@@ -6021,6 +6021,8 @@
       .psp-header .psp-back { display:none; }
       .psp-back { width:34px;height:34px;flex:0 0 auto;border:0;border-radius:8px;background:#f3f4f6;color:#374151;font-size:22px;line-height:1;cursor:pointer; }
       .psp-brand { display:flex;align-items:center;gap:8px;font-size:14px;font-weight:750;color:#111827;text-decoration:none; }
+      .psp-brand-home { padding:0;border:0;background:transparent;font:inherit;cursor:pointer; }
+      .psp-brand-home:focus-visible { outline:2px solid #2563eb;outline-offset:3px;border-radius:6px; }
       .psp-logo { width:28px;height:28px;border-radius:7px;background:#d92745;color:white;display:grid;place-items:center;font-family:serif;font-size:19px;font-weight:900;line-height:1;text-shadow:-.5px -.5px 0 #111,.5px -.5px 0 #111,-.5px .5px 0 #111,.5px .5px 0 #111; }
       .psp-map-back { border:0;background:transparent;color:#2563eb;font-size:12px;font-weight:700;cursor:pointer; }
       .psp-shell { max-width:980px;margin:0 auto;min-height:100dvh;padding:26px 32px 48px;background:#f7f3f0; }
@@ -6201,10 +6203,10 @@
       <div class="psp-header-inner">
         <div class="psp-header-left">
           <button type="button" class="psp-back" onclick="backFromPublicShopPage()" aria-label="前の画面に戻る">←</button>
-          <div class="psp-brand">
+          <button type="button" class="psp-brand psp-brand-home" onclick="openAppHomeFromPublicShop()" aria-label="家系ラーメンmapの地図を開く">
             <span class="psp-logo" aria-hidden="true">家</span>
             <span>家系ラーメンmap</span>
-          </div>
+          </button>
         </div>
         <button id="psp-map-back" type="button" class="psp-map-back" onclick="openCurrentPublicShopOnMap()">地図で見る ↗</button>
       </div>
@@ -7832,6 +7834,7 @@
       currentProfile = null;
       blockedUserIds = new Set();
       bookmarkedVisitIds = new Set();
+      resetCommunityFeedForAccountChange();
       updateAccountMenuSubtitle();
       updateAccountModalUI();
 
@@ -11404,6 +11407,26 @@
     const FEED_UPDATE_CHECK_INTERVAL_MS = 30 * 60 * 1000;
     const feedViewCache = new Map();
 
+    // アカウントごとに「フォロー中」やいいね等の見え方が変わるため、
+    // 切替時は前の利用者のフィードを残さない。
+    function resetCommunityFeedForAccountChange() {
+      feedViewCache.clear();
+      feedScope = 'all';
+      setFeedUpdateAvailable(false);
+      const allBtn = document.getElementById('feed-scope-all');
+      const followingBtn = document.getElementById('feed-scope-following');
+      if (allBtn) {
+        allBtn.setAttribute('aria-selected', 'true');
+        allBtn.style.borderBottomColor = '#ef4444';
+        allBtn.style.color = '#111827';
+      }
+      if (followingBtn) {
+        followingBtn.setAttribute('aria-selected', 'false');
+        followingBtn.style.borderBottomColor = 'transparent';
+        followingBtn.style.color = '#9ca3af';
+      }
+    }
+
     function setFeedUpdateAvailable(available) {
       const dot = document.getElementById('feed-update-dot');
       const button = document.getElementById('feed-refresh-button');
@@ -12693,7 +12716,15 @@
       }
 
       supabaseClient.auth.onAuthStateChange((event, session) => {
+        const previousUserId = currentUser?.id || '';
         currentUser = session?.user || null;
+        const nextUserId = currentUser?.id || '';
+        if (previousUserId !== nextUserId) {
+          currentProfile = null;
+          blockedUserIds = new Set();
+          bookmarkedVisitIds = new Set();
+          resetCommunityFeedForAccountChange();
+        }
         updateAccountMenuSubtitle();
         updateAccountModalUI();
         if (event === 'SIGNED_IN' && currentUser) {
@@ -19102,6 +19133,13 @@
       openShopOnMap(shopId);
     }
 
+    // 店舗ページのロゴは、通常のトップ（地図）へ戻る入口にする。
+    function openAppHomeFromPublicShop() {
+      closePublicShopPage({ clearHistory: true });
+      document.querySelector('.nav-item[data-tab="map"]')?.click();
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+
     function togglePublicShopWant() {
       toggleWantToGo();
       if (currentShop) syncPublicShopPersonal(currentShop);
@@ -19124,6 +19162,7 @@
     window.closePublicShopPage = closePublicShopPage;
     window.backFromPublicShopPage = backFromPublicShopPage;
     window.openCurrentPublicShopOnMap = openCurrentPublicShopOnMap;
+    window.openAppHomeFromPublicShop = openAppHomeFromPublicShop;
     window.openPublicShopLineage = openPublicShopLineage;
     window.togglePublicShopWant = togglePublicShopWant;
     window.togglePublicShopFavorite = togglePublicShopFavorite;
