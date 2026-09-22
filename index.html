@@ -7626,9 +7626,8 @@
       await syncVisitsToCloud();
       showToast(`${count}件の記録を公開しました`);
 
-      // フィードタブを開いていれば再読み込み
-      const feedTabEl = document.getElementById('tab-feed');
-      if (feedTabEl && feedTabEl.classList.contains('active')) loadCommunityFeed();
+      // 自分が公開した記録は、一覧を開いていれば直ちに反映する。
+      invalidateCommunityFeedCache({ reloadVisible: true });
     }
 
     // ===== ログイン機能の隠しフラグ（一般公開前のテスト用） =====
@@ -11157,6 +11156,33 @@
     let feedRankingPeriod = '30d';
     let feedRankingCategory = 'users';
     let feedRankingData = null;
+    const FEED_RANKING_CACHE_KEY = 'iekei-feed-ranking-cache-v1';
+
+    // ランキングは日本時間の日付ごとに一度だけ集計する。公開データのみを端末に保存する。
+    function getJstDateKey(date = new Date()) {
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit'
+      }).formatToParts(date);
+      const value = Object.fromEntries(parts.map(part => [part.type, part.value]));
+      return `${value.year}-${value.month}-${value.day}`;
+    }
+
+    function loadDailyFeedRankingCache() {
+      try {
+        const cached = JSON.parse(localStorage.getItem(FEED_RANKING_CACHE_KEY) || 'null');
+        return cached?.day === getJstDateKey() && cached?.data ? cached.data : null;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function saveDailyFeedRankingCache(data) {
+      try {
+        localStorage.setItem(FEED_RANKING_CACHE_KEY, JSON.stringify({ day: getJstDateKey(), data }));
+      } catch (_) {
+        // ストレージを利用できない環境では、その場の表示だけ継続する。
+      }
+    }
 
     function getFeedRankingStart(period, now) {
       const start = new Date(now);
@@ -11287,6 +11313,13 @@
     // 過去1年分を一度取得し、過去30日・半年・1年間のランキングを端末側で集計
     async function loadFeedSummary() {
       if (!supabaseClient) return;
+      const cachedRanking = loadDailyFeedRankingCache();
+      if (cachedRanking) {
+        feedRankingData = cachedRanking;
+        renderFeedRanking();
+        document.getElementById('feed-summary-card').style.display = 'block';
+        return;
+      }
       const now = new Date();
       const periodStarts = Object.fromEntries(
         Object.keys(FEED_RANKING_PERIODS).map(period => [period, getFeedRankingStart(period, now)])
@@ -11353,6 +11386,7 @@
           };
         });
 
+        saveDailyFeedRankingCache(feedRankingData);
         renderFeedRanking();
         document.getElementById('feed-summary-card').style.display = 'block';
       } catch (e) {
@@ -11390,6 +11424,7 @@
         html: listEl.innerHTML,
         page: feedPage,
         hasMore: feedHasMore,
+        hasUpdates: previous.hasUpdates === true,
         savedAt: Date.now()
       });
     }
@@ -11401,68 +11436,92 @@
       listEl.innerHTML = cached.html;
       feedPage = cached.page;
       feedHasMore = cached.hasMore;
+      setFeedUpdateAvailable(cached.hasUpdates === true);
       setupFeedObserver(listEl);
       return true;
     }
 
+    async function getFeedUpdateMarker(scope) {
+      let followingIds = null;
+      if (scope === 'following') {
+        if (!currentUser) return '';
+        const { data: followRows, error: followError } = await supabaseClient
+          .from('follows')
+          .select('following_id')
+          .eq('follower_id', currentUser.id);
+        if (followError) throw followError;
+        followingIds = [...new Set((followRows || []).map(row => row.following_id).filter(Boolean))];
+        if (!followingIds.length) return '';
+      }
+      let query = supabaseClient
+        .from('visits')
+        .select('id, updated_at, created_at')
+        .eq('is_public', true)
+        .lte('visited_on', getJstTodayStr());
+      if (followingIds) query = query.in('user_id', followingIds);
+      const { data, error } = await query
+        .order('updated_at', { ascending: false, nullsFirst: false })
+        .limit(1);
+      if (error) throw error;
+      const latest = data?.[0];
+      return latest ? `${latest.updated_at || latest.created_at || ''}:${latest.id}` : '';
+    }
+
     async function checkFeedForUpdates() {
-      const cached = feedViewCache.get(feedScope);
+      const scope = feedScope;
+      const cached = feedViewCache.get(scope);
       if (!cached || !supabaseClient) return;
       const now = Date.now();
       if (now - Number(cached.lastCheckedAt || 0) < FEED_UPDATE_CHECK_INTERVAL_MS) return;
       cached.lastCheckedAt = now;
       try {
-        const { data, error } = await supabaseClient
-          .from('visits')
-          .select('id, updated_at, created_at')
-          .eq('is_public', true)
-          .lte('visited_on', getJstTodayStr())
-          .order('updated_at', { ascending: false, nullsFirst: false })
-          .limit(1);
-        if (error) throw error;
-        const latest = data?.[0];
-        const marker = latest ? `${latest.updated_at || latest.created_at || ''}:${latest.id}` : '';
+        const marker = await getFeedUpdateMarker(scope);
         if (!cached.latestMarker) {
           cached.latestMarker = marker;
           return;
         }
-        if (marker && marker !== cached.latestMarker) setFeedUpdateAvailable(true);
+        if (marker && marker !== cached.latestMarker) {
+          cached.hasUpdates = true;
+          if (feedScope === scope) setFeedUpdateAvailable(true);
+        }
       } catch (error) {
         console.warn('投稿の更新確認をスキップ:', error?.message || String(error));
       }
     }
 
     async function establishFeedUpdateMarker() {
-      const cached = feedViewCache.get(feedScope);
+      const scope = feedScope;
+      const cached = feedViewCache.get(scope);
       if (!cached || !supabaseClient) return;
       try {
-        const { data, error } = await supabaseClient
-          .from('visits')
-          .select('id, updated_at, created_at')
-          .eq('is_public', true)
-          .lte('visited_on', getJstTodayStr())
-          .order('updated_at', { ascending: false, nullsFirst: false })
-          .limit(1);
-        if (error) throw error;
-        const latest = data?.[0];
-        cached.latestMarker = latest ? `${latest.updated_at || latest.created_at || ''}:${latest.id}` : '';
+        cached.latestMarker = await getFeedUpdateMarker(scope);
         cached.lastCheckedAt = Date.now();
+        cached.hasUpdates = false;
       } catch (error) {
         console.warn('投稿の更新時刻を保存できませんでした:', error?.message || String(error));
       }
     }
 
     async function setFeedScope(scope) {
-      feedScope = scope === 'following' ? 'following' : 'all';
+      const nextScope = scope === 'following' ? 'following' : 'all';
+      if (nextScope === 'following' && !currentUser) {
+        await showCustomAlert('フォロー中の投稿を見るにはログインが必要です');
+        return;
+      }
+      feedScope = nextScope;
       const allBtn = document.getElementById('feed-scope-all');
       const followingBtn = document.getElementById('feed-scope-following');
       if (allBtn) { allBtn.setAttribute('aria-selected', feedScope === 'all' ? 'true' : 'false'); allBtn.style.borderBottomColor = feedScope === 'all' ? '#ef4444' : 'transparent'; allBtn.style.color = feedScope === 'all' ? '#111827' : '#9ca3af'; }
       if (followingBtn) { followingBtn.setAttribute('aria-selected', feedScope === 'following' ? 'true' : 'false'); followingBtn.style.borderBottomColor = feedScope === 'following' ? '#ef4444' : 'transparent'; followingBtn.style.color = feedScope === 'following' ? '#111827' : '#9ca3af'; }
-      if (feedScope === 'following' && !currentUser) {
-        await showCustomAlert('フォロー中の投稿を見るにはログインが必要です');
-        return;
+      await loadCommunityFeed();
+    }
+
+    function invalidateCommunityFeedCache({ reloadVisible = false } = {}) {
+      feedViewCache.clear();
+      setFeedUpdateAvailable(false);
+      if (reloadVisible && document.getElementById('tab-feed')?.classList.contains('active')) {
+        void loadCommunityFeed({ force: true });
       }
-      await loadCommunityFeed({ force: true });
     }
 
     async function loadCommunityFeed(options = {}) {
@@ -12285,11 +12344,14 @@
       });
 
       await saveVisits();
-      updateMarkers();
-      renderShopList();
-      renderFeedTab();
-      requestLineageRender();
-      renderMypageTab();
+      // 同期後も、隠れているタブまで再描画しない。
+      const activeTabId = document.querySelector('.tab-content.active')?.id;
+      if (activeTabId === 'tab-map') {
+        updateMarkers();
+        renderShopList();
+      }
+      if (activeTabId === 'tab-lineage') requestLineageRender();
+      if (activeTabId === 'tab-mypage') renderMypageTab();
 
       return { addedCount, updatedCount, deletedCount };
     }
@@ -12314,6 +12376,10 @@
 
           const result = await pullCloudVisitChanges();
           lastCloudRefreshAt = Date.now();
+          // 他端末の編集も含め、次に投稿タブを開いた時は古い一覧を再利用しない。
+          if (result.addedCount || result.updatedCount || result.deletedCount) {
+            invalidateCommunityFeedCache({ reloadVisible: true });
+          }
           if (!silent && statusEl) {
             const total = result.addedCount + result.updatedCount + result.deletedCount;
             statusEl.textContent = total > 0
@@ -12366,7 +12432,10 @@
       let pullError = null;
       if (result?.ok !== false) {
         try {
-          await pullCloudVisitChanges();
+          const pullResult = await pullCloudVisitChanges();
+          if (pullResult.addedCount || pullResult.updatedCount || pullResult.deletedCount) {
+            invalidateCommunityFeedCache({ reloadVisible: true });
+          }
           lastCloudRefreshAt = Date.now();
         } catch (e) {
           pullError = e;
@@ -12404,9 +12473,12 @@
           return;
         }
         automaticCloudSyncRetryCount = 0;
-        if (result?.needsPull) restoreFromCloud({ silent: true });
-        if (document.getElementById('tab-feed')?.classList.contains('active')) {
-          void loadCommunityFeed();
+        if (result?.needsPull) {
+          restoreFromCloud({ silent: true });
+        } else if (result?.changed) {
+          // 自分の投稿・編集・削除は、同期の完了後に古いフィードキャッシュを破棄する。
+          // 表示中ならその場で取り直し、別タブなら次に開いた時だけ取得する。
+          invalidateCommunityFeedCache({ reloadVisible: true });
         }
       }, delay);
     }
@@ -12604,7 +12676,7 @@
       if (changed) {
         saveVisits(); // _cloudSyncedフラグを保存（再度syncVisitsToCloudが呼ばれても変更が無いので安全）
       }
-      return { ok: !syncHadError, needsPull };
+      return { ok: !syncHadError, needsPull, changed };
     }
 
     // 認証状態の初期化・監視
@@ -13270,8 +13342,8 @@
                 `店舗情報を最新データに更新しました${updatedLabel ? `\n${updatedLabel}` : ''}`,
                 { placement: 'top' }
               );
-              // 再初期化
-              initializeApp();
+              // 表示中の画面だけを更新する。非表示タブまで描画し直さない。
+              initializeApp({ storeDataUpdated: true });
             } else {
               // 初回読み込み
               initializeApp();
@@ -13566,13 +13638,43 @@
     }
 
     let appUiInitialized = false;
+    let storeDataViewRefreshPending = false;
 
-    function initializeApp() {
+    function refreshVisibleStoreDataView() {
+      // 直接開かれた店舗詳細は、最新の店舗データでそのページだけを更新する。
+      if (document.body.classList.contains('shop-public-page-open')) {
+        checkUrlParams();
+        return;
+      }
+      const activeTabId = document.querySelector('.tab-content.active')?.id;
+      if (activeTabId === 'tab-map') {
+        initMap();
+        renderShopList();
+        storeDataViewRefreshPending = false;
+      } else {
+        // 地図は次に表示された時に更新する。背景でLeafletや一覧を描き直さない。
+        storeDataViewRefreshPending = true;
+      }
+      if (activeTabId === 'tab-lineage') {
+        requestLineageRender();
+      } else {
+        window.lineageRendered = false;
+      }
+      if (activeTabId === 'tab-mypage') renderMypageTab();
+    }
+
+    function initializeApp(options = {}) {
+      const storeDataUpdated = options.storeDataUpdated === true;
       updateDataTimestampDisplay();
       console.log('🚀 アプリを初期化中...');
       
       // データ検証
       validateShopsData();
+
+      if (storeDataUpdated && appUiInitialized) {
+        refreshVisibleStoreDataView();
+        return;
+      }
       
       // 地図とUIを初期化
       initMap();
@@ -14686,6 +14788,11 @@
               if (header) {
                 header.style.display = 'flex';
               }
+              if (storeDataViewRefreshPending) {
+                initMap();
+                renderShopList();
+                storeDataViewRefreshPending = false;
+              }
               
               if (map) {
                 // 非表示中のサイズ差をLeafletがパンで補正すると、
@@ -14729,6 +14836,11 @@
             loadCommunityFeed();
           } else if (tab === 'map') {
             document.title = '家系ラーメン家系図・全国店舗マップ｜家系ラーメンmap';
+            if (storeDataViewRefreshPending) {
+              initMap();
+              renderShopList();
+              storeDataViewRefreshPending = false;
+            }
           }
           
           // ヘッダーの表示/非表示を制御（全タブで表示）
@@ -20590,6 +20702,7 @@
       if (!confirmed) return;
 
       const log = visits[currentShop.id].logs[logIndex];
+      const wasPublic = Boolean(log?.isPublic);
       // クラウドに同期済みの記録なら、まずクラウド側の削除を待って成功を確認する
       // （通信失敗時に端末側だけ消えて、次回復元で復活したり、写真だけ消えるのを防ぐ）
       if (log._cloudId && supabaseClient) {
@@ -20608,6 +20721,7 @@
       }
       visits[currentShop.id].logs.splice(logIndex, 1);
       saveVisits();
+      if (wasPublic) invalidateCommunityFeedCache({ reloadVisible: true });
 
       // 画面を更新
       updateMarkers();
@@ -20625,6 +20739,7 @@
       if (!confirmed) return;
 
       const log = visits[currentShop.id].logs[logIndex];
+      const wasPublic = Boolean(log?.isPublic);
       // クラウドに同期済みの記録なら、まずクラウド側の削除を待って成功を確認する
       // （通信失敗時に端末側だけ消えて、次回復元で復活したり、写真だけ消えるのを防ぐ）
       if (log._cloudId && supabaseClient) {
@@ -20643,6 +20758,7 @@
       }
       visits[currentShop.id].logs.splice(logIndex, 1);
       saveVisits();
+      if (wasPublic) invalidateCommunityFeedCache({ reloadVisible: true });
 
       // モーダルを閉じる
       closeRecordModal();
@@ -21106,9 +21222,11 @@
         visits[currentShop.id] = { logs: [], wantToGo: false };
       }
       
+      let previousWasPublic = false;
       if (editingLogIndex !== null) {
         // 編集モード: 既存の記録を更新（クラウド側のIDは引き継いで、再送信時はinsertでなくupdateにする）
         const oldLog = visits[currentShop.id].logs[editingLogIndex];
+        previousWasPublic = Boolean(oldLog?.isPublic);
         visitRecord._cloudId = oldLog?._cloudId || null;
         visitRecord._cloudUpdatedAt = oldLog?._cloudUpdatedAt || null;
         visits[currentShop.id].logs[editingLogIndex] = visitRecord;
@@ -21130,6 +21248,8 @@
         if (!syncResult?.ok) {
           scheduleAutomaticCloudSync();
           showToast('端末に保存しました。オンライン保存は通信復帰後に再試行します');
+        } else if (visitRecord.isPublic || previousWasPublic) {
+          invalidateCommunityFeedCache({ reloadVisible: true });
         }
       } else {
         scheduleAutomaticCloudSync();
@@ -21233,8 +21353,10 @@
         visits[currentShop.id] = { logs: [], wantToGo: false };
       }
       
+      let tweetPreviousWasPublic = false;
       if (editingLogIndex !== null) {
         const oldLog = visits[currentShop.id].logs[editingLogIndex];
+        tweetPreviousWasPublic = Boolean(oldLog?.isPublic);
         visitRecord._cloudId = oldLog?._cloudId || null;
         visitRecord._cloudUpdatedAt = oldLog?._cloudUpdatedAt || null;
         visits[currentShop.id].logs[editingLogIndex] = visitRecord;
@@ -21255,6 +21377,8 @@
         if (!syncResult?.ok) {
           scheduleAutomaticCloudSync();
           showToast('端末に保存しました。オンライン保存は通信復帰後に再試行します');
+        } else if (visitRecord.isPublic || tweetPreviousWasPublic) {
+          invalidateCommunityFeedCache({ reloadVisible: true });
         }
       } else {
         scheduleAutomaticCloudSync();
