@@ -58,13 +58,21 @@ function renderShopBody(html, shop) {
   }
   output = output.replace(/(<div id="psp-area"[^\n]*?<span>)[^<]*(<\/span>)/,
     (_, start, end) => `${start}${escapeAttribute(shop.area)}${end}`);
+  output = output.replace(
+    'id="shop-prerender-loading" class="psp-section" hidden',
+    'id="shop-prerender-loading" class="psp-section"'
+  );
   const style = `<style id="shop-prerender-style">
     body[data-shop-prerender] #loading-screen,
     body[data-shop-prerender] #psp-gallery,
     body[data-shop-prerender] #public-shop-page button,
     body[data-shop-prerender] .psp-side,
-    body[data-shop-prerender] .psp-main > :not(#psp-about-section) { display:none !important; }
+    body[data-shop-prerender] .psp-main > :not(#psp-about-section):not(#shop-prerender-loading) { display:none !important; }
     body[data-shop-prerender] .psp-grid { display:block; }
+    body[data-shop-prerender] #shop-prerender-loading { display:block; }
+    .shop-prerender-loading-inner { display:flex; align-items:center; gap:8px; color:#6b7280; font-size:13px; }
+    .shop-prerender-spinner { width:15px; height:15px; border:2px solid #d1d5db; border-top-color:#64748b; border-radius:50%; animation:shop-prerender-spin .75s linear infinite; }
+    @keyframes shop-prerender-spin { to { transform:rotate(360deg); } }
     ${!shop.description ? 'body[data-shop-prerender] #psp-about-section { display:none; }' : ''}
     ${!shop.area ? 'body[data-shop-prerender] #psp-area { display:none; }' : ''}
   </style>`;

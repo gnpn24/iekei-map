@@ -6237,6 +6237,9 @@
             </div>
           </div>
           </section>
+          <section id="shop-prerender-loading" class="psp-section" hidden aria-live="polite">
+            <div class="shop-prerender-loading-inner"><span class="shop-prerender-spinner" aria-hidden="true"></span><span>営業時間・地図などを読み込み中…</span></div>
+          </section>
           <section id="psp-all-hours-section" class="psp-section">
             <h2>すべての曜日・営業時間</h2>
             <div id="psp-all-hours-list" class="psp-hours-list"></div>
@@ -18776,6 +18779,7 @@
       loadShopCommunityVisits(shop.id, 'psp-community-list');
       document.body.removeAttribute('data-shop-prerender');
       document.getElementById('shop-prerender-style')?.remove();
+      document.getElementById('shop-prerender-loading')?.remove();
       window.scrollTo({ top: 0, behavior: options.smooth ? 'smooth' : 'auto' });
       return true;
     }
