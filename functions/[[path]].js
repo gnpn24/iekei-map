@@ -25,6 +25,7 @@ function applyMetadata(html, metadata) {
     output = output.replace(/<head>/i, '<head>\n  <base href="/">');
   }
   output = output.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeAttribute(metadata.title)}</title>`);
+  output = replaceMeta(output, 'name', 'description', metadata.description);
   output = replaceMeta(output, 'property', 'og:title', metadata.title);
   output = replaceMeta(output, 'property', 'og:description', metadata.description);
   output = replaceMeta(output, 'property', 'og:url', metadata.url);
@@ -38,6 +39,36 @@ function applyMetadata(html, metadata) {
     `<link rel="canonical" href="${escapeAttribute(metadata.url)}">`
   );
   return output;
+}
+
+// Render into the same visible elements that the app fills after its data loads.
+// This also leaves useful shop information available without JavaScript.
+function renderShopBody(html, shop) {
+  if (!shop) return html;
+  let output = html.replace('<body>', '<body class="shop-public-page-open" data-shop-prerender>');
+  output = output.replace('id="public-shop-page" aria-hidden="true"', 'id="public-shop-page" aria-hidden="false"');
+  for (const [id, value] of Object.entries({
+    'psp-name': shop.name,
+    'psp-reading': shop.nameHiragana,
+    'psp-eyebrow': shop.category,
+    'psp-description': shop.description
+  })) {
+    const pattern = new RegExp(`(<(?:h1|div|p) id="${id}"[^>]*>)[^<]*(</(?:h1|div|p)>)`);
+    output = output.replace(pattern, (_, start, end) => `${start}${escapeAttribute(value)}${end}`);
+  }
+  output = output.replace(/(<div id="psp-area"[^\n]*?<span>)[^<]*(<\/span>)/,
+    (_, start, end) => `${start}${escapeAttribute(shop.area)}${end}`);
+  const style = `<style id="shop-prerender-style">
+    body[data-shop-prerender] #loading-screen,
+    body[data-shop-prerender] #psp-gallery,
+    body[data-shop-prerender] #public-shop-page button,
+    body[data-shop-prerender] .psp-side,
+    body[data-shop-prerender] .psp-main > :not(#psp-about-section) { display:none !important; }
+    body[data-shop-prerender] .psp-grid { display:block; }
+    ${!shop.description ? 'body[data-shop-prerender] #psp-about-section { display:none; }' : ''}
+    ${!shop.area ? 'body[data-shop-prerender] #psp-area { display:none; }' : ''}
+  </style>`;
+  return output.replace('</head>', `${style}\n</head>`);
 }
 
 function seoApiUrl(env, mode, id = '') {
@@ -132,10 +163,11 @@ async function metadataForRoute(type, id, requestUrl, env) {
   const area = String(shop.area || '').replace(/\s+/g, ' ').trim().slice(0, 80);
   const category = String(shop.category || '').replace(/\s+/g, ' ').trim().slice(0, 80);
   const description = String(shop.description || '').replace(/\s+/g, ' ').trim().slice(0, 300);
-  const summary = [area, category, description].filter(Boolean).join('・') || '家系ラーメン店の詳細情報と訪問記録を確認できます。';
+  const summary = `${area ? `${area}の` : ''}「${name}」の店舗情報。${description ? `${description.replace(/[。.!！?？]+$/, '')}。` : ''}営業時間・アクセス・系譜・みんなの訪問記録を確認できます。`;
   return {
     title: `${shop.closed ? '閉店｜' : ''}${name}${area ? `｜${area}の家系ラーメン店` : ''}｜${SITE_NAME}`,
     description: summary,
+    shop: { name, area, category, description, nameHiragana: String(shop.nameHiragana || '') },
     url,
     noindex: Boolean(shop.closed)
   };
@@ -209,7 +241,7 @@ export async function onRequestGet(context) {
     };
   }
 
-  const html = applyMetadata(await assetResponse.text(), metadata);
+  const html = renderShopBody(applyMetadata(await assetResponse.text(), metadata), metadata.shop);
   const headers = new Headers(assetResponse.headers);
   headers.set('content-type', 'text/html; charset=utf-8');
   headers.set('cache-control', `public, max-age=${type === 'shops' ? 3600 : 300}`);

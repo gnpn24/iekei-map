@@ -18752,6 +18752,8 @@
       gallery.replaceChildren();
       document.getElementById('psp-community-list').innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:16px 0;">読み込み中...</div>';
       loadShopCommunityVisits(shop.id, 'psp-community-list');
+      document.body.removeAttribute('data-shop-prerender');
+      document.getElementById('shop-prerender-style')?.remove();
       window.scrollTo({ top: 0, behavior: options.smooth ? 'smooth' : 'auto' });
       return true;
     }
