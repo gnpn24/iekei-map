@@ -6403,9 +6403,10 @@
           </div>
           <div style="display:flex;align-items:center;align-self:center;gap:6px;transform:translateY(-4px);">
           <button type="button" onclick="openNotifications()" style="padding:6px 10px;border:1.5px solid #e5e7eb;border-radius:9px;background:white;font-size:13px;font-weight:600;color:#374151;cursor:pointer;">通知</button>
-          <button onclick="refreshCommunityFeed(this)" style="display:flex;align-items:center;gap:4px;padding:6px 12px;border:1.5px solid #e5e7eb;border-radius:9px;background:white;font-size:13px;font-weight:600;color:#374151;cursor:pointer;">
+          <button id="feed-refresh-button" onclick="refreshCommunityFeed(this)" style="position:relative;display:flex;align-items:center;gap:4px;padding:6px 12px;border:1.5px solid #e5e7eb;border-radius:9px;background:white;font-size:13px;font-weight:600;color:#374151;cursor:pointer;">
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
             更新
+            <span id="feed-update-dot" hidden aria-label="新しい投稿があります" style="position:absolute;right:-3px;top:-3px;width:8px;height:8px;border:2px solid white;border-radius:50%;background:#ef4444;"></span>
           </button>
           </div>
         </div>
@@ -11262,7 +11263,7 @@
         const svg = btn.querySelector('svg');
         if (svg) svg.style.animation = 'spin 0.8s linear infinite';
       }
-      loadCommunityFeed().finally(() => {
+      loadCommunityFeed({ force: true }).finally(() => {
         if (btn) {
           btn.style.opacity = '1';
           btn.style.pointerEvents = '';
@@ -11355,6 +11356,90 @@
     const FEED_PAGE_SIZE = 20;
     let feedObserver = null;
     let feedScope = 'all';
+    const FEED_UPDATE_CHECK_INTERVAL_MS = 30 * 60 * 1000;
+    const feedViewCache = new Map();
+
+    function setFeedUpdateAvailable(available) {
+      const dot = document.getElementById('feed-update-dot');
+      const button = document.getElementById('feed-refresh-button');
+      if (dot) dot.hidden = !available;
+      if (button) button.setAttribute('aria-label', available ? '新しい投稿があります。更新' : '投稿を更新');
+    }
+
+    function saveFeedViewCache() {
+      const listEl = document.getElementById('community-feed-list');
+      if (!listEl || feedIsLoading) return;
+      if (listEl.dataset.feedLoadError === '1') {
+        feedViewCache.delete(feedScope);
+        return;
+      }
+      const previous = feedViewCache.get(feedScope) || {};
+      feedViewCache.set(feedScope, {
+        ...previous,
+        html: listEl.innerHTML,
+        page: feedPage,
+        hasMore: feedHasMore,
+        savedAt: Date.now()
+      });
+    }
+
+    function restoreFeedViewCache() {
+      const cached = feedViewCache.get(feedScope);
+      const listEl = document.getElementById('community-feed-list');
+      if (!cached?.html || !listEl) return false;
+      listEl.innerHTML = cached.html;
+      feedPage = cached.page;
+      feedHasMore = cached.hasMore;
+      setupFeedObserver(listEl);
+      return true;
+    }
+
+    async function checkFeedForUpdates() {
+      const cached = feedViewCache.get(feedScope);
+      if (!cached || !supabaseClient) return;
+      const now = Date.now();
+      if (now - Number(cached.lastCheckedAt || 0) < FEED_UPDATE_CHECK_INTERVAL_MS) return;
+      cached.lastCheckedAt = now;
+      try {
+        const { data, error } = await supabaseClient
+          .from('visits')
+          .select('id, updated_at, created_at')
+          .eq('is_public', true)
+          .lte('visited_on', getJstTodayStr())
+          .order('updated_at', { ascending: false, nullsFirst: false })
+          .limit(1);
+        if (error) throw error;
+        const latest = data?.[0];
+        const marker = latest ? `${latest.updated_at || latest.created_at || ''}:${latest.id}` : '';
+        if (!cached.latestMarker) {
+          cached.latestMarker = marker;
+          return;
+        }
+        if (marker && marker !== cached.latestMarker) setFeedUpdateAvailable(true);
+      } catch (error) {
+        console.warn('投稿の更新確認をスキップ:', error?.message || String(error));
+      }
+    }
+
+    async function establishFeedUpdateMarker() {
+      const cached = feedViewCache.get(feedScope);
+      if (!cached || !supabaseClient) return;
+      try {
+        const { data, error } = await supabaseClient
+          .from('visits')
+          .select('id, updated_at, created_at')
+          .eq('is_public', true)
+          .lte('visited_on', getJstTodayStr())
+          .order('updated_at', { ascending: false, nullsFirst: false })
+          .limit(1);
+        if (error) throw error;
+        const latest = data?.[0];
+        cached.latestMarker = latest ? `${latest.updated_at || latest.created_at || ''}:${latest.id}` : '';
+        cached.lastCheckedAt = Date.now();
+      } catch (error) {
+        console.warn('投稿の更新時刻を保存できませんでした:', error?.message || String(error));
+      }
+    }
 
     async function setFeedScope(scope) {
       feedScope = scope === 'following' ? 'following' : 'all';
@@ -11366,18 +11451,27 @@
         await showCustomAlert('フォロー中の投稿を見るにはログインが必要です');
         return;
       }
-      await loadCommunityFeed();
+      await loadCommunityFeed({ force: true });
     }
 
-    async function loadCommunityFeed() {
+    async function loadCommunityFeed(options = {}) {
+      const force = Boolean(options.force);
+      if (!force && restoreFeedViewCache()) {
+        void checkFeedForUpdates();
+        return;
+      }
       // 初回読み込み：状態をリセット
       feedPage = 0;
       feedHasMore = true;
       const listEl = document.getElementById('community-feed-list');
       if (!listEl || !supabaseClient) return;
+      listEl.removeAttribute('data-feed-load-error');
       listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:24px 0;">読み込み中...</div>';
       loadFeedSummary();
       await loadFeedPage(true);
+      saveFeedViewCache();
+      setFeedUpdateAvailable(false);
+      void establishFeedUpdateMarker();
     }
 
     async function loadFeedPage(isFirst = false) {
@@ -11531,11 +11625,13 @@
       } catch (e) {
         console.error('フィード読み込みエラー:', e);
         if (loadingEl) loadingEl.remove();
+        listEl.dataset.feedLoadError = '1';
         if (isFirst) {
           listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:24px 0;">読み込みに失敗しました</div>';
         }
       } finally {
         feedIsLoading = false;
+        saveFeedViewCache();
       }
     }
 
