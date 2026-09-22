@@ -233,11 +233,19 @@ export async function onRequestGet(context) {
     metadata = await metadataForRoute(type, id, context.request.url, context.env);
   } catch (error) {
     console.error('リンクカード情報の取得エラー:', error);
+    // 店舗の公開可否を取得できない一時障害では noindex を返さない。
+    // Google には再取得を促し、正常な公開店舗が誤って除外されるのを防ぐ。
+    if (type === 'shops') {
+      return new Response('Shop metadata temporarily unavailable', {
+        status: 503,
+        headers: { 'cache-control': 'no-store' }
+      });
+    }
     metadata = {
-      title: type === 'shops' ? `店舗情報｜${SITE_NAME}` : `家系ラーメンmap`,
+      title: `家系ラーメンmap`,
       description: '家系ラーメンの店舗情報と訪問記録を確認できます。',
       url: `${SITE_ORIGIN}${url.pathname}`,
-      noindex: type === 'shops'
+      noindex: false
     };
   }
 
