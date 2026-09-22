@@ -851,6 +851,17 @@
         opacity: 1;
       }
     }
+
+    @keyframes slideDown {
+      from {
+        transform: translate(-50%, -8px);
+        opacity: 0;
+      }
+      to {
+        transform: translate(-50%, 0);
+        opacity: 1;
+      }
+    }
     
     .modal-header {
       padding: 16px;
@@ -13254,7 +13265,11 @@
             
             // トースト通知
             if (hasImmediateData) {
-              showToast('新しいデータがあります（🔄で更新）');
+              const updatedLabel = formatShopDataUpdatedAt(data.updatedAt);
+              showToast(
+                `店舗情報を最新データに更新しました${updatedLabel ? `\n${updatedLabel}` : ''}`,
+                { placement: 'top' }
+              );
               // 再初期化
               initializeApp();
             } else {
@@ -13348,22 +13363,35 @@
       initializeApp();
     }
     
+    function formatShopDataUpdatedAt(value) {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return '';
+      const pad = number => String(number).padStart(2, '0');
+      return `データ更新：${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
+
     // トースト通知
-    function showToast(message) {
+    function showToast(message, options = {}) {
+      const isTop = options.placement === 'top';
       const toast = document.createElement('div');
       toast.style.cssText = `
         position: fixed;
-        top: 50%;
+        top: ${isTop ? 'calc(12px + env(safe-area-inset-top, 0px))' : '50%'};
         left: 50%;
-        transform: translate(-50%, -50%);
+        transform: ${isTop ? 'translateX(-50%)' : 'translate(-50%, -50%)'};
         background: #111827;
         color: white;
-        padding: 12px 20px;
+        padding: 11px 18px;
         border-radius: 8px;
         font-size: 14px;
+        line-height: 1.5;
+        text-align: center;
+        white-space: pre-line;
+        max-width: calc(100vw - 32px);
         z-index: 10000;
-        animation: slideUpCenter 0.3s ease;
+        animation: ${isTop ? 'slideDown' : 'slideUpCenter'} 0.3s ease;
       `;
+      toast.setAttribute('role', 'status');
       toast.textContent = message;
       document.body.appendChild(toast);
       
