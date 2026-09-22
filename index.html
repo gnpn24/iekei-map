@@ -18518,6 +18518,24 @@
       return familyRootIndex > 0 ? visibleChain.slice(familyRootIndex) : visibleChain;
     }
 
+    function publicShopLineageFallbackRoot(shop) {
+      const category = String(shop?.category || '');
+      const rootIdByCategory = {
+        '総本山': 'yoshimuraya',
+        '直系': 'yoshimuraya',
+        '吉村家（直系以外）': 'yoshimuraya',
+        '本牧家': 'honmokuya',
+        '六角家': 'rokkakuya',
+        '武蔵家': 'musashiya',
+        '野中家': 'nonakaya',
+        '大輝家': 'daikiya',
+        '壱系': 'ichirokuya'
+      };
+      const rootId = category.startsWith('王道家') ? 'oudouya' : rootIdByCategory[category];
+      const root = rootId && shops.find(item => String(item.id) === rootId);
+      return root && String(root.name || '').trim() !== 'ダミー' ? root : null;
+    }
+
     function openPublicShopLineage() {
       const shopId = currentShop?.id;
       if (!shopId) return;
@@ -18702,18 +18720,22 @@
 
       const lineage = document.getElementById('psp-lineage');
       const chain = publicShopLineageChain(shop);
-      lineage.hidden = chain.length < 2;
-      document.getElementById('psp-lineage-section').hidden = chain.length < 2;
+      // 出身店が未登録でも、系統が分かる店舗はルート店だけを表示する。
+      const fallbackRoot = chain.length < 2 ? publicShopLineageFallbackRoot(shop) : null;
+      const lineageItems = chain.length >= 2 ? chain : (fallbackRoot ? [fallbackRoot] : []);
+      const hasLineage = lineageItems.length > 0;
+      lineage.hidden = !hasLineage;
+      document.getElementById('psp-lineage-section').hidden = !hasLineage;
       const origin = document.getElementById('psp-origin');
       const originItem = chain.length > 1 ? chain[chain.length - 2] : null;
       origin.textContent = originItem ? `出身: ${originItem.mapLabel || originItem.name}` : '';
       origin.hidden = !originItem;
       origin.onclick = originItem ? () => navigateToPublicShop(originItem.id) : null;
-      if (chain.length >= 2) {
+      if (hasLineage) {
         const categoryLabel = getShortCategoryName(shop.category || '');
         document.getElementById('psp-lineage-category').textContent = categoryLabel;
         document.getElementById('psp-lineage-tree-link').onclick = openPublicShopLineage;
-        document.getElementById('psp-lineage-path').innerHTML = chain.map((item, index) => {
+        document.getElementById('psp-lineage-path').innerHTML = lineageItems.map((item, index) => {
           const isCurrent = String(item.id) === String(shop.id);
           const label = escapeHtml(String(item.mapLabel || item.name || '').split('※')[0].trim());
           const node = isCurrent
@@ -18734,7 +18756,7 @@
       setExternalLink('psp-google-map', shop.googleMapUrl);
       document.getElementById('psp-links-section').hidden = !['psp-google-map', 'psp-website', 'psp-x']
         .some(id => !document.getElementById(id).hidden);
-      document.getElementById('psp-about-section').hidden = !description && chain.length < 2 && document.getElementById('psp-links-section').hidden;
+      document.getElementById('psp-about-section').hidden = !description && !hasLineage && document.getElementById('psp-links-section').hidden;
       const hasCoordinates = Number.isFinite(Number(shop.lat)) && Number.isFinite(Number(shop.lng));
       document.getElementById('psp-map-back').hidden = !hasCoordinates;
       document.getElementById('psp-map-tile').hidden = !hasCoordinates;

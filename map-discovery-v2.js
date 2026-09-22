@@ -1821,8 +1821,15 @@
     }
     if (Math.abs(deltaX) <= 6) {
       // Pointer Capture 中は click の対象がカード列へ変わることがあるため、
-      // カード本体のタップはここで確実に地図へ反映する。
-      if (startShopId) activateShopFromCard(startShopId);
+      // カード本体のクリックはここで確実に詳細モーダルまで開く。
+      if (startShopId) {
+        activateShopFromCard(startShopId);
+        if (wasMouseDrag && typeof showShopDetail === 'function') {
+          // pointerup 後に発火する同じクリックは二重に処理しない。
+          state.suppressCardClickUntil = Date.now() + 450;
+          showShopDetail(startShopId);
+        }
+      }
       return;
     }
     if (Math.abs(deltaX) > 6) state.suppressCardClickUntil = Date.now() + 450;
