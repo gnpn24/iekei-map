@@ -89,6 +89,7 @@ function seoApiUrl(env, mode, id = '') {
 
 async function fetchSeoPayload(env, mode, id = '') {
   const response = await fetch(seoApiUrl(env, mode, id), {
+    signal: AbortSignal.timeout(5000),
     cf: { cacheEverything: true, cacheTtl: 300 }
   });
   if (!response.ok) throw new Error(`SEO API: ${response.status}`);
@@ -237,6 +238,7 @@ export async function onRequestGet(context) {
   if (!assetResponse.ok) return assetResponse;
 
   let metadata;
+  let metadataUnavailable = false;
   try {
     metadata = await metadataForRoute(type, id, context.request.url, context.env);
   } catch (error) {
@@ -244,10 +246,9 @@ export async function onRequestGet(context) {
     // 店舗の公開可否を取得できない一時障害では noindex を返さない。
     // Google には再取得を促し、正常な公開店舗が誤って除外されるのを防ぐ。
     if (type === 'shops') {
-      return new Response('Shop metadata temporarily unavailable', {
-        status: 503,
-        headers: { 'cache-control': 'no-store' }
-      });
+      // 検索用APIの障害でもアプリのHTMLと店舗ルートを残す。
+      // ブラウザは通常の店舗API・端末キャッシュから詳細画面を復元できる。
+      metadataUnavailable = true;
     }
     metadata = {
       title: `家系ラーメンmap`,
@@ -261,5 +262,9 @@ export async function onRequestGet(context) {
   const headers = new Headers(assetResponse.headers);
   headers.set('content-type', 'text/html; charset=utf-8');
   headers.set('cache-control', `public, max-age=${type === 'shops' ? 3600 : 300}`);
-  return new Response(html, { status: 200, headers });
+  if (metadataUnavailable) {
+    headers.set('cache-control', 'no-store');
+    headers.set('retry-after', '60');
+  }
+  return new Response(html, { status: metadataUnavailable ? 503 : 200, headers });
 }
