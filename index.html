@@ -314,7 +314,7 @@
       position: fixed;
       z-index: 2400;
       right: 14px;
-      bottom: calc(var(--bottom-nav-height, 72px) + 12px);
+      top: var(--play-store-prompt-top, calc(60px + env(safe-area-inset-top, 0px)));
       left: 14px;
       max-width: 560px;
       margin: 0 auto;
@@ -7381,7 +7381,12 @@
       try {
         if (Number(localStorage.getItem(PLAY_STORE_PROMPT_DISMISSED_UNTIL_KEY) || 0) > Date.now()) return;
       } catch (_) {}
-      document.getElementById('play-store-prompt')?.removeAttribute('hidden');
+      const prompt = document.getElementById('play-store-prompt');
+      const header = document.querySelector('.app-container > .header');
+      if (header) {
+        prompt?.style.setProperty('--play-store-prompt-top', `${Math.round(header.getBoundingClientRect().bottom + 10)}px`);
+      }
+      prompt?.removeAttribute('hidden');
     }
 
     window.dismissPlayStorePrompt = dismissPlayStorePrompt;
