@@ -331,15 +331,11 @@
     .play-store-prompt-copy { min-width: 0; flex: 1; }
     .play-store-prompt-title { display: block; font-size: 13px; font-weight: 800; }
     .play-store-prompt-note { display: block; margin-top: 2px; color: #6b7280; font-size: 10px; }
-    .play-store-prompt-open {
+    .play-store-prompt-badge {
       flex: 0 0 auto;
-      padding: 9px 11px;
-      border-radius: 10px;
-      color: #fff;
-      background: #188038;
-      font-size: 11px;
-      font-weight: 800;
-      text-decoration: none;
+      display: block;
+      width: 112px;
+      height: auto;
       white-space: nowrap;
     }
     .play-store-prompt-close {
@@ -355,6 +351,37 @@
       cursor: pointer;
       font-size: 20px;
       line-height: 1;
+    }
+    .feed-toolbar {
+      padding: 8px 16px 0;
+      display: flex;
+      align-items: stretch;
+      justify-content: space-between;
+      gap: 8px;
+      background: white;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    #feed-scope-tabs { gap: 8px !important; min-width: 0; }
+    .feed-scope-tab { white-space: nowrap; font-size: 13px; }
+    .feed-toolbar-actions {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      align-self: center;
+      justify-content: flex-end;
+      gap: 4px;
+      transform: translateY(-4px);
+    }
+    .feed-sort-select { width: 88px; padding: 0 4px !important; font-size: 12px !important; white-space: nowrap; }
+    .feed-toolbar-button { padding: 6px 8px !important; font-size: 12px !important; white-space: nowrap; }
+    .feed-refresh-button { gap: 3px !important; }
+    @media (max-width: 390px) {
+      .feed-toolbar { padding-right: 8px; padding-left: 8px; gap: 5px; }
+      #feed-scope-tabs { gap: 5px !important; }
+      .feed-scope-tab { padding-right: 2px !important; padding-left: 2px !important; font-size: 12px; }
+      .feed-toolbar-actions { gap: 3px; }
+      .feed-sort-select { width: 78px; }
+      .feed-toolbar-button { padding-right: 6px !important; padding-left: 6px !important; }
     }
     
     .nav-item {
@@ -6499,18 +6526,18 @@
       
       <!-- List Tab -->
       <div id="tab-feed" class="tab-content">
-        <div style="padding:8px 16px 0;background:white;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:stretch;gap:10px;">
+        <div class="feed-toolbar">
           <div id="feed-scope-tabs" role="tablist" aria-label="投稿の表示範囲" style="display:flex;align-items:stretch;gap:18px;">
-            <button id="feed-scope-all" type="button" role="tab" aria-selected="true" onclick="setFeedScope('all')" style="border:0;border-bottom:3px solid #ef4444;background:transparent;color:#111827;font-weight:800;padding:8px 4px;cursor:pointer;">みんな</button>
-            <button id="feed-scope-following" type="button" role="tab" aria-selected="false" onclick="setFeedScope('following')" style="border:0;border-bottom:3px solid transparent;background:transparent;color:#9ca3af;font-weight:800;padding:8px 4px;cursor:pointer;">フォロー中</button>
+            <button id="feed-scope-all" class="feed-scope-tab" type="button" role="tab" aria-selected="true" onclick="setFeedScope('all')" style="border:0;border-bottom:3px solid #ef4444;background:transparent;color:#111827;font-weight:800;padding:8px 4px;cursor:pointer;">みんな</button>
+            <button id="feed-scope-following" class="feed-scope-tab" type="button" role="tab" aria-selected="false" onclick="setFeedScope('following')" style="border:0;border-bottom:3px solid transparent;background:transparent;color:#9ca3af;font-weight:800;padding:8px 4px;cursor:pointer;">フォロー中</button>
           </div>
-          <div style="display:flex;align-items:center;align-self:center;gap:6px;transform:translateY(-4px);">
-          <select id="feed-sort-select" onchange="setFeedSort(this.value)" aria-label="投稿の並び順" style="height:30px;padding:0 6px;border:1.5px solid #e5e7eb;border-radius:9px;background:white;color:#374151;font-size:13px;font-weight:600;cursor:pointer;">
+          <div class="feed-toolbar-actions">
+          <select id="feed-sort-select" class="feed-sort-select" onchange="setFeedSort(this.value)" aria-label="投稿の並び順" style="height:30px;padding:0 6px;border:1.5px solid #e5e7eb;border-radius:9px;background:white;color:#374151;font-size:13px;font-weight:600;cursor:pointer;">
             <option value="visited">訪問日順</option>
             <option value="created">投稿順</option>
           </select>
-          <button type="button" onclick="openNotifications()" style="padding:6px 10px;border:1.5px solid #e5e7eb;border-radius:9px;background:white;font-size:13px;font-weight:600;color:#374151;cursor:pointer;">通知</button>
-          <button id="feed-refresh-button" onclick="refreshCommunityFeed(this)" style="position:relative;display:flex;align-items:center;gap:4px;padding:6px 12px;border:1.5px solid #e5e7eb;border-radius:9px;background:white;font-size:13px;font-weight:600;color:#374151;cursor:pointer;">
+          <button type="button" class="feed-toolbar-button" onclick="openNotifications()" style="padding:6px 10px;border:1.5px solid #e5e7eb;border-radius:9px;background:white;font-size:13px;font-weight:600;color:#374151;cursor:pointer;">通知</button>
+          <button id="feed-refresh-button" class="feed-toolbar-button feed-refresh-button" onclick="refreshCommunityFeed(this)" style="position:relative;display:flex;align-items:center;gap:4px;padding:6px 12px;border:1.5px solid #e5e7eb;border-radius:9px;background:white;font-size:13px;font-weight:600;color:#374151;cursor:pointer;">
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
             更新
             <span id="feed-update-dot" hidden aria-label="新しい投稿があります" style="position:absolute;right:-3px;top:-3px;width:8px;height:8px;border:2px solid white;border-radius:50%;background:#ef4444;"></span>
@@ -6724,7 +6751,7 @@
     
     <aside id="play-store-prompt" class="play-store-prompt" hidden aria-label="Google Play版のご案内">
       <div class="play-store-prompt-copy"><span class="play-store-prompt-title">Google Play版があります</span><span class="play-store-prompt-note">アプリで家系ラーメンmapをもっと快適に</span></div>
-      <a class="play-store-prompt-open" href="https://play.google.com/store/apps/details?id=com.sota.iekeimap">開く</a>
+      <a href="https://play.google.com/store/apps/details?id=com.sota.iekeimap" aria-label="Google Playで家系ラーメンmapを開く"><img class="play-store-prompt-badge" src="https://play.google.com/intl/en_us/badges/static/images/badges/ja_badge_web_generic.png" alt="Google Play で手に入れよう"></a>
       <button type="button" class="play-store-prompt-close" onclick="dismissPlayStorePrompt()" aria-label="Google Play版の案内を閉じる">×</button>
     </aside>
 
