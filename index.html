@@ -309,6 +309,53 @@
       right: 0;
       z-index: 100;
     }
+    .play-store-prompt[hidden] { display: none !important; }
+    .play-store-prompt {
+      position: fixed;
+      z-index: 2400;
+      right: 14px;
+      bottom: calc(var(--bottom-nav-height, 72px) + 12px);
+      left: 14px;
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 12px 12px 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid rgba(31, 41, 55, 0.12);
+      border-radius: 16px;
+      color: #1f2937;
+      background: rgba(255, 255, 255, 0.97);
+      box-shadow: 0 10px 26px rgba(31, 41, 55, 0.18);
+    }
+    .play-store-prompt-copy { min-width: 0; flex: 1; }
+    .play-store-prompt-title { display: block; font-size: 13px; font-weight: 800; }
+    .play-store-prompt-note { display: block; margin-top: 2px; color: #6b7280; font-size: 10px; }
+    .play-store-prompt-open {
+      flex: 0 0 auto;
+      padding: 9px 11px;
+      border-radius: 10px;
+      color: #fff;
+      background: #188038;
+      font-size: 11px;
+      font-weight: 800;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .play-store-prompt-close {
+      width: 28px;
+      height: 28px;
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: 50%;
+      color: #6b7280;
+      background: transparent;
+      cursor: pointer;
+      font-size: 20px;
+      line-height: 1;
+    }
     
     .nav-item {
       flex: 1;
@@ -4742,6 +4789,7 @@
       background: rgba(255, 255, 255, 0.64);
       font-size: 13px;
     }
+    .feed-ranking-summary-mark svg { width: 16px; height: 16px; stroke: currentColor; }
     .feed-ranking-total {
       display: flex;
       align-items: center;
@@ -4926,6 +4974,48 @@
       color: #8b817a;
       font-size: 9px;
     }
+    .feed-ranking-more-button {
+      width: 100%; min-height: 42px; margin-top: 10px; padding: 0 14px;
+      display: flex; align-items: center; justify-content: space-between;
+      border: 1px solid rgba(143, 66, 34, 0.22); border-radius: 12px;
+      color: #8f4222; background: #fffdfb; cursor: pointer; font-size: 12px;
+      font-weight: 800; -webkit-tap-highlight-color: transparent;
+    }
+    .feed-ranking-more-button span { font-size: 17px; line-height: 1; }
+    .feed-ranking-more-button-summary {
+      min-height: 40px;
+      margin: 0;
+      border: 0;
+      border-top: 1px solid rgba(143, 66, 34, 0.12);
+      border-radius: 0;
+      background: #fffdfb;
+    }
+    .feed-ranking-detail-page[hidden] { display: none !important; }
+    .feed-ranking-detail-page {
+      position: fixed; z-index: 10050; inset: 0; overflow-y: auto;
+      padding-bottom: env(safe-area-inset-bottom, 0px); color: #292522;
+      background: #fbf3ef; overscroll-behavior: contain;
+    }
+    .feed-ranking-detail-inner { width: min(100%, 720px); min-height: 100%; margin: 0 auto; background: #fbf3ef; }
+    .feed-ranking-detail-header {
+      position: sticky; top: 0; z-index: 1; min-height: calc(60px + env(safe-area-inset-top, 0px));
+      padding: calc(10px + env(safe-area-inset-top, 0px)) 14px 10px;
+      display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(120, 72, 56, 0.14);
+      background: rgba(255, 253, 251, 0.96); backdrop-filter: blur(12px);
+    }
+    .feed-ranking-detail-back {
+      width: 38px; height: 38px; flex: 0 0 auto; display: grid; place-items: center;
+      border: 0; border-radius: 50%; color: #413b37; background: #f2ece8; cursor: pointer;
+      font-size: 24px; line-height: 1;
+    }
+    .feed-ranking-detail-heading { min-width: 0; }
+    .feed-ranking-detail-heading h2 { margin: 0; font-size: 17px; font-weight: 800; }
+    .feed-ranking-detail-heading p { margin: 2px 0 0; color: #7b736d; font-size: 10px; }
+    .feed-ranking-detail-body { padding: 16px; }
+    .feed-ranking-detail-period-tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .feed-ranking-detail-list { margin-top: 10px; border-radius: 16px; background: #fffdfb; overflow: hidden; box-shadow: 0 5px 16px rgba(80, 40, 24, 0.07); }
+    .feed-ranking-detail-list .feed-ranking-row { padding-right: 12px; padding-left: 12px; }
+    .feed-ranking-detail-loading { padding: 34px 16px; color: #7b736d; font-size: 13px; text-align: center; }
     .feed-list-wrap {
       padding: 14px 12px 96px !important;
       background: #fbf3ef !important;
@@ -6433,13 +6523,14 @@
           <button id="feed-ranking-summary" class="feed-ranking-summary" type="button" onclick="toggleFeedSummary()" aria-expanded="false">
             <span class="feed-ranking-summary-copy">
               <span id="feed-summary-period" class="feed-ranking-summary-period">過去30日の公開記録</span>
-              <span class="feed-ranking-summary-title"><span class="feed-ranking-summary-mark" aria-hidden="true">♨</span>みんなのランキング</span>
+              <span class="feed-ranking-summary-title"><span class="feed-ranking-summary-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4H4v3a5 5 0 0 0 5 5"/><path d="M17 4h3v3a5 5 0 0 1-5 5"/><path d="M8 4h8v5a4 4 0 0 1-8 0z"/></svg></span>みんなのランキング</span>
             </span>
             <span class="feed-ranking-total">
               <span class="feed-ranking-total-value"><span id="feed-summary-cups">-</span><span class="feed-ranking-total-unit">杯</span></span>
               <span id="feed-summary-chevron" aria-hidden="true" style="transform:rotate(180deg);">⌃</span>
             </span>
           </button>
+          <button type="button" class="feed-ranking-more-button feed-ranking-more-button-summary" onclick="openFeedRankingDetail()">ランキングをすべて見る <span aria-hidden="true">→</span></button>
 
           <div id="feed-summary-detail" class="feed-ranking-body" hidden>
             <div class="feed-ranking-period-tabs" role="tablist" aria-label="集計期間">
@@ -6458,6 +6549,28 @@
             <div class="feed-ranking-footnote">公開された訪問記録から集計</div>
           </div>
         </div>
+
+        <section id="feed-ranking-detail-page" class="feed-ranking-detail-page" hidden aria-hidden="true" aria-label="みんなのランキング">
+          <div class="feed-ranking-detail-inner">
+            <header class="feed-ranking-detail-header">
+              <button type="button" class="feed-ranking-detail-back" onclick="closeFeedRankingDetail()" aria-label="投稿一覧へ戻る">‹</button>
+              <div class="feed-ranking-detail-heading"><h2>みんなのランキング</h2><p>公開された訪問記録から集計</p></div>
+            </header>
+            <div class="feed-ranking-detail-body">
+              <div class="feed-ranking-period-tabs feed-ranking-detail-period-tabs" role="tablist" aria-label="集計期間">
+                <button id="feed-detail-period-tab-30d" class="feed-ranking-period-tab" type="button" role="tab" aria-selected="true" onclick="setFeedRankingDetailPeriod('30d')">30日</button>
+                <button id="feed-detail-period-tab-6m" class="feed-ranking-period-tab" type="button" role="tab" aria-selected="false" onclick="setFeedRankingDetailPeriod('6m')">半年</button>
+                <button id="feed-detail-period-tab-1y" class="feed-ranking-period-tab" type="button" role="tab" aria-selected="false" onclick="setFeedRankingDetailPeriod('1y')">1年</button>
+                <button id="feed-detail-period-tab-all" class="feed-ranking-period-tab" type="button" role="tab" aria-selected="false" onclick="setFeedRankingDetailPeriod('all')">全期間</button>
+              </div>
+              <div class="feed-ranking-category-tabs" role="tablist" aria-label="ランキング種別">
+                <button id="feed-detail-category-tab-users" class="feed-ranking-category-tab" type="button" role="tab" aria-selected="true" onclick="setFeedRankingDetailCategory('users')">食べた人</button>
+                <button id="feed-detail-category-tab-shops" class="feed-ranking-category-tab" type="button" role="tab" aria-selected="false" onclick="setFeedRankingDetailCategory('shops')">人気のお店</button>
+              </div>
+              <div id="feed-ranking-detail-list" class="feed-ranking-detail-list"><div class="feed-ranking-detail-loading">ランキングを読み込み中…</div></div>
+            </div>
+          </div>
+        </section>
 
         <div class="feed-list-wrap">
           <div id="community-feed-list">
@@ -6609,6 +6722,12 @@
       </div>
     </div>
     
+    <aside id="play-store-prompt" class="play-store-prompt" hidden aria-label="Google Play版のご案内">
+      <div class="play-store-prompt-copy"><span class="play-store-prompt-title">Google Play版があります</span><span class="play-store-prompt-note">アプリで家系ラーメンmapをもっと快適に</span></div>
+      <a class="play-store-prompt-open" href="https://play.google.com/store/apps/details?id=com.sota.iekeimap">開く</a>
+      <button type="button" class="play-store-prompt-close" onclick="dismissPlayStorePrompt()" aria-label="Google Play版の案内を閉じる">×</button>
+    </aside>
+
     <div class="bottom-nav">
       <button class="nav-item active" data-tab="map">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -7216,6 +7335,30 @@
     // 訪問記録は端末キャッシュを先に表示し、ログイン後にクラウドとの差分を反映する。
     // iOSではSwiftからのUserDefaults復元が非同期なので、初回同期前に完了を待つ。
     const isNativeApp = !!(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.saveVisits);
+    const PLAY_STORE_PROMPT_DISMISSED_UNTIL_KEY = 'iekei-play-store-prompt-dismissed-until';
+    const PLAY_STORE_PROMPT_DISMISS_MS = 30 * 24 * 60 * 60 * 1000;
+
+    function isAndroidBrowser() {
+      const isAndroid = /Android/i.test(navigator.userAgent || '');
+      const isStandalone = window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone === true;
+      return isAndroid && !isNativeApp && !isStandalone;
+    }
+
+    function dismissPlayStorePrompt() {
+      document.getElementById('play-store-prompt')?.setAttribute('hidden', '');
+      try { localStorage.setItem(PLAY_STORE_PROMPT_DISMISSED_UNTIL_KEY, String(Date.now() + PLAY_STORE_PROMPT_DISMISS_MS)); } catch (_) {}
+    }
+
+    function showPlayStorePromptIfEligible() {
+      if (!isAndroidBrowser()) return;
+      try {
+        if (Number(localStorage.getItem(PLAY_STORE_PROMPT_DISMISSED_UNTIL_KEY) || 0) > Date.now()) return;
+      } catch (_) {}
+      document.getElementById('play-store-prompt')?.removeAttribute('hidden');
+    }
+
+    window.dismissPlayStorePrompt = dismissPlayStorePrompt;
+    setTimeout(showPlayStorePromptIfEligible, 1200);
     let resolveLocalVisitsReady;
     let localVisitsReadyResolved = !isNativeApp;
     const localVisitsReady = new Promise(resolve => {
@@ -11217,6 +11360,8 @@
       const sorted = [...countMap.entries()]
         .filter(([id]) => id !== null && id !== undefined && id !== '')
         .sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0]), 'ja'));
+      const countFrequencies = new Map();
+      sorted.forEach(([, count]) => countFrequencies.set(count, (countFrequencies.get(count) || 0) + 1));
       let previousCount = null;
       let previousRank = 0;
       return sorted.slice(0, limit).map(([id, count], index) => {
@@ -11227,7 +11372,7 @@
           id,
           count,
           rank,
-          isTied: sorted.filter(([, candidateCount]) => candidateCount === count).length > 1
+          isTied: (countFrequencies.get(count) || 0) > 1
         };
       });
     }
@@ -11400,6 +11545,106 @@
         console.error('ランキング取得エラー:', e);
       }
     }
+
+    let feedRankingDetailData = null;
+    let feedRankingDetailPeriod = '30d';
+    let feedRankingDetailCategory = 'users';
+    let feedRankingDetailLoading = null;
+    const FEED_RANKING_DETAIL_CACHE_KEY = 'iekei-feed-ranking-detail-cache-v1';
+
+    function loadDailyFeedRankingDetailCache() {
+      try {
+        const cached = JSON.parse(localStorage.getItem(FEED_RANKING_DETAIL_CACHE_KEY) || 'null');
+        return cached?.day === getJstDateKey() && cached?.data ? cached.data : null;
+      } catch (_) { return null; }
+    }
+    function saveDailyFeedRankingDetailCache(data) {
+      try { localStorage.setItem(FEED_RANKING_DETAIL_CACHE_KEY, JSON.stringify({ day: getJstDateKey(), data })); }
+      catch (_) { /* 容量不足時も、その場の表示は継続する。 */ }
+    }
+    async function fetchAllPublicRankingRows() {
+      const rows = [];
+      const pageSize = 1000;
+      let start = 0;
+      while (true) {
+        const { data, error } = await supabaseClient.from('visits')
+          .select(await compatibleVisitSelect('shop_id, user_id, visited_at, date_precision'))
+          .eq('is_public', true).order('visited_at', { ascending: false }).range(start, start + pageSize - 1);
+        if (error) throw error;
+        rows.push(...(data || []));
+        if (!data || data.length < pageSize) break;
+        start += pageSize;
+      }
+      return rows;
+    }
+    async function fetchRankingProfiles(profileIds) {
+      const profiles = [];
+      const ids = [...profileIds];
+      for (let start = 0; start < ids.length; start += 100) {
+        const { data, error } = await supabaseClient.from('profiles').select('id, display_name, avatar_url').in('id', ids.slice(start, start + 100));
+        if (error) console.warn('ランキング用プロフィール取得エラー:', error);
+        else profiles.push(...(data || []));
+      }
+      return profiles;
+    }
+    async function loadFeedRankingDetail() {
+      if (feedRankingDetailData) return feedRankingDetailData;
+      if (feedRankingDetailLoading) return feedRankingDetailLoading;
+      const cached = loadDailyFeedRankingDetailCache();
+      if (cached) { feedRankingDetailData = cached; return feedRankingDetailData; }
+      feedRankingDetailLoading = (async () => {
+        const now = new Date();
+        const periods = { ...FEED_RANKING_PERIODS, all: { label: '全期間' } };
+        const periodStarts = Object.fromEntries(Object.keys(FEED_RANKING_PERIODS).map(period => [period, getFeedRankingStart(period, now)]));
+        const rows = await fetchAllPublicRankingRows();
+        const validRows = rows.filter(row => { const visitedAt = new Date(row.visited_at); return !Number.isNaN(visitedAt.getTime()) && visitedAt <= now; });
+        const profileIds = new Set();
+        const workingData = {};
+        Object.keys(periods).forEach(period => {
+          const periodRows = period === 'all' ? validRows : validRows.filter(row => new Date(row.visited_at) >= periodStarts[period]);
+          const users = new Map(); const shopsCount = new Map();
+          periodRows.forEach(row => { if (row.user_id) { users.set(row.user_id, (users.get(row.user_id) || 0) + 1); profileIds.add(row.user_id); } if (row.shop_id) shopsCount.set(row.shop_id, (shopsCount.get(row.shop_id) || 0) + 1); });
+          workingData[period] = { total: periodRows.length, users: getFeedTopRanked(users, Infinity), shops: getFeedTopRanked(shopsCount, Infinity) };
+        });
+        const profileMap = new Map((await fetchRankingProfiles(profileIds)).map(profile => [String(profile.id), profile]));
+        feedRankingDetailData = {};
+        Object.keys(periods).forEach(period => {
+          const periodData = workingData[period];
+          feedRankingDetailData[period] = { total: periodData.total, users: periodData.users.map(item => { const profile = profileMap.get(String(item.id)); return { ...item, name: profile?.display_name || '匿名ユーザー', avatarUrl: profile?.avatar_url || '' }; }), shops: periodData.shops.map(item => { const shop = (typeof shops !== 'undefined' ? shops : []).find(candidate => String(candidate.id) === String(item.id)); return { ...item, name: shop?.name || String(item.id) }; }) };
+        });
+        saveDailyFeedRankingDetailCache(feedRankingDetailData);
+        return feedRankingDetailData;
+      })();
+      try { return await feedRankingDetailLoading; } finally { feedRankingDetailLoading = null; }
+    }
+    function renderFeedRankingDetail() {
+      const list = document.getElementById('feed-ranking-detail-list');
+      if (!list || !feedRankingDetailData) return;
+      ['30d', '6m', '1y', 'all'].forEach(period => document.getElementById(`feed-detail-period-tab-${period}`)?.setAttribute('aria-selected', String(period === feedRankingDetailPeriod)));
+      document.getElementById('feed-detail-category-tab-users')?.setAttribute('aria-selected', String(feedRankingDetailCategory === 'users'));
+      document.getElementById('feed-detail-category-tab-shops')?.setAttribute('aria-selected', String(feedRankingDetailCategory === 'shops'));
+      const items = feedRankingDetailData?.[feedRankingDetailPeriod]?.[feedRankingDetailCategory] || [];
+      if (!items.length) { list.innerHTML = '<div class="feed-ranking-empty">この期間の公開記録はまだありません</div>'; return; }
+      list.innerHTML = items.map(item => {
+        const note = `${item.isTied ? '同率' : ''}${item.rank}位`;
+        if (feedRankingDetailCategory === 'users') return `<button type="button" class="feed-ranking-row${item.rank === 1 ? ' is-top' : ''}" data-user-id="${escapeHtml(String(item.id))}" onclick="openRankingUserProfile(this.dataset.userId)" aria-label="${escapeHtml(`${note} ${item.name} ${item.count}杯`)}"><span class="feed-ranking-rank">${item.rank}</span>${avatarHtml(item.avatarUrl, 34)}<span class="feed-ranking-copy"><span class="feed-ranking-name">${escapeHtml(item.name)}</span><span class="feed-ranking-note">${note}</span></span><span class="feed-ranking-count">${item.count}杯</span></button>`;
+        return `<button type="button" class="feed-ranking-row${item.rank === 1 ? ' is-top' : ''}" data-shop-id="${escapeHtml(String(item.id))}" onclick="openRankingShopDetail(this.dataset.shopId)" aria-label="${escapeHtml(`${note} ${item.name} ${item.count}杯`)}"><span class="feed-ranking-rank">${item.rank}</span><span class="feed-ranking-shop-avatar" aria-hidden="true">店</span><span class="feed-ranking-copy"><span class="feed-ranking-name">${escapeHtml(item.name)}</span><span class="feed-ranking-note">${note}</span></span><span class="feed-ranking-count">${item.count}杯</span></button>`;
+      }).join('');
+    }
+    async function openFeedRankingDetail() {
+      const page = document.getElementById('feed-ranking-detail-page'); const list = document.getElementById('feed-ranking-detail-list');
+      if (!page || !list) return;
+      page.hidden = false; page.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden';
+      if (feedRankingDetailData) { renderFeedRankingDetail(); return; }
+      list.innerHTML = '<div class="feed-ranking-detail-loading">ランキングを読み込み中…</div>';
+      try { await loadFeedRankingDetail(); renderFeedRankingDetail(); }
+      catch (error) { console.error('詳細ランキング取得エラー:', error); list.innerHTML = '<div class="feed-ranking-empty">ランキングを読み込めませんでした</div>'; }
+    }
+    function closeFeedRankingDetail() { const page = document.getElementById('feed-ranking-detail-page'); if (!page) return; page.hidden = true; page.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; }
+    function openRankingUserProfile(userId) { closeFeedRankingDetail(); openUserProfile(userId); }
+    function openRankingShopDetail(shopId) { closeFeedRankingDetail(); showShopDetail(shopId); }
+    function setFeedRankingDetailPeriod(period) { if (['30d', '6m', '1y', 'all'].includes(period)) { feedRankingDetailPeriod = period; renderFeedRankingDetail(); } }
+    function setFeedRankingDetailCategory(category) { if (['users', 'shops'].includes(category)) { feedRankingDetailCategory = category; renderFeedRankingDetail(); } }
 
     // フィードのページネーション状態
     let feedPage = 0;
@@ -13402,7 +13647,7 @@
             if (hasImmediateData) {
               const updatedLabel = formatShopDataUpdatedAt(data.updatedAt);
               showToast(
-                `店舗情報を最新データに更新しました${updatedLabel ? `\n${updatedLabel}` : ''}`,
+                `店舗情報を更新しました${updatedLabel ? `\n${updatedLabel}` : ''}`,
                 { placement: 'top' }
               );
               // 表示中の画面だけを更新する。非表示タブまで描画し直さない。
@@ -13502,7 +13747,7 @@
       const date = new Date(value);
       if (Number.isNaN(date.getTime())) return '';
       const pad = number => String(number).padStart(2, '0');
-      return `データ更新：${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+      return `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
     }
 
     // トースト通知
