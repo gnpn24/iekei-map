@@ -13227,9 +13227,20 @@
     }
 
     async function decodeEnvelope(responseData) {
-      if (!responseData || responseData.ok !== true) {
+      const hasEncryptedPayload = Boolean(
+        responseData &&
+        typeof responseData.iv === 'string' &&
+        typeof responseData.aad === 'string' &&
+        typeof responseData.payload === 'string'
+      );
+      if (!responseData || (!hasEncryptedPayload && responseData.ok !== true)) {
         const count = Number(responseData?.errorCount || 0);
         throw new Error(`店舗データの検証に失敗しました（${count}件）`);
+      }
+      // APIは検証エラーの詳細と、読み取り可能な店舗データを同時に返す。
+      // 以前と同じく、個別の行エラーだけではアプリ全体を止めない。
+      if (responseData.ok !== true) {
+        console.warn(`店舗データに検証エラーがあります（${Number(responseData.errorCount || 0)}件）。利用可能な店舗を読み込みます。`);
       }
       if (!k) {
         throw new Error('復号キーが設定されていません');
@@ -14805,6 +14816,9 @@
     function initTabs() {
       document.querySelectorAll('.nav-item').forEach(btn => {
         btn.addEventListener('click', () => {
+          const publicShopId = document.body.classList.contains('shop-public-page-open')
+            ? currentShop?.id
+            : null;
           // 公開店舗ページ上で下部ナビを押した場合は、
           // 背景タブだけを切り替えず、店舗ページも確実に閉じる。
           if (document.body.classList.contains('shop-public-page-open')) {
@@ -14860,6 +14874,13 @@
           
           const tab = btn.dataset.tab;
           if (!tab) return;
+
+          // 店舗詳細から下部の「マップ」を押した時は、上部の「地図で見る」と同じく
+          // 対象店舗へカメラを移動してポップアップを開く。
+          if (publicShopId && tab === 'map') {
+            openShopOnMap(publicShopId);
+            return;
+          }
 
           const currentTab = document.querySelector('.tab-content.active');
           const isEnteringFeed = tab === 'feed' && currentTab?.id !== 'tab-feed';
