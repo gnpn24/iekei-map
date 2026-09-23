@@ -6415,6 +6415,10 @@
             <button id="feed-scope-following" type="button" role="tab" aria-selected="false" onclick="setFeedScope('following')" style="border:0;border-bottom:3px solid transparent;background:transparent;color:#9ca3af;font-weight:800;padding:8px 4px;cursor:pointer;">フォロー中</button>
           </div>
           <div style="display:flex;align-items:center;align-self:center;gap:6px;transform:translateY(-4px);">
+          <select id="feed-sort-select" onchange="setFeedSort(this.value)" aria-label="投稿の並び順" style="height:30px;padding:0 6px;border:1.5px solid #e5e7eb;border-radius:9px;background:white;color:#374151;font-size:13px;font-weight:600;cursor:pointer;">
+            <option value="visited">訪問日順</option>
+            <option value="created">投稿順</option>
+          </select>
           <button type="button" onclick="openNotifications()" style="padding:6px 10px;border:1.5px solid #e5e7eb;border-radius:9px;background:white;font-size:13px;font-weight:600;color:#374151;cursor:pointer;">通知</button>
           <button id="feed-refresh-button" onclick="refreshCommunityFeed(this)" style="position:relative;display:flex;align-items:center;gap:4px;padding:6px 12px;border:1.5px solid #e5e7eb;border-radius:9px;background:white;font-size:13px;font-weight:600;color:#374151;cursor:pointer;">
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
@@ -11404,8 +11408,13 @@
     const FEED_PAGE_SIZE = 20;
     let feedObserver = null;
     let feedScope = 'all';
+    let feedSort = 'visited';
     const FEED_UPDATE_CHECK_INTERVAL_MS = 30 * 60 * 1000;
     const feedViewCache = new Map();
+
+    function feedCacheKey(scope = feedScope, sort = feedSort) {
+      return `${scope}:${sort}`;
+    }
 
     // アカウントごとに「フォロー中」やいいね等の見え方が変わるため、
     // 切替時は前の利用者のフィードを残さない。
@@ -11438,11 +11447,12 @@
       const listEl = document.getElementById('community-feed-list');
       if (!listEl || feedIsLoading) return;
       if (listEl.dataset.feedLoadError === '1') {
-        feedViewCache.delete(feedScope);
+        feedViewCache.delete(feedCacheKey());
         return;
       }
-      const previous = feedViewCache.get(feedScope) || {};
-      feedViewCache.set(feedScope, {
+      const cacheKey = feedCacheKey();
+      const previous = feedViewCache.get(cacheKey) || {};
+      feedViewCache.set(cacheKey, {
         ...previous,
         html: listEl.innerHTML,
         page: feedPage,
@@ -11453,7 +11463,7 @@
     }
 
     function restoreFeedViewCache() {
-      const cached = feedViewCache.get(feedScope);
+      const cached = feedViewCache.get(feedCacheKey());
       const listEl = document.getElementById('community-feed-list');
       if (!cached?.html || !listEl) return false;
       listEl.innerHTML = cached.html;
@@ -11492,7 +11502,7 @@
 
     async function checkFeedForUpdates() {
       const scope = feedScope;
-      const cached = feedViewCache.get(scope);
+      const cached = feedViewCache.get(feedCacheKey(scope));
       if (!cached || !supabaseClient) return;
       const now = Date.now();
       if (now - Number(cached.lastCheckedAt || 0) < FEED_UPDATE_CHECK_INTERVAL_MS) return;
@@ -11514,7 +11524,7 @@
 
     async function establishFeedUpdateMarker() {
       const scope = feedScope;
-      const cached = feedViewCache.get(scope);
+      const cached = feedViewCache.get(feedCacheKey(scope));
       if (!cached || !supabaseClient) return;
       try {
         cached.latestMarker = await getFeedUpdateMarker(scope);
@@ -11536,6 +11546,13 @@
       const followingBtn = document.getElementById('feed-scope-following');
       if (allBtn) { allBtn.setAttribute('aria-selected', feedScope === 'all' ? 'true' : 'false'); allBtn.style.borderBottomColor = feedScope === 'all' ? '#ef4444' : 'transparent'; allBtn.style.color = feedScope === 'all' ? '#111827' : '#9ca3af'; }
       if (followingBtn) { followingBtn.setAttribute('aria-selected', feedScope === 'following' ? 'true' : 'false'); followingBtn.style.borderBottomColor = feedScope === 'following' ? '#ef4444' : 'transparent'; followingBtn.style.color = feedScope === 'following' ? '#111827' : '#9ca3af'; }
+      await loadCommunityFeed();
+    }
+
+    async function setFeedSort(sort) {
+      feedSort = sort === 'created' ? 'created' : 'visited';
+      const select = document.getElementById('feed-sort-select');
+      if (select) select.value = feedSort;
       await loadCommunityFeed();
     }
 
@@ -11604,11 +11621,15 @@
           .select(await compatibleVisitSelect('id, shop_id, visited_at, date_precision, rating, comment, order_text, options, noodle_firmness, flavor_intensity, oil_amount, weather, temperature, wait_minutes, user_id, created_at'))
           .eq('is_public', true);
         if (followingIds) visitQuery = visitQuery.in('user_id', followingIds);
-        const { data: visitRowsRaw, error } = await visitQuery
-          .lte('visited_on', getJstTodayStr())
-          .order('visited_on', { ascending: false, nullsFirst: false })
-          .order('created_at', { ascending: false })
-          .range(from, to);
+        visitQuery = visitQuery.lte('visited_on', getJstTodayStr());
+        if (feedSort === 'created') {
+          visitQuery = visitQuery.order('created_at', { ascending: false });
+        } else {
+          visitQuery = visitQuery
+            .order('visited_on', { ascending: false, nullsFirst: false })
+            .order('created_at', { ascending: false });
+        }
+        const { data: visitRowsRaw, error } = await visitQuery.range(from, to);
         if (error) throw error;
 
         // ブロックしたユーザーの投稿は表示しない
@@ -16075,6 +16096,23 @@
       }).join('');
     }
     
+    // 詳細ページなど、地図が非表示だった画面から戻る場合は、
+    // Leafletの表示領域が確定してからカメラを動かす。
+    function afterMapTabIsVisible(callback, attempt = 0) {
+      const mapElement = document.getElementById('map');
+      if (!map && mapElement) initMap();
+      const rect = mapElement?.getBoundingClientRect();
+      if (!map || !rect || rect.width < 2 || rect.height < 2) {
+        if (attempt < 4) requestAnimationFrame(() => afterMapTabIsVisible(callback, attempt + 1));
+        return;
+      }
+      map.invalidateSize({ pan: false, animate: false });
+      requestAnimationFrame(() => {
+        map.invalidateSize({ pan: false, animate: false });
+        callback();
+      });
+    }
+
     function openShopOnMap(shopId) {
       const shop = shops.find(s => s.id === shopId);
       if (!shop) return;
@@ -16093,8 +16131,7 @@
       if (header) header.style.display = 'flex';
       document.title = '家系ラーメンMAP｜地図';
 
-      setTimeout(() => {
-        if (map) map.invalidateSize({ pan: false, animate: false });
+      afterMapTabIsVisible(() => {
         if (shop.lat && shop.lng) {
           if (!markers[shopId]) updateMarkers();
           focusShop(shopId, { centerOnTarget: true });
